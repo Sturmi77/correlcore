@@ -357,6 +357,68 @@ implementieren.
 
 ---
 
+## 12. Umsetzungsplan (C-full)
+
+Aufwand ~2–4 Personentage (Issue-Schätzung). Reihenfolge folgt der Issue-Empfehlung: Spec-Freeze →
+Backend-DTO → Frontend-Panel → Tests → Cleanup. Umsetzung auf dem Branch
+`claude/issue-852-spec-konzept-4ry2jd` (bzw. Folge-Branch).
+
+### Phase 0 — Review-Gate (Voraussetzung, ~0,5d)
+
+- [ ] Frontend + Backend zeichnen Spec gegen (Issue-Schritt 5); Status → `Accepted`.
+- [ ] i18n-Copy-Keys final abstimmen (`trends.maturity.*`, Reuse von `maturity.*`).
+
+### Phase 1 — Backend-DTO (~1–1,5d)
+
+- [ ] **Schema** `backend/app/schemas/stats.py`: `HealthContextResponse` + Sub-Modelle
+  (`MaturitySummary`, `CoverageMetric`, `HealthContextSection`, `HealthConnectStatus | None`).
+- [ ] **Service** `backend/app/services/stats_service.py`: `compute_health_context(user, as_of)`:
+  - Maturity aus `insight_service` beziehen (nicht neu berechnen).
+  - Coverage über **90-Tage-Fenster**: `entry`/`sleep`/`symptom` = Tage-mit-Daten ÷ 90.
+  - Gates (Hybrid): `unlocked` je Sektion aus Feature-Threshold (Symptom ≥ 15 Entries;
+    Sleep Coverage ≥ 0.5 & ≥ 15 Beob.), `reason`/`entries_until_unlock`/`copy_key` setzen.
+  - `health_connect` optional (consent/last_sync/sleep_import_ok), `null` ohne Consent.
+- [ ] **Router** `backend/app/api/v1/endpoints/entries.py`: `GET /entries/stats/health-context`
+  (Auth wie übrige Stats-Endpoints, kurzlebiges Caching optional).
+- [ ] **Privacy:** keine Klartext-Symptom-/Sleep-Werte in Response **oder Logs** (nur Zähler/%).
+- [ ] **Tests** `backend/.../test_stats_*`: Coverage-Formeln, Gate-Schwellen (Grenzfälle 14/15
+  Entries, 0.49/0.50 Coverage), `health_connect=null`-Pfad, **Log-Assertion gegen Art.-9-Leaks**.
+  Die drei Fixtures (§9) sind die Soll-Ausgaben.
+
+### Phase 2 — Frontend-Anbindung (~1d)
+
+- [ ] **Client** `apps/web/src/lib/api/stats.ts`: `HealthContextResponse`-Typ + `fetchHealthContext()`.
+- [ ] **Panel** `apps/web/src/lib/components/trends/TrendsHealthContext.svelte` umbauen:
+  - Titel/Copy → „Datenreife" (i18n), Streak-Trio (`current/longest/total`) **entfernen**.
+  - Reife-Kopf via **wiederverwendetem `InsightStageHeader`** (G1), **keine** Bespoke-Chips.
+  - 3 Coverage-Meter mit `role="meter"` (G3), Lucide-Icons statt Emoji (G2), Deep-Links ≥44px (G4).
+  - Gesperrte Sektionen: `copy_key` + `entries_until_unlock` rendern (Progressive Disclosure).
+  - Cycle-Strip als getrennte, neutrale Sektion (D3).
+  - Mobile-first: Umbruch/kein H-Scroll (G7).
+- [ ] **Page** `apps/web/src/routes/trends/+page.svelte`: `fetchHealthContext()` statt `fetchEntryStreak()`
+  laden und an Panel übergeben; Fixture-/Dev-Mode-Pfad mitziehen.
+- [ ] **i18n** `apps/web/src/lib/i18n/locales/{de,en}.json`: neue `trends.maturity.*`-Keys, alte
+  `trends.health.*`/`trends.consistency.*`-Streak-Keys aus dem Panel lösen.
+
+### Phase 3 — Tests & Cleanup (~0,5d)
+
+- [ ] **Component-/UI-Tests** (`TrendsHealthContext.test.ts` neu): Rendering je Fixture, Gate-Zustände,
+  keine Streak-Zahlen, i18n-Keys vorhanden.
+- [ ] **Contract-Test** DTO ↔ Frontend-Typ.
+- [ ] `trends/page.test.ts` an den neuen Datenfluss anpassen.
+- [ ] Prüfen, ob `fetchEntryStreak`/`EntryStreakResponse` sonst noch genutzt wird; sonst
+  zurückbauen. `docs/FRONTEND.md`-Verweis auf den Trends-Health-Block aktualisieren.
+- [ ] Mobile-Check auf 360px (echtes Gerät / DevTools).
+
+### Risiken / Hinweise
+
+- **Sleep-Coverage-Quelle:** entweder Timeseries `sleep_quality_avg` oder Entry-`sleep_*` — in Phase 1
+  eine Quelle als kanonisch festlegen (Konsistenz mit Engine-Sleep-Gate).
+- **Kein neuer Screen** (ADR-0017): alles bleibt im Trends-Panel.
+- **PR erst auf Zuruf** — kein automatischer PR (siehe Projektregeln).
+
+---
+
 ## Referenzen
 
 - Issue [#852](https://github.com/Sturmi77/correlcore/issues/852)
