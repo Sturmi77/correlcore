@@ -17,6 +17,7 @@ from app.services.insight_service import (
     calculate_insight_maturity,
     get_insight_event_windows,
     get_insight_maturity,
+    insight_subject_key,
     list_insights,
     list_latest_insights,
     newest_insight_per_subject_stmt,
@@ -456,6 +457,116 @@ async def test_list_latest_insights_keeps_lasso_and_lag_symptom_cluster_findings
         out = await list_latest_insights(db, user_id=user.id, limit=10)
 
     assert out == [lasso, lag]
+
+
+def _make_lag_insight(
+    user: User,
+    *,
+    feature_id: str,
+    lag_days: int,
+    correlation: float,
+    p_corrected: float,
+    generated_at: datetime,
+    feature_key: str = "tag:sport",
+) -> Insight:
+    """A lag symptom-cluster insight for a (mood_score, feature_key) pair."""
+    insight = _make_insight(
+        user,
+        generated_at=generated_at,
+        insight_type=InsightType.SYMPTOM_CLUSTER,
+        metric="mood_score",
+        subject_type="metric",
+        subject_label="mood_score",
+        payload={
+            "method": "lag",
+            "target": {"kind": "metric", "key": "mood_score"},
+            "feature": {"kind": "tag", "key": feature_key, "id": feature_id},
+            "lag_days": lag_days,
+            "correlation": correlation,
+            "p_value_corrected": p_corrected,
+        },
+    )
+    insight.effect_size = correlation
+    return insight
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_collapses_lag_pair_to_winning_lag() -> None:
+    """#853 F2: all significant lags of a pair collapse to one card = max |r|."""
+    user = make_user()
+    feature_id = str(uuid.uuid4())
+    # SQL surfaces newest-first; the winner (max |r|, lag 3) is deliberately not
+    # first, proving selection is by |r| and not "first seen".
+    lag2 = _make_lag_insight(
+        user,
+        feature_id=feature_id,
+        lag_days=2,
+        correlation=0.34,
+        p_corrected=0.01,
+        generated_at=datetime(2026, 5, 12, 3, tzinfo=UTC),
+    )
+    lag3 = _make_lag_insight(
+        user,
+        feature_id=feature_id,
+        lag_days=3,
+        correlation=0.40,
+        p_corrected=0.02,
+        generated_at=datetime(2026, 5, 12, 2, tzinfo=UTC),
+    )
+    lag4 = _make_lag_insight(
+        user,
+        feature_id=feature_id,
+        lag_days=4,
+        correlation=-0.28,
+        p_corrected=0.03,
+        generated_at=datetime(2026, 5, 12, 1, tzinfo=UTC),
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([lag2, lag3, lag4]),
+            _rows_result([]),
+        ]
+    )
+
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(db, user_id=user.id, limit=10)
+
+    assert out == [lag3]
+
+
+def test_lag_subject_key_is_pair_scoped_across_lags() -> None:
+    """#853 F2/Q2: differing lags of a pair share one subject key (dedupe + dismiss)."""
+    user = make_user()
+    feature_id = str(uuid.uuid4())
+    lag2 = _make_lag_insight(
+        user,
+        feature_id=feature_id,
+        lag_days=2,
+        correlation=0.34,
+        p_corrected=0.01,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+    )
+    lag5 = _make_lag_insight(
+        user,
+        feature_id=feature_id,
+        lag_days=5,
+        correlation=0.31,
+        p_corrected=0.02,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+    )
+    assert insight_subject_key(lag2) == insight_subject_key(lag5)
+    # A different feature (distinct canonical key) stays a distinct subject.
+    other = _make_lag_insight(
+        user,
+        feature_id=str(uuid.uuid4()),
+        feature_key="tag:coffee",
+        lag_days=2,
+        correlation=0.34,
+        p_corrected=0.01,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+    )
+    assert insight_subject_key(other) != insight_subject_key(lag2)
 
 
 @pytest.mark.asyncio

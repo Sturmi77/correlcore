@@ -293,12 +293,16 @@ def _latest_subject_key(
             feature = insight.payload.get("feature")
             feature_key = feature.get("key") if isinstance(feature, dict) else None
             feature_id = feature.get("id") if isinstance(feature, dict) else None
+            # #853 (F2 / Q2): the key is per (target, feature) pair, NOT per lag.
+            # Dropping ``lag_days`` collapses all significant lags of a pair to a
+            # single subject so /insights/latest surfaces one card and a dismiss
+            # hides the whole pair. list_latest_insights then picks the winning
+            # lag (max |r|) among the collapsed rows.
             return (
                 "symptom_cluster",
                 "lag",
                 _payload_key(insight.payload.get("target")),
                 _payload_key(feature_key or feature_id),
-                insight.payload.get("lag_days"),
             )
         if method == "lasso":
             return ("symptom_cluster", "lasso", _payload_key(insight.payload.get("target")))
@@ -312,6 +316,32 @@ def _latest_subject_key(
         if insight.subject_label:
             return ("tag_label", _normalise_label(insight.subject_label))
     return ("subject", insight.subject_id, insight.subject_label)
+
+
+def _is_lag_insight(insight: Insight) -> bool:
+    return (
+        insight.insight_type == InsightType.SYMPTOM_CLUSTER
+        and isinstance(insight.payload, dict)
+        and insight.payload.get("method") == "lag"
+    )
+
+
+def _lag_winner_rank(insight: Insight) -> tuple[float, float, float]:
+    """Sort key for choosing the surviving lag of a (target, feature) pair.
+
+    #853 (Q1): the strongest lag wins — max ``|r|``, tie-broken by the smaller
+    FDR-corrected p, then the smaller lag. Higher tuple = stronger; the two
+    tie-breakers are negated so a plain ``>`` comparison prefers the smaller
+    raw value. Missing fields sort last.
+    """
+
+    payload = insight.payload if isinstance(insight.payload, dict) else {}
+    abs_r = abs(insight.effect_size) if insight.effect_size is not None else 0.0
+    p_corrected = payload.get("p_value_corrected")
+    p_corrected = float(p_corrected) if isinstance(p_corrected, (int, float)) else 1.0
+    lag_days = payload.get("lag_days")
+    lag_days = float(lag_days) if isinstance(lag_days, int) else float("inf")
+    return (abs_r, -p_corrected, -lag_days)
 
 
 def _jsonable_subject_part(value: object) -> object:
@@ -459,8 +489,13 @@ async def list_latest_insights(
     dismissed_uuid_keys = await dismissed_uuid_keys_remaining(db, user_id=user_id)
     tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
 
-    latest: list[Insight] = []
-    seen: set[tuple[object, ...]] = set()
+    # One row per subject. For lag subjects (now keyed per pair, #853 F2) several
+    # rows share a key, so pick the winning lag (max |r|, see _lag_winner_rank)
+    # rather than whichever the SQL ordering surfaced first. Other subjects keep
+    # the first (newest) row, unchanged. ``order`` preserves feed position by
+    # first appearance so replacing a lag winner never reorders the feed.
+    chosen: dict[tuple[object, ...], Insight] = {}
+    order: list[tuple[object, ...]] = []
     for insight in insights:
         if str(insight.id) in dismissed_uuid_keys:
             continue
@@ -473,13 +508,17 @@ async def list_latest_insights(
             insight.subject_type,
             _latest_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id),
         )
-        if key in seen:
-            continue
-        seen.add(key)
-        latest.append(insight)
-        if len(latest) >= limit:
-            break
-    return latest
+        existing = chosen.get(key)
+        if existing is None:
+            chosen[key] = insight
+            order.append(key)
+        elif (
+            _is_lag_insight(insight)
+            and _is_lag_insight(existing)
+            and _lag_winner_rank(insight) > _lag_winner_rank(existing)
+        ):
+            chosen[key] = insight
+    return [chosen[key] for key in order][:limit]
 
 
 @dataclass(frozen=True)

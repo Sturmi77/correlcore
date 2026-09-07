@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -11,6 +12,7 @@ from app.models.insight_dismissal import InsightDismissal
 from app.services.insight_dismissal_service import (
     create_insight_dismissal,
     delete_insight_dismissal_by_insight_id,
+    rewrite_lag_dismissal_subject_key,
 )
 from app.services.insight_service import insight_subject_key
 from tests.conftest import make_user
@@ -206,3 +208,61 @@ async def test_compute_digest_excludes_subject_dismissals() -> None:
 
     assert digest.insight_count == DIGEST_TOP_N
     assert insights[0].id not in {item.id for item in digest.insights}
+
+
+def _make_lag_insight_for_key(user) -> Insight:
+    insight = Insight()
+    insight.id = uuid.uuid4()
+    insight.user_id = user.id
+    insight.insight_type = InsightType.SYMPTOM_CLUSTER
+    insight.tier = InsightTier.DEVELOPING
+    insight.metric = "mood_score"
+    insight.subject_type = "metric"
+    insight.subject_id = None
+    insight.subject_label = "mood_score"
+    insight.payload = {
+        "method": "lag",
+        "target": {"kind": "metric", "key": "mood_score"},
+        "feature": {"kind": "tag", "key": "tag:sport", "id": str(uuid.uuid4())},
+        "lag_days": 2,
+    }
+    return insight
+
+
+def test_rewrite_lag_dismissal_subject_key_collapses_to_pair() -> None:
+    """#853 Q2: a legacy per-lag dismissal key is rewritten onto its pair key."""
+    user = make_user()
+    insight = _make_lag_insight_for_key(user)
+    pair_key = insight_subject_key(insight)  # already pair-scoped after #853
+
+    # Reconstruct a legacy key whose subject list still carried a trailing lag.
+    payload = json.loads(pair_key)
+    payload["subject"] = [*payload["subject"], 2]
+    legacy_key = json.dumps(payload, separators=(",", ":"), sort_keys=True, ensure_ascii=True)
+
+    assert legacy_key != pair_key
+    assert rewrite_lag_dismissal_subject_key(legacy_key) == pair_key
+
+
+def test_rewrite_lag_dismissal_subject_key_ignores_non_lag_and_collapsed() -> None:
+    user = make_user()
+    insight = _make_lag_insight_for_key(user)
+    pair_key = insight_subject_key(insight)
+
+    # Already collapsed (4-element subject) → nothing to do.
+    assert rewrite_lag_dismissal_subject_key(pair_key) is None
+    # A non-lag subject key is left untouched.
+    non_lag = json.dumps(
+        {
+            "insight_type": "spearman",
+            "metric": "mood_score",
+            "subject_type": "metric",
+            "subject": ["subject", None, "energy"],
+        },
+        separators=(",", ":"),
+        sort_keys=True,
+        ensure_ascii=True,
+    )
+    assert rewrite_lag_dismissal_subject_key(non_lag) is None
+    # Malformed input is tolerated.
+    assert rewrite_lag_dismissal_subject_key("not json") is None
