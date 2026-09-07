@@ -70,9 +70,7 @@ def rewrite_lag_dismissal_subject_key(subject_key: str) -> str | None:
         and subject[1] == "lag"
     ):
         payload["subject"] = subject[:4]
-        rewritten = json.dumps(
-            payload, separators=(",", ":"), sort_keys=True, ensure_ascii=True
-        )
+        rewritten = json.dumps(payload, separators=(",", ":"), sort_keys=True, ensure_ascii=True)
         return rewritten if rewritten != subject_key else None
     return None
 
