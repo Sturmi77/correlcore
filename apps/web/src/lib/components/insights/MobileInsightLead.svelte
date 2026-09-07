@@ -68,6 +68,7 @@
     {inactiveTagIds}
     featured
     showConfidenceSummary
+    compactLagProfile
     {enableExploreEvents}
     on:dismiss={(event) => dispatch('dismiss', event.detail)}
     on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}

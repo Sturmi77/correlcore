@@ -18,6 +18,8 @@ vi.mock('svelte-i18n', async () => {
         return `Based on ${options?.values?.n} entries`;
       if (key === 'insights.card.sample_meta')
         return `Based on ${options?.values?.n} entries · ${options?.values?.days} days`;
+      if (key === 'insights.card.lag_peak_marker')
+        return `Strongest at +${options?.values?.days} days`;
       if (key === 'trends.metric.mood') return 'Mood';
       if (key === 'trends.metric.energy') return 'Energy';
       if (key === 'trends.metric.stress') return 'Stress';
@@ -384,5 +386,24 @@ describe('InsightCard lag profile mini-bars (#488 Phase 1b)', () => {
     render(InsightCard, { props: { insight: noProfile } });
 
     expect(screen.queryByTestId('insight-card-lag-profile')).toBeNull();
+  });
+
+  // #853 V2: compact peek renders a single peak marker instead of the bars.
+  it('renders a peak marker and no bars when compactLagProfile is set', () => {
+    const { container } = render(InsightCard, {
+      props: { insight: LAG_INSIGHT, compactLagProfile: true },
+    });
+
+    expect(screen.getByTestId('insight-card-lag-profile')).toBeTruthy();
+    const marker = screen.getByTestId('insight-card-lag-marker');
+    expect(marker.textContent).toContain('2');
+    expect(container.querySelectorAll('.insight-card__lag-col')).toHaveLength(0);
+  });
+
+  it('renders the full bars and no marker by default', () => {
+    render(InsightCard, { props: { insight: LAG_INSIGHT } });
+
+    expect(screen.queryByTestId('insight-card-lag-marker')).toBeNull();
+    expect(screen.getByTestId('insight-card-lag-profile')).toBeTruthy();
   });
 });
