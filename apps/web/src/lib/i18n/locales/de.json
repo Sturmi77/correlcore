@@ -78,6 +78,19 @@
       "work_context_stress_note": "Stärkere Färbung = besser innerhalb der gezeigten Situationen (Stress invertiert; Farbe je Spalte skaliert).",
       "none": "Keine"
     },
+    "worker_run": {
+      "label": "Analyse",
+      "when_today": "heute {time}",
+      "when_yesterday": "gestern {time}",
+      "when_weekday": "{weekday} {time}",
+      "when_date": "{date}",
+      "succeeded": "Letzter Lauf {when}",
+      "succeeded_with_count": "Letzter Lauf {when} · {count} Erkenntnisse",
+      "failed": "Letzter Lauf fehlgeschlagen {when}",
+      "badge_succeeded": "{when}",
+      "badge_succeeded_with_count": "{when} · {count}",
+      "badge_failed": "fehlgeschlagen · {when}"
+    },
     "insight": {
       "empty_statement": "Diese Erkenntnis hat noch keinen Text."
     },
@@ -1268,6 +1281,14 @@
         "dismiss": "Schliessen",
         "close_aria": "Wochenzusammenfassung schliessen"
       }
+    },
+    "new_modal": {
+      "eyebrow": "Neue Erkenntnisse",
+      "title": "Frische Analyse",
+      "subtitle": "{count} neue Erkenntnisse seit deinem letzten Besuch",
+      "view_full": "Erkenntnisse oeffnen",
+      "dismiss": "Schliessen",
+      "close_aria": "Neue Erkenntnisse schliessen"
     },
     "mobile": {
       "eyebrow": "Mobile Zusammenfassung",

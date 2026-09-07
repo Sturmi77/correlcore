@@ -285,6 +285,8 @@ services:
     - correlcore
     security_opt:
     - no-new-privileges:true
+    healthcheck:
+      disable: true
     logging:
       driver: json-file
       options:

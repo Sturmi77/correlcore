@@ -187,6 +187,13 @@ async def update_user_preferences(
             current = preferences.last_seen_digest_at
             if current is not None and value < current:
                 continue
+        if key == "last_seen_insight_at":
+            # Same high-water rule for the new-insights popup: never move
+            # the ack mark backward so a stale client cannot re-surface
+            # insights the user already dismissed.
+            current = preferences.last_seen_insight_at
+            if current is not None and value < current:
+                continue
         setattr(preferences, key, value)
 
     await db.flush()

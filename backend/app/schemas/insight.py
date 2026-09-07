@@ -62,6 +62,17 @@ class InsightResponse(BaseModel):
     updated_at: datetime
 
 
+class InsightWorkerRunSummary(BaseModel):
+    """Latest per-user insight generation attempt for Home / status UI."""
+
+    status: Literal["succeeded", "failed", "never_run"]
+    finished_at: datetime | None = None
+    started_at: datetime | None = None
+    insight_count: int | None = None
+    trigger_source: str | None = None
+    generated_for_date: date_type | None = None
+
+
 class InsightListResponse(BaseModel):
     """Envelope for future insight list endpoints."""
 
@@ -70,6 +81,9 @@ class InsightListResponse(BaseModel):
     # The timestamp is independent of persisted rows: a successful generation
     # may legitimately produce no candidates and therefore no new Insight.
     last_successful_insight_run_at: datetime | None = None
+    # Compact Home/status strip: latest finished USER_INSIGHTS attempt (any
+    # outcome), including insight_count from the run result payload.
+    last_insight_run: InsightWorkerRunSummary | None = None
 
 
 class InsightEventWindow(BaseModel):

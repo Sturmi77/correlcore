@@ -397,6 +397,11 @@ async def test_insights_endpoint_returns_statement_field(
                 new_callable=AsyncMock,
                 return_value=None,
             ),
+            patch(
+                "app.api.v1.endpoints.insights.latest_user_insight_run",
+                new_callable=AsyncMock,
+                return_value=None,
+            ),
         ):
             response = await async_client.get(
                 "/api/v1/insights?limit=5",
@@ -708,6 +713,11 @@ async def test_latest_insights_endpoint_uses_latest_service(
                 new_callable=AsyncMock,
                 return_value=datetime(2026, 5, 13, tzinfo=UTC),
             ),
+            patch(
+                "app.api.v1.endpoints.insights.latest_user_insight_run",
+                new_callable=AsyncMock,
+                return_value=None,
+            ),
         ):
             response = await async_client.get(
                 "/api/v1/insights/latest?limit=3",
@@ -722,6 +732,7 @@ async def test_latest_insights_endpoint_uses_latest_service(
     assert body["insights"][0]["insight_type"] == "weekday_pattern"
     assert body["insight_maturity"]["phase"] == "robust"
     assert body["last_successful_insight_run_at"] == "2026-05-13T00:00:00Z"
+    assert body["last_insight_run"] is None
 
 
 @pytest.mark.asyncio

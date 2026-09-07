@@ -78,6 +78,19 @@
       "work_context_stress_note": "Stronger shading = better within the situations shown (stress inverted; colour scaled per column).",
       "none": "None"
     },
+    "worker_run": {
+      "label": "Analysis",
+      "when_today": "today {time}",
+      "when_yesterday": "yesterday {time}",
+      "when_weekday": "{weekday} {time}",
+      "when_date": "{date}",
+      "succeeded": "Last run {when}",
+      "succeeded_with_count": "Last run {when} · {count} insights",
+      "failed": "Last run failed {when}",
+      "badge_succeeded": "{when}",
+      "badge_succeeded_with_count": "{when} · {count}",
+      "badge_failed": "failed · {when}"
+    },
     "insight": {
       "empty_statement": "This insight has no statement yet."
     },
@@ -1268,6 +1281,14 @@
         "dismiss": "Dismiss",
         "close_aria": "Close weekly digest"
       }
+    },
+    "new_modal": {
+      "eyebrow": "New insights",
+      "title": "Fresh analysis",
+      "subtitle": "{count} new findings since your last visit",
+      "view_full": "Open insights",
+      "dismiss": "Dismiss",
+      "close_aria": "Close new insights"
     },
     "mobile": {
       "eyebrow": "Mobile summary",

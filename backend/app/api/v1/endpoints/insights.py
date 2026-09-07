@@ -20,6 +20,7 @@ from app.db.session import get_session
 from app.models.insight import Insight, InsightType
 from app.models.insight_dismissal import InsightDismissal
 from app.models.user import User
+from app.models.worker_run import WorkerRun, WorkerRunStatus
 from app.schemas.insight import (
     InsightDigestItemResponse,
     InsightDigestResponse,
@@ -33,6 +34,7 @@ from app.schemas.insight import (
     InsightRegenerateResponse,
     InsightResponse,
     InsightTriggerResponse,
+    InsightWorkerRunSummary,
 )
 from app.schemas.stats import (
     SymptomTagCooccurrenceResponse,
@@ -76,11 +78,46 @@ from app.services.insight_worker_service import (
 )
 from app.services.stats_service import get_symptom_tag_cooccurrence, get_tag_cooccurrence
 from app.services.tag_cluster_service import get_tag_clusters
-from app.services.worker_run_service import latest_successful_insight_run_at
+from app.services.worker_run_service import (
+    latest_successful_insight_run_at,
+    latest_user_insight_run,
+)
 from app.workers.analytics import run_insights_once
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _insight_worker_run_summary(run: WorkerRun | None) -> InsightWorkerRunSummary | None:
+    """Map a persisted USER_INSIGHTS row into the Home status DTO."""
+
+    if run is None:
+        return None
+    result = run.result if isinstance(run.result, dict) else {}
+    insight_count = result.get("insight_count")
+    generated_for_date = result.get("generated_for_date")
+    trigger = result.get("trigger_source")
+    if trigger is None and run.trigger_source is not None:
+        trigger = (
+            run.trigger_source.value
+            if hasattr(run.trigger_source, "value")
+            else str(run.trigger_source)
+        )
+    parsed_date: date | None = None
+    if isinstance(generated_for_date, str):
+        try:
+            parsed_date = date.fromisoformat(generated_for_date)
+        except ValueError:
+            parsed_date = None
+    status_value = "succeeded" if run.status == WorkerRunStatus.SUCCEEDED else "failed"
+    return InsightWorkerRunSummary(
+        status=status_value,  # type: ignore[arg-type]
+        finished_at=run.finished_at,
+        started_at=run.started_at,
+        insight_count=insight_count if isinstance(insight_count, int) else None,
+        trigger_source=trigger if isinstance(trigger, str) else None,
+        generated_for_date=parsed_date,
+    )
 
 
 def _cooccurrence_range_query(
@@ -159,10 +196,12 @@ async def list_insights_endpoint(
     insights = await list_insights(db, user_id=user.id, limit=limit)
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
     last_successful_run = await latest_successful_insight_run_at(db, user_id=user.id)
+    last_run = await latest_user_insight_run(db, user_id=user.id)
     return InsightListResponse(
         insight_maturity=insight_maturity,
         insights=[InsightResponse.model_validate(insight) for insight in insights],
         last_successful_insight_run_at=last_successful_run,
+        last_insight_run=_insight_worker_run_summary(last_run),
     )
 
 
@@ -181,10 +220,12 @@ async def list_latest_insights_endpoint(
     insights = await list_latest_insights(db, user_id=user.id, limit=limit)
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
     last_successful_run = await latest_successful_insight_run_at(db, user_id=user.id)
+    last_run = await latest_user_insight_run(db, user_id=user.id)
     return InsightListResponse(
         insight_maturity=insight_maturity,
         insights=[InsightResponse.model_validate(insight) for insight in insights],
         last_successful_insight_run_at=last_successful_run,
+        last_insight_run=_insight_worker_run_summary(last_run),
     )
 
 

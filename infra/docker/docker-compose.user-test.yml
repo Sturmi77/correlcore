@@ -251,6 +251,8 @@ services:
     - internal
     security_opt:
     - no-new-privileges:true
+    healthcheck:
+      disable: true
 volumes:
   postgres_data: null
   redis_data: null
