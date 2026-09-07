@@ -537,6 +537,28 @@
       "heading": "Health readiness",
       "body": "Symptom and sleep analyses appear here once the required data fields are stable. Until then, this section only shows tracking consistency."
     },
+    "maturity": {
+      "heading": "Data readiness",
+      "body": "How complete your health data is — and which analyses are already available.",
+      "locked": "locked",
+      "cycle_context": "Neutral context",
+      "entry": {
+        "label": "Entry coverage",
+        "caption": "{days} of {window} days logged"
+      },
+      "symptom": {
+        "label": "Symptom coverage",
+        "ok": "Symptom analyses available",
+        "insufficient_entries": "{count} more entries until symptom analyses",
+        "deep_link": "Insights: symptoms"
+      },
+      "sleep": {
+        "label": "Sleep coverage",
+        "ok": "Sleep insights available",
+        "insufficient_coverage": "Sleep insights from 50% sleep coverage",
+        "deep_link": "Health Connect"
+      }
+    },
     "cycle": {
       "heading": "Cycle day overlay",
       "body": "Optional cycle-day entries are shown as neutral context only, without interpretation."

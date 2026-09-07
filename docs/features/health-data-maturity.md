@@ -325,14 +325,14 @@ Symptom 83 %, Sleep 64 % — alle **frei**. Cycle-Strip erscheint als **eigene, 
 
 - [ ] Diese Spec (Metriken, Fenster, Gates, Non-Goals) merged **oder** als Issue-AC eingefroren.
 - [x] Backend-DTO + Tests (Coverage-Formeln, keine Art.-9-Leaks in Logs). — Phase 1, s. §12.
-- [ ] Trends-Panel an DTO; Streak-Placeholder entfernt/entschärft.
-- [ ] Contract-/UI-Tests (`trends/page.test.ts` + Komponenten-/API-Tests).
-- [ ] Titel und Inhalt deckungsgleich; keine gamifizierenden Streak-Rekord-Zahlen.
-- [ ] Cycle-Overlay klar getrennt oder mit migriert.
-- [ ] UI-Konventionen §7.6 erfüllt: `InsightStageHeader` wiederverwendet (G1), keine Emoji (G2),
+- [x] Trends-Panel an DTO; Streak-Placeholder entfernt/entschärft. — Phase 2, s. §12.
+- [x] Contract-/UI-Tests (`trends/page.test.ts` + Komponenten-/API-Tests). — 19 Web-Tests grün.
+- [x] Titel und Inhalt deckungsgleich; keine gamifizierenden Streak-Rekord-Zahlen.
+- [x] Cycle-Overlay klar getrennt oder mit migriert.
+- [x] UI-Konventionen §7.6 erfüllt: `InsightStageHeader` wiederverwendet (G1), keine Emoji (G2),
       `role="meter"` (G3), 44px-Trefferflächen (G4), i18n-Reuse (G5).
-- [ ] Mobile-first responsiv (G7): auf 360/430px kein horizontaler Scroll, Reife-Kopf + Fußzeilen
-      brechen sauber um; auf echtem Gerät bzw. 360px-Viewport geprüft.
+- [ ] Mobile-first responsiv (G7): CSS umgesetzt (Umbruch/Meter volle Breite); finaler 360px-Check
+      am echten Gerät steht noch aus.
 
 ---
 
@@ -391,20 +391,24 @@ Backend-DTO → Frontend-Panel → Tests → Cleanup. Umsetzung auf dem Branch
   (14/15 Entries; 44/45 Tage = 0.49/0.50 Coverage; 18 Tage), `health_connect=null`-Pfad,
   Art.-9-No-Leak-Guard, Endpoint 200 + 401. **12 Tests grün**, ruff + mypy sauber.
 
-### Phase 2 — Frontend-Anbindung (~1d)
+### Phase 2 — Frontend-Anbindung (~1d) — ✅ UMGESETZT
 
-- [ ] **Client** `apps/web/src/lib/api/stats.ts`: `HealthContextResponse`-Typ + `fetchHealthContext()`.
-- [ ] **Panel** `apps/web/src/lib/components/trends/TrendsHealthContext.svelte` umbauen:
-  - Titel/Copy → „Datenreife" (i18n), Streak-Trio (`current/longest/total`) **entfernen**.
-  - Reife-Kopf via **wiederverwendetem `InsightStageHeader`** (G1), **keine** Bespoke-Chips.
-  - 3 Coverage-Meter mit `role="meter"` (G3), Lucide-Icons statt Emoji (G2), Deep-Links ≥44px (G4).
-  - Gesperrte Sektionen: `copy_key` + `entries_until_unlock` rendern (Progressive Disclosure).
-  - Cycle-Strip als getrennte, neutrale Sektion (D3).
-  - Mobile-first: Umbruch/kein H-Scroll (G7).
-- [ ] **Page** `apps/web/src/routes/trends/+page.svelte`: `fetchHealthContext()` statt `fetchEntryStreak()`
-  laden und an Panel übergeben; Fixture-/Dev-Mode-Pfad mitziehen.
-- [ ] **i18n** `apps/web/src/lib/i18n/locales/{de,en}.json`: neue `trends.maturity.*`-Keys, alte
-  `trends.health.*`/`trends.consistency.*`-Streak-Keys aus dem Panel lösen.
+- [x] **Client** `apps/web/src/lib/api/stats.ts`: `HealthContextResponse`-Typ (+ Sub-Typen) +
+  `fetchHealthContext()`.
+- [x] **Panel** `apps/web/src/lib/components/trends/TrendsHealthContext.svelte` umgebaut:
+  - Titel/Copy → „Datenreife" (`trends.maturity.*`), Streak-Trio entfernt.
+  - Reife-Kopf via **wiederverwendetem `InsightStageHeader`** (G1), gespeist aus der kanonischen
+    `InsightMaturity` (kein Bespoke-Chip).
+  - 3 Coverage-Meter mit `role="meter"` + aria (G3), Lucide-`Lock` statt Emoji (G2), Deep-Links ≥44px (G4).
+  - Gesperrte Sektionen: `copy_key` + `entries_until_unlock` gerendert (Progressive Disclosure).
+  - Cycle-Strip als getrennte, neutrale Sektion (D3); Meter einfarbig, kein Rot/Grün (ADR-0035).
+- [x] **Page** `apps/web/src/routes/trends/+page.svelte`: `fetchHealthContext()` statt `fetchEntryStreak()`
+  (soft-fail, nicht mehr „core"); Maturity aus `$insightStore.insightMaturity` bzw. Dev-Fixture.
+  - **Maturity-Quelle:** Für die wiederverwendete Komponente wird die kanonische `InsightMaturity`
+    durchgereicht (voller Kontrakt inkl. `user_message_key`), nicht die schlankere DTO-Maturity.
+  - **Dev-Fixture:** `phaseFixtures.ts` um `healthContext` erweitert (Gates spiegeln die Backend-Schwellen).
+- [x] **i18n** `apps/web/src/lib/i18n/locales/{de,en}.json`: neue `trends.maturity.*`-Keys; alte
+  `trends.health.*`/`trends.consistency.*`-Keys bleiben unangetastet (nur nicht mehr vom Panel genutzt).
 
 ### Phase 3 — Tests & Cleanup (~0,5d)
 

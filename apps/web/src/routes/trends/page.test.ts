@@ -72,12 +72,38 @@ vi.mock('$lib/api/stats', () => ({
       },
     ],
   })),
-  fetchEntryStreak: vi.fn(async () => ({
-    current_streak: 2,
-    longest_streak: 5,
-    total_entry_days: 12,
-    last_entry_date: '2026-05-16',
+  fetchHealthContext: vi.fn(async () => ({
     as_of: '2026-05-16',
+    coverage_window_days: 90,
+    maturity: {
+      phase: 'provisional',
+      phase_index: 3,
+      current_entries: 24,
+      next_phase_at: 30,
+      entries_until_next: 6,
+    },
+    coverage: {
+      entry: { days_with_data: 22, window_days: 90, pct: 0.24 },
+      sleep: { days_with_data: 3, window_days: 90, pct: 0.03 },
+      symptom: { days_with_data: 16, window_days: 90, pct: 0.18 },
+    },
+    sections: [
+      {
+        id: 'symptom',
+        unlocked: true,
+        reason: 'ok',
+        entries_until_unlock: null,
+        copy_key: 'trends.maturity.symptom.ok',
+      },
+      {
+        id: 'sleep',
+        unlocked: false,
+        reason: 'insufficient_coverage',
+        entries_until_unlock: null,
+        copy_key: 'trends.maturity.sleep.insufficient_coverage',
+      },
+    ],
+    health_connect: null,
   })),
 }));
 
@@ -147,7 +173,7 @@ describe('/trends page', () => {
     expect(screen.queryByTestId('trends-tab-health')).toBeNull();
     expect(screen.getByTestId('trends-tab-habits')).toBeTruthy();
     expect(screen.getByTestId('trends-health-context')).toBeTruthy();
-    expect(screen.getByText('trends.health.heading')).toBeTruthy();
+    expect(screen.getByText('trends.maturity.heading')).toBeTruthy();
   });
 
   it('switches to Habits tab', async () => {
