@@ -4,7 +4,10 @@
 
 import type { InsightWorkerRunSummary } from '$lib/api/insights';
 
-export type TranslateFn = (key: string, options?: { values?: Record<string, unknown> }) => string;
+export type TranslateFn = (
+  key: string,
+  options?: { values?: Record<string, string | number> }
+) => string;
 
 /** Format finished_at for the Home strip (relative when recent). */
 export function formatInsightRunWhen(

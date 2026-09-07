@@ -12,7 +12,10 @@
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
   import { shouldShowWeeklyDigestModal } from '$lib/utils/weeklyDigestModal';
-  import { weeklyDigestModalOpen } from '$lib/stores/insightAnnouncements';
+  import {
+    weeklyDigestEligibilitySettled,
+    weeklyDigestModalOpen,
+  } from '$lib/stores/insightAnnouncements';
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
   import Button from '$lib/components/common/Button.svelte';
   import CorrelationHint from '$lib/components/insights/CorrelationHint.svelte';
@@ -34,29 +37,37 @@
   const TITLE_ID = 'weekly-digest-modal-title';
 
   async function maybeShow(): Promise<void> {
-    if ($auth.status !== 'authenticated') return;
-    let preferences: UserPreferencesResponse;
     try {
-      preferences = await fetchUserPreferences();
-    } catch {
-      return;
-    }
-    if (!preferences.digest_enabled) return;
+      if ($auth.status !== 'authenticated') return;
+      let preferences: UserPreferencesResponse;
+      try {
+        preferences = await fetchUserPreferences();
+      } catch {
+        return;
+      }
+      if (!preferences.digest_enabled) return;
 
-    let latest: InsightDigestResponse;
-    try {
-      latest = await fetchLatestInsightDigest();
-    } catch (err) {
-      // 404 (not enough insights) / 403 (disabled) / offline → no modal.
-      if (!(err instanceof ApiError)) return;
-      return;
-    }
+      let latest: InsightDigestResponse;
+      try {
+        latest = await fetchLatestInsightDigest();
+      } catch (err) {
+        // 404 (not enough insights) / 403 (disabled) / offline → no modal.
+        if (!(err instanceof ApiError)) return;
+        return;
+      }
 
-    // Decide purely on digest freshness; the reactive `visible` gate above
-    // defers rendering while a blocking sheet is open (handles either ordering).
-    if (shouldShowWeeklyDigestModal({ preferences, digest: latest })) {
-      digest = latest;
-      open = true;
+      // Decide purely on digest freshness; the reactive `visible` gate above
+      // defers rendering while a blocking sheet is open (handles either ordering).
+      if (shouldShowWeeklyDigestModal({ preferences, digest: latest })) {
+        digest = latest;
+        open = true;
+        // Set before eligibilitySettled so NewInsightsModal cannot race ahead
+        // of the reactive `$:` weeklyDigestModalOpen.set(open) flush.
+        weeklyDigestModalOpen.set(true);
+      }
+    } finally {
+      // Always settle so the daily modal is not blocked forever on skip/error.
+      weeklyDigestEligibilitySettled.set(true);
     }
   }
 
@@ -105,6 +116,7 @@
     }
     return () => {
       weeklyDigestModalOpen.set(false);
+      weeklyDigestEligibilitySettled.set(false);
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', onVisible);
       }

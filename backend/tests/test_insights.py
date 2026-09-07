@@ -396,6 +396,11 @@ async def test_insights_endpoint_returns_statement_field(
                 new_callable=AsyncMock,
                 return_value=None,
             ),
+            patch(
+                "app.api.v1.endpoints.insights.latest_user_insight_run",
+                new_callable=AsyncMock,
+                return_value=None,
+            ),
         ):
             response = await async_client.get(
                 "/api/v1/insights?limit=5",

@@ -5,7 +5,10 @@
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
   import { entrySheetStore } from '$lib/stores/entrySheet';
-  import { weeklyDigestModalOpen } from '$lib/stores/insightAnnouncements';
+  import {
+    weeklyDigestEligibilitySettled,
+    weeklyDigestModalOpen,
+  } from '$lib/stores/insightAnnouncements';
   import { insightStore, loadInsights } from '$lib/stores/insights';
   import {
     fetchUserPreferences,
@@ -16,7 +19,6 @@
   import {
     isNewInsightsPopupAlreadyShownToday,
     markNewInsightsPopupDay,
-    maxInsightGeneratedAt,
     shouldShowNewInsightsModal,
   } from '$lib/utils/newInsightsModal';
   import { localIsoDate } from '$lib/utils/home';
@@ -27,19 +29,29 @@
 
   // Once-daily “new insights since last ack” sheet. Yields to the entry sheet
   // and the weekly digest modal (digest has priority). Ack via
-  // last_seen_insight_at + local calendar-day gate in localStorage.
+  // last_seen_insight_at + per-user local calendar-day gate in localStorage.
   let open = false;
   let candidates: InsightResponse[] = [];
+  let ackHighWater: string | null = null;
 
   $: visible = open && !$entrySheetStore.open && !$weeklyDigestModalOpen;
 
   const TITLE_ID = 'new-insights-modal-title';
 
+  function currentUserId(): string | null {
+    const state = get(auth);
+    return state.status === 'authenticated' ? state.user.id : null;
+  }
+
   async function maybeShow(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
     if (open) return;
+    if (!get(weeklyDigestEligibilitySettled)) return;
     if (get(weeklyDigestModalOpen)) return;
-    if (isNewInsightsPopupAlreadyShownToday()) return;
+
+    const userId = currentUserId();
+    if (!userId) return;
+    if (isNewInsightsPopupAlreadyShownToday(userId)) return;
 
     let preferences: UserPreferencesResponse;
     try {
@@ -48,10 +60,9 @@
       return;
     }
 
-    // Ensure we have a fresh insight list (Home may already have loaded it).
-    if (get(insightStore).insights.length === 0 && !get(insightStore).loading) {
-      await loadInsights();
-    }
+    // Always refresh: a long-lived PWA may hold yesterday's nonempty list and
+    // would otherwise skip the fetch and miss a nightly worker run.
+    await loadInsights();
 
     const state = get(insightStore);
     const decision = shouldShowNewInsightsModal({
@@ -60,20 +71,22 @@
       dismissedIds: state.dismissedIds,
       blockingSheetOpen: get(entrySheetStore).open,
       digestModalOpen: get(weeklyDigestModalOpen),
-      alreadyShownToday: isNewInsightsPopupAlreadyShownToday(),
+      alreadyShownToday: isNewInsightsPopupAlreadyShownToday(userId),
     });
 
     if (!decision.show) return;
 
     candidates = decision.candidates;
+    ackHighWater = decision.ackHighWater;
     open = true;
-    markNewInsightsPopupDay(localIsoDate(new Date()));
+    markNewInsightsPopupDay(userId, localIsoDate(new Date()));
   }
 
   async function dismiss(): Promise<void> {
     open = false;
-    const highWater = maxInsightGeneratedAt(candidates);
+    const highWater = ackHighWater;
     candidates = [];
+    ackHighWater = null;
     if (!highWater) return;
     try {
       await updateUserPreferences({ last_seen_insight_at: highWater });
@@ -93,10 +106,11 @@
   }
 
   onMount(() => {
-    // Let WeeklyDigestModal claim priority first on a cold start.
-    const start = window.setTimeout(() => {
-      void maybeShow();
-    }, 400);
+    // Wait for WeeklyDigestModal's eligibility check (not a fixed timer) so
+    // weekly priority is deterministic even when prefs/digest fetches are slow.
+    const unsubSettled = weeklyDigestEligibilitySettled.subscribe((settled) => {
+      if (settled && !open) void maybeShow();
+    });
 
     const onVisible = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible' && !open) {
@@ -121,9 +135,24 @@
       }
     });
 
+    // Same retry when the entry sheet was open during the initial check
+    // (e.g. /?openEntry=1) and later closes.
+    let sawEntryOpen = false;
+    const unsubEntry = entrySheetStore.subscribe((sheet) => {
+      if (sheet.open) {
+        sawEntryOpen = true;
+        return;
+      }
+      if (sawEntryOpen && !open) {
+        sawEntryOpen = false;
+        void maybeShow();
+      }
+    });
+
     return () => {
-      window.clearTimeout(start);
+      unsubSettled();
       unsubDigest();
+      unsubEntry();
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', onVisible);
       }

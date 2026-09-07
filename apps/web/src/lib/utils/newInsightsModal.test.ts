@@ -83,6 +83,44 @@ describe('shouldShowNewInsightsModal', () => {
     });
     expect(decision.show).toBe(true);
     expect(decision.candidates).toHaveLength(1);
+    expect(decision.ackHighWater).toBe('2026-09-07T03:00:00Z');
+  });
+
+  it('ack high-water covers omitted lower-ranked fresh insights', () => {
+    const rows = [
+      insight({
+        id: 'strong-earlier',
+        generated_at: '2026-09-07T03:00:00Z',
+        confidence: 0.95,
+        effect_size: 0.9,
+      }),
+      insight({
+        id: 'mid-a',
+        generated_at: '2026-09-07T03:10:00Z',
+        confidence: 0.5,
+        effect_size: 0.4,
+      }),
+      insight({
+        id: 'mid-b',
+        generated_at: '2026-09-07T03:20:00Z',
+        confidence: 0.45,
+        effect_size: 0.35,
+      }),
+      insight({
+        id: 'weak-latest',
+        generated_at: '2026-09-07T05:00:00Z',
+        confidence: 0.2,
+        effect_size: 0.1,
+      }),
+    ];
+    const decision = shouldShowNewInsightsModal({
+      preferences: prefs({ last_seen_insight_at: '2026-09-06T00:00:00Z' }),
+      insights: rows,
+    });
+    expect(decision.show).toBe(true);
+    expect(decision.candidates).toHaveLength(3);
+    expect(decision.candidates.map((r) => r.id)).not.toContain('weak-latest');
+    expect(decision.ackHighWater).toBe('2026-09-07T05:00:00Z');
   });
 
   it('does not show when already seen', () => {
