@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -41,6 +42,37 @@ def _parse_uuid(value: str) -> uuid.UUID | None:
         return uuid.UUID(value)
     except ValueError:
         return None
+
+
+def rewrite_lag_dismissal_subject_key(subject_key: str) -> str | None:
+    """Collapse a per-lag dismissal key onto its (target, feature) pair.
+
+    #853 (Q2): a dismiss now hides a whole pair, so a stored lag dismissal key
+    must drop its trailing ``lag_days`` subject element to match the pair-scoped
+    key that :func:`insight_subject_key` now produces. Returns the rewritten key,
+    or ``None`` when ``subject_key`` is not a per-lag key or already collapsed
+    (leave it untouched). Pure string transform so the 045 data migration and its
+    tests share one implementation. New dismissals need no rewrite — they are
+    keyed pair-scoped from the start.
+    """
+
+    try:
+        payload = json.loads(subject_key)
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    subject = payload.get("subject")
+    if (
+        isinstance(subject, list)
+        and len(subject) == 5
+        and subject[0] == "symptom_cluster"
+        and subject[1] == "lag"
+    ):
+        payload["subject"] = subject[:4]
+        rewritten = json.dumps(payload, separators=(",", ":"), sort_keys=True, ensure_ascii=True)
+        return rewritten if rewritten != subject_key else None
+    return None
 
 
 async def list_dismissed_subject_keys(

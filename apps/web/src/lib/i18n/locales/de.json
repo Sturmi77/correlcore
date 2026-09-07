@@ -1470,7 +1470,8 @@
       "cluster_features": "Mehrere Faktoren",
       "lag_days_unit": "Tage",
       "lag_profile_label": "Zusammenhang je Verzoegerung (Tage)",
-      "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen"
+      "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen",
+      "lag_peak_marker": "Am staerksten bei +{days} Tagen"
     },
     "lag_heatmap": {
       "title": "Zeitversatz-Muster",

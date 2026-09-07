@@ -43,6 +43,12 @@
   export let showMaturityBadge = true;
   /** When false, hide the dismiss control (e.g. digest preview cards). */
   export let dismissable = true;
+  /**
+   * #853 V2: render the lag profile as a single peak marker instead of the
+   * 7-day bars. Keeps the card short where height is tight (e.g. the mobile
+   * lead) while the event sheet stays the canonical detail path.
+   */
+  export let compactLagProfile = false;
 
   const dispatch = createEventDispatcher<{
     retry: void;
@@ -129,6 +135,7 @@
   }
 
   $: lagProfile = insight ? lagProfileBars(insight) : null;
+  $: activeLagBar = lagProfile?.find((bar) => bar.active) ?? null;
   $: lagProfileMaxAbs = lagProfile
     ? Math.max(...lagProfile.map((bar) => Math.abs(bar.r)), 0.0001)
     : 1;
@@ -398,29 +405,42 @@
 
     {#if lagProfile}
       <div class="insight-card__lag-profile" data-testid="insight-card-lag-profile">
-        <span class="insight-card__lag-profile-label">
-          {$_('insights.card.lag_profile_label')}
-        </span>
-        <div
-          class="insight-card__lag-bars"
-          role="img"
-          aria-label={$_('insights.card.lag_profile_aria', {
-            values: { days: payloadNumber(insight, 'lag_days') ?? 0 },
-          })}
-        >
-          {#each lagProfile as bar (bar.lag)}
-            <div class="insight-card__lag-col" class:insight-card__lag-col--active={bar.active}>
-              <div class="insight-card__lag-bar-track">
-                <div
-                  class="insight-card__lag-bar"
-                  style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
-                  title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
-                ></div>
+        {#if compactLagProfile}
+          <!-- #853 V2: compact peek — only the peak lag, no bar chart. -->
+          <span
+            class="insight-card__lag-marker"
+            data-testid="insight-card-lag-marker"
+            style={`--insight-accent: ${accentColor}`}
+          >
+            {$_('insights.card.lag_peak_marker', {
+              values: { days: activeLagBar?.lag ?? payloadNumber(insight, 'lag_days') ?? 0 },
+            })}
+          </span>
+        {:else}
+          <span class="insight-card__lag-profile-label">
+            {$_('insights.card.lag_profile_label')}
+          </span>
+          <div
+            class="insight-card__lag-bars"
+            role="img"
+            aria-label={$_('insights.card.lag_profile_aria', {
+              values: { days: payloadNumber(insight, 'lag_days') ?? 0 },
+            })}
+          >
+            {#each lagProfile as bar (bar.lag)}
+              <div class="insight-card__lag-col" class:insight-card__lag-col--active={bar.active}>
+                <div class="insight-card__lag-bar-track">
+                  <div
+                    class="insight-card__lag-bar"
+                    style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
+                    title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                  ></div>
+                </div>
+                <span class="insight-card__lag-tick">{bar.lag}</span>
               </div>
-              <span class="insight-card__lag-tick">{bar.lag}</span>
-            </div>
-          {/each}
-        </div>
+            {/each}
+          </div>
+        {/if}
       </div>
     {/if}
 
@@ -740,26 +760,51 @@
     font-variant-numeric: tabular-nums;
     margin: 0;
   }
-  /* Sprint 3 (ADR-0035 §6) — phase-gated explore-events affordance. */
+  /* Sprint 3 (ADR-0035 §6) — phase-gated explore-events affordance.
+     #853 V2: promoted to the card's primary action, since the event-aligned
+     sheet is the canonical lag evidence and the profile above is only a
+     secondary peek. Emphasised via an accent border + soft primary tint rather
+     than a solid primary fill: the mid-tone primary cannot carry a filled label
+     at 4.5:1 in the dark theme, so the label uses the high-contrast text token
+     and the accent lives in the border/tint (#853 review). */
   .insight-card__explore {
     align-self: flex-start;
     font-size: var(--text-sm, 0.875rem);
     font-weight: 600;
-    color: var(--color-fg);
-    background: transparent;
-    border: 1px solid var(--color-border, var(--color-border-chart));
+    color: var(--color-text);
+    background: var(--color-primary-highlight);
+    border: 1px solid var(--color-primary);
     border-radius: var(--radius-sm, 0.375rem);
     padding: var(--space-1) var(--space-3);
     cursor: pointer;
-    transition: background var(--transition-interactive);
+    transition:
+      background var(--transition-interactive),
+      border-color var(--transition-interactive);
   }
   .insight-card__explore:hover,
   .insight-card__explore:focus-visible {
-    background: var(--color-strip-track-bg);
+    background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
+    border-color: var(--color-primary-hover);
     outline: none;
   }
   .insight-card__explore:focus-visible {
     box-shadow: 0 0 0 2px var(--color-cursor-halo);
+  }
+  /* #853 V2: compact lag peek — a single de-emphasised peak marker. */
+  .insight-card__lag-marker {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1, 0.25rem);
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-left: 2px solid var(--insight-accent, var(--color-primary));
+    border-radius: var(--radius-sm, 0.375rem);
+    background: var(--color-surface-offset);
+    font-variant-numeric: tabular-nums;
   }
   .insight-card--skeleton {
     pointer-events: none;

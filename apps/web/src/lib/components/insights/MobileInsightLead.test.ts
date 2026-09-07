@@ -84,6 +84,31 @@ describe('MobileInsightLead', () => {
     expect(screen.getByTestId('analysis-cross-link-trends').getAttribute('href')).toBe('/trends');
   });
 
+  it('renders the lag profile as a compact peek marker, not the full bars (#853 V2)', () => {
+    const lagInsight: InsightResponse = {
+      ...insight,
+      id: 'lag-lead',
+      insight_type: 'symptom_cluster',
+      payload: {
+        method: 'lag',
+        target: { kind: 'metric', key: 'mood_score', name: 'Mood' },
+        feature: { kind: 'tag', key: 'tag:sport', name: 'Sport' },
+        lag_days: 2,
+        lag_profile: [
+          { lag: 1, r: 0.1 },
+          { lag: 2, r: 0.4 },
+          { lag: 3, r: 0.15 },
+        ],
+      },
+    };
+    const { container } = render(MobileInsightLead, {
+      props: { insight: lagInsight, maturity, entryCount: 42 },
+    });
+
+    expect(screen.getByTestId('insight-card-lag-marker')).toBeTruthy();
+    expect(container.querySelectorAll('.insight-card__lag-col')).toHaveLength(0);
+  });
+
   it('forwards exploreEvents from the lead card when enabled', async () => {
     const handler = vi.fn();
     const tagInsight = { ...insight, id: 'tag-lead', subject_type: 'tag', subject_id: 'focus' };

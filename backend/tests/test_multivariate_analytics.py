@@ -3,6 +3,8 @@ from __future__ import annotations
 import uuid
 from datetime import date, timedelta
 
+import pytest
+
 from app.services.multivariate_analytics import (
     MIN_ML_ENTRIES,
     FeatureKind,
@@ -416,3 +418,46 @@ def test_lag_analysis_attaches_lag_profile() -> None:
     assert all(isinstance(point.correlation, float) for point in lag_finding.profile)
     # Sorted by lag for stable rendering.
     assert [point.lag_days for point in lag_finding.profile] == sorted(lags)
+
+
+def test_lag_analysis_emits_one_finding_per_pair() -> None:
+    # #853 F1: at most one finding per (target, feature) pair. The 4-day
+    # tag→symptom cycle is significant at multiple lags (+1 and +5 both align
+    # perfectly), so before the collapse this pair yielded several findings.
+    tag_id = uuid.uuid4()
+    symptom_id = uuid.uuid4()
+    start = date(2026, 1, 1)
+    entries = []
+    for offset in range(100):
+        tag_present = offset % 4 == 0
+        symptom_present = offset > 0 and (offset - 1) % 4 == 0
+        entries.append(
+            _entry(
+                start + timedelta(days=offset),
+                tag_ids=frozenset({tag_id}) if tag_present else frozenset(),
+                symptom_ids=frozenset({symptom_id}) if symptom_present else frozenset(),
+            )
+        )
+    frame, feature_meta = build_design_matrix(
+        entries,
+        tags={tag_id: _feature("tag", tag_id, "stressful-day")},
+        symptoms={symptom_id: _feature("symptom", symptom_id, "headache")},
+    )
+
+    findings = run_lag_analysis(frame, feature_meta)
+
+    # No (target, feature) pair appears more than once.
+    pairs = [(finding.target.key, finding.feature.key) for finding in findings]
+    assert len(pairs) == len(set(pairs))
+
+    tag_symptom = next(
+        finding
+        for finding in findings
+        if finding.target.kind == "symptom" and finding.feature.kind == "tag"
+    )
+    # Winner is the strongest lag; the +1/+5 tie resolves to the smaller lag.
+    assert tag_symptom.lag_days == 1
+    assert abs(tag_symptom.correlation) == pytest.approx(1.0, abs=1e-6)
+    # Secondary lags are retained in the profile, not emitted as separate cards.
+    assert len(tag_symptom.profile) >= 2
+    assert 5 in {point.lag_days for point in tag_symptom.profile}

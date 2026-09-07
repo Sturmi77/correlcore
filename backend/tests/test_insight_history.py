@@ -226,3 +226,88 @@ async def test_generate_delete_targets_only_same_generated_for_date() -> None:
     delete_stmt = db.execute.await_args_list[6].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert "generated_for_date" in str(delete_stmt)
+
+
+def _make_lag_history_insight(
+    user: User,
+    *,
+    generated_for_date: date,
+    feature_key: str,
+    lag_days: int,
+    correlation: float,
+) -> Insight:
+    now = datetime.combine(generated_for_date, datetime.min.time(), tzinfo=UTC)
+    insight = Insight()
+    insight.id = uuid.uuid4()
+    insight.user_id = user.id
+    insight.insight_type = InsightType.SYMPTOM_CLUSTER
+    insight.tier = InsightTier.DEVELOPING
+    insight.metric = "mood_score"
+    insight.subject_type = "metric"
+    insight.subject_id = None
+    insight.subject_label = "mood_score"
+    insight.effect_size = correlation
+    insight.confidence = 0.7
+    insight.sample_n = 20
+    insight.statement_enc = f"Lag {lag_days}"
+    insight.flags = {}
+    insight.payload = {
+        "method": "lag",
+        "target": {"kind": "metric", "key": "mood_score"},
+        "feature": {"kind": "tag", "key": feature_key, "id": str(uuid.uuid4())},
+        "lag_days": lag_days,
+        "correlation": correlation,
+        "p_value_corrected": 0.01,
+    }
+    insight.generated_for_date = generated_for_date
+    insight.generated_at = now
+    insight.created_at = now
+    insight.updated_at = now
+    return insight
+
+
+@pytest.mark.asyncio
+async def test_list_insight_history_collapses_legacy_lag_rows_per_date() -> None:
+    """#853 review: legacy history holds several lag rows per pair per generation.
+
+    After lag_days left the subject key they collapse to one subject; the timeline
+    must show a single card per (pair, generated_for_date) with the winning lag,
+    not duplicate cards nor an inflated observation_count.
+    """
+    user = make_user()
+    day = date(2026, 5, 10)
+    weaker = _make_lag_history_insight(
+        user, generated_for_date=day, feature_key="tag:sport", lag_days=2, correlation=0.30
+    )
+    stronger = _make_lag_history_insight(
+        user, generated_for_date=day, feature_key="tag:sport", lag_days=3, correlation=0.46
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([weaker, stronger]),
+            _rows_result([]),
+        ]
+    )
+
+    with (
+        patch(
+            "app.services.insight_dismissal_service.migrate_uuid_prefs_to_subject_dismissals",
+            new=AsyncMock(return_value=0),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.list_dismissed_subject_keys",
+            new=AsyncMock(return_value=set()),
+        ),
+        patch(
+            "app.services.insight_dismissal_service.dismissed_uuid_keys_remaining",
+            new=AsyncMock(return_value=set()),
+        ),
+    ):
+        entries, total = await list_insight_history(db, user_id=user.id, status="all")
+
+    assert total == 1
+    assert entries[0].insight.id == stronger.id
+    assert entries[0].observation_count == 1
+    assert entries[0].first_seen_on == day
+    assert entries[0].last_seen_on == day

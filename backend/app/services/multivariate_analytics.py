@@ -493,6 +493,27 @@ def run_lag_analysis(
             )
         )
 
+    # #853 F1: emit at most one finding per (target, feature) pair — the winning
+    # lag (max |r|, tie: smaller corrected p, then smaller lag). Secondary
+    # significant lags are not dropped: they live on in the retained ``profile``,
+    # which already carries r at every observed lag. Mirrors the winning-lag
+    # selection in insight_service.list_latest_insights so engine and API agree.
+    best_by_pair: dict[tuple[str, str], LagFinding] = {}
+    for finding in findings:
+        pair = (finding.target.key, finding.feature.key)
+        current = best_by_pair.get(pair)
+        if current is None or (
+            abs(finding.correlation),
+            -finding.p_corrected,
+            -finding.lag_days,
+        ) > (
+            abs(current.correlation),
+            -current.p_corrected,
+            -current.lag_days,
+        ):
+            best_by_pair[pair] = finding
+    findings = list(best_by_pair.values())
+
     findings.sort(
         key=lambda item: (
             item.target.kind != "metric",
