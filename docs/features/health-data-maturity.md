@@ -1,7 +1,7 @@
 # Feature Spec: Health Data Maturity (Trends „Health Context")
 
-**Status:** Draft — NICHT eingefroren (Spec-Dialog zu Issue #852)
-**Version:** 0.1.0
+**Status:** Draft — Entscheidungen D1–D7 aufgelöst; Freeze steht noch aus (offen: Beispiel-Fixtures §9)
+**Version:** 0.2.0
 **Created:** 2026-09-07
 **Updated:** 2026-09-07
 **Owner:** @Sturmi77
@@ -89,7 +89,7 @@ belegbar aus dem Repo.
 
 ---
 
-## 4. Fenster & Gate-Kopplung [OFFEN]
+## 4. Fenster & Gate-Kopplung [ENTSCHIEDEN]
 
 Es gibt **kein** einheitliches „Engine-Fenster" — der Code nutzt mehrere:
 
@@ -101,16 +101,19 @@ Es gibt **kein** einheitliches „Engine-Fenster" — der Code nutzt mehrere:
 | Tag-Cluster | 90-Tage-Fenster; provisional 45 / robust 90 Entries | `tag_cluster_service.py` |
 | Changepoint | ≥ 60 Entries | `changepoint.py` |
 
-**Empfehlung (zur Entscheidung):**
-- **Coverage-Fenster:** rollierend **90 Tage** (deckungsgleich mit Tag-Cluster-Fenster, glättet lange
-  Historie, macht die „122-Tage-Zahl" gegenstandslos). `coverage_window_days` als DTO-Feld (Default 90)
-  ausliefern, damit UI es beschriften kann.
-- **Gates:** pro Sektion an den **echten Feature-Threshold** koppeln (Symptom ab 15 Entries, Sleep ab
-  0.5/15, Cluster ab 45/90) statt an eine Sammel-Phase — so bleibt die Freischaltung konsistent mit dem,
-  was die Engine tatsächlich rechnet.
+**Entscheidungen (D4 / D5):**
+- **Coverage-Fenster [D4]:** rollierend **90 Tage** (deckungsgleich mit Tag-Cluster-Fenster, glättet lange
+  Historie, macht die „122-Tage-Zahl" gegenstandslos). `coverage_window_days` wird als DTO-Feld
+  (fest **90**, nicht per Query konfigurierbar in v1) ausgeliefert, damit die UI es beschriften kann.
+- **Gate-Kopplung [D5 — Hybrid]:** Zwei Ebenen:
+  1. **Maturity-Phase** (`collecting → early_patterns → provisional → robust`) dient als **grobe
+     Fortschritts-/Kontext-Anzeige** (Chip + „noch N Einträge").
+  2. Die **tatsächliche Sektions-Freischaltung** (`unlocked`) hängt am **echten Feature-Threshold**:
+     Symptom ab 15 Entries, Sleep ab Coverage ≥ 0.5 **und** ≥ 15 Beobachtungen, (später) Cluster 45/90.
 
-**Zu entscheiden:** 90 vs. 30 Tage; Feature-Threshold-Gates vs. Maturity-Phase-Gates; ob
-`coverage_window_days` konfigurierbar ist.
+  Damit zeigt der Chip den Gesamtfortschritt, während jede Sektion unabhängig freischaltet — konsistent
+  mit dem, was die Engine je Feature wirklich rechnet. Das Backend bleibt einziger Owner beider Ebenen;
+  das Frontend rendert nur (§5).
 
 ---
 
@@ -127,14 +130,16 @@ Pro Sektion:
 
 ---
 
-## 6. API-Shape [ENTSCHIEDEN: neues DTO/Endpoint — Feinschliff offen]
+## 6. API-Shape [ENTSCHIEDEN]
 
 **Neuer, dedizierter Endpoint** (ein Owner, cachebar, saubere Trennung von `stats`).
 
-- **Pfad (Vorschlag, [OFFEN] Feinschliff mit Backend):** `GET /api/v1/entries/stats/health-context`
-  oder `GET /api/v1/health/context`.
+- **Pfad [D7]:** `GET /api/v1/entries/stats/health-context` — reiht sich in die bestehende
+  Stats-Namensfamilie ein (`timeseries`, `tag/symptom-heatmap`, `streak`).
 - **Auth:** wie übrige Stats-Endpoints (Session/Cookie).
 - **Caching:** kurzlebig (z. B. 5–15 min), da rein abgeleitet; ETag optional.
+- **Gates:** `sections[].unlocked` folgt der Hybrid-Regel aus §4/§5 (Feature-Threshold), `maturity.phase`
+  liefert die grobe Fortschrittsebene.
 
 **Response (Entwurf):**
 
@@ -168,12 +173,12 @@ Pro Sektion:
 
 ## 7. UI-Wire & Abgrenzung
 
-### 7.1 Surfaces [OFFEN]
+### 7.1 Surfaces [ENTSCHIEDEN — D1]
 
-**Empfehlung:** v1 **Trends-only** (Block ersetzt die heutige Streak-Anzeige in
-`TrendsHealthContext.svelte`). DTO bewusst **surface-agnostisch** halten, damit Home später ein
-kompaktes Signal konsumieren kann — **aber** ohne Maturity-Journey-Banner/Streak auf Home
-(FRONTEND.md verbietet das dort).
+v1 ist **Trends-only**: der Block ersetzt die heutige Streak-Anzeige in `TrendsHealthContext.svelte`.
+Das DTO wird bewusst **surface-agnostisch** gehalten, damit Home später ein kompaktes Signal konsumieren
+kann — **aber** ohne Maturity-Journey-Banner/Streak auf Home (FRONTEND.md verbietet das dort). Home ist
+in v1 **kein** Scope.
 
 ### 7.2 Panel-Aufbau (Trends)
 
@@ -181,16 +186,18 @@ kompaktes Signal konsumieren kann — **aber** ohne Maturity-Journey-Banner/Stre
 - Maturity-Chip + 3 Coverage-Meter (entry/sleep/symptom), jeweils mit Insufficient-Copy aus `copy_key`.
 - Deep-Links: Insights-Symptom-Bereich, Health-Connect-Hub (`/health-connect`).
 
-### 7.3 Label [OFFEN]
+### 7.3 Label [ENTSCHIEDEN — D2]
 
-Arbeitstitel „Datenreife Health". **Empfehlung:** DE **„Datenreife"**, EN **„Data readiness"** oder
-**„Health data coverage"**. Zu entscheiden + i18n-Keys festziehen (`trends.health.*` → neue Keys).
+DE **„Datenreife"**, EN **„Data readiness"**. Die i18n-Keys werden neu gezogen: `trends.health.heading`
+und `trends.health.body` werden umtextet (oder auf neue `trends.maturity.*`-Keys migriert); die alten
+`trends.consistency.*`-Streak-Labels entfallen im Panel.
 
-### 7.4 Cycle-Strip [OFFEN]
+### 7.4 Cycle-Strip [ENTSCHIEDEN — D3]
 
-**Empfehlung:** als **neutraler Kontext** klar getrennt (eigene Sektion/Überschrift), **nicht** als
-Readiness-/Reife-Faktor gewertet. Migration in eigenen Bereich möglich; Beachtung von
+Der Cycle-Strip bleibt im Panel, aber als **eigene Sektion „neutraler Kontext"** klar getrennt und
+**nicht** als Readiness-/Reife-Faktor gewertet (siehe Mockup, Profil „Symptom-reich"). Beachtung von
 [ADR-0031](../adr/0031-cycle-tracking-scope.md)/[ADR-0033](../adr/0033-sensitive-health-data-handling-cycle-signals.md).
+Eine spätere Auslagerung in einen eigenen Bereich bleibt möglich, ist aber v1 nicht nötig.
 
 ### 7.5 Abgrenzung (keine Doppel-Dashboards)
 
@@ -203,9 +210,11 @@ in Insights-Symptom-Analytics; Wearable-Import/Consent lebt im HC-Hub.
 
 - **Art. 9 / DSGVO:** keine Klartext-Symptomnamen, keine konkreten Sleep-Werte in DTO **oder Logs** —
   nur **Zähler/Anteile** (`days_with_data`, `pct`). (Issue C-full DoD: „keine Art.-9-Leaks in Logs".)
-- **Health-Connect-Status [OFFEN]:** falls aufgenommen, nur `consent: bool`, `last_sync_at`,
-  `sleep_import_ok: bool` — **keine** importierten Gesundheitswerte. HC ist consent-gated (403 ohne
-  Consent, `HEALTH_CONNECT.md`). **Empfehlung:** als optionales Feld vorsehen, Anzeige v1 optional.
+- **Health-Connect-Status [ENTSCHIEDEN — D6]:** `health_connect` ist ein **optionales DTO-Feld** mit nur
+  `consent: bool`, `last_sync_at`, `sleep_import_ok: bool` — **keine** importierten Gesundheitswerte.
+  HC ist consent-gated (403 ohne Consent, `HEALTH_CONNECT.md`); ohne Consent ist das Feld `null`.
+  Die **UI-Anzeige** ist in v1 optional (Feld wird geliefert, Darstellung kann später ergänzt werden);
+  der Deep-Link zum HC-Hub (`/health-connect`) bleibt in jedem Fall.
 
 ---
 
@@ -233,17 +242,22 @@ _(Werte werden nach Auflösung von §4 ergänzt.)_
 
 ---
 
-## 11. Offene Entscheidungen (Decision-Log)
+## 11. Decision-Log
 
-| # | Frage | Status | Empfehlung |
-| - | ----- | ------ | ---------- |
-| D1 | Surfaces: Trends-only vs. auch Home | **OFFEN** | Trends-only v1, DTO surface-agnostisch |
-| D2 | Label DE/EN | **OFFEN** | „Datenreife" / „Data readiness" |
-| D3 | Cycle-Strip: getrennt / auslagern / mit migrieren | **OFFEN** | getrennt, neutraler Kontext |
-| D4 | Coverage-Fenster 90 vs. 30 Tage | **OFFEN** | 90 Tage (wie Tag-Cluster) |
-| D5 | Gates: Feature-Threshold vs. Maturity-Phase | **OFFEN** | Feature-Threshold (15 / 0.5·15 / 45·90) |
-| D6 | Health-Connect-Status ins DTO? | **OFFEN** | optionales Feld, Anzeige v1 optional |
-| D7 | Endpoint-Pfad `/entries/stats/health-context` vs. `/health/context` | **OFFEN** | mit Backend im Review-Gate |
+Alle sieben Forks sind im Spec-Dialog (2026-09-07) entschieden:
+
+| # | Frage | Status | Entscheidung |
+| - | ----- | ------ | ------------ |
+| D1 | Surfaces: Trends-only vs. auch Home | ✅ ENTSCHIEDEN | **Trends-only** v1, DTO surface-agnostisch (Home kein Scope) |
+| D2 | Label DE/EN | ✅ ENTSCHIEDEN | **„Datenreife"** / **„Data readiness"** |
+| D3 | Cycle-Strip: getrennt / auslagern / mit migrieren | ✅ ENTSCHIEDEN | **getrennt**, eigene Sektion „neutraler Kontext" |
+| D4 | Coverage-Fenster 90 vs. 30 Tage | ✅ ENTSCHIEDEN | **90 Tage** rollierend, `coverage_window_days=90` fix |
+| D5 | Gates: Feature-Threshold vs. Maturity-Phase | ✅ ENTSCHIEDEN | **Hybrid** — Phase grob, Freischaltung per Feature-Threshold (15 / 0.5·15 / 45·90) |
+| D6 | Health-Connect-Status ins DTO? | ✅ ENTSCHIEDEN | **optionales Feld** `health_connect`, Anzeige v1 optional |
+| D7 | Endpoint-Pfad | ✅ ENTSCHIEDEN | **`/api/v1/entries/stats/health-context`** |
+
+**Verbleibend bis Freeze:** Beispiel-Fixtures (§9) mit erwarteter Panel-Ausgabe — Freeze-Kriterium laut
+Issue-Schritt 4/5.
 
 ---
 
