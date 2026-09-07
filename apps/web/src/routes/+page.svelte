@@ -74,6 +74,7 @@
 
   $: latestInsight = $insightStore.latest;
   $: insightMaturity = $insightStore.insightMaturity;
+  $: lastInsightRun = $insightStore.lastInsightRun;
   $: insightLoading = $insightStore.loading;
   $: contextInsight = $rankedInsights.find((i) => isCalendarContextInsight(i)) ?? null;
   // See selectNewestWeekdayPattern's doc comment: rankInsights sorts by
@@ -293,6 +294,7 @@
       <HomeTodayContext
         {todayIso}
         {todayEntry}
+        {lastInsightRun}
         loading={dashboardLoading && !dashboardLoaded}
         on:logToday={() => openEntry(todayIso)}
       />

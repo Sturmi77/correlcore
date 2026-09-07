@@ -12,6 +12,7 @@
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
   import { shouldShowWeeklyDigestModal } from '$lib/utils/weeklyDigestModal';
+  import { weeklyDigestModalOpen } from '$lib/stores/insightAnnouncements';
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
   import Button from '$lib/components/common/Button.svelte';
   import CorrelationHint from '$lib/components/insights/CorrelationHint.svelte';
@@ -28,6 +29,7 @@
   // decision time is not enough. While a blocking sheet is open we hide the
   // digest modal and re-show it once the sheet closes — never overlaying it.
   $: visible = open && !$entrySheetStore.open;
+  $: weeklyDigestModalOpen.set(open);
 
   const TITLE_ID = 'weekly-digest-modal-title';
 
@@ -102,6 +104,7 @@
       document.addEventListener('visibilitychange', onVisible);
     }
     return () => {
+      weeklyDigestModalOpen.set(false);
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', onVisible);
       }

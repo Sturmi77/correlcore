@@ -2519,6 +2519,16 @@
             "title": "Insights",
             "type": "array"
           },
+          "last_insight_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InsightWorkerRunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "last_successful_insight_run_at": {
             "anyOf": [
               {
@@ -2881,6 +2891,83 @@
         ],
         "title": "InsightType",
         "type": "string"
+      },
+      "InsightWorkerRunSummary": {
+        "description": "Latest per-user insight generation attempt for Home / status UI.",
+        "properties": {
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "generated_for_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated For Date"
+          },
+          "insight_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insight Count"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "failed",
+              "never_run"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trigger_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Source"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "InsightWorkerRunSummary",
+        "type": "object"
       },
       "InstanceInfo": {
         "description": "Non-sensitive, public deployment descriptor.",

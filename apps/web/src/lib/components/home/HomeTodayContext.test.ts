@@ -5,7 +5,19 @@ import HomeTodayContext from './HomeTodayContext.svelte';
 import type { EntryResponse } from '$lib/api/entries';
 
 vi.mock('svelte-i18n', () => ({
-  _: readable((key: string) => key),
+  _: {
+    subscribe: (
+      run: (
+        formatter: (key: string, options?: { values?: Record<string, unknown> }) => string
+      ) => void
+    ) => {
+      run((key: string, options?: { values?: Record<string, unknown> }) => {
+        if (options?.values) return `${key} ${JSON.stringify(options.values)}`;
+        return key;
+      });
+      return () => undefined;
+    },
+  },
   locale: readable('en'),
 }));
 
@@ -32,7 +44,6 @@ describe('HomeTodayContext', () => {
     });
     expect(screen.getByTestId('home-today-status').textContent).toContain('home.no_entry_today');
     expect(screen.queryByTestId('home-work-context')).toBeNull();
-    // #675: one button in both states — with no entry it is the "log today" CTA.
     expect(screen.getByTestId('home-today-action').textContent).toContain('home.cta_log_today');
   });
 
@@ -75,5 +86,28 @@ describe('HomeTodayContext', () => {
 
     await fireEvent.click(screen.getByTestId('home-today-action'));
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('shows analysis badge under the date when lastInsightRun is present', () => {
+    render(HomeTodayContext, {
+      props: {
+        todayIso: '2026-05-15',
+        todayEntry: entry,
+        loading: false,
+        lastInsightRun: {
+          status: 'succeeded',
+          finished_at: '2026-05-15T03:00:00.000Z',
+          started_at: '2026-05-15T02:55:00.000Z',
+          insight_count: 8,
+          trigger_source: 'scheduled',
+          generated_for_date: '2026-05-15',
+        },
+      },
+    });
+
+    const badge = screen.getByTestId('home-analysis-status');
+    expect(badge.getAttribute('href')).toBe('/insights');
+    expect(badge.textContent).toContain('home.worker_run.label');
+    expect(badge.textContent).toContain('badge_succeeded_with_count');
   });
 });

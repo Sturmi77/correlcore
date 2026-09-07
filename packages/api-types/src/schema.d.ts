@@ -2608,6 +2608,7 @@ export interface components {
             insight_maturity: components["schemas"]["InsightMaturity"];
             /** Insights */
             insights?: components["schemas"]["InsightResponse"][];
+            last_insight_run?: components["schemas"]["InsightWorkerRunSummary"] | null;
             /** Last Successful Insight Run At */
             last_successful_insight_run_at?: string | null;
         };
@@ -2771,6 +2772,27 @@ export interface components {
          * @enum {string}
          */
         InsightType: "pointbiserial" | "spearman" | "weekday_pattern" | "work_context_pattern" | "weekday_context_pattern" | "symptom_cluster" | "symptom_mood_association" | "symptom_tag_cooccurrence" | "note_marker_mood" | "changepoint";
+        /**
+         * InsightWorkerRunSummary
+         * @description Latest per-user insight generation attempt for Home / status UI.
+         */
+        InsightWorkerRunSummary: {
+            /** Finished At */
+            finished_at?: string | null;
+            /** Generated For Date */
+            generated_for_date?: string | null;
+            /** Insight Count */
+            insight_count?: number | null;
+            /** Started At */
+            started_at?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "succeeded" | "failed" | "never_run";
+            /** Trigger Source */
+            trigger_source?: string | null;
+        };
         /**
          * InstanceInfo
          * @description Non-sensitive, public deployment descriptor.

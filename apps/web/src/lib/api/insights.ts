@@ -62,6 +62,17 @@ export interface InsightListResponse {
    * candidates, so freshness must prefer it over `generated_at`.
    */
   last_successful_insight_run_at?: string | null;
+  /** Latest finished USER_INSIGHTS attempt (Home compact worker status). */
+  last_insight_run?: InsightWorkerRunSummary | null;
+}
+
+export interface InsightWorkerRunSummary {
+  status: 'succeeded' | 'failed' | 'never_run';
+  finished_at: string | null;
+  started_at: string | null;
+  insight_count: number | null;
+  trigger_source: string | null;
+  generated_for_date: string | null;
 }
 
 export interface InsightDigestItem {

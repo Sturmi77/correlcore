@@ -144,6 +144,31 @@ async def test_update_user_preferences_last_seen_digest_at_is_monotonic() -> Non
 
 
 @pytest.mark.asyncio
+async def test_update_user_preferences_last_seen_insight_at_is_monotonic() -> None:
+    user = make_user()
+    preferences = _make_preferences(user)
+    preferences.last_seen_insight_at = datetime(2026, 9, 6, 3, tzinfo=UTC)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_optional_result(preferences))
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    out = await update_user_preferences(
+        db,
+        user_id=user.id,
+        payload=UserPreferencesUpdate(last_seen_insight_at=datetime(2026, 9, 1, 3, tzinfo=UTC)),
+    )
+    assert out.last_seen_insight_at == datetime(2026, 9, 6, 3, tzinfo=UTC)
+
+    out = await update_user_preferences(
+        db,
+        user_id=user.id,
+        payload=UserPreferencesUpdate(last_seen_insight_at=datetime(2026, 9, 7, 3, tzinfo=UTC)),
+    )
+    assert out.last_seen_insight_at == datetime(2026, 9, 7, 3, tzinfo=UTC)
+
+
+@pytest.mark.asyncio
 async def test_update_user_preferences_persists_digest_on_opt_in() -> None:
     # #819: flipping digest_enabled false→true triggers a best-effort snapshot.
     user = make_user()
