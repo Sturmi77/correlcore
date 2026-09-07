@@ -324,7 +324,7 @@ Symptom 83 %, Sleep 64 % — alle **frei**. Cycle-Strip erscheint als **eigene, 
 ## 10. Definition of Done (C-full, aus Issue)
 
 - [ ] Diese Spec (Metriken, Fenster, Gates, Non-Goals) merged **oder** als Issue-AC eingefroren.
-- [ ] Backend-DTO + Tests (Coverage-Formeln, keine Art.-9-Leaks in Logs).
+- [x] Backend-DTO + Tests (Coverage-Formeln, keine Art.-9-Leaks in Logs). — Phase 1, s. §12.
 - [ ] Trends-Panel an DTO; Streak-Placeholder entfernt/entschärft.
 - [ ] Contract-/UI-Tests (`trends/page.test.ts` + Komponenten-/API-Tests).
 - [ ] Titel und Inhalt deckungsgleich; keine gamifizierenden Streak-Rekord-Zahlen.
@@ -368,22 +368,28 @@ Backend-DTO → Frontend-Panel → Tests → Cleanup. Umsetzung auf dem Branch
 - [ ] Frontend + Backend zeichnen Spec gegen (Issue-Schritt 5); Status → `Accepted`.
 - [ ] i18n-Copy-Keys final abstimmen (`trends.maturity.*`, Reuse von `maturity.*`).
 
-### Phase 1 — Backend-DTO (~1–1,5d)
+### Phase 1 — Backend-DTO (~1–1,5d) — ✅ UMGESETZT
 
-- [ ] **Schema** `backend/app/schemas/stats.py`: `HealthContextResponse` + Sub-Modelle
-  (`MaturitySummary`, `CoverageMetric`, `HealthContextSection`, `HealthConnectStatus | None`).
-- [ ] **Service** `backend/app/services/stats_service.py`: `compute_health_context(user, as_of)`:
-  - Maturity aus `insight_service` beziehen (nicht neu berechnen).
-  - Coverage über **90-Tage-Fenster**: `entry`/`sleep`/`symptom` = Tage-mit-Daten ÷ 90.
+- [x] **Schema** `backend/app/schemas/stats.py`: `HealthContextResponse` + Sub-Modelle
+  (`HealthContextMaturity`, `CoverageMetric`, `HealthContextCoverage`, `HealthContextSection`,
+  `HealthConnectStatus | None`).
+- [x] **Service** `backend/app/services/health_context_service.py`: `get_health_context(db, user_id, as_of)`.
+  - Maturity aus `insight_service.get_insight_maturity` beziehen (nicht neu berechnen).
+  - Coverage über **90-Tage-Fenster** (`HEALTH_CONTEXT_WINDOW_DAYS`): `entry`/`sleep`/`symptom`
+    = distinkte Tage-mit-Daten ÷ 90.
   - Gates (Hybrid): `unlocked` je Sektion aus Feature-Threshold (Symptom ≥ 15 Entries;
-    Sleep Coverage ≥ 0.5 & ≥ 15 Beob.), `reason`/`entries_until_unlock`/`copy_key` setzen.
-  - `health_connect` optional (consent/last_sync/sleep_import_ok), `null` ohne Consent.
-- [ ] **Router** `backend/app/api/v1/endpoints/entries.py`: `GET /entries/stats/health-context`
-  (Auth wie übrige Stats-Endpoints, kurzlebiges Caching optional).
-- [ ] **Privacy:** keine Klartext-Symptom-/Sleep-Werte in Response **oder Logs** (nur Zähler/%).
-- [ ] **Tests** `backend/.../test_stats_*`: Coverage-Formeln, Gate-Schwellen (Grenzfälle 14/15
-  Entries, 0.49/0.50 Coverage), `health_connect=null`-Pfad, **Log-Assertion gegen Art.-9-Leaks**.
-  Die drei Fixtures (§9) sind die Soll-Ausgaben.
+    Sleep Coverage ≥ 0.5 & ≥ 15 Beob.), `reason`/`entries_until_unlock`/`copy_key` gesetzt.
+  - `health_connect` optional, consent-gated; v1 liefert nur `consent`, `null` ohne Consent.
+  - **Modul-Abweichung vom Plan:** eigenes `health_context_service.py` statt `stats_service.py`,
+    weil `insight_service` bereits `stats_service` importiert (sonst zirkulär).
+  - **Sleep-Quelle aufgelöst (Risiko):** kanonisches Signal = `Entry.sleep_minutes` (die Spalte,
+    die das Engine-Sleep-Gate `MIN_SLEEP_COLUMN_COVERAGE` steuert).
+- [x] **Router** `backend/app/api/v1/endpoints/entries.py`: `GET /entries/stats/health-context`
+  (Auth wie übrige Stats-Endpoints, `120/minute` Rate-Limit).
+- [x] **Privacy:** Response/Service emittieren nur Zähler/Ratios/Enums — kein Klartext, kein Logging.
+- [x] **Tests** `backend/tests/test_health_context_service.py`: drei §9-Fixtures, Gate-Grenzfälle
+  (14/15 Entries; 44/45 Tage = 0.49/0.50 Coverage; 18 Tage), `health_connect=null`-Pfad,
+  Art.-9-No-Leak-Guard, Endpoint 200 + 401. **12 Tests grün**, ruff + mypy sauber.
 
 ### Phase 2 — Frontend-Anbindung (~1d)
 
