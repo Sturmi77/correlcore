@@ -494,6 +494,13 @@ async def list_latest_insights(
     # rather than whichever the SQL ordering surfaced first. Other subjects keep
     # the first (newest) row, unchanged. ``order`` preserves feed position by
     # first appearance so replacing a lag winner never reorders the feed.
+    #
+    # The winner is chosen only *within the newest generation* of a pair: the
+    # ``newest_insight_per_subject_stmt`` window partitions on ``payload`` so a
+    # pair keeps one row per (lag, generation), and an older generation may hold
+    # a stronger |r|. Ranking across generations would surface a stale statement,
+    # sample_n and profile indefinitely, so a newer generation always wins and
+    # |r| only breaks ties inside the same ``generated_for_date`` (#853 review).
     chosen: dict[tuple[object, ...], Insight] = {}
     order: list[tuple[object, ...]] = []
     for insight in insights:
@@ -512,12 +519,17 @@ async def list_latest_insights(
         if existing is None:
             chosen[key] = insight
             order.append(key)
-        elif (
-            _is_lag_insight(insight)
-            and _is_lag_insight(existing)
-            and _lag_winner_rank(insight) > _lag_winner_rank(existing)
-        ):
-            chosen[key] = insight
+        elif _is_lag_insight(insight) and _is_lag_insight(existing):
+            existing_gen = existing.generated_for_date
+            candidate_gen = insight.generated_for_date
+            if candidate_gen is not None and (existing_gen is None or candidate_gen > existing_gen):
+                # Newer generation always wins, regardless of |r|.
+                chosen[key] = insight
+            elif candidate_gen == existing_gen and _lag_winner_rank(insight) > _lag_winner_rank(
+                existing
+            ):
+                # Same generation → strongest lag.
+                chosen[key] = insight
     return [chosen[key] for key in order][:limit]
 
 
@@ -585,8 +597,15 @@ async def list_insight_history(
     dismissed_uuid_keys = await dismissed_uuid_keys_remaining(db, user_id=user_id)
     tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, insights)
 
+    # Collapse to one row per (subject, generated_for_date). Since #853 dropped
+    # lag_days from the subject key, a single generation of legacy history can
+    # hold several lag rows for the same pair; without this they would render as
+    # duplicate timeline cards and inflate observation_count (e.g. "Seen 7×" for
+    # one evaluation). Keep the winning lag per date (max |r|), matching the
+    # /latest selection; other subjects keep the first (newest) row per date.
     subject_dates: dict[str, list[date_type]] = {}
     annotated: list[tuple[Insight, str, str]] = []
+    slot_index: dict[tuple[str, date_type | None], int] = {}
     for insight in insights:
         subject_key = insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
         is_dismissed = (
@@ -597,8 +616,19 @@ async def list_insight_history(
             continue
         if status == "dismissed" and visibility != "dismissed":
             continue
-        annotated.append((insight, subject_key, visibility))
-        subject_dates.setdefault(subject_key, []).append(insight.generated_for_date)
+        slot = (subject_key, insight.generated_for_date)
+        position = slot_index.get(slot)
+        if position is None:
+            slot_index[slot] = len(annotated)
+            annotated.append((insight, subject_key, visibility))
+            subject_dates.setdefault(subject_key, []).append(insight.generated_for_date)
+        elif (
+            _is_lag_insight(insight)
+            and _is_lag_insight(annotated[position][0])
+            and (_lag_winner_rank(insight) > _lag_winner_rank(annotated[position][0]))
+        ):
+            # Same pair + date: keep the stronger lag as this slot's representative.
+            annotated[position] = (insight, subject_key, visibility)
 
     subject_stats = {
         key: (min(dates), max(dates), len(dates)) for key, dates in subject_dates.items()

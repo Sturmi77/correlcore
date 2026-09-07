@@ -761,15 +761,18 @@
     margin: 0;
   }
   /* Sprint 3 (ADR-0035 §6) — phase-gated explore-events affordance.
-     #853 V2: promoted to the card's primary action (filled), since the
-     event-aligned sheet is the canonical lag evidence and the profile above
-     is only a secondary peek. */
+     #853 V2: promoted to the card's primary action, since the event-aligned
+     sheet is the canonical lag evidence and the profile above is only a
+     secondary peek. Emphasised via an accent border + soft primary tint rather
+     than a solid primary fill: the mid-tone primary cannot carry a filled label
+     at 4.5:1 in the dark theme, so the label uses the high-contrast text token
+     and the accent lives in the border/tint (#853 review). */
   .insight-card__explore {
     align-self: flex-start;
     font-size: var(--text-sm, 0.875rem);
     font-weight: 600;
-    color: var(--color-text-inverse);
-    background: var(--color-primary);
+    color: var(--color-text);
+    background: var(--color-primary-highlight);
     border: 1px solid var(--color-primary);
     border-radius: var(--radius-sm, 0.375rem);
     padding: var(--space-1) var(--space-3);
@@ -780,7 +783,7 @@
   }
   .insight-card__explore:hover,
   .insight-card__explore:focus-visible {
-    background: var(--color-primary-hover);
+    background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
     border-color: var(--color-primary-hover);
     outline: none;
   }

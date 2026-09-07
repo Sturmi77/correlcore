@@ -535,6 +535,48 @@ async def test_list_latest_insights_collapses_lag_pair_to_winning_lag() -> None:
     assert out == [lag3]
 
 
+@pytest.mark.asyncio
+async def test_list_latest_insights_prefers_newest_generation_lag() -> None:
+    """#853 review: rank the winning lag only within a pair's newest generation.
+
+    ``newest_insight_per_subject_stmt`` keeps one row per (lag, generation), so a
+    weaker but newer lag must still win over a stronger row from an older
+    generation — otherwise /latest would surface a stale statement indefinitely.
+    """
+    user = make_user()
+    feature_id = str(uuid.uuid4())
+    newest = _make_lag_insight(
+        user,
+        feature_id=feature_id,
+        lag_days=2,
+        correlation=0.30,
+        p_corrected=0.02,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+    )
+    newest.generated_for_date = date(2026, 5, 12)
+    older_stronger = _make_lag_insight(
+        user,
+        feature_id=feature_id,
+        lag_days=3,
+        correlation=0.48,
+        p_corrected=0.01,
+        generated_at=datetime(2026, 5, 5, tzinfo=UTC),
+    )
+    older_stronger.generated_for_date = date(2026, 5, 5)
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([newest, older_stronger]),
+            _rows_result([]),
+        ]
+    )
+
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(db, user_id=user.id, limit=10)
+
+    assert out == [newest]
+
+
 def test_lag_subject_key_is_pair_scoped_across_lags() -> None:
     """#853 F2/Q2: differing lags of a pair share one subject key (dedupe + dismiss)."""
     user = make_user()
