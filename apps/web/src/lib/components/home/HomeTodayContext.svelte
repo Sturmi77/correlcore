@@ -4,6 +4,7 @@
   import { _ } from 'svelte-i18n';
   import type { EntryResponse } from '$lib/api/entries';
   import type { InsightWorkerRunSummary } from '$lib/api/insights';
+  import type { FaultyHomeContainer } from '$lib/utils/devHealth';
   import Button from '$lib/components/common/Button.svelte';
   import { formatHomeDate } from '$lib/utils/home';
   import { formatInsightWorkerRunBadge } from '$lib/utils/insightWorkerRunStatus';
@@ -11,6 +12,7 @@
   export let todayIso: string;
   export let todayEntry: EntryResponse | null = null;
   export let lastInsightRun: InsightWorkerRunSummary | null = null;
+  export let faultyContainers: FaultyHomeContainer[] = [];
   export let loading = false;
 
   const dispatch = createEventDispatcher<{ logToday: void }>();
@@ -63,6 +65,21 @@
             <span>{analysisBadge.text}</span>
           </a>
         {/if}
+        {#each faultyContainers as container (container.name)}
+          <a
+            href="/dev"
+            class="home-today__badge home-today__badge--warning"
+            data-testid="home-container-status"
+            data-container={container.name}
+          >
+            <span class="home-today__badge-label">{$_('home.container_health.label')}</span>
+            <span>
+              {$_(`home.container_health.${container.issue}`, {
+                values: { name: container.name },
+              })}
+            </span>
+          </a>
+        {/each}
       {/if}
     </div>
   </div>

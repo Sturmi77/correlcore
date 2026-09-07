@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import socket
 from collections.abc import Generator
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -15,8 +16,15 @@ from app.api.v1.deps.auth import get_current_user
 from app.core.config import settings
 from app.main import app
 from app.models.worker_run import WorkerJobKind, WorkerRun, WorkerRunStatus, WorkerTriggerSource
-from app.schemas.dev import DevInfoResponse
-from app.services.dev_service import build_dev_info
+from app.schemas.dev import DevHealthComponent, DevInfoResponse
+from app.services.dev_service import (
+    _probe_minio_sync,
+    _probe_smtp_sync,
+    _probe_web_sync,
+    _probe_worker_sync,
+    _tcp_probe_sync,
+    build_dev_info,
+)
 from app.services.health_service import ComponentHealth, ComponentStatus, ReadinessReport
 from tests.conftest import make_user
 
@@ -38,6 +46,13 @@ def _dev_payload() -> DevInfoResponse:
         minio_connected=False,
         health_ready=True,
         uptime_seconds=42,
+        health_components=[
+            DevHealthComponent(name="api", status="ok", detail="process"),
+            DevHealthComponent(name="postgres", status="ok"),
+            DevHealthComponent(name="redis", status="ok"),
+            DevHealthComponent(name="encryption", status="ok"),
+            DevHealthComponent(name="minio", status="down", detail="unresolved"),
+        ],
     )
 
 
@@ -52,6 +67,10 @@ def _reset_dev_state() -> Generator[None, None, None]:
         "GIT_COMMIT": settings.GIT_COMMIT,
         "GIT_BRANCH": settings.GIT_BRANCH,
         "BUILD_TIME": settings.BUILD_TIME,
+        "SMTP_HOST": settings.SMTP_HOST,
+        "SMTP_PORT": settings.SMTP_PORT,
+        "DEV_DOCKER_HOST": settings.DEV_DOCKER_HOST,
+        "DATABASE_URL": settings.DATABASE_URL,
     }
     app.dependency_overrides.clear()
     yield
@@ -124,6 +143,13 @@ async def test_dev_info_200_for_verified_user(async_client: AsyncClient) -> None
     assert data["git_commit"] == "26c4274e0b2688931f7ceab108d72b775233fdf7"
     assert data["git_branch"] == "main"
     assert data["build_time"] == "2026-05-10T16:00:00Z"
+    assert [item["name"] for item in data["health_components"]] == [
+        "api",
+        "postgres",
+        "redis",
+        "encryption",
+        "minio",
+    ]
 
 
 @pytest.mark.asyncio
@@ -167,10 +193,19 @@ async def test_build_dev_info_reads_version_settings() -> None:
     def pool_metric(name: str) -> int | None:
         return {"size": 10, "checkedout": 2}.get(name)
 
+    minio = DevHealthComponent(name="minio", status="ok")
+    web = DevHealthComponent(name="web", status="ok")
+    smtp = DevHealthComponent(name="mailpit", status="ok")
+    worker = DevHealthComponent(name="worker", status="ok", detail="resolved")
+
     with (
         patch("app.services.dev_service.check_readiness", side_effect=ready),
         patch("app.services.dev_service._db_migration_head", AsyncMock(return_value="009")),
-        patch("app.services.dev_service._probe_minio", AsyncMock(return_value=True)),
+        patch(
+            "app.services.dev_service._collect_optional_probes",
+            AsyncMock(return_value=(minio, web, smtp, worker)),
+        ),
+        patch("app.services.dev_service.list_stack_containers", return_value=[]),
         patch("app.services.dev_service._pool_metric", side_effect=pool_metric),
     ):
         info = await build_dev_info(AsyncMock(spec=AsyncSession))
@@ -187,6 +222,105 @@ async def test_build_dev_info_reads_version_settings() -> None:
     assert info.db_migration_head == "009"
     assert info.db_pool_size == 10
     assert info.db_checked_out == 2
+    assert [component.name for component in info.health_components] == [
+        "api",
+        "redis",
+        "web",
+        "worker",
+        "minio",
+        "mailpit",
+    ]
+    assert all(component.status == "ok" for component in info.health_components)
+
+
+def test_tcp_probe_sync_ok_down_and_unresolved() -> None:
+    with patch("app.services.dev_service.socket.create_connection"):
+        status, detail = _tcp_probe_sync("web", 3000)
+    assert status is ComponentStatus.OK
+    assert detail == ""
+
+    with patch(
+        "app.services.dev_service.socket.create_connection",
+        side_effect=TimeoutError(),
+    ):
+        status, detail = _tcp_probe_sync("web", 3000)
+    assert status is ComponentStatus.DOWN
+    assert detail == "TimeoutError"
+
+    with patch(
+        "app.services.dev_service.socket.create_connection",
+        side_effect=socket.gaierror(),
+    ):
+        status, detail = _tcp_probe_sync("missing", 3000)
+    assert status is None
+    assert detail == "unresolved"
+
+
+def test_optional_probes_omit_unresolved_web_and_empty_smtp() -> None:
+    settings.SMTP_HOST = ""
+    with patch(
+        "app.services.dev_service._tcp_probe_sync",
+        return_value=(None, "unresolved"),
+    ):
+        assert _probe_web_sync() is None
+        minio = _probe_minio_sync()
+        assert minio.name == "minio"
+        assert minio.status == "down"
+        assert minio.detail == "unresolved"
+        assert _probe_smtp_sync() is None
+
+
+def test_web_probe_lists_down_when_port_closed() -> None:
+    with patch(
+        "app.services.dev_service._tcp_probe_sync",
+        return_value=(ComponentStatus.DOWN, "ConnectionRefusedError"),
+    ):
+        component = _probe_web_sync()
+    assert component is not None
+    assert component.name == "web"
+    assert component.status == "down"
+    assert component.detail == "ConnectionRefusedError"
+
+
+def test_worker_probe_reports_stopped_on_compose_network() -> None:
+    settings.DATABASE_URL = "postgresql+asyncpg://u:p@postgres:5432/correlcore"
+    with patch(
+        "app.services.dev_service.socket.getaddrinfo",
+        side_effect=socket.gaierror(),
+    ):
+        component = _probe_worker_sync()
+    assert component is not None
+    assert component.name == "worker"
+    assert component.status == "down"
+    assert component.detail == "stopped"
+
+
+def test_worker_probe_ok_when_hostname_resolves() -> None:
+    settings.DATABASE_URL = "postgresql+asyncpg://u:p@postgres:5432/correlcore"
+    with patch("app.services.dev_service.socket.getaddrinfo"):
+        component = _probe_worker_sync()
+    assert component is not None
+    assert component.status == "ok"
+    assert component.detail == "resolved"
+
+
+def test_worker_probe_omitted_outside_compose() -> None:
+    settings.DATABASE_URL = "postgresql+asyncpg://u:p@localhost:5432/correlcore"
+    assert _probe_worker_sync() is None
+
+
+def test_smtp_probe_uses_mailpit_name_for_compose_host() -> None:
+    settings.SMTP_HOST = "mailpit"
+    settings.SMTP_PORT = 1025
+    with patch(
+        "app.services.dev_service._tcp_probe_sync",
+        return_value=(ComponentStatus.OK, ""),
+    ) as probe:
+        component = _probe_smtp_sync()
+    assert component is not None
+    assert component.name == "mailpit"
+    assert component.status == "ok"
+    probe.assert_called_once_with("mailpit", 1025)
 
 
 def _fake_run(**overrides: object) -> WorkerRun:

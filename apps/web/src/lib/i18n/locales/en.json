@@ -91,6 +91,11 @@
       "badge_succeeded_with_count": "{when} · {count}",
       "badge_failed": "failed · {when}"
     },
+    "container_health": {
+      "label": "Stack",
+      "unhealthy": "{name} unhealthy",
+      "stopped": "{name} stopped"
+    },
     "insight": {
       "empty_statement": "This insight has no statement yet."
     },
@@ -1700,6 +1705,14 @@
     "not_ready": "not ready",
     "connected": "connected",
     "down": "down",
+    "services": "Stack services",
+    "services_hint": "Reachability from the API process. This is not Docker HEALTHCHECK status (no Docker socket in the API container).",
+    "component_status": {
+      "ok": "ok",
+      "degraded": "degraded",
+      "down": "down",
+      "unavailable": "unavailable"
+    },
     "db_pool_size": "DB Pool Size",
     "db_checked_out": "DB Checked Out",
     "na": "n/a",
