@@ -219,6 +219,7 @@ sind **verbindlich** für die Implementierung:
 | **G4** | Interaktive Elemente (Deep-Links, Hilfe) mit **≥ 44px** Trefferfläche. | `.stage__text-button { min-height: 44px }` |
 | **G5** | **Bestehende i18n-Keys wiederverwenden** (`maturity.{phase}.label`, `maturity.journey.compact_entries_until_next`, `insights.stage.readiness_label`) statt neuer Reife-Copy — verhindert Wording-Drift. | en/de.json `maturity.*` |
 | **G6** | Falls Reife-Kopf gerendert wird: exakter Stil der Komponente (`N/4`-Marker, `--color-text-inverse`, `--radius-full`), keine Bespoke-Chips. | `InsightStageHeader.svelte` |
+| **G7** | **Mobile-first responsiv.** Panel primär für schmale Viewports (~360–430px) ausgelegt: Reife-Kopf-Zeile darf umbrechen / Controls stapeln (analog Komponenten-Breakpoints `@media 767px` + `360px`), Coverage-Meter volle Breite, Metrik-Fußzeile (Note + Deep-Link) umbruchsicher, **kein** horizontaler Seiten-Scroll; Cycle-Strip scrollt in eigenem Container (`overflow-x`). Desktop ist die Aufweitung, nicht der Ausgangspunkt. | FRONTEND.md „mobile-first"; `InsightStageHeader.svelte:238-267` |
 
 **Bereits konform (kein Handlungsbedarf):** einfarbige Meter-Skala ohne Rot/Grün-Urteil
 (FRONTEND.md/ADR-0035), keine Streak-Rekorde (neutrales „X von Y Tagen"), deskriptive statt imperative
@@ -261,6 +262,8 @@ _(Werte werden nach Auflösung von §4 ergänzt.)_
 - [ ] Cycle-Overlay klar getrennt oder mit migriert.
 - [ ] UI-Konventionen §7.6 erfüllt: `InsightStageHeader` wiederverwendet (G1), keine Emoji (G2),
       `role="meter"` (G3), 44px-Trefferflächen (G4), i18n-Reuse (G5).
+- [ ] Mobile-first responsiv (G7): auf 360/430px kein horizontaler Scroll, Reife-Kopf + Fußzeilen
+      brechen sauber um; auf echtem Gerät bzw. 360px-Viewport geprüft.
 
 ---
 
