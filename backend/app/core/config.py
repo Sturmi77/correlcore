@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     DEV_VIEW_ENABLED: bool = False
     DEV_DB_BACKUP_DIR: str = "/tmp/correlcore-backups"
+    # Optional Docker Engine endpoint for /dev container health (ADR-0015:
+    # TCP to socket-proxy, not a socket mount). Empty skips Engine HTTP.
+    DEV_DOCKER_HOST: str = ""
 
     # Worker freshness monitoring (#756). GET /worker/status exposes age and
     # status of the last successful run per WorkerJobKind so an external

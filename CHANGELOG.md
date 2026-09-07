@@ -8,6 +8,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Developer View stack health** — `/dev` Runtime lists per-service reachability
+  (API, Postgres, Redis, encryption, Web, worker, MinIO, SMTP/Mailpit) from
+  application probes, plus Docker container state when the Engine API is
+  reachable. Home shows unhealthy/stopped containers next to the analysis badge
+  when client developer mode is on and the insight worker has never run.
+  A clean `migrate` exit (0) is ignored.
+
 ## [1.7.1] — 2026-09-06
 
 Bugfix-Patch nach v1.7.0 (Sticky-Chrome, Settings-Reorder, Home-Heatmap).

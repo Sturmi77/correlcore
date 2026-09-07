@@ -15,11 +15,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.db.session import engine
-from app.schemas.dev import DevInfoResponse
-from app.services.health_service import ComponentStatus, check_readiness
+from app.schemas.dev import DevHealthComponent, DevHealthStatus, DevInfoResponse
+from app.services.docker_health_service import list_stack_containers
+from app.services.health_service import ComponentHealth, ComponentStatus, check_readiness
 
 logger = logging.getLogger(__name__)
 _STARTED_AT_MONOTONIC = time.monotonic()
+_TCP_TIMEOUT_SECONDS = 2.0
+# Compose service name + container port (quickstart, Dockge, Dockhand, prod).
+_COMPOSE_WEB_HOST = "web"
+_COMPOSE_WEB_PORT = 3000
+_COMPOSE_WORKER_HOST = "worker"
+_COMPOSE_DB_HOSTS = {"postgres", "correlcore-postgres"}
 
 
 def _optional_env(value: str) -> str | None:
@@ -57,30 +64,120 @@ def _minio_endpoint_host_port() -> tuple[str, int]:
     return host, port
 
 
-def _probe_minio_sync() -> bool:
+def _tcp_probe_sync(host: str, port: int) -> tuple[ComponentStatus | None, str]:
+    """TCP connect with a short timeout.
+
+    Returns ``(None, "unresolved")`` when the hostname is not in DNS — typical
+    for local uvicorn without the Compose network. Callers decide whether to
+    omit that service or treat it as down.
+    """
     try:
-        host, port = _minio_endpoint_host_port()
-        with socket.create_connection((host, port), timeout=2):
-            return True
+        with socket.create_connection((host, port), timeout=_TCP_TIMEOUT_SECONDS):
+            return ComponentStatus.OK, ""
+    except socket.gaierror:
+        return None, "unresolved"
     except Exception as exc:
-        logger.warning("dev info minio probe failed: %s", type(exc).__name__)
-        return False
+        logger.warning("dev tcp probe %s:%s failed: %s", host, port, type(exc).__name__)
+        return ComponentStatus.DOWN, type(exc).__name__
 
 
-async def _probe_minio() -> bool:
-    return await asyncio.to_thread(_probe_minio_sync)
+def _status_value(status: ComponentStatus) -> DevHealthStatus:
+    if status == ComponentStatus.OK:
+        return "ok"
+    if status == ComponentStatus.DEGRADED:
+        return "degraded"
+    return "down"
+
+
+def _from_readiness(component: ComponentHealth) -> DevHealthComponent:
+    return DevHealthComponent(
+        name=component.name,
+        status=_status_value(component.status),
+        detail=component.detail,
+    )
+
+
+def _probe_minio_sync() -> DevHealthComponent:
+    host, port = _minio_endpoint_host_port()
+    status, detail = _tcp_probe_sync(host, port)
+    if status is None:
+        return DevHealthComponent(name="minio", status="down", detail=detail)
+    return DevHealthComponent(name="minio", status=_status_value(status), detail=detail)
+
+
+def _probe_web_sync() -> DevHealthComponent | None:
+    status, detail = _tcp_probe_sync(_COMPOSE_WEB_HOST, _COMPOSE_WEB_PORT)
+    if status is None:
+        return None
+    return DevHealthComponent(name="web", status=_status_value(status), detail=detail)
+
+
+def _database_hostname() -> str:
+    raw = settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://", 1)
+    return (urlparse(raw).hostname or "").lower()
+
+
+def _probe_worker_sync() -> DevHealthComponent | None:
+    """Compose-only: DNS for ``worker``. Unresolved means the container stopped."""
+    if _database_hostname() not in _COMPOSE_DB_HOSTS:
+        return None
+    try:
+        socket.getaddrinfo(_COMPOSE_WORKER_HOST, None)
+        return DevHealthComponent(name="worker", status="ok", detail="resolved")
+    except socket.gaierror:
+        return DevHealthComponent(name="worker", status="down", detail="stopped")
+
+
+def _probe_smtp_sync() -> DevHealthComponent | None:
+    host = settings.SMTP_HOST.strip()
+    if not host:
+        return None
+    name = "mailpit" if host in {"mailpit", "correlcore-mailpit"} else "smtp"
+    status, detail = _tcp_probe_sync(host, settings.SMTP_PORT)
+    if status is None:
+        return DevHealthComponent(name=name, status="down", detail=detail)
+    return DevHealthComponent(name=name, status=_status_value(status), detail=detail)
+
+
+async def _collect_optional_probes() -> tuple[
+    DevHealthComponent,
+    DevHealthComponent | None,
+    DevHealthComponent | None,
+    DevHealthComponent | None,
+]:
+    minio, web, smtp, worker = await asyncio.gather(
+        asyncio.to_thread(_probe_minio_sync),
+        asyncio.to_thread(_probe_web_sync),
+        asyncio.to_thread(_probe_smtp_sync),
+        asyncio.to_thread(_probe_worker_sync),
+    )
+    return minio, web, smtp, worker
 
 
 async def build_dev_info(db: AsyncSession) -> DevInfoResponse:
-    readiness, migration_head, minio_connected = await asyncio.gather(
+    readiness, migration_head, optional, containers = await asyncio.gather(
         check_readiness(),
         _db_migration_head(db),
-        _probe_minio(),
+        _collect_optional_probes(),
+        asyncio.to_thread(list_stack_containers),
     )
+    minio_component, web_component, smtp_component, worker_component = optional
     redis_connected = any(
         component.name == "redis" and component.status == ComponentStatus.OK
         for component in readiness.components
     )
+    minio_connected = minio_component.status == "ok"
+    health_components: list[DevHealthComponent] = [
+        DevHealthComponent(name="api", status="ok", detail="process"),
+        *[_from_readiness(component) for component in readiness.components],
+    ]
+    if web_component is not None:
+        health_components.append(web_component)
+    if worker_component is not None:
+        health_components.append(worker_component)
+    health_components.append(minio_component)
+    if smtp_component is not None:
+        health_components.append(smtp_component)
     image_digest = _optional_env(settings.IMAGE_DIGEST)
     image_hash = image_digest or settings.IMAGE_TAG
     return DevInfoResponse(
@@ -99,4 +196,6 @@ async def build_dev_info(db: AsyncSession) -> DevInfoResponse:
         minio_connected=minio_connected,
         health_ready=readiness.ready,
         uptime_seconds=max(0, int(time.monotonic() - _STARTED_AT_MONOTONIC)),
+        health_components=health_components,
+        containers=containers,
     )

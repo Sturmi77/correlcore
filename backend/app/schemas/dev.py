@@ -13,6 +13,36 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+DevHealthStatus = Literal["ok", "degraded", "down", "unavailable"]
+
+
+class DevHealthComponent(BaseModel):
+    """Reachability of one stack service as seen from the API process.
+
+    This is an application-level probe (TCP / SELECT 1 / PING), not Docker
+    HEALTHCHECK state. ADR-0015 forbids a Docker socket in the API container.
+    """
+
+    name: str
+    status: DevHealthStatus
+    detail: str = ""
+
+
+class DevContainerHealth(BaseModel):
+    """Docker-reported state for one Compose/stack container.
+
+    ``issue`` is ``none`` for a clean one-shot (migrate exited 0) even though
+    the container is stopped.
+    """
+
+    name: str
+    service: str
+    state: str
+    health: Literal["healthy", "unhealthy", "starting", "none"] = "none"
+    exit_code: int | None = None
+    issue: Literal["unhealthy", "stopped", "none"] = "none"
+    status_text: str = ""
+
 
 class DevInfoResponse(BaseModel):
     image_hash: str
@@ -30,6 +60,8 @@ class DevInfoResponse(BaseModel):
     minio_connected: bool
     health_ready: bool
     uptime_seconds: int
+    health_components: list[DevHealthComponent] = Field(default_factory=list)
+    containers: list[DevContainerHealth] = Field(default_factory=list)
 
 
 class WorkerRunResponse(BaseModel):

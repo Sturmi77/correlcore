@@ -110,4 +110,33 @@ describe('HomeTodayContext', () => {
     expect(badge.textContent).toContain('home.worker_run.label');
     expect(badge.textContent).toContain('badge_succeeded_with_count');
   });
+
+  it('shows defective stack containers next to the date in developer diagnostics', () => {
+    render(HomeTodayContext, {
+      props: {
+        todayIso: '2026-05-15',
+        todayEntry: entry,
+        loading: false,
+        lastInsightRun: {
+          status: 'never_run',
+          finished_at: null,
+          started_at: null,
+          insight_count: null,
+          trigger_source: null,
+          generated_for_date: null,
+        },
+        faultyContainers: [
+          { name: 'worker', issue: 'stopped' },
+          { name: 'postgres', issue: 'unhealthy' },
+        ],
+      },
+    });
+
+    const badges = screen.getAllByTestId('home-container-status');
+    expect(badges).toHaveLength(2);
+    expect(badges[0].getAttribute('href')).toBe('/dev');
+    expect(badges[0].textContent).toContain('home.container_health.stopped');
+    expect(badges[1].textContent).toContain('home.container_health.unhealthy');
+    expect(screen.queryByTestId('home-analysis-status')).toBeNull();
+  });
 });
