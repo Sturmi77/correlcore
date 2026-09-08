@@ -372,6 +372,34 @@
         "title": "ConsentStatusItem",
         "type": "object"
       },
+      "CoverageMetric": {
+        "description": "A neutral coverage ratio over the rolling window (no streak record).",
+        "properties": {
+          "days_with_data": {
+            "minimum": 0.0,
+            "title": "Days With Data",
+            "type": "integer"
+          },
+          "pct": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Pct",
+            "type": "number"
+          },
+          "window_days": {
+            "minimum": 1.0,
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days_with_data",
+          "window_days",
+          "pct"
+        ],
+        "title": "CoverageMetric",
+        "type": "object"
+      },
       "DashboardSummaryResponse": {
         "properties": {
           "confidence_score": {
@@ -2036,6 +2064,210 @@
           "sleep_minutes"
         ],
         "title": "HealthConnectSleepImportItem",
+        "type": "object"
+      },
+      "HealthConnectStatus": {
+        "description": "Optional Health-Connect meta — never carries Art. 9 health values.\n\nv1 populates ``consent`` only; ``last_sync_at`` / ``sleep_import_ok`` are\nreserved for when the import service exposes that state (spec D6).",
+        "properties": {
+          "consent": {
+            "title": "Consent",
+            "type": "boolean"
+          },
+          "last_sync_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sync At"
+          },
+          "sleep_import_ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sleep Import Ok"
+          }
+        },
+        "required": [
+          "consent"
+        ],
+        "title": "HealthConnectStatus",
+        "type": "object"
+      },
+      "HealthContextCoverage": {
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/CoverageMetric"
+          },
+          "sleep": {
+            "$ref": "#/components/schemas/CoverageMetric"
+          },
+          "symptom": {
+            "$ref": "#/components/schemas/CoverageMetric"
+          }
+        },
+        "required": [
+          "entry",
+          "sleep",
+          "symptom"
+        ],
+        "title": "HealthContextCoverage",
+        "type": "object"
+      },
+      "HealthContextMaturity": {
+        "description": "Coarse analysis-maturity phase (mirrors the shared InsightMaturity).\n\nRendered via the reused ``InsightStageHeader`` — the frontend must not\nrecompute the phase (see spec G1/G5, FRONTEND.md).",
+        "properties": {
+          "current_entries": {
+            "minimum": 0.0,
+            "title": "Current Entries",
+            "type": "integer"
+          },
+          "entries_until_next": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entries Until Next"
+          },
+          "next_phase_at": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Phase At"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "phase_index": {
+            "maximum": 4.0,
+            "minimum": 1.0,
+            "title": "Phase Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "phase",
+          "phase_index",
+          "current_entries"
+        ],
+        "title": "HealthContextMaturity",
+        "type": "object"
+      },
+      "HealthContextResponse": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/HealthContextCoverage"
+          },
+          "coverage_window_days": {
+            "minimum": 1.0,
+            "title": "Coverage Window Days",
+            "type": "integer"
+          },
+          "health_connect": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HealthConnectStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maturity": {
+            "$ref": "#/components/schemas/HealthContextMaturity"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/HealthContextSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "as_of",
+          "coverage_window_days",
+          "maturity",
+          "coverage"
+        ],
+        "title": "HealthContextResponse",
+        "type": "object"
+      },
+      "HealthContextSection": {
+        "description": "Progressive-disclosure gate for one section (Backend owns the decision).",
+        "properties": {
+          "copy_key": {
+            "title": "Copy Key",
+            "type": "string"
+          },
+          "entries_until_unlock": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entries Until Unlock"
+          },
+          "id": {
+            "enum": [
+              "symptom",
+              "sleep"
+            ],
+            "title": "Id",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "ok",
+              "insufficient_entries",
+              "insufficient_coverage",
+              "no_consent"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "unlocked": {
+            "title": "Unlocked",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "unlocked",
+          "reason",
+          "copy_key"
+        ],
+        "title": "HealthContextSection",
         "type": "object"
       },
       "HealthSummary": {
@@ -8657,6 +8889,88 @@
           }
         },
         "summary": "Return a neutral day-over-day entry comparison",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/entries/stats/health-context": {
+      "get": {
+        "operationId": "get_health_context_endpoint_api_v1_entries_stats_health_context_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "access_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthContextResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Return the honest data-readiness / coverage panel (Issue #852)",
         "tags": [
           "entries"
         ]

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import Lock from '@lucide/svelte/icons/lock';
+  import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
   import type { EntryResponse } from '$lib/api/entries';
   import type { InsightMaturity } from '$lib/api/insights';
   import type {
@@ -96,7 +97,7 @@
           <div class="metric__top">
             <span class="metric__name">
               {#if locked}
-                <Lock size={13} class="metric__lock" aria-hidden="true" />
+                <Lock size={ICON_SIZE_SM} class="metric__lock" aria-hidden="true" />
               {/if}
               {$_(row.labelKey)}
             </span>
