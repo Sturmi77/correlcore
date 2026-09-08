@@ -61,12 +61,12 @@ niemals physiologische oder medizinische Bereitschaft.
 
 Vier Signale, alle aus **bereits vorhandenen** Quellen (kein neuer Score, keine neue Statistik):
 
-| # | Signal | Quelle (Ist) | Bedeutung |
-| - | ------ | ------------ | --------- |
-| 1 | **Maturity-Phase** | `insight_maturity` (Insights-Service, Backend-owned) | Wie weit ist die Insight-Engine? `collecting → early_patterns → provisional → robust` |
-| 2 | **Entry-Coverage %** | `entries.entry_date` im Fenster | Anteil Tage mit ≥1 Eintrag — neutrales Konsistenz-Signal, **ersetzt** die Streak-Rekorde |
-| 3 | **Sleep-Coverage %** | Timeseries `sleep_quality_avg` / Entry `sleep_*` im Fenster | Anteil Tage mit Sleep-Wert — erklärt, warum Sleep-Insights ggf. noch fehlen |
-| 4 | **Symptom-Coverage %** | Symptom-Heatmap `days[].count` im Fenster | Anteil Tage mit ≥1 Symptom-Log — Dichte, **nicht** Inhalt |
+| #   | Signal                 | Quelle (Ist)                                                | Bedeutung                                                                                |
+| --- | ---------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 1   | **Maturity-Phase**     | `insight_maturity` (Insights-Service, Backend-owned)        | Wie weit ist die Insight-Engine? `collecting → early_patterns → provisional → robust`    |
+| 2   | **Entry-Coverage %**   | `entries.entry_date` im Fenster                             | Anteil Tage mit ≥1 Eintrag — neutrales Konsistenz-Signal, **ersetzt** die Streak-Rekorde |
+| 3   | **Sleep-Coverage %**   | Timeseries `sleep_quality_avg` / Entry `sleep_*` im Fenster | Anteil Tage mit Sleep-Wert — erklärt, warum Sleep-Insights ggf. noch fehlen              |
+| 4   | **Symptom-Coverage %** | Symptom-Heatmap `days[].count` im Fenster                   | Anteil Tage mit ≥1 Symptom-Log — Dichte, **nicht** Inhalt                                |
 
 **Grundsatz (Issue):** Streichen, was wir nicht ehrlich erklären können. Alle vier sind erklärbar und
 belegbar aus dem Repo.
@@ -78,12 +78,12 @@ belegbar aus dem Repo.
 > **Fenster/Gate-Kopplung ist [OFFEN] — siehe §4.** Die Zahlen unten sind die realen Engine-Schwellen
 > aus dem Code und dienen als Kandidaten für die Kopplung.
 
-| Metrik | Formel | Fenster | Min-n / Schwelle (Code-Referenz) | UI-Darstellung |
-| ------ | ------ | ------- | -------------------------------- | -------------- |
-| `maturity_phase` | direkt aus `insight_maturity.phase` (nicht neu berechnen!) | Engine-intern | Phasen bei 7 / 14 / 30 Entries (`insight_service.py` `next_phase_at`) | Phasen-Chip + „noch N Einträge bis X" |
-| `entry_coverage_pct` | `Tage mit ≥1 entry / Fensterlänge` | **[OFFEN] §4** | — (immer anzeigbar) | Neutraler %-Meter + „X von Y Tagen" |
-| `sleep_coverage_pct` | `Tage mit sleep-Wert / Fensterlänge` | **[OFFEN] §4** | Engine-Sleep-Gate: Coverage ≥ **0.5** **und** ≥ **15** Beobachtungen (`multivariate_analytics.py` `MIN_SLEEP_COLUMN_COVERAGE=0.5`, `MIN_SLEEP_COLUMN_OBSERVATIONS=15`) | %-Meter + „Sleep-Insights ab 50 % Abdeckung" |
-| `symptom_coverage_pct` | `Tage mit ≥1 Symptom-Log / Fensterlänge` | **[OFFEN] §4** | Symptom-Analytics ab **15** Entries (`symptom_analytics.py` `MIN_SYMPTOM_ANALYTICS_ENTRIES=15`) | %-Meter + Deep-Link Insights-Symptom |
+| Metrik                 | Formel                                                     | Fenster        | Min-n / Schwelle (Code-Referenz)                                                                                                                                       | UI-Darstellung                               |
+| ---------------------- | ---------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `maturity_phase`       | direkt aus `insight_maturity.phase` (nicht neu berechnen!) | Engine-intern  | Phasen bei 7 / 14 / 30 Entries (`insight_service.py` `next_phase_at`)                                                                                                  | Phasen-Chip + „noch N Einträge bis X"        |
+| `entry_coverage_pct`   | `Tage mit ≥1 entry / Fensterlänge`                         | **[OFFEN] §4** | — (immer anzeigbar)                                                                                                                                                    | Neutraler %-Meter + „X von Y Tagen"          |
+| `sleep_coverage_pct`   | `Tage mit sleep-Wert / Fensterlänge`                       | **[OFFEN] §4** | Engine-Sleep-Gate: Coverage ≥ **0.5** **und** ≥ **15** Beobachtungen (`multivariate_analytics.py` `MIN_SLEEP_COLUMN_COVERAGE=0.5`, `MIN_SLEEP_COLUMN_OBSERVATIONS=15`) | %-Meter + „Sleep-Insights ab 50 % Abdeckung" |
+| `symptom_coverage_pct` | `Tage mit ≥1 Symptom-Log / Fensterlänge`                   | **[OFFEN] §4** | Symptom-Analytics ab **15** Entries (`symptom_analytics.py` `MIN_SYMPTOM_ANALYTICS_ENTRIES=15`)                                                                        | %-Meter + Deep-Link Insights-Symptom         |
 
 **No-Streak-Regel:** Entry-Coverage wird **nur** als „X von Y Tagen" / % dargestellt — **keine**
 „Beste Kontinuität"/Rekord-Zahl, kein 🔥, keine Red/Green-Ampel (FRONTEND.md, ADR-0035 divergent-scale).
@@ -94,15 +94,16 @@ belegbar aus dem Repo.
 
 Es gibt **kein** einheitliches „Engine-Fenster" — der Code nutzt mehrere:
 
-| Kontext | Fenster / Schwelle | Datei |
-| ------- | ------------------ | ----- |
-| Maturity-Phasen | 7 / 14 / 30 Entries (kumulativ, kein Zeitfenster) | `insight_service.py` |
-| Symptom-Analytics | ≥ 15 Entries | `symptom_analytics.py` |
-| Sleep-Spalte (multivariat) | Coverage ≥ 0.5 & ≥ 15 Beobachtungen | `multivariate_analytics.py` |
-| Tag-Cluster | 90-Tage-Fenster; provisional 45 / robust 90 Entries | `tag_cluster_service.py` |
-| Changepoint | ≥ 60 Entries | `changepoint.py` |
+| Kontext                    | Fenster / Schwelle                                  | Datei                       |
+| -------------------------- | --------------------------------------------------- | --------------------------- |
+| Maturity-Phasen            | 7 / 14 / 30 Entries (kumulativ, kein Zeitfenster)   | `insight_service.py`        |
+| Symptom-Analytics          | ≥ 15 Entries                                        | `symptom_analytics.py`      |
+| Sleep-Spalte (multivariat) | Coverage ≥ 0.5 & ≥ 15 Beobachtungen                 | `multivariate_analytics.py` |
+| Tag-Cluster                | 90-Tage-Fenster; provisional 45 / robust 90 Entries | `tag_cluster_service.py`    |
+| Changepoint                | ≥ 60 Entries                                        | `changepoint.py`            |
 
 **Entscheidungen (D4 / D5):**
+
 - **Coverage-Fenster [D4]:** rollierend **90 Tage** (deckungsgleich mit Tag-Cluster-Fenster, glättet lange
   Historie, macht die „122-Tage-Zahl" gegenstandslos). `coverage_window_days` wird als DTO-Feld
   (fest **90**, nicht per Query konfigurierbar in v1) ausgeliefert, damit die UI es beschriften kann.
@@ -126,6 +127,7 @@ Das DTO liefert **explizite Gate-Flags** samt Begründung; das Frontend **render
 keine Schwellen (FRONTEND.md: „frontend components must not recompute the phase from entry count").
 
 Pro Sektion:
+
 - `unlocked: boolean`
 - `reason: enum` (`ok` | `insufficient_entries` | `insufficient_coverage` | `no_consent` | …)
 - `entries_until_unlock: int | null` (für „noch N Einträge")
@@ -151,21 +153,33 @@ Pro Sektion:
   "as_of": "2026-09-07",
   "coverage_window_days": 90,
   "maturity": {
-    "phase": "provisional",           // aus insight_maturity, NICHT neu berechnet
+    "phase": "provisional", // aus insight_maturity, NICHT neu berechnet
     "current_entries": 52,
-    "next_phase_at": 30,              // Backend-owned
-    "entries_until_next": 0
+    "next_phase_at": 30, // Backend-owned
+    "entries_until_next": 0,
   },
   "coverage": {
-    "entry":   { "days_with_data": 61, "window_days": 90, "pct": 0.68 },
-    "sleep":   { "days_with_data": 30, "window_days": 90, "pct": 0.33 },
-    "symptom": { "days_with_data": 44, "window_days": 90, "pct": 0.49 }
+    "entry": { "days_with_data": 61, "window_days": 90, "pct": 0.68 },
+    "sleep": { "days_with_data": 30, "window_days": 90, "pct": 0.33 },
+    "symptom": { "days_with_data": 44, "window_days": 90, "pct": 0.49 },
   },
   "sections": [
-    { "id": "symptom", "unlocked": true,  "reason": "ok",                    "entries_until_unlock": null, "copy_key": "trends.maturity.symptom.ok" },
-    { "id": "sleep",   "unlocked": false, "reason": "insufficient_coverage", "entries_until_unlock": null, "copy_key": "trends.maturity.sleep.insufficient" }
+    {
+      "id": "symptom",
+      "unlocked": true,
+      "reason": "ok",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.symptom.ok",
+    },
+    {
+      "id": "sleep",
+      "unlocked": false,
+      "reason": "insufficient_coverage",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.sleep.insufficient",
+    },
   ],
-  "health_connect": null              // [OFFEN] §8 — optionales Meta-Signal
+  "health_connect": null, // [OFFEN] §8 — optionales Meta-Signal
 }
 ```
 
@@ -212,14 +226,14 @@ in Insights-Symptom-Analytics; Wearable-Import/Consent lebt im HC-Hub.
 Aus dem Abgleich Mockup ↔ echte Komponenten (`InsightStageHeader.svelte`) + FRONTEND.md. Diese Regeln
 sind **verbindlich** für die Implementierung:
 
-| # | Regel | Referenz |
-| - | ----- | -------- |
-| **G1** | **Keine zweite Readiness-Fläche.** Die Reife/Phase wird ausschließlich über die geteilte Komponente **`InsightStageHeader`** dargestellt (wiederverwenden, nicht nachbauen). Alternativ nur Deep-Link zu Insights. | FRONTEND.md:352 „only default phase/readiness surface" |
-| **G2** | **Keine Emoji** in Progress-/Lock-/Warn-Anzeigen. Lucide-Icons (`@lucide/svelte`, z. B. `Lock`, `HelpCircle`). | FRONTEND.md:601, :73/:77 |
-| **G3** | Coverage-Balken als **`role="meter"`** mit `aria-valuemin/max/now` + `aria-label` (analog `.stage__track`). | `InsightStageHeader.svelte:78-85` |
-| **G4** | Interaktive Elemente (Deep-Links, Hilfe) mit **≥ 44px** Trefferfläche. | `.stage__text-button { min-height: 44px }` |
-| **G5** | **Bestehende i18n-Keys wiederverwenden** (`maturity.{phase}.label`, `maturity.journey.compact_entries_until_next`, `insights.stage.readiness_label`) statt neuer Reife-Copy — verhindert Wording-Drift. | en/de.json `maturity.*` |
-| **G6** | Falls Reife-Kopf gerendert wird: exakter Stil der Komponente (`N/4`-Marker, `--color-text-inverse`, `--radius-full`), keine Bespoke-Chips. | `InsightStageHeader.svelte` |
+| #      | Regel                                                                                                                                                                                                                                                                                                                                                                                                                                  | Referenz                                                        |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **G1** | **Keine zweite Readiness-Fläche.** Die Reife/Phase wird ausschließlich über die geteilte Komponente **`InsightStageHeader`** dargestellt (wiederverwenden, nicht nachbauen). Alternativ nur Deep-Link zu Insights.                                                                                                                                                                                                                     | FRONTEND.md:352 „only default phase/readiness surface"          |
+| **G2** | **Keine Emoji** in Progress-/Lock-/Warn-Anzeigen. Lucide-Icons (`@lucide/svelte`, z. B. `Lock`, `HelpCircle`).                                                                                                                                                                                                                                                                                                                         | FRONTEND.md:601, :73/:77                                        |
+| **G3** | Coverage-Balken als **`role="meter"`** mit `aria-valuemin/max/now` + `aria-label` (analog `.stage__track`).                                                                                                                                                                                                                                                                                                                            | `InsightStageHeader.svelte:78-85`                               |
+| **G4** | Interaktive Elemente (Deep-Links, Hilfe) mit **≥ 44px** Trefferfläche.                                                                                                                                                                                                                                                                                                                                                                 | `.stage__text-button { min-height: 44px }`                      |
+| **G5** | **Bestehende i18n-Keys wiederverwenden** (`maturity.{phase}.label`, `maturity.journey.compact_entries_until_next`, `insights.stage.readiness_label`) statt neuer Reife-Copy — verhindert Wording-Drift.                                                                                                                                                                                                                                | en/de.json `maturity.*`                                         |
+| **G6** | Falls Reife-Kopf gerendert wird: exakter Stil der Komponente (`N/4`-Marker, `--color-text-inverse`, `--radius-full`), keine Bespoke-Chips.                                                                                                                                                                                                                                                                                             | `InsightStageHeader.svelte`                                     |
 | **G7** | **Mobile-first responsiv.** Panel primär für schmale Viewports (~360–430px) ausgelegt: Reife-Kopf-Zeile darf umbrechen / Controls stapeln (analog Komponenten-Breakpoints `@media 767px` + `360px`), Coverage-Meter volle Breite, Metrik-Fußzeile (Note + Deep-Link) umbruchsicher, **kein** horizontaler Seiten-Scroll; Cycle-Strip scrollt in eigenem Container (`overflow-x`). Desktop ist die Aufweitung, nicht der Ausgangspunkt. | FRONTEND.md „mobile-first"; `InsightStageHeader.svelte:238-267` |
 
 **Bereits konform (kein Handlungsbedarf):** einfarbige Meter-Skala ohne Rot/Grün-Urteil
@@ -253,15 +267,33 @@ Diese JSON-Blöcke sind die kanonische Grundlage für die Backend- und Contract-
 {
   "as_of": "2026-09-07",
   "coverage_window_days": 90,
-  "maturity": { "phase": "collecting", "phase_index": 1, "current_entries": 4, "next_phase_at": 7, "entries_until_next": 3 },
+  "maturity": {
+    "phase": "collecting",
+    "phase_index": 1,
+    "current_entries": 4,
+    "next_phase_at": 7,
+    "entries_until_next": 3
+  },
   "coverage": {
-    "entry":   { "days_with_data": 4, "window_days": 90, "pct": 0.04 },
-    "sleep":   { "days_with_data": 2, "window_days": 90, "pct": 0.02 },
+    "entry": { "days_with_data": 4, "window_days": 90, "pct": 0.04 },
+    "sleep": { "days_with_data": 2, "window_days": 90, "pct": 0.02 },
     "symptom": { "days_with_data": 1, "window_days": 90, "pct": 0.01 }
   },
   "sections": [
-    { "id": "symptom", "unlocked": false, "reason": "insufficient_entries",  "entries_until_unlock": 11,   "copy_key": "trends.maturity.symptom.insufficient_entries" },
-    { "id": "sleep",   "unlocked": false, "reason": "insufficient_coverage", "entries_until_unlock": null, "copy_key": "trends.maturity.sleep.insufficient_coverage" }
+    {
+      "id": "symptom",
+      "unlocked": false,
+      "reason": "insufficient_entries",
+      "entries_until_unlock": 11,
+      "copy_key": "trends.maturity.symptom.insufficient_entries"
+    },
+    {
+      "id": "sleep",
+      "unlocked": false,
+      "reason": "insufficient_coverage",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.sleep.insufficient_coverage"
+    }
   ],
   "health_connect": null
 }
@@ -277,15 +309,33 @@ Sleep **gesperrt** („zu wenig Schlafdaten …"). Kein Cycle-Strip.
 {
   "as_of": "2026-09-07",
   "coverage_window_days": 90,
-  "maturity": { "phase": "provisional", "phase_index": 3, "current_entries": 24, "next_phase_at": 30, "entries_until_next": 6 },
+  "maturity": {
+    "phase": "provisional",
+    "phase_index": 3,
+    "current_entries": 24,
+    "next_phase_at": 30,
+    "entries_until_next": 6
+  },
   "coverage": {
-    "entry":   { "days_with_data": 61, "window_days": 90, "pct": 0.68 },
-    "sleep":   { "days_with_data": 18, "window_days": 90, "pct": 0.20 },
+    "entry": { "days_with_data": 61, "window_days": 90, "pct": 0.68 },
+    "sleep": { "days_with_data": 18, "window_days": 90, "pct": 0.2 },
     "symptom": { "days_with_data": 44, "window_days": 90, "pct": 0.49 }
   },
   "sections": [
-    { "id": "symptom", "unlocked": true,  "reason": "ok",                    "entries_until_unlock": null, "copy_key": "trends.maturity.symptom.ok" },
-    { "id": "sleep",   "unlocked": false, "reason": "insufficient_coverage", "entries_until_unlock": null, "copy_key": "trends.maturity.sleep.insufficient_coverage" }
+    {
+      "id": "symptom",
+      "unlocked": true,
+      "reason": "ok",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.symptom.ok"
+    },
+    {
+      "id": "sleep",
+      "unlocked": false,
+      "reason": "insufficient_coverage",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.sleep.insufficient_coverage"
+    }
   ],
   "health_connect": null
 }
@@ -301,17 +351,39 @@ Sleep **gesperrt** („zu wenig Schlafdaten …"). Kein Cycle-Strip.
 {
   "as_of": "2026-09-07",
   "coverage_window_days": 90,
-  "maturity": { "phase": "robust", "phase_index": 4, "current_entries": 96, "next_phase_at": null, "entries_until_next": null },
+  "maturity": {
+    "phase": "robust",
+    "phase_index": 4,
+    "current_entries": 96,
+    "next_phase_at": null,
+    "entries_until_next": null
+  },
   "coverage": {
-    "entry":   { "days_with_data": 82, "window_days": 90, "pct": 0.91 },
-    "sleep":   { "days_with_data": 58, "window_days": 90, "pct": 0.64 },
+    "entry": { "days_with_data": 82, "window_days": 90, "pct": 0.91 },
+    "sleep": { "days_with_data": 58, "window_days": 90, "pct": 0.64 },
     "symptom": { "days_with_data": 75, "window_days": 90, "pct": 0.83 }
   },
   "sections": [
-    { "id": "symptom", "unlocked": true, "reason": "ok", "entries_until_unlock": null, "copy_key": "trends.maturity.symptom.ok" },
-    { "id": "sleep",   "unlocked": true, "reason": "ok", "entries_until_unlock": null, "copy_key": "trends.maturity.sleep.ok" }
+    {
+      "id": "symptom",
+      "unlocked": true,
+      "reason": "ok",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.symptom.ok"
+    },
+    {
+      "id": "sleep",
+      "unlocked": true,
+      "reason": "ok",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.sleep.ok"
+    }
   ],
-  "health_connect": { "consent": true, "last_sync_at": "2026-09-06T22:10:00Z", "sleep_import_ok": true }
+  "health_connect": {
+    "consent": true,
+    "last_sync_at": "2026-09-06T22:10:00Z",
+    "sleep_import_ok": true
+  }
 }
 ```
 
@@ -340,15 +412,15 @@ Symptom 83 %, Sleep 64 % — alle **frei**. Cycle-Strip erscheint als **eigene, 
 
 Alle sieben Forks sind im Spec-Dialog (2026-09-07) entschieden:
 
-| # | Frage | Status | Entscheidung |
-| - | ----- | ------ | ------------ |
-| D1 | Surfaces: Trends-only vs. auch Home | ✅ ENTSCHIEDEN | **Trends-only** v1, DTO surface-agnostisch (Home kein Scope) |
-| D2 | Label DE/EN | ✅ ENTSCHIEDEN | **„Datenreife"** / **„Data readiness"** |
-| D3 | Cycle-Strip: getrennt / auslagern / mit migrieren | ✅ ENTSCHIEDEN | **getrennt**, eigene Sektion „neutraler Kontext" |
-| D4 | Coverage-Fenster 90 vs. 30 Tage | ✅ ENTSCHIEDEN | **90 Tage** rollierend, `coverage_window_days=90` fix |
-| D5 | Gates: Feature-Threshold vs. Maturity-Phase | ✅ ENTSCHIEDEN | **Hybrid** — Phase grob, Freischaltung per Feature-Threshold (15 / 0.5·15 / 45·90) |
-| D6 | Health-Connect-Status ins DTO? | ✅ ENTSCHIEDEN | **optionales Feld** `health_connect`, Anzeige v1 optional |
-| D7 | Endpoint-Pfad | ✅ ENTSCHIEDEN | **`/api/v1/entries/stats/health-context`** |
+| #   | Frage                                             | Status         | Entscheidung                                                                       |
+| --- | ------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------- |
+| D1  | Surfaces: Trends-only vs. auch Home               | ✅ ENTSCHIEDEN | **Trends-only** v1, DTO surface-agnostisch (Home kein Scope)                       |
+| D2  | Label DE/EN                                       | ✅ ENTSCHIEDEN | **„Datenreife"** / **„Data readiness"**                                            |
+| D3  | Cycle-Strip: getrennt / auslagern / mit migrieren | ✅ ENTSCHIEDEN | **getrennt**, eigene Sektion „neutraler Kontext"                                   |
+| D4  | Coverage-Fenster 90 vs. 30 Tage                   | ✅ ENTSCHIEDEN | **90 Tage** rollierend, `coverage_window_days=90` fix                              |
+| D5  | Gates: Feature-Threshold vs. Maturity-Phase       | ✅ ENTSCHIEDEN | **Hybrid** — Phase grob, Freischaltung per Feature-Threshold (15 / 0.5·15 / 45·90) |
+| D6  | Health-Connect-Status ins DTO?                    | ✅ ENTSCHIEDEN | **optionales Feld** `health_connect`, Anzeige v1 optional                          |
+| D7  | Endpoint-Pfad                                     | ✅ ENTSCHIEDEN | **`/api/v1/entries/stats/health-context`**                                         |
 
 **Verbleibend bis Freeze:** nur noch das **Review-Gate** (Frontend + Backend gegenzeichnen,
 Issue-Schritt 5). Inhaltlich ist die Spec vollständig — alle Entscheidungen (D1–D7), UI-Konventionen
@@ -371,8 +443,8 @@ Backend-DTO → Frontend-Panel → Tests → Cleanup. Umsetzung auf dem Branch
 ### Phase 1 — Backend-DTO (~1–1,5d) — ✅ UMGESETZT
 
 - [x] **Schema** `backend/app/schemas/stats.py`: `HealthContextResponse` + Sub-Modelle
-  (`HealthContextMaturity`, `CoverageMetric`, `HealthContextCoverage`, `HealthContextSection`,
-  `HealthConnectStatus | None`).
+      (`HealthContextMaturity`, `CoverageMetric`, `HealthContextCoverage`, `HealthContextSection`,
+      `HealthConnectStatus | None`).
 - [x] **Service** `backend/app/services/health_context_service.py`: `get_health_context(db, user_id, as_of)`.
   - Maturity aus `insight_service.get_insight_maturity` beziehen (nicht neu berechnen).
   - Coverage über **90-Tage-Fenster** (`HEALTH_CONTEXT_WINDOW_DAYS`): `entry`/`sleep`/`symptom`
@@ -385,16 +457,16 @@ Backend-DTO → Frontend-Panel → Tests → Cleanup. Umsetzung auf dem Branch
   - **Sleep-Quelle aufgelöst (Risiko):** kanonisches Signal = `Entry.sleep_minutes` (die Spalte,
     die das Engine-Sleep-Gate `MIN_SLEEP_COLUMN_COVERAGE` steuert).
 - [x] **Router** `backend/app/api/v1/endpoints/entries.py`: `GET /entries/stats/health-context`
-  (Auth wie übrige Stats-Endpoints, `120/minute` Rate-Limit).
+      (Auth wie übrige Stats-Endpoints, `120/minute` Rate-Limit).
 - [x] **Privacy:** Response/Service emittieren nur Zähler/Ratios/Enums — kein Klartext, kein Logging.
 - [x] **Tests** `backend/tests/test_health_context_service.py`: drei §9-Fixtures, Gate-Grenzfälle
-  (14/15 Entries; 44/45 Tage = 0.49/0.50 Coverage; 18 Tage), `health_connect=null`-Pfad,
-  Art.-9-No-Leak-Guard, Endpoint 200 + 401. **12 Tests grün**, ruff + mypy sauber.
+      (14/15 Entries; 44/45 Tage = 0.49/0.50 Coverage; 18 Tage), `health_connect=null`-Pfad,
+      Art.-9-No-Leak-Guard, Endpoint 200 + 401. **12 Tests grün**, ruff + mypy sauber.
 
 ### Phase 2 — Frontend-Anbindung (~1d) — ✅ UMGESETZT
 
 - [x] **Client** `apps/web/src/lib/api/stats.ts`: `HealthContextResponse`-Typ (+ Sub-Typen) +
-  `fetchHealthContext()`.
+      `fetchHealthContext()`.
 - [x] **Panel** `apps/web/src/lib/components/trends/TrendsHealthContext.svelte` umgebaut:
   - Titel/Copy → „Datenreife" (`trends.maturity.*`), Streak-Trio entfernt.
   - Reife-Kopf via **wiederverwendetem `InsightStageHeader`** (G1), gespeist aus der kanonischen
@@ -403,27 +475,27 @@ Backend-DTO → Frontend-Panel → Tests → Cleanup. Umsetzung auf dem Branch
   - Gesperrte Sektionen: `copy_key` + `entries_until_unlock` gerendert (Progressive Disclosure).
   - Cycle-Strip als getrennte, neutrale Sektion (D3); Meter einfarbig, kein Rot/Grün (ADR-0035).
 - [x] **Page** `apps/web/src/routes/trends/+page.svelte`: `fetchHealthContext()` statt `fetchEntryStreak()`
-  (soft-fail, nicht mehr „core"); Maturity aus `$insightStore.insightMaturity` bzw. Dev-Fixture.
+      (soft-fail, nicht mehr „core"); Maturity aus `$insightStore.insightMaturity` bzw. Dev-Fixture.
   - **Maturity-Quelle:** Für die wiederverwendete Komponente wird die kanonische `InsightMaturity`
     durchgereicht (voller Kontrakt inkl. `user_message_key`), nicht die schlankere DTO-Maturity.
   - **Dev-Fixture:** `phaseFixtures.ts` um `healthContext` erweitert (Gates spiegeln die Backend-Schwellen).
 - [x] **i18n** `apps/web/src/lib/i18n/locales/{de,en}.json`: neue `trends.maturity.*`-Keys; alte
-  `trends.health.*`/`trends.consistency.*`-Keys bleiben unangetastet (nur nicht mehr vom Panel genutzt).
+      `trends.health.*`/`trends.consistency.*`-Keys bleiben unangetastet (nur nicht mehr vom Panel genutzt).
 
 ### Phase 3 — Tests & Cleanup (~0,5d) — ✅ UMGESETZT (bis auf Geräte-Check)
 
 - [x] **Component-/UI-Tests** `TrendsHealthContext.test.ts`: Meter je Coverage-Zeile, Gate-Zustände
-  (locked + Copy-Key, kein Deep-Link), keine Streak-Labels, Cycle-Sektion, `InsightStageHeader`-Reuse.
+      (locked + Copy-Key, kein Deep-Link), keine Streak-Labels, Cycle-Sektion, `InsightStageHeader`-Reuse.
 - [x] **Contract-Test** DTO ↔ Frontend-Typ: `test_health_context_endpoint_contract_shape` prüft die
-  serialisierten JSON-Keys gegen das `HealthContextResponse`-Interface (Drift-Guard).
+      serialisierten JSON-Keys gegen das `HealthContextResponse`-Interface (Drift-Guard).
 - [x] `trends/page.test.ts` an den neuen Datenfluss angepasst (Mock `fetchHealthContext`, Heading-Key).
 - [x] **Streak-Rückbau geprüft:** `fetchEntryStreak`/`EntryStreakResponse` sind frontendseitig nur noch
-  vom eigenen Client-Test + der Dev-Fixture referenziert; der Backend-`/stats/streak`-Endpoint bleibt
-  reale API → **bewusst belassen** (kein durch diese Änderung erzeugter Dead Code).
+      vom eigenen Client-Test + der Dev-Fixture referenziert; der Backend-`/stats/streak`-Endpoint bleibt
+      reale API → **bewusst belassen** (kein durch diese Änderung erzeugter Dead Code).
 - [x] `docs/FRONTEND.md`-Verweis auf den Trends-Datenreife-Block aktualisiert (Screen 4).
 - [ ] **Mobile-Check auf 360px** (echtes Gerät / DevTools): CSS umgesetzt (mobile-first, Umbruch,
-  einspaltige Meter, Cycle-Strip mit eigenem `overflow-x`); der visuelle Geräte-Check steht als
-  einziger offener Punkt aus (headless im CI-Container nicht sinnvoll ausführbar).
+      einspaltige Meter, Cycle-Strip mit eigenem `overflow-x`); der visuelle Geräte-Check steht als
+      einziger offener Punkt aus (headless im CI-Container nicht sinnvoll ausführbar).
 
 ### Risiken / Hinweise
 

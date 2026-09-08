@@ -1721,6 +1721,40 @@ export interface components {
             /** Password */
             password: string;
         };
+        /**
+         * DevContainerHealth
+         * @description Docker-reported state for one Compose/stack container.
+         *
+         *     ``issue`` is ``none`` for a clean one-shot (migrate exited 0) even though
+         *     the container is stopped.
+         */
+        DevContainerHealth: {
+            /** Exit Code */
+            exit_code?: number | null;
+            /**
+             * Health
+             * @default none
+             * @enum {string}
+             */
+            health: "healthy" | "unhealthy" | "starting" | "none";
+            /**
+             * Issue
+             * @default none
+             * @enum {string}
+             */
+            issue: "unhealthy" | "stopped" | "none";
+            /** Name */
+            name: string;
+            /** Service */
+            service: string;
+            /** State */
+            state: string;
+            /**
+             * Status Text
+             * @default
+             */
+            status_text: string;
+        };
         /** DevDbBackupCreateResponse */
         DevDbBackupCreateResponse: {
             backup: components["schemas"]["DevDbBackupItem"];
@@ -1794,10 +1828,33 @@ export interface components {
              */
             status: "ok";
         };
+        /**
+         * DevHealthComponent
+         * @description Reachability of one stack service as seen from the API process.
+         *
+         *     This is an application-level probe (TCP / SELECT 1 / PING), not Docker
+         *     HEALTHCHECK state. ADR-0015 forbids a Docker socket in the API container.
+         */
+        DevHealthComponent: {
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "degraded" | "down" | "unavailable";
+        };
         /** DevInfoResponse */
         DevInfoResponse: {
             /** Build Time */
             build_time: string | null;
+            /** Containers */
+            containers?: components["schemas"]["DevContainerHealth"][];
             /** Db Checked Out */
             db_checked_out: number | null;
             /** Db Migration Head */
@@ -1810,6 +1867,8 @@ export interface components {
             git_branch: string;
             /** Git Commit */
             git_commit: string;
+            /** Health Components */
+            health_components?: components["schemas"]["DevHealthComponent"][];
             /** Health Ready */
             health_ready: boolean;
             /** Image Digest */
@@ -2608,6 +2667,7 @@ export interface components {
             insight_maturity: components["schemas"]["InsightMaturity"];
             /** Insights */
             insights?: components["schemas"]["InsightResponse"][];
+            last_insight_run?: components["schemas"]["InsightWorkerRunSummary"] | null;
             /** Last Successful Insight Run At */
             last_successful_insight_run_at?: string | null;
         };
@@ -2771,6 +2831,27 @@ export interface components {
          * @enum {string}
          */
         InsightType: "pointbiserial" | "spearman" | "weekday_pattern" | "work_context_pattern" | "weekday_context_pattern" | "symptom_cluster" | "symptom_mood_association" | "symptom_tag_cooccurrence" | "note_marker_mood" | "changepoint";
+        /**
+         * InsightWorkerRunSummary
+         * @description Latest per-user insight generation attempt for Home / status UI.
+         */
+        InsightWorkerRunSummary: {
+            /** Finished At */
+            finished_at?: string | null;
+            /** Generated For Date */
+            generated_for_date?: string | null;
+            /** Insight Count */
+            insight_count?: number | null;
+            /** Started At */
+            started_at?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "succeeded" | "failed" | "never_run";
+            /** Trigger Source */
+            trigger_source?: string | null;
+        };
         /**
          * InstanceInfo
          * @description Non-sensitive, public deployment descriptor.

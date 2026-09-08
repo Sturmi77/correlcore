@@ -26,6 +26,7 @@ import {
   type InsightDismissalResponse,
   type InsightMaturity,
   type InsightResponse,
+  type InsightWorkerRunSummary,
 } from '$lib/api/insights';
 import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
 import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
@@ -35,6 +36,7 @@ export interface InsightStoreState {
   insights: InsightResponse[];
   insightMaturity: InsightMaturity | null;
   latest: InsightResponse | null;
+  lastInsightRun: InsightWorkerRunSummary | null;
   loading: boolean;
   error: string | null;
   dismissedIds: string[];
@@ -45,6 +47,7 @@ const _state = writable<InsightStoreState>({
   insights: [],
   insightMaturity: null,
   latest: null,
+  lastInsightRun: null,
   loading: false,
   error: null,
   dismissedIds: [],
@@ -106,6 +109,7 @@ export async function loadInsights(): Promise<void> {
         insights: fixture.insights,
         insightMaturity: fixture.maturity,
         latest,
+        lastInsightRun: null,
         loading: false,
         error: null,
         ...dismissalState,
@@ -120,6 +124,7 @@ export async function loadInsights(): Promise<void> {
       insights,
       insightMaturity: response.insight_maturity,
       latest,
+      lastInsightRun: response.last_insight_run ?? null,
       loading: false,
       error: null,
       ...dismissalState,
@@ -200,6 +205,7 @@ export function resetInsightStore(): void {
     insights: [],
     insightMaturity: null,
     latest: null,
+    lastInsightRun: null,
     loading: false,
     error: null,
     dismissedIds: [],

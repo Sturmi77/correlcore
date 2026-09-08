@@ -3,11 +3,16 @@
   import { locale } from 'svelte-i18n';
   import { _ } from 'svelte-i18n';
   import type { EntryResponse } from '$lib/api/entries';
+  import type { InsightWorkerRunSummary } from '$lib/api/insights';
+  import type { FaultyHomeContainer } from '$lib/utils/devHealth';
   import Button from '$lib/components/common/Button.svelte';
   import { formatHomeDate } from '$lib/utils/home';
+  import { formatInsightWorkerRunBadge } from '$lib/utils/insightWorkerRunStatus';
 
   export let todayIso: string;
   export let todayEntry: EntryResponse | null = null;
+  export let lastInsightRun: InsightWorkerRunSummary | null = null;
+  export let faultyContainers: FaultyHomeContainer[] = [];
   export let loading = false;
 
   const dispatch = createEventDispatcher<{ logToday: void }>();
@@ -16,6 +21,9 @@
   $: workContextKey = todayEntry
     ? (`entry.work_context.${todayEntry.work_context}` as const)
     : null;
+  $: analysisBadge = formatInsightWorkerRunBadge(lastInsightRun, $_, {
+    locale: $locale ?? 'en',
+  });
 </script>
 
 <section class="home-today" data-testid="home-today-context" aria-live="polite">
@@ -25,17 +33,53 @@
     <div class="home-today__badges">
       {#if loading}
         <span class="home-today__badge home-today__badge--muted">{$_('home.loading_today')}</span>
-      {:else if todayEntry && workContextKey}
-        <span class="home-today__badge home-today__badge--context" data-testid="home-work-context">
-          {$_(workContextKey)}
-        </span>
-        <span class="home-today__badge home-today__badge--success" data-testid="home-today-status">
-          {$_('home.entry_today_present')}
-        </span>
       {:else}
-        <span class="home-today__badge home-today__badge--warning" data-testid="home-today-status">
-          {$_('home.no_entry_today')}
-        </span>
+        {#if todayEntry && workContextKey}
+          <span
+            class="home-today__badge home-today__badge--context"
+            data-testid="home-work-context"
+          >
+            {$_(workContextKey)}
+          </span>
+          <span
+            class="home-today__badge home-today__badge--success"
+            data-testid="home-today-status"
+          >
+            {$_('home.entry_today_present')}
+          </span>
+        {:else}
+          <span
+            class="home-today__badge home-today__badge--warning"
+            data-testid="home-today-status"
+          >
+            {$_('home.no_entry_today')}
+          </span>
+        {/if}
+        {#if analysisBadge}
+          <a
+            href="/insights"
+            class="home-today__badge home-today__badge--analysis home-today__badge--{analysisBadge.tone}"
+            data-testid="home-analysis-status"
+          >
+            <span class="home-today__badge-label">{$_('home.worker_run.label')}</span>
+            <span>{analysisBadge.text}</span>
+          </a>
+        {/if}
+        {#each faultyContainers as container (container.name)}
+          <a
+            href="/dev"
+            class="home-today__badge home-today__badge--warning"
+            data-testid="home-container-status"
+            data-container={container.name}
+          >
+            <span class="home-today__badge-label">{$_('home.container_health.label')}</span>
+            <span>
+              {$_(`home.container_health.${container.issue}`, {
+                values: { name: container.name },
+              })}
+            </span>
+          </a>
+        {/each}
       {/if}
     </div>
   </div>
@@ -91,11 +135,20 @@
   .home-today__badge {
     display: inline-flex;
     align-items: center;
+    gap: var(--space-1);
     padding: var(--space-1) var(--space-3);
     border-radius: var(--radius-full);
     font-size: var(--text-xs);
     font-weight: 600;
     line-height: 1.3;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .home-today__badge-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   .home-today__badge--context {
@@ -110,6 +163,17 @@
   }
 
   .home-today__badge--warning {
+    background: color-mix(in oklch, var(--color-warning) 12%, transparent);
+    color: var(--color-warning);
+  }
+
+  .home-today__badge--analysis.home-today__badge--success {
+    background: color-mix(in oklch, var(--color-primary) 10%, transparent);
+    color: var(--color-primary);
+    border: 1px solid color-mix(in oklch, var(--color-primary) 28%, transparent);
+  }
+
+  .home-today__badge--analysis.home-today__badge--warning {
     background: color-mix(in oklch, var(--color-warning) 12%, transparent);
     color: var(--color-warning);
   }

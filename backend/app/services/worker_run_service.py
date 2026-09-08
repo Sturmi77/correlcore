@@ -310,3 +310,28 @@ async def latest_successful_insight_run_at(
         .limit(1)
     )
     return result.scalar_one_or_none()
+
+
+async def latest_user_insight_run(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+) -> WorkerRun | None:
+    """Return this user's most recent USER_INSIGHTS run (any finished status).
+
+    Used by the Home compact worker-status strip: when the last attempt ran,
+    whether it succeeded, and how many insights it produced.
+    """
+
+    result = await db.execute(
+        select(WorkerRun)
+        .where(
+            WorkerRun.scope_user_id == user_id,
+            WorkerRun.job_kind == WorkerJobKind.USER_INSIGHTS,
+            WorkerRun.status.in_([WorkerRunStatus.SUCCEEDED, WorkerRunStatus.FAILED]),
+            WorkerRun.finished_at.is_not(None),
+        )
+        .order_by(WorkerRun.finished_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()

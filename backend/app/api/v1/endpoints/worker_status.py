@@ -161,5 +161,22 @@ async def get_worker_status(
     now = datetime.now(UTC)
     runs = await latest_successful_system_runs(db, kinds=MONITORED_KINDS)
     jobs = [_build_job_freshness(kind, runs.get(kind), now=now) for kind in MONITORED_KINDS]
-    overall_status = "stale" if any(job.stale for job in jobs) else "ok"
-    return WorkerStatusResponse(status=overall_status, generated_at=now, jobs=jobs)
+    # DIGEST is weekly (Sunday piggyback). ``never_run`` mid-week after a
+    # deploy — or before the first Sunday slot — must not mark the whole
+    # fleet unhealthy while nightly daily_bundle/insights stay fresh.
+    # A digest that *did* succeed and then aged past its 7× threshold still
+    # counts toward overall staleness.
+    overall_stale = False
+    for job in jobs:
+        if job.job_kind == WorkerJobKind.DIGEST.value:
+            if job.job_status == "stale":
+                overall_stale = True
+                break
+        elif job.stale:
+            overall_stale = True
+            break
+    return WorkerStatusResponse(
+        status="stale" if overall_stale else "ok",
+        generated_at=now,
+        jobs=jobs,
+    )

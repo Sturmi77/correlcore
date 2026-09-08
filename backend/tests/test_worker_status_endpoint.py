@@ -153,11 +153,11 @@ async def test_worker_status_ok_with_admin_session(async_client: AsyncClient) ->
     assert response.status_code == 200
     data = response.json()
     job_by_kind = {job["job_kind"]: job for job in data["jobs"]}
-    # DIGEST never ran -> counts as stale/never_run but does not 500.
+    # DIGEST never ran -> per-job never_run/stale, but overall stays ok while
+    # nightly jobs are fresh (do not poison monitoring mid-week after deploy).
     assert job_by_kind["digest"]["job_status"] == "never_run"
     assert job_by_kind["digest"]["stale"] is True
-    # Overall status reflects the digest gap even though daily jobs are fresh.
-    assert data["status"] == "stale"
+    assert data["status"] == "ok"
 
 
 @pytest.mark.asyncio
@@ -229,3 +229,42 @@ async def test_worker_status_is_stale_when_all_insight_users_failed(
     job_by_kind = {job["job_kind"]: job for job in data["jobs"]}
     assert job_by_kind["insights"]["job_status"] == "never_run"
     assert job_by_kind["insights"]["stale"] is True
+
+
+@pytest.mark.asyncio
+async def test_worker_status_overall_stale_when_digest_aged(
+    async_client: AsyncClient,
+) -> None:
+    """A previously successful digest that aged past 7× threshold flags overall."""
+
+    settings.WORKER_STATUS_API_KEY = "secret-key"
+    settings.WORKER_STALE_AFTER_HOURS = 30
+    app.dependency_overrides[get_current_user_lax] = _no_session_user()
+    now = datetime.now(UTC)
+    runs = {
+        WorkerJobKind.DAILY_BUNDLE: _fake_run(
+            WorkerJobKind.DAILY_BUNDLE, finished_at=now - timedelta(hours=2)
+        ),
+        WorkerJobKind.INSIGHTS: _fake_run(
+            WorkerJobKind.INSIGHTS, finished_at=now - timedelta(hours=2)
+        ),
+        # 7 * 30h = 210h threshold; 220h → stale
+        WorkerJobKind.DIGEST: _fake_run(
+            WorkerJobKind.DIGEST, finished_at=now - timedelta(hours=220)
+        ),
+    }
+
+    with patch(
+        "app.api.v1.endpoints.worker_status.latest_successful_system_runs",
+        new=AsyncMock(return_value=runs),
+    ):
+        response = await async_client.get(
+            "/api/v1/worker/status",
+            headers={"X-Worker-Status-Key": "secret-key"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "stale"
+    job_by_kind = {job["job_kind"]: job for job in data["jobs"]}
+    assert job_by_kind["digest"]["job_status"] == "stale"

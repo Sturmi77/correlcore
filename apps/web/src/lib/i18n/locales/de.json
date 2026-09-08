@@ -78,6 +78,24 @@
       "work_context_stress_note": "Stärkere Färbung = besser innerhalb der gezeigten Situationen (Stress invertiert; Farbe je Spalte skaliert).",
       "none": "Keine"
     },
+    "worker_run": {
+      "label": "Analyse",
+      "when_today": "heute {time}",
+      "when_yesterday": "gestern {time}",
+      "when_weekday": "{weekday} {time}",
+      "when_date": "{date}",
+      "succeeded": "Letzter Lauf {when}",
+      "succeeded_with_count": "Letzter Lauf {when} · {count} Erkenntnisse",
+      "failed": "Letzter Lauf fehlgeschlagen {when}",
+      "badge_succeeded": "{when}",
+      "badge_succeeded_with_count": "{when} · {count}",
+      "badge_failed": "fehlgeschlagen · {when}"
+    },
+    "container_health": {
+      "label": "Stack",
+      "unhealthy": "{name} unhealthy",
+      "stopped": "{name} gestoppt"
+    },
     "insight": {
       "empty_statement": "Diese Erkenntnis hat noch keinen Text."
     },
@@ -1291,6 +1309,14 @@
         "close_aria": "Wochenzusammenfassung schliessen"
       }
     },
+    "new_modal": {
+      "eyebrow": "Neue Erkenntnisse",
+      "title": "Frische Analyse",
+      "subtitle": "{count} neue Erkenntnisse seit deinem letzten Besuch",
+      "view_full": "Erkenntnisse oeffnen",
+      "dismiss": "Schliessen",
+      "close_aria": "Neue Erkenntnisse schliessen"
+    },
     "mobile": {
       "eyebrow": "Mobile Zusammenfassung",
       "strongest_heading": "Stärkstes aktuelles Signal",
@@ -1702,6 +1728,21 @@
     "not_ready": "nicht bereit",
     "connected": "verbunden",
     "down": "down",
+    "services": "Stack-Dienste",
+    "services_hint": "Erreichbarkeit aus dem API-Prozess. Das ist nicht der Docker-HEALTHCHECK-Status (kein Docker-Socket im API-Container).",
+    "component_status": {
+      "ok": "ok",
+      "degraded": "eingeschraenkt",
+      "down": "down",
+      "unavailable": "nicht erreichbar"
+    },
+    "containers": "Docker-Container",
+    "containers_hint": "Engine-Status, wenn erreichbar (TCP-Proxy oder Host-docker-CLI). Saubere migrate-Exits gelten als none.",
+    "container_issue": {
+      "none": "ok",
+      "unhealthy": "unhealthy",
+      "stopped": "gestoppt"
+    },
     "db_pool_size": "DB-Pool-Groesse",
     "db_checked_out": "DB ausgecheckt",
     "na": "n/a",

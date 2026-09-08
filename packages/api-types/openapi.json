@@ -427,6 +427,67 @@
         "title": "DeleteAccountRequest",
         "type": "object"
       },
+      "DevContainerHealth": {
+        "description": "Docker-reported state for one Compose/stack container.\n\n``issue`` is ``none`` for a clean one-shot (migrate exited 0) even though\nthe container is stopped.",
+        "properties": {
+          "exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Code"
+          },
+          "health": {
+            "default": "none",
+            "enum": [
+              "healthy",
+              "unhealthy",
+              "starting",
+              "none"
+            ],
+            "title": "Health",
+            "type": "string"
+          },
+          "issue": {
+            "default": "none",
+            "enum": [
+              "unhealthy",
+              "stopped",
+              "none"
+            ],
+            "title": "Issue",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "status_text": {
+            "default": "",
+            "title": "Status Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "service",
+          "state"
+        ],
+        "title": "DevContainerHealth",
+        "type": "object"
+      },
       "DevDbBackupCreateResponse": {
         "properties": {
           "backup": {
@@ -564,6 +625,36 @@
         "title": "DevDbRestoreResponse",
         "type": "object"
       },
+      "DevHealthComponent": {
+        "description": "Reachability of one stack service as seen from the API process.\n\nThis is an application-level probe (TCP / SELECT 1 / PING), not Docker\nHEALTHCHECK state. ADR-0015 forbids a Docker socket in the API container.",
+        "properties": {
+          "detail": {
+            "default": "",
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "degraded",
+              "down",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status"
+        ],
+        "title": "DevHealthComponent",
+        "type": "object"
+      },
       "DevInfoResponse": {
         "properties": {
           "build_time": {
@@ -576,6 +667,13 @@
               }
             ],
             "title": "Build Time"
+          },
+          "containers": {
+            "items": {
+              "$ref": "#/components/schemas/DevContainerHealth"
+            },
+            "title": "Containers",
+            "type": "array"
           },
           "db_checked_out": {
             "anyOf": [
@@ -621,6 +719,13 @@
           "git_commit": {
             "title": "Git Commit",
             "type": "string"
+          },
+          "health_components": {
+            "items": {
+              "$ref": "#/components/schemas/DevHealthComponent"
+            },
+            "title": "Health Components",
+            "type": "array"
           },
           "health_ready": {
             "title": "Health Ready",
@@ -2519,6 +2624,16 @@
             "title": "Insights",
             "type": "array"
           },
+          "last_insight_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InsightWorkerRunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "last_successful_insight_run_at": {
             "anyOf": [
               {
@@ -2881,6 +2996,83 @@
         ],
         "title": "InsightType",
         "type": "string"
+      },
+      "InsightWorkerRunSummary": {
+        "description": "Latest per-user insight generation attempt for Home / status UI.",
+        "properties": {
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "generated_for_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated For Date"
+          },
+          "insight_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insight Count"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "failed",
+              "never_run"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trigger_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Source"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "InsightWorkerRunSummary",
+        "type": "object"
       },
       "InstanceInfo": {
         "description": "Non-sensitive, public deployment descriptor.",

@@ -15,6 +15,8 @@
   import { _ } from 'svelte-i18n';
   import { auth, currentUser } from '$lib/stores/auth';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
+  import { fetchDevInfo } from '$lib/api/dev';
+  import { ApiError } from '$lib/api/client';
   import { fetchDashboardSummary, type DashboardSummaryResponse } from '$lib/api/dashboard';
   import { insightStore, rankedInsights, loadInsights } from '$lib/stores/insights';
   import {
@@ -22,10 +24,15 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
-  import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
+  import { devForceVisualizations, devMode, devPhase } from '$lib/stores/devMode';
   import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { pwaInstallStore } from '$lib/stores/pwaInstall';
   import { findEntryForDate, localIsoDate } from '$lib/utils/home';
+  import {
+    insightWorkerIsOverdue,
+    selectFaultyHomeContainers,
+    type FaultyHomeContainer,
+  } from '$lib/utils/devHealth';
   import { canUseOfflineSync } from '$lib/offline/featureFlag';
   import { findLocalEntryByDateSlot, localEntryToEntryResponse } from '$lib/stores/entriesOffline';
   import { isCalendarContextInsight } from '$lib/utils/insightConfounder';
@@ -69,12 +76,30 @@
   let preferencesLoaded = false;
   let activeDevFixtureKey = '';
   let onboardingRedirecting = false;
+  let faultyContainers: FaultyHomeContainer[] = [];
+  let containerHealthKey = '';
+  let containerHealthGeneration = 0;
 
   $: entrySheetOpen = $entrySheetStore.open;
 
   $: latestInsight = $insightStore.latest;
   $: insightMaturity = $insightStore.insightMaturity;
+  $: lastInsightRun = $insightStore.lastInsightRun;
   $: insightLoading = $insightStore.loading;
+  $: workerNeedsContainerHealth = !insightLoading && insightWorkerIsOverdue(lastInsightRun);
+  $: containerHealthRequest =
+    $auth.status === 'authenticated' && $devMode && workerNeedsContainerHealth ? 'load' : 'skip';
+
+  $: if (containerHealthRequest !== containerHealthKey) {
+    containerHealthKey = containerHealthRequest;
+    containerHealthGeneration += 1;
+    const generation = containerHealthGeneration;
+    if (containerHealthRequest === 'load') {
+      void loadFaultyContainers(generation);
+    } else {
+      faultyContainers = [];
+    }
+  }
   $: contextInsight = $rankedInsights.find((i) => isCalendarContextInsight(i)) ?? null;
   // See selectNewestWeekdayPattern's doc comment: rankInsights sorts by
   // confidence × |effect_size|, not recency, so picking the top-ranked
@@ -100,6 +125,25 @@
     preferencesLoaded ? (userPreferences?.home_sections ?? null) : null
   );
   $: enabledHomeSections = preferencesLoaded ? resolveEnabledSections(homeSections) : [];
+
+  async function loadFaultyContainers(generation: number): Promise<void> {
+    try {
+      const info = await fetchDevInfo();
+      if (generation !== containerHealthGeneration) return;
+      if (!insightWorkerIsOverdue(get(insightStore).lastInsightRun)) {
+        faultyContainers = [];
+        return;
+      }
+      faultyContainers = selectFaultyHomeContainers(info);
+    } catch (err) {
+      if (generation !== containerHealthGeneration) return;
+      if (err instanceof ApiError && (err.status === 404 || err.status === 401)) {
+        faultyContainers = [];
+        return;
+      }
+      faultyContainers = [];
+    }
+  }
 
   function openEntry(date: string = todayIso): void {
     openEntrySheet(date, { onboardingTags: showOnboardingTags });
@@ -293,6 +337,8 @@
       <HomeTodayContext
         {todayIso}
         {todayEntry}
+        {lastInsightRun}
+        {faultyContainers}
         loading={dashboardLoading && !dashboardLoaded}
         on:logToday={() => openEntry(todayIso)}
       />
