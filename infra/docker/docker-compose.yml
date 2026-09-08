@@ -4,6 +4,7 @@
 #
 # Start: docker compose up -d
 # Optional: docker compose --profile monitoring up -d
+# Optional: docker compose --profile mailpit up -d  # local SMTP catcher (eval)
 # Upgrade guide: docs/selfhost/M10_COMPOSE_UPGRADE.md
 
 name: correlcore
@@ -281,7 +282,9 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  # ── MailPit (Dev SMTP — Issue #39) ───────────────────────────────────────
+  # ── MailPit (eval SMTP catcher — Issue #39; profile `mailpit`) ───────────
+  # Not started by default. Homelab without a relay: `--profile mailpit` or
+  # COMPOSE_PROFILES=mailpit. Production SMTP: omit the profile.
   mailpit:
     image: axllent/mailpit:latest
     container_name: correlcore-mailpit
@@ -294,6 +297,8 @@ services:
       - '127.0.0.1:8025:8025'
     networks:
       - internal
+    profiles:
+      - mailpit
     security_opt:
       - no-new-privileges:true
     healthcheck:

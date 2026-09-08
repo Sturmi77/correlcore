@@ -20,9 +20,16 @@ Dockhand pullt das Repo selbst und re-deployt bei jedem Webhook-Push.
 3. Tab **Environment** öffnen → Variablen aus `.env.example` übernehmen und
    Secrets ausfüllen (siehe unten).
 4. Optional **Profiles to enable** setzen:
+   - `mailpit` für den lokalen SMTP-Catcher (Eval ohne echten Relay; UI `:8025`)
    - `monitoring` für GlitchTip
-   - `worker` fuer den M2-Cleanup-Worker
+     Wer schon einen SMTP-Relay in `SMTP_*` hat, `mailpit` **nicht** aktivieren.
 5. **Deploy** klicken.
+
+Nach einem Compose-Update, das Mailpit hinter das Profil legt: wenn der alte
+`correlcore-mailpit`-Container noch läuft, Redeploy mit Orphan-Removal (Dockhand
+entfernt Profile-Services, die nicht mehr aktiv sind, oft erst nach explizitem
+Cleanup). Echter SMTP: Profil `mailpit` aus **Profiles to enable** und aus
+`COMPOSE_PROFILES` lassen.
 
 ### Variante B — Manuelles Verzeichnis
 
@@ -72,7 +79,7 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 | Variable       | Pflicht | Default     | Beschreibung                                                                                                                                                                                                                                                                                                                    |
 | -------------- | ------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `IMAGE_TAG`    | nein    | `latest`    | Welcher GHCR-Tag für `correlcore-api` und `correlcore-web` gepullt wird. Empfohlen: pinned Tag (`sha-abc1234` oder `v0.3.0`) damit Dockhands Vulnerability-Scan (Grype/Trivy) reproducible vergleichen kann. Verfügbare Tags siehe [GHCR-Pakete im Repo](https://github.com/Sturmi77/correlcore/pkgs/container/correlcore-api). |
-| `TAILSCALE_IP` | nein    | `127.0.0.1` | IPv4-Adresse, auf die api/web/mailpit (und optional GlitchTip) ihre Ports binden. Default `127.0.0.1` = nur vom Host selbst erreichbar. Für Tailnet-Zugriff: `tailscale ip -4` auf dem Host → z. B. `100.101.102.103`.                                                                                                          |
+| `TAILSCALE_IP` | nein    | `127.0.0.1` | IPv4-Adresse, auf die web (und optional Mailpit/GlitchTip) ihre Ports binden. Default `127.0.0.1` = nur vom Host selbst erreichbar. Für Tailnet-Zugriff: `tailscale ip -4` auf dem Host → z. B. `100.101.102.103`.                                                                                                              |
 
 ### Backend — App-Modus
 
@@ -131,7 +138,7 @@ sind, welche Form sie brauchen und wo sie im Backend-Code wirken
 
 | Variable        | Pflicht | Default                    | Beschreibung                                                                                                                                                                                                                                                           |
 | --------------- | ------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SMTP_HOST`     | nein    | `mailpit`                  | SMTP-Server-Hostname. Default zeigt auf den lokalen Mailpit-Container. Für echten Mailversand: z. B. `smtp.eu.mailgun.org`, `smtp.fastmail.com`.                                                                                                                       |
+| `SMTP_HOST`     | nein    | `mailpit`                  | SMTP-Server-Hostname. Homelab-Default zeigt auf den lokalen Mailpit-Container (Profil `mailpit`). Für echten Mailversand: z. B. `smtp.eu.mailgun.org`, `smtp.fastmail.com` — und das Profil `mailpit` weglassen.                                                       |
 | `SMTP_PORT`     | nein    | `1025`                     | SMTP-Port. Mailpit lauscht auf `1025` (kein TLS). Echter Provider meist `587` (STARTTLS) oder `465` (SMTPS). **Hinweis:** Backend-Default in `config.py` ist `587` — die Compose überschreibt das hier explizit auf `1025`, damit Mailpit out-of-the-box funktioniert. |
 | `SMTP_USER`     | nein    | _leer_                     | Auth-User beim SMTP-Provider. Für Mailpit nicht nötig.                                                                                                                                                                                                                 |
 | `SMTP_PASSWORD` | nein    | _leer_                     | Auth-Passwort. Für Mailpit nicht nötig.                                                                                                                                                                                                                                |
@@ -192,13 +199,13 @@ Tailnet erreichbar sein soll (sonst nur localhost).
 ## Tailscale-Bind
 
 Setze `TAILSCALE_IP=$(tailscale ip -4)` in der `.env`. Dann binden web und
-mailpit nur auf das Tailnet-Interface — kein WAN-Exposure.
+(optional) mailpit nur auf das Tailnet-Interface — kein WAN-Exposure.
 
-| Service | Host-Port (Default)      | Zugriff im Tailnet                       |
-| ------- | ------------------------ | ---------------------------------------- |
-| Web     | `${WEB_HOST_PORT:-3010}` | `http://<tailscale-ip>:<WEB_HOST_PORT>`  |
-| API     | _kein Host-Port_         | nur intern (`http://api:8000`, ADR-0011) |
-| Mailpit | 8025                     | `http://<tailscale-ip>:8025`             |
+| Service | Host-Port (Default)      | Zugriff im Tailnet                              |
+| ------- | ------------------------ | ----------------------------------------------- |
+| Web     | `${WEB_HOST_PORT:-3010}` | `http://<tailscale-ip>:<WEB_HOST_PORT>`         |
+| API     | _kein Host-Port_         | nur intern (`http://api:8000`, ADR-0011)        |
+| Mailpit | 8025                     | `http://<tailscale-ip>:8025` (Profil `mailpit`) |
 
 **Seit ADR-0011 hat die API kein Host-Port-Mapping mehr.** Der Web-Container
 proxyt `/api/*` serverseitig an `INTERNAL_API_URL` (Default `http://api:8000`)
@@ -286,7 +293,7 @@ docker ps --format '{{.Names}} {{.Image}}' | grep correlcore
 > manueller **Re-pull** ist dafür nicht mehr nötig. Für `postgres`,
 > `redis` und `mailpit` ist `pull_policy` bewusst nicht gesetzt:
 > diese laufen auf gepinnten Versions-Tags und sollen sich nicht
-> ungewollt aktualisieren.
+> ungewollt aktualisieren. Mailpit startet nur mit Profil `mailpit`.
 >
 > **Achtung beim Mischen mit `:latest`:** Da Auto-Pull zwangsläufig
 > `:latest` hält, propagiert ein fehlerhaftes main-Image direkt zum

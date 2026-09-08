@@ -85,7 +85,7 @@ STACKS: dict[str, dict[str, Any]] = {
             "CorrelCore — Compose stack for published-image user tests (GHCR).",
             "Tailscale-internal homelab (no Traefik/TLS); ports bind to the",
             "Tailscale/loopback interface only. Analytics worker always on;",
-            "optional profile: `monitoring` (GlitchTip).",
+            "optional profiles: `mailpit` (SMTP catcher), `monitoring` (GlitchTip).",
             "",
             "Start:  cp .env.example .env  &&  edit  &&",
             "        docker compose -f docker-compose.user-test.yml up -d",
@@ -137,7 +137,8 @@ STACKS: dict[str, dict[str, Any]] = {
             "Tailscale-internal homelab (no Traefik/TLS). Per ADR-0011 the API is",
             "not published on the host: the web container proxies /api/* to",
             "http://api:8000 inside the Compose network. Analytics worker always",
-            "on; optional profile: `monitoring` (GlitchTip).",
+            "on; optional profiles: `mailpit` (SMTP catcher), `monitoring`",
+            "(GlitchTip).",
         ],
     },
 }
@@ -167,13 +168,15 @@ _CSP_NOTE = [
 ]
 
 # Homelab stacks start the analytics `worker` by default (#818), matching
-# production. GlitchTip stays behind the optional `monitoring` profile where
-# the stack ships it.
+# production. Mailpit stays behind the optional `mailpit` profile; GlitchTip
+# stays behind `monitoring` where the stack ships it.
 def _worker_note(*, glitchtip: bool) -> list[str]:
     lines = [
         "The analytics `worker` (nightly insights + retention cleanup + the",
         "weekly in-app digest on Sundays) always starts with this stack (#818).",
         "Users opt in to the digest per account under Settings → Analysis.",
+        "Optional: enable Mailpit with COMPOSE_PROFILES=mailpit",
+        "(or `--profile mailpit`) for the local SMTP catcher.",
     ]
     if glitchtip:
         lines.extend(

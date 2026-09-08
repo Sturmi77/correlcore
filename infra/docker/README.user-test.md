@@ -17,7 +17,7 @@ Zielumgebung: Tailscale-internes Netz (Homelab, Synology, Mini-PC).
 | `web`       | SvelteKit-Frontend (`ghcr.io/sturmi77/correlcore-web`) | _always_     |
 | `postgres`  | PostgreSQL 16 + pgvector                               | _always_     |
 | `redis`     | Token-Store + Rate-Limit-State                         | _always_     |
-| `mailpit`   | Lokaler SMTP-Catcher für Verifizierungs-Mails          | _always_     |
+| `mailpit`   | Lokaler SMTP-Catcher für Verifizierungs-Mails          | `mailpit`    |
 | `glitchtip` | Error-Tracking (Web-UI auf Port 8080)                  | `monitoring` |
 | `worker`    | M2-Cleanup-Worker fuer unverified Accounts             | `worker`     |
 
@@ -95,6 +95,10 @@ verwirft Auth-Cookies auf `http://…` — Symptom: Login OK, danach
 docker compose -f docker-compose.user-test.yml up -d
 docker compose -f docker-compose.user-test.yml logs -f api
 ```
+
+`.env.user-test.example` setzt `COMPOSE_PROFILES=mailpit` (SMTP-Catcher auf
+`:8025`). Ohne das Profil und ohne echten Relay kommen Verifikations-Mails
+nicht an.
 
 Healthcheck-Status:
 

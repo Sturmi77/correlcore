@@ -7,10 +7,10 @@ Deploy CorrelCore on your own infrastructure. Full operator reference also lives
 
 ## Deployment paths
 
-| Path               | Compose file                    | TLS                                     | Best for                   |
-| ------------------ | ------------------------------- | --------------------------------------- | -------------------------- |
-| **B — Quickstart** | `docker-compose.quickstart.yml` | Bind to Tailscale IP; Mailpit for email | First eval, homelab        |
-| **A — Public VPS** | `docker-compose.yml`            | Traefik + Let's Encrypt                 | Internet-facing production |
+| Path               | Compose file                    | TLS                                                 | Best for                   |
+| ------------------ | ------------------------------- | --------------------------------------------------- | -------------------------- |
+| **B — Quickstart** | `docker-compose.quickstart.yml` | Bind to Tailscale IP; Mailpit via profile `mailpit` | First eval, homelab        |
+| **A — Public VPS** | `docker-compose.yml`            | Traefik + Let's Encrypt                             | Internet-facing production |
 
 **Start here:** Path B for a 10-minute local eval. Path A when you have a public domain and SMTP relay.
 
@@ -56,6 +56,10 @@ docker compose -f docker-compose.quickstart.yml up -d
 Optional profiles:
 
 ```bash
+# Local SMTP catcher (verify-email UI on :8025). Bootstrap writes
+# COMPOSE_PROFILES=mailpit so a plain `up -d` already starts it.
+docker compose -f docker-compose.quickstart.yml --profile mailpit up -d
+
 # Error tracking (GlitchTip on port 8080)
 docker compose -f docker-compose.quickstart.yml --profile monitoring up -d
 ```
@@ -72,7 +76,9 @@ curl -sf "http://127.0.0.1:${WEB_HOST_PORT:-3010}/api/v1/health"
 
 Open the app at `http://${TAILSCALE_IP}:${WEB_HOST_PORT}` (default `http://127.0.0.1:3010`).
 
-Verify-email links appear in **Mailpit**: `http://${TAILSCALE_IP}:8025`.
+Verify-email links appear in **Mailpit** when the `mailpit` profile is on:
+`http://${TAILSCALE_IP}:8025`. With a real SMTP relay, omit that profile and
+set `SMTP_*` in `.env`.
 
 ---
 

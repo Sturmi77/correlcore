@@ -70,11 +70,14 @@ From repository root:
 
 ```bash
 cd infra/docker
-docker compose -f docker-compose.quickstart.yml up -d
-docker compose -f docker-compose.quickstart.yml ps
+docker compose -f docker-compose.quickstart.yml --profile mailpit up -d
+docker compose -f docker-compose.quickstart.yml --profile mailpit ps
 ```
 
 **Expected running:** `migrate` (exited 0), `api`, `web`, `postgres`, `redis`, `mailpit`.
+
+Without `--profile mailpit` (and without `COMPOSE_PROFILES=mailpit` in `.env`),
+Mailpit is absent — that is the production-SMTP path.
 
 **Not present:** `minio`, `traefik`, `socket-proxy`.
 

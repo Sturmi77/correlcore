@@ -14,8 +14,9 @@
 #
 # The analytics `worker` (nightly insights + retention cleanup + the weekly
 # in-app digest on Sundays) always starts with this stack — same as production
-# (#818). Optional profile: `monitoring` (GlitchTip). Users still opt in to the
-# digest per account under Settings → Analysis (`digest_enabled`).
+# (#818). Optional profiles: `mailpit` (local SMTP catcher for eval) and
+# `monitoring` (GlitchTip). Users still opt in to the digest per account under
+# Settings → Analysis (`digest_enabled`).
 #
 # See docs/selfhost/INSTALL.md Path B and docs/M10_SPRINT_PLAN.md.
 
@@ -165,6 +166,9 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # Local SMTP catcher for eval (verify/reset mail without a relay).
+  # Opt-in: COMPOSE_PROFILES=mailpit or `--profile mailpit`. Real SMTP: omit
+  # this profile, set SMTP_* to the relay, then `up -d --remove-orphans`.
   mailpit:
     image: axllent/mailpit:latest
     container_name: correlcore-quickstart-mailpit
@@ -177,6 +181,8 @@ services:
       - '${TAILSCALE_IP:-127.0.0.1}:8025:8025'
     networks:
       - internal
+    profiles:
+      - mailpit
     security_opt:
       - no-new-privileges:true
     healthcheck:

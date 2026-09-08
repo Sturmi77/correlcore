@@ -7,12 +7,13 @@ Last updated: 2026-07-19
 **Combined cutover:** [`hosted-cutover.md`](hosted-cutover.md)
 
 Operator runbook for **real email** on the Hosted reference instance.
-Selfhost quickstart keeps Mailpit — do not change that path.
+Selfhost eval still enables Mailpit via profile `mailpit` (`COMPOSE_PROFILES`
+in the quickstart/dockhand env examples) — do not delete the service from compose.
 
 ## Goal
 
 Verify- and password-reset mails leave `@correlcore.com` via a real SMTP
-relay. After E2E green: **Mailpit is removed from the Hosted stack**.
+relay. Mailpit is Compose profile `mailpit` and must stay **off** on Hosted.
 
 ## Recommendation for correlcore.com
 
@@ -93,15 +94,21 @@ Rules:
 
 ---
 
-## C. Remove Mailpit (Hosted only)
+## C. Mailpit (Hosted off by default)
+
+Mailpit is Compose profile `mailpit`, not part of the default stack. Hosted
+and any instance with a real relay: do **not** enable that profile.
 
 After verify/reset E2E passes:
 
-1. Stop/remove Mailpit service from the Hosted compose project.
-2. Unpublish Mailpit ports (8025/1025) if mapped.
-3. Confirm no container still named/using `mailpit` as SMTP target.
-4. **Do not** change [`docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml)
-   defaults — Selfhost/dev keeps Mailpit.
+1. Confirm `COMPOSE_PROFILES` / Dockhand **Profiles to enable** does not include
+   `mailpit`.
+2. Redeploy with orphan removal (`docker compose up -d --remove-orphans` or
+   Dockhand equivalent) so a leftover `correlcore-mailpit` container is dropped.
+3. Confirm `SMTP_HOST` is the relay, not `mailpit`.
+4. Selfhost eval still enables Mailpit via `COMPOSE_PROFILES=mailpit` in the
+   quickstart/dockhand `.env*.example` files — do not delete the service from
+   compose.
 
 ---
 
@@ -124,5 +131,5 @@ From API logs: successful send, no connection errors to `mailpit`.
 - [ ] Relay credentials live in Hosted `.env` (not git)
 - [ ] SPF/DKIM/DMARC appropriate for chosen relay
 - [ ] Verify + reset E2E on public origin
-- [ ] Mailpit removed from Hosted stack
-- [ ] Selfhost quickstart still documents Mailpit
+- [ ] Mailpit profile not enabled on Hosted (`SMTP_HOST` ≠ `mailpit`)
+- [ ] Selfhost quickstart still documents `COMPOSE_PROFILES=mailpit`

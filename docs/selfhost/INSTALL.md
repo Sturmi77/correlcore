@@ -17,11 +17,11 @@ Consolidates [`infra/dockhand/README.md`](../../infra/dockhand/README.md),
 
 ## Deployment paths
 
-| Path                         | Compose file                                                                                                                                            | TLS / exposure                            | Best for                        |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------- |
-| **B — Quickstart / Homelab** | [`infra/docker/docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml)                                                        | Bind to `TAILSCALE_IP`; Mailpit for email | First eval, Tailscale, Dockhand |
-| **A — Public VPS**           | [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml)                                                                              | Traefik + Let's Encrypt on 80/443         | Internet-facing production      |
-| **Legacy homelab**           | [`infra/dockhand/compose.yaml`](../../infra/dockhand/compose.yaml) or [`docker-compose.user-test.yml`](../../infra/docker/docker-compose.user-test.yml) | Same as quickstart                        | Existing Dockhand adopters      |
+| Path                         | Compose file                                                                                                                                            | TLS / exposure                                        | Best for                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------- |
+| **B — Quickstart / Homelab** | [`infra/docker/docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml)                                                        | Bind to `TAILSCALE_IP`; Mailpit via profile `mailpit` | First eval, Tailscale, Dockhand |
+| **A — Public VPS**           | [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml)                                                                              | Traefik + Let's Encrypt on 80/443                     | Internet-facing production      |
+| **Legacy homelab**           | [`infra/dockhand/compose.yaml`](../../infra/dockhand/compose.yaml) or [`docker-compose.user-test.yml`](../../infra/docker/docker-compose.user-test.yml) | Same as quickstart                                    | Existing Dockhand adopters      |
 
 **Start here:** Path B for a 10-minute local eval. Path A when you have a public domain and SMTP relay.
 
@@ -67,6 +67,10 @@ docker compose -f docker-compose.quickstart.yml up -d
 Optional profiles (see [`COMPOSE_STACKS.md`](COMPOSE_STACKS.md)):
 
 ```bash
+# Local SMTP catcher (verify-email UI on :8025). Bootstrap writes
+# COMPOSE_PROFILES=mailpit so a plain `up -d` already starts it.
+docker compose -f docker-compose.quickstart.yml --profile mailpit up -d
+
 # Error tracking (GlitchTip on port 8080)
 docker compose -f docker-compose.quickstart.yml --profile monitoring up -d
 ```
@@ -84,7 +88,9 @@ curl -sf "http://127.0.0.1:${WEB_HOST_PORT:-3010}/api/v1/health"
 
 Open the app at `http://${TAILSCALE_IP}:${WEB_HOST_PORT}` (default `http://127.0.0.1:3010`).
 
-Verify-email links appear in **Mailpit**: `http://${TAILSCALE_IP}:8025`.
+Verify-email links appear in **Mailpit** when the `mailpit` profile is on:
+`http://${TAILSCALE_IP}:8025`. With a real SMTP relay, omit that profile and
+set `SMTP_*` in `.env`.
 
 ### 4. Upgrade to production VPS
 
@@ -99,7 +105,7 @@ When ready for a public domain, follow Path A below. Your Postgres volume is sep
 - Linux host with Docker ≥ 24 and Compose v2
 - Public IPv4 (and optionally IPv6) on ports **80** and **443**
 - A domain you control (example: `correlcore.example.com`)
-- SMTP relay for email verification (or Mailpit for non-production tests)
+- SMTP relay for email verification (or `--profile mailpit` for non-production tests)
 
 ### 1. DNS records
 
@@ -202,6 +208,9 @@ Optional profiles:
 ```bash
 # Error tracking (GlitchTip at https://errors.${DOMAIN})
 docker compose --profile monitoring up -d
+
+# Local SMTP catcher (eval only — skip when SMTP_* points at a real relay)
+docker compose --profile mailpit up -d
 ```
 
 The **analytics worker** starts automatically with the production stack (insights + GDPR account cleanup). No `--profile worker` needed on Path A. The same worker also generates the weekly in-app **digest** on Sundays; there is no separate profile or container. Users opt in per account under Settings → Analysis (`digest_enabled`, off by default).

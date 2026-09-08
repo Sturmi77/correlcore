@@ -8,10 +8,10 @@ service shape.
 
 ## Canonical
 
-| Path                                                                                             | Use when                 | Notes                                                                    |
-| ------------------------------------------------------------------------------------------------ | ------------------------ | ------------------------------------------------------------------------ |
-| [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml)                       | Public VPS + Traefik TLS | **Path A** in [`INSTALL.md`](INSTALL.md). Analytics `worker` always on.  |
-| [`infra/docker/docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml) | Homelab / Tailscale eval | **Path B**. Analytics `worker` always on; optional profile `monitoring`. |
+| Path                                                                                             | Use when                 | Notes                                                                                |
+| ------------------------------------------------------------------------------------------------ | ------------------------ | ------------------------------------------------------------------------------------ |
+| [`infra/docker/docker-compose.yml`](../../infra/docker/docker-compose.yml)                       | Public VPS + Traefik TLS | **Path A** in [`INSTALL.md`](INSTALL.md). Analytics `worker` always on.              |
+| [`infra/docker/docker-compose.quickstart.yml`](../../infra/docker/docker-compose.quickstart.yml) | Homelab / Tailscale eval | **Path B**. Analytics `worker` always on; optional profiles `mailpit`, `monitoring`. |
 
 Bootstrap secrets: `scripts/bootstrap-selfhost-env.sh --quickstart` or `--production`.
 
@@ -28,10 +28,11 @@ Env examples must stay aligned for: `SECRET_KEY`, `ENCRYPTION_KEY`,
 
 ## Profiles
 
-| Profile            | Service                                  | Purpose                        |
-| ------------------ | ---------------------------------------- | ------------------------------ |
-| _(none / default)_ | api, web, postgres, redis, **worker**, … | Core app + scheduled analytics |
-| `monitoring`       | GlitchTip (where defined)                | Error tracking                 |
+| Profile            | Service                                  | Purpose                                |
+| ------------------ | ---------------------------------------- | -------------------------------------- |
+| _(none / default)_ | api, web, postgres, redis, **worker**, … | Core app + scheduled analytics         |
+| `mailpit`          | Mailpit SMTP catcher (UI `:8025`)        | Eval verify/reset without a real relay |
+| `monitoring`       | GlitchTip (where defined)                | Error tracking                         |
 
 The analytics `worker` (insights, retention cleanup, Sunday digest generation)
 starts with the default stack on Path A **and** Path B / Dockhand / Dockge —
@@ -49,16 +50,29 @@ Digest **delivery** remains opt-in **per user** (Settings → Analysis,
 > Upgrading from Path B / Dockhand where you previously set
 > `COMPOSE_PROFILES=worker`: you can leave it (harmless) or remove `worker`
 > from the list — the worker service no longer uses that profile.
+>
+> **Mailpit is now profile `mailpit`.** Existing stacks that still want the
+> catcher must add it (`COMPOSE_PROFILES=mailpit` or Dockhand **Profiles to
+> enable**). Instances with a real SMTP relay should omit it and redeploy
+> with `--remove-orphans` so `correlcore-mailpit` is dropped.
 
 Examples:
 
 ```bash
-# Default Path B — worker included
+# Default Path B — worker included; Mailpit off unless profiled
 docker compose -f docker-compose.quickstart.yml up -d
+
+# Homelab eval with Mailpit (verify-email UI on :8025)
+docker compose -f docker-compose.quickstart.yml --profile mailpit up -d
 
 # Homelab + GlitchTip
 docker compose -f docker-compose.quickstart.yml --profile monitoring up -d
 ```
+
+`.env.quickstart.example` sets `COMPOSE_PROFILES=mailpit` so bootstrap/eval
+still gets the catcher without passing `--profile`. Operators with a real
+SMTP relay omit `mailpit` from that list (or from Dockhand **Profiles to enable**)
+and run `up -d --remove-orphans` so the old container is dropped.
 
 Manual one-shot (any env with DB access):
 

@@ -67,6 +67,6 @@ jobs:
             infra/dockge/compose.yaml \
             infra/dockhand/compose.yaml; do
             echo "::group::docker compose config — $f"
-            docker compose -f "$f" --profile worker --profile monitoring config >/dev/null
+            docker compose -f "$f" --profile mailpit --profile monitoring config >/dev/null
             echo "::endgroup::"
           done

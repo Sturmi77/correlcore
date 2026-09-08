@@ -9,7 +9,7 @@
 # CorrelCore — Compose stack for published-image user tests (GHCR).
 # Tailscale-internal homelab (no Traefik/TLS); ports bind to the
 # Tailscale/loopback interface only. Analytics worker always on;
-# optional profile: `monitoring` (GlitchTip).
+# optional profiles: `mailpit` (SMTP catcher), `monitoring` (GlitchTip).
 #
 # Start:  cp .env.example .env  &&  edit  &&
 #         docker compose -f docker-compose.user-test.yml up -d
@@ -17,6 +17,8 @@
 # The analytics `worker` (nightly insights + retention cleanup + the
 # weekly in-app digest on Sundays) always starts with this stack (#818).
 # Users opt in to the digest per account under Settings → Analysis.
+# Optional: enable Mailpit with COMPOSE_PROFILES=mailpit
+# (or `--profile mailpit`) for the local SMTP catcher.
 # Optional: enable GlitchTip with COMPOSE_PROFILES=monitoring
 # (or `--profile monitoring`).
 #
@@ -198,6 +200,8 @@ services:
     - ${TAILSCALE_IP:-127.0.0.1}:8025:8025
     networks:
     - internal
+    profiles:
+    - mailpit
     security_opt:
     - no-new-privileges:true
     healthcheck:

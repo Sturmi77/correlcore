@@ -11,11 +11,14 @@
 # Tailscale-internal homelab (no Traefik/TLS). Per ADR-0011 the API is
 # not published on the host: the web container proxies /api/* to
 # http://api:8000 inside the Compose network. Analytics worker always
-# on; optional profile: `monitoring` (GlitchTip).
+# on; optional profiles: `mailpit` (SMTP catcher), `monitoring`
+# (GlitchTip).
 #
 # The analytics `worker` (nightly insights + retention cleanup + the
 # weekly in-app digest on Sundays) always starts with this stack (#818).
 # Users opt in to the digest per account under Settings → Analysis.
+# Optional: enable Mailpit with COMPOSE_PROFILES=mailpit
+# (or `--profile mailpit`) for the local SMTP catcher.
 # Optional: enable GlitchTip with COMPOSE_PROFILES=monitoring
 # (or `--profile monitoring`).
 #
@@ -222,6 +225,8 @@ services:
     - ${TAILSCALE_IP:-127.0.0.1}:8025:8025
     networks:
     - correlcore
+    profiles:
+    - mailpit
     security_opt:
     - no-new-privileges:true
     healthcheck:

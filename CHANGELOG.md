@@ -8,6 +8,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Mailpit is a Compose profile (`mailpit`).** The catcher no longer starts
+  with the default stack (same opt-in pattern as GlitchTip/`monitoring`). Homelab
+  eval: `COMPOSE_PROFILES=mailpit` is set in the quickstart/dockhand/dockge
+  `.env*.example` files (or Dockhand **Profiles to enable**). Real SMTP: omit
+  the profile, set `SMTP_*` to the relay, then `up -d --remove-orphans` (or
+  Dockhand redeploy with orphan cleanup) so `correlcore-mailpit` is dropped.
+
 ### Added
 
 - **Developer View stack health** — `/dev` Runtime lists per-service reachability

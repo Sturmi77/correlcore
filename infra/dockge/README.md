@@ -42,13 +42,13 @@ python3 -c 'import secrets; print(secrets.token_urlsafe(24))'
 ## Tailscale-Bind
 
 Setze `TAILSCALE_IP=$(tailscale ip -4)` in der `.env`. Dann binden api/web/
-mailpit nur auf das Tailnet-Interface — kein WAN-Exposure.
+(optional mailpit) nur auf das Tailnet-Interface — kein WAN-Exposure.
 
 | Service | Host-Port (Default)      | Zugriff im Tailnet                                  |
 | ------- | ------------------------ | --------------------------------------------------- |
 | Web     | `${WEB_HOST_PORT:-3000}` | `http://<tailscale-ip>:<WEB_HOST_PORT>`             |
 | API     | `${API_HOST_PORT:-8210}` | `http://<tailscale-ip>:<API_HOST_PORT>/health/live` |
-| Mailpit | 8025                     | `http://<tailscale-ip>:8025`                        |
+| Mailpit | 8025                     | `http://<tailscale-ip>:8025` (Profil `mailpit`)     |
 
 > Host-Ports sind über `API_HOST_PORT` (Default `8210`) und `WEB_HOST_PORT`
 > (Default `3000`) in der `.env` konfigurierbar — falls auf dem Host bereits
@@ -73,6 +73,9 @@ Migration 012 erteilt Rechte und erzwingt Row-Level-Security auf User-Daten.
 - **Analytics-Worker** (Insights, Cleanup, wöchentlicher Digest) startet mit dem
   Default-Stack — kein `COMPOSE_PROFILES=worker` nötig (#818). Der Worker startet
   `supercronic` und braucht ein **Image ≥ v1.5.0**.
+- **Mailpit** (SMTP-Catcher, UI `:8025`) ist Profil `mailpit`. `.env.example`
+  setzt `COMPOSE_PROFILES=mailpit` für Eval. Echter Relay: `mailpit` aus der
+  Liste nehmen und `SMTP_*` setzen, danach Redeploy mit Orphan-Removal.
 - **GlitchTip** (Error-Tracking) ist in diesem Stack **nicht enthalten** —
   anders als bei quickstart/user-test gibt es hier keinen GlitchTip-Service.
   Wer Error-Tracking braucht, nimmt den `user-test`- oder `quickstart`-Stack
