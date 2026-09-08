@@ -85,7 +85,7 @@ git clone https://github.com/Sturmi77/correlcore.git
 cd correlcore/infra/docker
 cp .env.example .env
 # Edit .env: DOMAIN, LETSENCRYPT_EMAIL, SECRET_KEY, ENCRYPTION_KEY, passwords — see INSTALL.md
-# Pin IMAGE_TAG=v1.7.1 (or the latest v1.x) for published GHCR images
+# Pin IMAGE_TAG=v1.8.0 (or the latest v1.x) for published GHCR images
 # Set acme.email in infra/docker/traefik/traefik.yml to match LETSENCRYPT_EMAIL
 docker compose up -d
 ```
