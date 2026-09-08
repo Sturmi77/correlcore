@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date as date_type
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -82,6 +83,80 @@ class EntryStreakResponse(BaseModel):
     total_entry_days: int
     last_entry_date: date_type | None = None
     as_of: date_type
+
+
+# ---------------------------------------------------------------------------
+# Health Data Maturity (Issue #852) — honest data-readiness / coverage panel.
+# See docs/features/health-data-maturity.md. This is a coverage/maturity
+# overview, NOT a physiological or medical readiness score.
+# ---------------------------------------------------------------------------
+
+HealthContextSectionId = Literal["symptom", "sleep"]
+HealthContextReason = Literal[
+    "ok",
+    "insufficient_entries",
+    "insufficient_coverage",
+    "no_consent",
+]
+
+
+class HealthContextMaturity(BaseModel):
+    """Coarse analysis-maturity phase (mirrors the shared InsightMaturity).
+
+    Rendered via the reused ``InsightStageHeader`` — the frontend must not
+    recompute the phase (see spec G1/G5, FRONTEND.md).
+    """
+
+    phase: str
+    phase_index: int = Field(ge=1, le=4)
+    current_entries: int = Field(ge=0)
+    next_phase_at: int | None = Field(default=None, ge=1)
+    entries_until_next: int | None = Field(default=None, ge=0)
+
+
+class CoverageMetric(BaseModel):
+    """A neutral coverage ratio over the rolling window (no streak record)."""
+
+    days_with_data: int = Field(ge=0)
+    window_days: int = Field(ge=1)
+    pct: float = Field(ge=0, le=1)
+
+
+class HealthContextCoverage(BaseModel):
+    entry: CoverageMetric
+    sleep: CoverageMetric
+    symptom: CoverageMetric
+
+
+class HealthContextSection(BaseModel):
+    """Progressive-disclosure gate for one section (Backend owns the decision)."""
+
+    id: HealthContextSectionId
+    unlocked: bool
+    reason: HealthContextReason
+    entries_until_unlock: int | None = Field(default=None, ge=0)
+    copy_key: str
+
+
+class HealthConnectStatus(BaseModel):
+    """Optional Health-Connect meta — never carries Art. 9 health values.
+
+    v1 populates ``consent`` only; ``last_sync_at`` / ``sleep_import_ok`` are
+    reserved for when the import service exposes that state (spec D6).
+    """
+
+    consent: bool
+    last_sync_at: datetime | None = None
+    sleep_import_ok: bool | None = None
+
+
+class HealthContextResponse(BaseModel):
+    as_of: date_type
+    coverage_window_days: int = Field(ge=1)
+    maturity: HealthContextMaturity
+    coverage: HealthContextCoverage
+    sections: list[HealthContextSection] = Field(default_factory=list)
+    health_connect: HealthConnectStatus | None = None
 
 
 class TagCooccurrenceTagRef(BaseModel):

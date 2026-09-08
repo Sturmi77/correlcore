@@ -555,6 +555,28 @@
       "heading": "Gesundheitsbereitschaft",
       "body": "Symptom- und Schlafanalysen erscheinen hier, sobald die benoetigten Datenfelder stabil verfuegbar sind. Bis dahin zeigt dieser Bereich nur Tracking-Konsistenz."
     },
+    "maturity": {
+      "heading": "Datenreife",
+      "body": "Wie vollstaendig deine Gesundheitsdaten sind – und welche Analysen dadurch schon bereitstehen.",
+      "locked": "gesperrt",
+      "cycle_context": "Neutraler Kontext",
+      "entry": {
+        "label": "Eintrags-Abdeckung",
+        "caption": "{days} von {window} Tagen mit Eintrag"
+      },
+      "symptom": {
+        "label": "Symptom-Abdeckung",
+        "ok": "Symptom-Analysen verfuegbar",
+        "insufficient_entries": "Noch {count} Eintraege bis Symptom-Analysen",
+        "deep_link": "Insights: Symptome"
+      },
+      "sleep": {
+        "label": "Schlaf-Abdeckung",
+        "ok": "Sleep-Insights verfuegbar",
+        "insufficient_coverage": "Sleep-Insights ab 50 % Schlaf-Abdeckung",
+        "deep_link": "Health Connect"
+      }
+    },
     "cycle": {
       "heading": "Cycle-Day-Overlay",
       "body": "Optionale Cycle-Day-Eintraege werden nur als neutraler Kontext gezeigt, ohne Interpretation."

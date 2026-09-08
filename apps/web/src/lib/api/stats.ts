@@ -66,6 +66,55 @@ export interface EntryStreakResponse {
   as_of: string;
 }
 
+// Health Data Maturity (Issue #852) — honest data-readiness / coverage panel.
+// See docs/features/health-data-maturity.md. Not a physiological score.
+export type HealthContextSectionId = 'symptom' | 'sleep';
+export type HealthContextReason =
+  'ok' | 'insufficient_entries' | 'insufficient_coverage' | 'no_consent';
+
+export interface HealthContextMaturity {
+  phase: string;
+  phase_index: number;
+  current_entries: number;
+  next_phase_at: number | null;
+  entries_until_next: number | null;
+}
+
+export interface CoverageMetric {
+  days_with_data: number;
+  window_days: number;
+  pct: number;
+}
+
+export interface HealthContextCoverage {
+  entry: CoverageMetric;
+  sleep: CoverageMetric;
+  symptom: CoverageMetric;
+}
+
+export interface HealthContextSection {
+  id: HealthContextSectionId;
+  unlocked: boolean;
+  reason: HealthContextReason;
+  entries_until_unlock: number | null;
+  copy_key: string;
+}
+
+export interface HealthConnectStatus {
+  consent: boolean;
+  last_sync_at: string | null;
+  sleep_import_ok: boolean | null;
+}
+
+export interface HealthContextResponse {
+  as_of: string;
+  coverage_window_days: number;
+  maturity: HealthContextMaturity;
+  coverage: HealthContextCoverage;
+  sections: HealthContextSection[];
+  health_connect: HealthConnectStatus | null;
+}
+
 export async function fetchTimeseries(range: TimeseriesRange): Promise<TimeseriesResponse> {
   return api.get<TimeseriesResponse>(`/entries/stats/timeseries?range=${range}`);
 }
@@ -103,4 +152,9 @@ export async function fetchSymptomHeatmap(
 export async function fetchEntryStreak(asOf?: string): Promise<EntryStreakResponse> {
   const qs = asOf ? `?as_of=${encodeURIComponent(asOf)}` : '';
   return api.get<EntryStreakResponse>(`/entries/stats/streak${qs}`);
+}
+
+export async function fetchHealthContext(asOf?: string): Promise<HealthContextResponse> {
+  const qs = asOf ? `?as_of=${encodeURIComponent(asOf)}` : '';
+  return api.get<HealthContextResponse>(`/entries/stats/health-context${qs}`);
 }

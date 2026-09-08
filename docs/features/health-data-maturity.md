@@ -1,7 +1,7 @@
 # Feature Spec: Health Data Maturity (Trends „Health Context")
 
-**Status:** Draft — D1–D7 aufgelöst, UI-Abgleich (G1–G6) eingearbeitet; Freeze offen (Beispiel-Fixtures §9)
-**Version:** 0.3.0
+**Status:** Umgesetzt (C-full Phase 1–3) — Backend-DTO + Trends-Panel live, Tests grün; offen: Review-Gate + finaler 360px-Geräte-Check
+**Version:** 1.0.0
 **Created:** 2026-09-07
 **Updated:** 2026-09-07
 **Owner:** @Sturmi77
@@ -14,8 +14,9 @@
 
 Dieses Dokument ist ein **Spec-Entwurf im Dialog**. Bereits getroffene Entscheidungen sind
 als **[ENTSCHIEDEN]** markiert, noch offene Forks als **[OFFEN]** mit einer Empfehlung.
-Die Spec gilt erst als _freezebar_, wenn (a) alle **[OFFEN]**-Punkte aufgelöst und (b) die
-drei Beispiel-Fixtures (§9) ohne Diskussion passen (Issue-Schritt 4 + 5).
+Stand v1.0.0-rc: (a) alle **[OFFEN]**-Punkte sind aufgelöst und (b) die drei Beispiel-Fixtures (§9)
+sind ausformuliert und folgen ohne Diskussion aus §3–§5. Damit ist die Spec inhaltlich freezebar;
+es fehlt nur noch das Review-Gate (Issue-Schritt 5).
 
 Änderungen an Formeln, Fenstern oder Gates nach dem Freeze nur mit Spec-Diff (Issue-Schritt 5).
 
@@ -253,31 +254,157 @@ Copy (FRONTEND.md:601), Theme-aware, Progressive Disclosure statt leerer „unav
 
 ---
 
-## 9. Beispiel-Fixtures [SPÄTER — Freeze-Kriterium]
+## 9. Beispiel-Fixtures [ENTSCHIEDEN — Freeze-Kriterium]
 
-Drei User-Profile als JSON-Fixtures mit erwarteter Panel-Ausgabe; Spec gilt erst als freezebar, wenn
-alle drei ohne Diskussion passen (Issue-Schritt 4):
+Drei User-Profile als Fixtures (DTO-Response + erwartete Panel-Ausgabe). Die Spec gilt als **freezebar**,
+weil alle drei ohne Diskussion aus den Regeln §3–§5 folgen (Issue-Schritt 4/5). Fenster überall 90 Tage,
+Gates per Feature-Threshold (Symptom ≥ 15 Entries; Sleep Coverage ≥ 0.5 & ≥ 15 Beobachtungen).
+Diese JSON-Blöcke sind die kanonische Grundlage für die Backend- und Contract-Tests.
 
-1. **Neu** (< 7 Entries): Phase `collecting`, alle Sektionen `unlocked:false`, Coverage niedrig.
-2. **Sleep-arm** (viele Entries, wenig Sleep): Symptom unlocked, Sleep `insufficient_coverage`.
-3. **Symptom-reich**: Symptom + Maturity hoch, Sleep mittel.
+### 9.1 Profil „Neu" (< 7 Entries)
 
-_(Werte werden nach Auflösung von §4 ergänzt.)_
+```json
+{
+  "as_of": "2026-09-07",
+  "coverage_window_days": 90,
+  "maturity": {
+    "phase": "collecting",
+    "phase_index": 1,
+    "current_entries": 4,
+    "next_phase_at": 7,
+    "entries_until_next": 3
+  },
+  "coverage": {
+    "entry": { "days_with_data": 4, "window_days": 90, "pct": 0.04 },
+    "sleep": { "days_with_data": 2, "window_days": 90, "pct": 0.02 },
+    "symptom": { "days_with_data": 1, "window_days": 90, "pct": 0.01 }
+  },
+  "sections": [
+    {
+      "id": "symptom",
+      "unlocked": false,
+      "reason": "insufficient_entries",
+      "entries_until_unlock": 11,
+      "copy_key": "trends.maturity.symptom.insufficient_entries"
+    },
+    {
+      "id": "sleep",
+      "unlocked": false,
+      "reason": "insufficient_coverage",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.sleep.insufficient_coverage"
+    }
+  ],
+  "health_connect": null
+}
+```
+
+**Erwartete Panel-Ausgabe:** Reife-Kopf `1/4 · Daten sammeln · 4/7 Einträge, noch 3 bis Erste Muster`
+(Meter ~57 %). Entry-Coverage 4 % („4 von 90 Tagen"). Symptom **gesperrt** („noch 11 Einträge …"),
+Sleep **gesperrt** („zu wenig Schlafdaten …"). Kein Cycle-Strip.
+
+### 9.2 Profil „Sleep-arm" (viele Entries, wenig Sleep)
+
+```json
+{
+  "as_of": "2026-09-07",
+  "coverage_window_days": 90,
+  "maturity": {
+    "phase": "provisional",
+    "phase_index": 3,
+    "current_entries": 24,
+    "next_phase_at": 30,
+    "entries_until_next": 6
+  },
+  "coverage": {
+    "entry": { "days_with_data": 61, "window_days": 90, "pct": 0.68 },
+    "sleep": { "days_with_data": 18, "window_days": 90, "pct": 0.2 },
+    "symptom": { "days_with_data": 44, "window_days": 90, "pct": 0.49 }
+  },
+  "sections": [
+    {
+      "id": "symptom",
+      "unlocked": true,
+      "reason": "ok",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.symptom.ok"
+    },
+    {
+      "id": "sleep",
+      "unlocked": false,
+      "reason": "insufficient_coverage",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.sleep.insufficient_coverage"
+    }
+  ],
+  "health_connect": null
+}
+```
+
+**Erwartete Panel-Ausgabe:** Reife-Kopf `3/4 · Vorläufig · 24/30 Einträge, noch 6 bis Robust`
+(Meter ~62 %). Entry 68 %, Symptom 49 % **frei** (+ Deep-Link Insights-Symptome), Sleep 20 %
+**gesperrt** („Sleep-Insights ab 50 % Abdeckung"). Kein Cycle-Strip.
+
+### 9.3 Profil „Symptom-reich" (robust, mit Health-Connect)
+
+```json
+{
+  "as_of": "2026-09-07",
+  "coverage_window_days": 90,
+  "maturity": {
+    "phase": "robust",
+    "phase_index": 4,
+    "current_entries": 96,
+    "next_phase_at": null,
+    "entries_until_next": null
+  },
+  "coverage": {
+    "entry": { "days_with_data": 82, "window_days": 90, "pct": 0.91 },
+    "sleep": { "days_with_data": 58, "window_days": 90, "pct": 0.64 },
+    "symptom": { "days_with_data": 75, "window_days": 90, "pct": 0.83 }
+  },
+  "sections": [
+    {
+      "id": "symptom",
+      "unlocked": true,
+      "reason": "ok",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.symptom.ok"
+    },
+    {
+      "id": "sleep",
+      "unlocked": true,
+      "reason": "ok",
+      "entries_until_unlock": null,
+      "copy_key": "trends.maturity.sleep.ok"
+    }
+  ],
+  "health_connect": {
+    "consent": true,
+    "last_sync_at": "2026-09-06T22:10:00Z",
+    "sleep_import_ok": true
+  }
+}
+```
+
+**Erwartete Panel-Ausgabe:** Reife-Kopf `4/4 · Robust · 96 Einträge, robust` (Meter 100 %). Entry 91 %,
+Symptom 83 %, Sleep 64 % — alle **frei**. Cycle-Strip erscheint als **eigene, neutrale** Sektion.
+`health_connect` belegt (Anzeige v1 optional; kein Klartext-Gesundheitswert, nur Meta).
 
 ---
 
 ## 10. Definition of Done (C-full, aus Issue)
 
 - [ ] Diese Spec (Metriken, Fenster, Gates, Non-Goals) merged **oder** als Issue-AC eingefroren.
-- [ ] Backend-DTO + Tests (Coverage-Formeln, keine Art.-9-Leaks in Logs).
-- [ ] Trends-Panel an DTO; Streak-Placeholder entfernt/entschärft.
-- [ ] Contract-/UI-Tests (`trends/page.test.ts` + Komponenten-/API-Tests).
-- [ ] Titel und Inhalt deckungsgleich; keine gamifizierenden Streak-Rekord-Zahlen.
-- [ ] Cycle-Overlay klar getrennt oder mit migriert.
-- [ ] UI-Konventionen §7.6 erfüllt: `InsightStageHeader` wiederverwendet (G1), keine Emoji (G2),
+- [x] Backend-DTO + Tests (Coverage-Formeln, keine Art.-9-Leaks in Logs). — Phase 1, s. §12.
+- [x] Trends-Panel an DTO; Streak-Placeholder entfernt/entschärft. — Phase 2, s. §12.
+- [x] Contract-/UI-Tests (`trends/page.test.ts` + Komponenten-/API-Tests). — 19 Web-Tests grün.
+- [x] Titel und Inhalt deckungsgleich; keine gamifizierenden Streak-Rekord-Zahlen.
+- [x] Cycle-Overlay klar getrennt oder mit migriert.
+- [x] UI-Konventionen §7.6 erfüllt: `InsightStageHeader` wiederverwendet (G1), keine Emoji (G2),
       `role="meter"` (G3), 44px-Trefferflächen (G4), i18n-Reuse (G5).
-- [ ] Mobile-first responsiv (G7): auf 360/430px kein horizontaler Scroll, Reife-Kopf + Fußzeilen
-      brechen sauber um; auf echtem Gerät bzw. 360px-Viewport geprüft.
+- [ ] Mobile-first responsiv (G7): CSS umgesetzt (Umbruch/Meter volle Breite); finaler 360px-Check
+      am echten Gerät steht noch aus.
 
 ---
 
@@ -295,8 +422,87 @@ Alle sieben Forks sind im Spec-Dialog (2026-09-07) entschieden:
 | D6  | Health-Connect-Status ins DTO?                    | ✅ ENTSCHIEDEN | **optionales Feld** `health_connect`, Anzeige v1 optional                          |
 | D7  | Endpoint-Pfad                                     | ✅ ENTSCHIEDEN | **`/api/v1/entries/stats/health-context`**                                         |
 
-**Verbleibend bis Freeze:** Beispiel-Fixtures (§9) mit erwarteter Panel-Ausgabe — Freeze-Kriterium laut
-Issue-Schritt 4/5.
+**Verbleibend bis Freeze:** nur noch das **Review-Gate** (Frontend + Backend gegenzeichnen,
+Issue-Schritt 5). Inhaltlich ist die Spec vollständig — alle Entscheidungen (D1–D7), UI-Konventionen
+(G1–G7) und Fixtures (§9) sind ausformuliert. Nach dem Gegenzeichnen: Status → `Accepted`, dann C-full
+implementieren.
+
+---
+
+## 12. Umsetzungsplan (C-full)
+
+Aufwand ~2–4 Personentage (Issue-Schätzung). Reihenfolge folgt der Issue-Empfehlung: Spec-Freeze →
+Backend-DTO → Frontend-Panel → Tests → Cleanup. Umsetzung auf dem Branch
+`claude/issue-852-spec-konzept-4ry2jd` (bzw. Folge-Branch).
+
+### Phase 0 — Review-Gate (Voraussetzung, ~0,5d)
+
+- [ ] Frontend + Backend zeichnen Spec gegen (Issue-Schritt 5); Status → `Accepted`.
+- [ ] i18n-Copy-Keys final abstimmen (`trends.maturity.*`, Reuse von `maturity.*`).
+
+### Phase 1 — Backend-DTO (~1–1,5d) — ✅ UMGESETZT
+
+- [x] **Schema** `backend/app/schemas/stats.py`: `HealthContextResponse` + Sub-Modelle
+      (`HealthContextMaturity`, `CoverageMetric`, `HealthContextCoverage`, `HealthContextSection`,
+      `HealthConnectStatus | None`).
+- [x] **Service** `backend/app/services/health_context_service.py`: `get_health_context(db, user_id, as_of)`.
+  - Maturity aus `insight_service.get_insight_maturity` beziehen (nicht neu berechnen).
+  - Coverage über **90-Tage-Fenster** (`HEALTH_CONTEXT_WINDOW_DAYS`): `entry`/`sleep`/`symptom`
+    = distinkte Tage-mit-Daten ÷ 90.
+  - Gates (Hybrid): `unlocked` je Sektion aus Feature-Threshold (Symptom ≥ 15 Entries;
+    Sleep Coverage ≥ 0.5 & ≥ 15 Beob.), `reason`/`entries_until_unlock`/`copy_key` gesetzt.
+  - `health_connect` optional, consent-gated; v1 liefert nur `consent`, `null` ohne Consent.
+  - **Modul-Abweichung vom Plan:** eigenes `health_context_service.py` statt `stats_service.py`,
+    weil `insight_service` bereits `stats_service` importiert (sonst zirkulär).
+  - **Sleep-Quelle aufgelöst (Risiko):** kanonisches Signal = `Entry.sleep_minutes` (die Spalte,
+    die das Engine-Sleep-Gate `MIN_SLEEP_COLUMN_COVERAGE` steuert).
+- [x] **Router** `backend/app/api/v1/endpoints/entries.py`: `GET /entries/stats/health-context`
+      (Auth wie übrige Stats-Endpoints, `120/minute` Rate-Limit).
+- [x] **Privacy:** Response/Service emittieren nur Zähler/Ratios/Enums — kein Klartext, kein Logging.
+- [x] **Tests** `backend/tests/test_health_context_service.py`: drei §9-Fixtures, Gate-Grenzfälle
+      (14/15 Entries; 44/45 Tage = 0.49/0.50 Coverage; 18 Tage), `health_connect=null`-Pfad,
+      Art.-9-No-Leak-Guard, Endpoint 200 + 401. **12 Tests grün**, ruff + mypy sauber.
+
+### Phase 2 — Frontend-Anbindung (~1d) — ✅ UMGESETZT
+
+- [x] **Client** `apps/web/src/lib/api/stats.ts`: `HealthContextResponse`-Typ (+ Sub-Typen) +
+      `fetchHealthContext()`.
+- [x] **Panel** `apps/web/src/lib/components/trends/TrendsHealthContext.svelte` umgebaut:
+  - Titel/Copy → „Datenreife" (`trends.maturity.*`), Streak-Trio entfernt.
+  - Reife-Kopf via **wiederverwendetem `InsightStageHeader`** (G1), gespeist aus der kanonischen
+    `InsightMaturity` (kein Bespoke-Chip).
+  - 3 Coverage-Meter mit `role="meter"` + aria (G3), Lucide-`Lock` statt Emoji (G2), Deep-Links ≥44px (G4).
+  - Gesperrte Sektionen: `copy_key` + `entries_until_unlock` gerendert (Progressive Disclosure).
+  - Cycle-Strip als getrennte, neutrale Sektion (D3); Meter einfarbig, kein Rot/Grün (ADR-0035).
+- [x] **Page** `apps/web/src/routes/trends/+page.svelte`: `fetchHealthContext()` statt `fetchEntryStreak()`
+      (soft-fail, nicht mehr „core"); Maturity aus `$insightStore.insightMaturity` bzw. Dev-Fixture.
+  - **Maturity-Quelle:** Für die wiederverwendete Komponente wird die kanonische `InsightMaturity`
+    durchgereicht (voller Kontrakt inkl. `user_message_key`), nicht die schlankere DTO-Maturity.
+  - **Dev-Fixture:** `phaseFixtures.ts` um `healthContext` erweitert (Gates spiegeln die Backend-Schwellen).
+- [x] **i18n** `apps/web/src/lib/i18n/locales/{de,en}.json`: neue `trends.maturity.*`-Keys; alte
+      `trends.health.*`/`trends.consistency.*`-Keys bleiben unangetastet (nur nicht mehr vom Panel genutzt).
+
+### Phase 3 — Tests & Cleanup (~0,5d) — ✅ UMGESETZT (bis auf Geräte-Check)
+
+- [x] **Component-/UI-Tests** `TrendsHealthContext.test.ts`: Meter je Coverage-Zeile, Gate-Zustände
+      (locked + Copy-Key, kein Deep-Link), keine Streak-Labels, Cycle-Sektion, `InsightStageHeader`-Reuse.
+- [x] **Contract-Test** DTO ↔ Frontend-Typ: `test_health_context_endpoint_contract_shape` prüft die
+      serialisierten JSON-Keys gegen das `HealthContextResponse`-Interface (Drift-Guard).
+- [x] `trends/page.test.ts` an den neuen Datenfluss angepasst (Mock `fetchHealthContext`, Heading-Key).
+- [x] **Streak-Rückbau geprüft:** `fetchEntryStreak`/`EntryStreakResponse` sind frontendseitig nur noch
+      vom eigenen Client-Test + der Dev-Fixture referenziert; der Backend-`/stats/streak`-Endpoint bleibt
+      reale API → **bewusst belassen** (kein durch diese Änderung erzeugter Dead Code).
+- [x] `docs/FRONTEND.md`-Verweis auf den Trends-Datenreife-Block aktualisiert (Screen 4).
+- [ ] **Mobile-Check auf 360px** (echtes Gerät / DevTools): CSS umgesetzt (mobile-first, Umbruch,
+      einspaltige Meter, Cycle-Strip mit eigenem `overflow-x`); der visuelle Geräte-Check steht als
+      einziger offener Punkt aus (headless im CI-Container nicht sinnvoll ausführbar).
+
+### Risiken / Hinweise
+
+- **Sleep-Coverage-Quelle:** ✅ aufgelöst in Phase 1 — kanonisch `Entry.sleep_minutes` (die Spalte,
+  die das Engine-Sleep-Gate `MIN_SLEEP_COLUMN_COVERAGE` steuert).
+- **Kein neuer Screen** (ADR-0017): alles bleibt im Trends-Panel.
+- **PR erst auf Zuruf** — kein automatischer PR (siehe Projektregeln).
 
 ---
 

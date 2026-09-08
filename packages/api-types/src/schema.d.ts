@@ -545,6 +545,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/entries/stats/health-context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Return the honest data-readiness / coverage panel (Issue #852) */
+        get: operations["get_health_context_endpoint_api_v1_entries_stats_health_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/entries/stats/streak": {
         parameters: {
             query?: never;
@@ -1695,6 +1712,18 @@ export interface components {
             /** Updated At */
             updated_at?: string | null;
         };
+        /**
+         * CoverageMetric
+         * @description A neutral coverage ratio over the rolling window (no streak record).
+         */
+        CoverageMetric: {
+            /** Days With Data */
+            days_with_data: number;
+            /** Pct */
+            pct: number;
+            /** Window Days */
+            window_days: number;
+        };
         /** DashboardSummaryResponse */
         DashboardSummaryResponse: {
             /** Confidence Score */
@@ -2407,6 +2436,83 @@ export interface components {
             entry_date: string;
             /** Sleep Minutes */
             sleep_minutes: number;
+        };
+        /**
+         * HealthConnectStatus
+         * @description Optional Health-Connect meta — never carries Art. 9 health values.
+         *
+         *     v1 populates ``consent`` only; ``last_sync_at`` / ``sleep_import_ok`` are
+         *     reserved for when the import service exposes that state (spec D6).
+         */
+        HealthConnectStatus: {
+            /** Consent */
+            consent: boolean;
+            /** Last Sync At */
+            last_sync_at?: string | null;
+            /** Sleep Import Ok */
+            sleep_import_ok?: boolean | null;
+        };
+        /** HealthContextCoverage */
+        HealthContextCoverage: {
+            entry: components["schemas"]["CoverageMetric"];
+            sleep: components["schemas"]["CoverageMetric"];
+            symptom: components["schemas"]["CoverageMetric"];
+        };
+        /**
+         * HealthContextMaturity
+         * @description Coarse analysis-maturity phase (mirrors the shared InsightMaturity).
+         *
+         *     Rendered via the reused ``InsightStageHeader`` — the frontend must not
+         *     recompute the phase (see spec G1/G5, FRONTEND.md).
+         */
+        HealthContextMaturity: {
+            /** Current Entries */
+            current_entries: number;
+            /** Entries Until Next */
+            entries_until_next?: number | null;
+            /** Next Phase At */
+            next_phase_at?: number | null;
+            /** Phase */
+            phase: string;
+            /** Phase Index */
+            phase_index: number;
+        };
+        /** HealthContextResponse */
+        HealthContextResponse: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            coverage: components["schemas"]["HealthContextCoverage"];
+            /** Coverage Window Days */
+            coverage_window_days: number;
+            health_connect?: components["schemas"]["HealthConnectStatus"] | null;
+            maturity: components["schemas"]["HealthContextMaturity"];
+            /** Sections */
+            sections?: components["schemas"]["HealthContextSection"][];
+        };
+        /**
+         * HealthContextSection
+         * @description Progressive-disclosure gate for one section (Backend owns the decision).
+         */
+        HealthContextSection: {
+            /** Copy Key */
+            copy_key: string;
+            /** Entries Until Unlock */
+            entries_until_unlock?: number | null;
+            /**
+             * Id
+             * @enum {string}
+             */
+            id: "symptom" | "sleep";
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "ok" | "insufficient_entries" | "insufficient_coverage" | "no_consent";
+            /** Unlocked */
+            unlocked: boolean;
         };
         /** HealthSummary */
         HealthSummary: {
@@ -5343,6 +5449,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryDeltaResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_health_context_endpoint_api_v1_entries_stats_health_context_get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthContextResponse"];
                 };
             };
             /** @description Validation Error */

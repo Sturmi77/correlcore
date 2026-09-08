@@ -39,6 +39,7 @@ from app.schemas.entry import (
 from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 from app.schemas.stats import (
     EntryStreakResponse,
+    HealthContextResponse,
     SymptomHeatmapResponse,
     TagHeatmapResponse,
     TimeseriesRange,
@@ -61,6 +62,7 @@ from app.services.entry_service import (
     list_entries,
     update_entry,
 )
+from app.services.health_context_service import get_health_context
 from app.services.insight_worker_service import schedule_post_batch_insight_regeneration
 from app.services.note_signal_extractor import run_note_signal_extraction_background
 from app.services.stats_service import (
@@ -260,6 +262,21 @@ async def get_entry_streak_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> EntryStreakResponse:
     return await get_entry_streak(db, user_id=user.id, as_of=as_of)
+
+
+@router.get(
+    "/stats/health-context",
+    response_model=HealthContextResponse,
+    summary="Return the honest data-readiness / coverage panel (Issue #852)",
+)
+@limiter.limit("120/minute")
+async def get_health_context_endpoint(
+    request: Request,
+    as_of: date_type | None = Query(default=None, alias="as_of"),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> HealthContextResponse:
+    return await get_health_context(db, user_id=user.id, as_of=as_of)
 
 
 @router.get(

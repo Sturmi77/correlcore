@@ -167,6 +167,42 @@ async function installSmokeApi(page: Page, options: { authenticated: boolean }) 
       });
     }
 
+    if (path === '/entries/stats/health-context' && method === 'GET') {
+      return json(200, {
+        as_of: '2026-05-22',
+        coverage_window_days: 90,
+        maturity: {
+          phase: 'provisional',
+          phase_index: 3,
+          current_entries: 24,
+          next_phase_at: 30,
+          entries_until_next: 6,
+        },
+        coverage: {
+          entry: { days_with_data: 61, window_days: 90, pct: 0.68 },
+          sleep: { days_with_data: 18, window_days: 90, pct: 0.2 },
+          symptom: { days_with_data: 44, window_days: 90, pct: 0.49 },
+        },
+        sections: [
+          {
+            id: 'symptom',
+            unlocked: true,
+            reason: 'ok',
+            entries_until_unlock: null,
+            copy_key: 'trends.maturity.symptom.ok',
+          },
+          {
+            id: 'sleep',
+            unlocked: false,
+            reason: 'insufficient_coverage',
+            entries_until_unlock: null,
+            copy_key: 'trends.maturity.sleep.insufficient_coverage',
+          },
+        ],
+        health_connect: null,
+      });
+    }
+
     if (path === '/insights/latest' && method === 'GET') {
       return json(200, {
         insight_maturity: {
@@ -300,7 +336,11 @@ test('trends and insights render authenticated analytics surfaces', async ({ pag
   });
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible();
   await expect(page.getByTestId('trends-health-context')).toBeVisible();
-  await expect(page.locator('.trends-health__consistency strong').first()).toHaveText('3');
+  // Data-readiness coverage meters replace the former streak trio (#852).
+  await expect(page.locator('.trends-health__coverage [role="meter"]').first()).toHaveAttribute(
+    'aria-valuenow',
+    '68'
+  );
 
   await page.goto('/insights');
   await expect(page.getByText(/fridays currently line up/i)).toBeVisible({

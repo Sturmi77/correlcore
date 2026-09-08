@@ -462,7 +462,14 @@ Time range: [7D] [30D] [90D] [1Y]
 - **Event markers (M3.8):** Phase transitions, symptom onsets, and habit-goal changes appear as neutral vertical markers across all rows. Marker colour comes from `--color-event-marker-*` tokens and must respect the theme-agnostic colour rule.
 - Symptom heatmap is neutral occurrence/intensity visualization only. It does not introduce co-occurrence, medical interpretation, correlation recommendations, or a new analytics engine.
 - Mobile uses one controlled horizontal timeline scroller with sticky row labels and compact layer controls. Desktop uses a wider analysis canvas, sticky controls, and may keep an entry-detail panel open beside the chart.
-- Health tab may show a cycle-day strip when entries contain `cycle_day`; it must not infer phases or provide medical interpretation.
+- The **Datenreife / Data-readiness** panel (`TrendsHealthContext`, Issue #852) replaces the former
+  "Gesundheitsbereitschaft" streak block. It is fed by `GET /entries/stats/health-context` and shows the
+  reused `InsightStageHeader` plus neutral entry/sleep/symptom **coverage meters** (single-hue, `role="meter"`)
+  over a 90-day window, with per-section progressive-disclosure gates. It shows **no** streak-record numbers
+  and is a coverage/maturity overview only — never a physiological or medical readiness score. See
+  [`features/health-data-maturity.md`](features/health-data-maturity.md).
+- The panel may show a cycle-day strip when entries contain `cycle_day`, rendered as a **separate neutral
+  context** section; it must not infer phases or provide medical interpretation.
 - Habits tab shows goal-based adherence for `build` / `reduce` habit tags, with a 7/14/28/90 day window selector.
 - Habit detail reuses the neutral tag heatmap and may show a correlation contribution from existing insights; insufficient-data copy is target-aware (heatmap remains visible); no streak counters, badges, points, rewards or urgency framing.
 

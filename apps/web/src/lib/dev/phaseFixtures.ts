@@ -11,6 +11,7 @@ import type {
 } from '$lib/api/insights';
 import type {
   EntryStreakResponse,
+  HealthContextResponse,
   SymptomHeatmapResponse,
   TagHeatmapResponse,
   TimeseriesResponse,
@@ -59,6 +60,7 @@ export interface DevPhaseFixture {
   tagHeatmap: TagHeatmapResponse;
   symptomHeatmap: SymptomHeatmapResponse;
   streak: EntryStreakResponse;
+  healthContext: HealthContextResponse;
   habitStats: HabitStatsResponse[];
   habitTags: TagResponse[];
   tagCooccurrenceByRange: Record<TagCooccurrenceRange, TagCooccurrenceResponse>;
@@ -193,6 +195,65 @@ function makeStreak(entries: EntryResponse[], entryCount: number): EntryStreakRe
     total_entry_days: entryCount,
     last_entry_date: entries[0]?.entry_date ?? null,
     as_of: today,
+  };
+}
+
+// Mirrors the backend gate thresholds (health_context_service): symptom unlocks
+// at >= 15 entries; sleep at coverage >= 0.5 AND >= 15 observations.
+function makeHealthContext(
+  presetId: DevPhasePresetId,
+  entryCount: number,
+  maturity: InsightMaturity
+): HealthContextResponse {
+  const window = 90;
+  const analyticsEnabled = presetId === 'provisional' || presetId === 'robust';
+  const robust = presetId === 'robust';
+  const clamp = (value: number): number => Math.max(0, Math.min(window, Math.round(value)));
+  const entryDays = clamp(Math.min(entryCount, window));
+  const symptomDays = clamp(entryDays * (analyticsEnabled ? 0.6 : 0.15));
+  const sleepDays = clamp(entryDays * (robust ? 0.6 : 0.2));
+  const pct = (days: number): number => Math.round((days / window) * 100) / 100;
+
+  const symptomUnlocked = maturity.current_entries >= 15;
+  const sleepPct = pct(sleepDays);
+  const sleepUnlocked = sleepPct >= 0.5 && sleepDays >= 15;
+
+  return {
+    as_of: today,
+    coverage_window_days: window,
+    maturity: {
+      phase: maturity.phase,
+      phase_index: maturity.phase_index,
+      current_entries: maturity.current_entries,
+      next_phase_at: maturity.next_phase_at,
+      entries_until_next: maturity.entries_until_next,
+    },
+    coverage: {
+      entry: { days_with_data: entryDays, window_days: window, pct: pct(entryDays) },
+      sleep: { days_with_data: sleepDays, window_days: window, pct: sleepPct },
+      symptom: { days_with_data: symptomDays, window_days: window, pct: pct(symptomDays) },
+    },
+    sections: [
+      {
+        id: 'symptom',
+        unlocked: symptomUnlocked,
+        reason: symptomUnlocked ? 'ok' : 'insufficient_entries',
+        entries_until_unlock: symptomUnlocked ? null : Math.max(0, 15 - maturity.current_entries),
+        copy_key: symptomUnlocked
+          ? 'trends.maturity.symptom.ok'
+          : 'trends.maturity.symptom.insufficient_entries',
+      },
+      {
+        id: 'sleep',
+        unlocked: sleepUnlocked,
+        reason: sleepUnlocked ? 'ok' : 'insufficient_coverage',
+        entries_until_unlock: null,
+        copy_key: sleepUnlocked
+          ? 'trends.maturity.sleep.ok'
+          : 'trends.maturity.sleep.insufficient_coverage',
+      },
+    ],
+    health_connect: null,
   };
 }
 
@@ -814,6 +875,11 @@ export function getDevPhaseFixture(state: DevPhaseStateLike): DevPhaseFixture {
     tagHeatmap: makeTagHeatmap(days, insightEnabled ? (robustEnabled ? 7 : 4) : 0),
     symptomHeatmap: makeSymptomHeatmap(days, analyticsEnabled ? (robustEnabled ? 7 : 4) : 0),
     streak: makeStreak(entries, entryCount),
+    healthContext: makeHealthContext(
+      state.presetId,
+      entryCount,
+      devMaturityFromPreset(state.presetId, entryCount)
+    ),
     habitStats: makeHabitStats(entries, insightEnabled),
     habitTags: makeHabitTags(insightEnabled),
     tagCooccurrenceByRange: makeTagCooccurrenceByRange(days, analyticsEnabled),

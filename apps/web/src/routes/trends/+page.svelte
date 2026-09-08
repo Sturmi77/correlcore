@@ -5,16 +5,17 @@
   import { listEntries, type EntryResponse } from '$lib/api/entries';
   import { hasNote } from '$lib/utils/noteSummary';
   import {
-    fetchEntryStreak,
+    fetchHealthContext,
     fetchSymptomHeatmap,
     fetchTagHeatmap,
     fetchTimeseries,
-    type EntryStreakResponse,
+    type HealthContextResponse,
     type SymptomHeatmapResponse,
     type TagHeatmapResponse,
     type TimeseriesRange,
     type TimeseriesResponse,
   } from '$lib/api/stats';
+  import type { InsightMaturity } from '$lib/api/insights';
   import { listHabits, type HabitStatsResponse } from '$lib/api/habits';
   import { listSymptomsForEntry, listVisibleSymptoms } from '$lib/api/symptoms';
   import { listTagsForEntry, listVisibleTags, type TagResponse } from '$lib/api/tags';
@@ -86,7 +87,10 @@
   let timeseries: TimeseriesResponse | null = null;
   let heatmap: TagHeatmapResponse | null = null;
   let symptomHeatmap: SymptomHeatmapResponse | null = null;
-  let streak: EntryStreakResponse | null = null;
+  let healthContext: HealthContextResponse | null = null;
+  // Maturity for the reused InsightStageHeader (spec G1). Dev-force uses the
+  // fixture's maturity; otherwise the canonical insight-store maturity.
+  let devMaturity: InsightMaturity | null = null;
   let habitStats: HabitStatsResponse[] = [];
   let habitTags: TagResponse[] = [];
   let allTags: TagResponse[] = [];
@@ -125,6 +129,7 @@
   const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
 
   $: range = $analysisRange;
+  $: panelMaturity = $devForceVisualizations ? devMaturity : $insightStore.insightMaturity;
   $: noteEntryDates = trendEntries
     .filter((entry) => hasNote(entry))
     .map((entry) => entry.entry_date);
@@ -166,7 +171,8 @@
         timeseries = { ...fixture.timeseries, range: activeRange };
         heatmap = fixture.tagHeatmap;
         symptomHeatmap = fixture.symptomHeatmap;
-        streak = fixture.streak;
+        healthContext = fixture.healthContext;
+        devMaturity = fixture.maturity;
         habitStats = fixture.habitStats.map((habit) => ({ ...habit, window: habitWindow }));
         habitTags = fixture.habitTags;
         allTags = fixture.habitTags;
@@ -193,7 +199,7 @@
         timeseriesResult,
         heatmapResult,
         symptomResult,
-        streakResult,
+        healthContextResult,
         entriesResult,
         habitResult,
         tagsResult,
@@ -207,13 +213,14 @@
             : {}),
         }),
         symptomPromise,
-        fetchEntryStreak(),
+        fetchHealthContext(),
         listEntries({ start_date, end_date, limit: 365 }),
         activeTab === 'habits' ? listHabits(habitWindow) : Promise.resolve({ habits: habitStats }),
         activeTab === 'habits' ? listVisibleTags() : Promise.resolve(habitTags),
       ]);
 
-      const coreFailed = [timeseriesResult, heatmapResult, streakResult, entriesResult].find(
+      // Health context is optional context — a failure must not blank the tab.
+      const coreFailed = [timeseriesResult, heatmapResult, entriesResult].find(
         (result) => result.status === 'rejected'
       );
       if (coreFailed && coreFailed.status === 'rejected') {
@@ -225,7 +232,7 @@
       if (heatmapResult.status === 'fulfilled') heatmap = heatmapResult.value;
       // Symptom rows are optional context — keep Compare usable if this call fails.
       symptomHeatmap = symptomResult.status === 'fulfilled' ? symptomResult.value : null;
-      if (streakResult.status === 'fulfilled') streak = streakResult.value;
+      healthContext = healthContextResult.status === 'fulfilled' ? healthContextResult.value : null;
       if (entriesResult.status === 'fulfilled') {
         const nextEntries = entriesResult.value;
         cycleEntries = nextEntries.filter((entry) => entry.cycle_day !== null);
@@ -528,7 +535,7 @@
             on:layerChange={(event) => setCompareLayers(event.detail)}
           />
         </div>
-        <TrendsHealthContext {streak} {cycleEntries} />
+        <TrendsHealthContext {healthContext} maturity={panelMaturity} {cycleEntries} />
       </div>
 
       <TrendsCompareSettingsSheet
