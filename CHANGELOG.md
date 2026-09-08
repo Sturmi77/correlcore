@@ -8,9 +8,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-09-08
+
+Feature-Release: Trends „Datenreife"-Panel, Home Analysis-Badge mit Daily-New-Insights,
+Developer-View Stack-Health und P-balanced Insights.
+
 ### Added
 
-- **Developer View stack health** — `/dev` Runtime lists per-service reachability
+- **Trends „Datenreife"-Panel (#852)** — Der fehlbenannte „Gesundheitsbereitschaft"-Block
+  (der nur Eintrags-Streak-Zahlen zeigte) wird durch ein ehrliches Datenreife-/Coverage-Panel
+  ersetzt: wiederverwendeter `InsightStageHeader` plus neutrale Entry-/Sleep-/Symptom-Coverage-
+  Meter über ein 90-Tage-Fenster, mit progressiver Freischaltung je Sektion (Symptom ab 15
+  Einträgen, Sleep ab 50 % Abdeckung). Neuer Endpoint `GET /entries/stats/health-context`.
+  Keine gamifizierenden Streak-Rekorde und keine Klartext-Gesundheitswerte im DTO oder in Logs
+  (DSGVO Art. 9). Konzept: `docs/features/health-data-maturity.md`.
+- **Home Analysis-Badge & Daily-New-Insights-Popup (#859)** — Home zeigt ein Analyse-Badge und
+  ein tägliches Popup, das neue Erkenntnisse hervorhebt.
+- **Developer View stack health (#861)** — `/dev` Runtime lists per-service reachability
   (API, Postgres, Redis, encryption, Web, worker, MinIO, SMTP/Mailpit) from
   application probes, plus Docker container state when the Engine API is
   reachable (TCP proxy / host CLI; not attached in production compose). Home
@@ -18,6 +32,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   developer mode is on and the insight worker has never run or the last
   USER_INSIGHTS run is older than 30h (missed nightly cadence). A clean
   `migrate` exit (0) is ignored.
+- **P-balanced Insights (#853)** — Insights liefern eine Lag-Karte je Faktorpaar, eine
+  Profil-Vorschau und zeigen Events als Detailansicht statt separater Karten.
 
 ## [1.7.1] — 2026-09-06
 
