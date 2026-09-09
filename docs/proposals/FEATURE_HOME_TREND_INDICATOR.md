@@ -183,14 +183,43 @@ Das 7-Spalten-Grid hat **horizontal keinen** Platz. Optionen:
     Überschrift umbrechen (Gruppe bleibt zusammen); ggf. reduziert sich der Trend
     auf das reine Glyph ohne Textlabel. So entsteht **kein** Overflow und keine
     erzwungene Zusatzhöhe im Normalfall.
-- **Option W2: Micro-Caret pro Tag** an `weekday-overview__value` (Z. 87–89),
-  gespeist aus `weekday_summary[].mood_trend`. Dezent, aber 7× visuelles Rauschen
-  im ohnehin dichten Strip → höheres Risiko, die Aufteilung „negativ zu
-  beeinflussen". Nur wenn pro-Tag-Trend explizit gewünscht ist.
+- **Option W2 (zusätzlich, zuschaltbar): Micro-Caret pro Tag** an
+  `weekday-overview__value` (Z. 87–89), gespeist aus
+  `weekday_summary[].mood_trend`. **Festgelegt** als optionaler, **ein-/
+  ausschaltbarer** Tages-Indikator zusätzlich zu W1 (siehe „Verbindliche
+  Festlegung" unten).
 
-**Empfehlung W1** — ein aggregierter, serverseitig korrekter Wochen-Trend ist
-aussagekräftiger als sieben verrauschte Einzeltrends und kommt mit der
-Badge-Gruppe ohne Layout-Bruch aus.
+**Empfehlung / Festlegung:** **W1 ist das verbindliche Default-Signal** (immer
+sichtbar, robust). **W2 ergänzt es als zuschaltbare Ebene** — Default sichtbar,
+per Umschalter abschaltbar; W1 bleibt bei ausgeschaltetem W2 erhalten.
+
+##### Verbindliche Festlegung — Tages-Indikator (W2), Design exakt wie Mockup
+
+Referenz-Mockup: Artifact „Home-Muster Trendindikatoren" (Screenshots unten /
+im Issue #868). Verbindlich:
+
+- **Platzierung:** ein winziges Glyph **inline rechts neben dem Mood-Wert** der
+  Zelle (`weekday-overview__value`), `white-space: nowrap`, Glyph ≈ 0.82em, mit
+  0.12rem Abstand — **keine** zusätzliche Zellhöhe, 7-Spalten-Grid unverändert.
+- **Grammatik = wie überall:** `TrendingUp` / `TrendingDown` / `Minus` (Lucide),
+  **neutrale** Farbe (`--color-text-muted`); Richtung nur über die **Form**, kein
+  Rot/Grün, kein Urteil.
+- **`unknown`-Gating pro Tag:** hat ein Wochentag in einer der beiden Perioden zu
+  wenige Werte, wird **kein** Glyph gezeigt (Wert bleibt). Nie geraten.
+- **Zuschaltbarkeit:** ein globaler Schalter „Tages-Indikator" steuert die
+  Sichtbarkeit der Tages-Carets (W1-Header bleibt unberührt). Persistenz als
+  `UserPreferences`-Flag (z. B. `home_weekday_day_trend_enabled`, Default `true`);
+  Umsetzung analog zu den bestehenden Home-Section-Preferences
+  ([`preferences.ts`](../../apps/web/src/lib/api/preferences.ts)).
+- **A11y:** Carets `aria-hidden`; die Tagesrichtungen fließen als Klartext in das
+  bestehende `role="img"`-`aria-label` des Charts (Z. 47–59) ein.
+
+> **Statistik-Caveat (bewusst akzeptiert):** Bei `N = 28` hat jeder Wochentag nur
+> ~4 Werte je Periode → Tages-Trends sind verrauscht und häufig `unknown`. Das ist
+> genau der Grund für das strikte Gating und dafür, dass W1 (aggregiert, robust)
+> das Leitsignal bleibt und W2 optional/abschaltbar ist. Ein längeres Fenster
+> **nur** für den Tages-Trend ist eine mögliche spätere Verfeinerung (offene
+> Frage), wird für V1 aber nicht umgesetzt.
 
 #### B.2 Arbeitssituationsmuster (`HomeWorkContextSummary`)
 
@@ -267,11 +296,14 @@ Formulierungen wie „verbessert sich".
 2. Web-Typen (`dashboard.ts`) + Mapping-Utils (`homeWeekdayOverview.ts`,
    `homeWorkContextSummary.ts`), Anzeigewert = `current_avg`.
 3. UI: aggregiertes Wochen-Trend-Badge in einer Badge-Gruppe (W1) +
-   Chip-Glyph im Arbeitssituationsmuster (C1), Richtungen neutral.
+   Chip-Glyph im Arbeitssituationsmuster (C1), Richtungen neutral. **Zusätzlich
+   W2:** zuschaltbare Tages-Carets im Wochenmuster (Default an) inkl.
+   `UserPreferences`-Flag `home_weekday_day_trend_enabled` + Settings-Umschalter.
 4. i18n DE/EN (neue Keys, fenster-genaue Copy mit `{n}`).
 5. Tests: Backend-Aggregation/Gewichtung/Schwellen, Util-Mapping, Komponenten-Unit
-   (Richtung, `unknown`-Gating, Header-Badge-Gruppe bei aktivem Frühsignal,
-   A11y-Label), Dashboard-Mocks/Fixtures erweitern.
+   (Richtung, `unknown`-Gating je Tag & je Zelle, Header-Badge-Gruppe bei aktivem
+   Frühsignal, W2-Toggle-Sichtbarkeit, A11y-Label), Dashboard-Mocks/Fixtures
+   erweitern.
 
 ## Barrierefreiheit
 
@@ -308,10 +340,25 @@ Formulierungen wie „verbessert sich".
 Aggregierte Mittelwerte über zwei Zeitfenster aus bestehenden Entry-Daten; keine
 neuen PII-Felder, keine neue Datenerhebung.
 
+## Mockup
+
+Originalgetreues Mockup beider Karten (echte Tokens, hell + dunkel, W2-Umschalter):
+
+![Home-Karten mit Trendindikatoren — hell](assets/home-trend-indicator/cards-light.png)
+![Home-Karten mit Trendindikatoren — dunkel](assets/home-trend-indicator/cards-dark.png)
+
+Interaktiv (mit Kriterien-Zuordnung & Umschalter): Artifact „Home-Muster
+Trendindikatoren".
+
 ---
 
 ### Änderungshistorie
 
+- **v3** — Tages-Indikator (W2) verbindlich festgeschrieben: zusätzlich zu W1, als
+  **zuschaltbarer** Tages-Caret im Wochenmuster (neutral, `unknown`-gated, Design
+  exakt wie Mockup), inkl. `UserPreferences`-Flag + Umschalter; Statistik-Caveat
+  und längeres Tages-Fenster als offene Verfeinerung dokumentiert. Mockup-
+  Screenshots ergänzt.
 - **v2** — Überarbeitung nach Codex-Review (PR #866): Backend liefert jetzt
   `MetricTrend` mit Fenster-Mittel + Counts und einen serverseitig aggregierten
   `weekday_mood_trend` (Codex #1); Anzeigewert = Fenster-Ø statt All-Time
