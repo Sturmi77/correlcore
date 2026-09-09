@@ -3,8 +3,12 @@
   import type { WorkContextSummaryItem } from '$lib/api/dashboard';
   import {
     buildWorkContextHeatmapRows,
+    nextWorkContextSort,
+    sortWorkContextHeatmapRows,
     WORK_CONTEXT_METRICS,
     type WorkContextMetricKey,
+    type WorkContextSort,
+    type WorkContextSortColumn,
   } from '$lib/utils/homeWorkContextSummary';
   import TrendDirectionGlyph from './TrendDirectionGlyph.svelte';
 
@@ -17,6 +21,51 @@
     energy: 'home.brief.metric_energy',
     stress: 'home.brief.metric_stress',
   };
+
+  /** Active sort, or `null` for the default best-situation-first order. */
+  let sort: WorkContextSort | null = null;
+
+  function toggleSort(column: WorkContextSortColumn): void {
+    sort = nextWorkContextSort(sort, column);
+  }
+
+  function columnLabel(column: WorkContextSortColumn): string {
+    return column === 'work_context'
+      ? $_('home.brief.work_context_column_situation')
+      : $_(METRIC_LABEL_KEY[column]);
+  }
+
+  // `current` is passed in explicitly so Svelte tracks `sort` as a reactive
+  // dependency of every header expression that calls these helpers.
+  function ariaSortFor(
+    column: WorkContextSortColumn,
+    current: WorkContextSort | null
+  ): 'ascending' | 'descending' | 'none' {
+    if (!current || current.column !== column) return 'none';
+    return current.direction === 'asc' ? 'ascending' : 'descending';
+  }
+
+  function sortIndicator(column: WorkContextSortColumn, current: WorkContextSort | null): string {
+    const state = ariaSortFor(column, current);
+    if (state === 'ascending') return '▲';
+    if (state === 'descending') return '▼';
+    return '↕';
+  }
+
+  function sortButtonLabel(column: WorkContextSortColumn, current: WorkContextSort | null): string {
+    const state = ariaSortFor(column, current);
+    if (state === 'ascending') {
+      return $_('home.brief.work_context_sort_ascending', {
+        values: { column: columnLabel(column) },
+      });
+    }
+    if (state === 'descending') {
+      return $_('home.brief.work_context_sort_descending', {
+        values: { column: columnLabel(column) },
+      });
+    }
+    return $_('home.brief.work_context_sort_action', { values: { column: columnLabel(column) } });
+  }
 
   const METRIC_COLOR: Record<WorkContextMetricKey, string> = {
     mood: 'var(--color-metric-mood)',
@@ -35,7 +84,11 @@
     });
   }
 
-  $: rows = buildWorkContextHeatmapRows(workContextSummary);
+  $: rows = sortWorkContextHeatmapRows(
+    buildWorkContextHeatmapRows(workContextSummary),
+    sort,
+    (workContext) => $_(`entry.work_context.${workContext}`)
+  );
 </script>
 
 {#if rows.length || loading}
@@ -57,11 +110,43 @@
       aria-label={$_('home.brief.work_context_heading')}
     >
       <div class="work-context-summary__head" role="row">
-        <span class="work-context-summary__corner" role="columnheader"></span>
+        <span
+          class="work-context-summary__corner"
+          role="columnheader"
+          aria-sort={ariaSortFor('work_context', sort)}
+        >
+          <button
+            type="button"
+            class="work-context-summary__sort"
+            data-column="work_context"
+            aria-label={sortButtonLabel('work_context', sort)}
+            on:click={() => toggleSort('work_context')}
+          >
+            {$_('home.brief.work_context_column_situation')}
+            <span class="work-context-summary__sort-indicator" aria-hidden="true"
+              >{sortIndicator('work_context', sort)}</span
+            >
+          </button>
+        </span>
         {#each WORK_CONTEXT_METRICS as metric}
-          <span class="work-context-summary__col" role="columnheader">
-            <i class="work-context-summary__dot" style={`--dot: ${METRIC_COLOR[metric]}`}></i>
-            {$_(METRIC_LABEL_KEY[metric])}
+          <span
+            class="work-context-summary__col"
+            role="columnheader"
+            aria-sort={ariaSortFor(metric, sort)}
+          >
+            <button
+              type="button"
+              class="work-context-summary__sort"
+              data-column={metric}
+              aria-label={sortButtonLabel(metric, sort)}
+              on:click={() => toggleSort(metric)}
+            >
+              <i class="work-context-summary__dot" style={`--dot: ${METRIC_COLOR[metric]}`}></i>
+              {$_(METRIC_LABEL_KEY[metric])}
+              <span class="work-context-summary__sort-indicator" aria-hidden="true"
+                >{sortIndicator(metric, sort)}</span
+              >
+            </button>
           </span>
         {/each}
       </div>
@@ -166,6 +251,58 @@
     font-weight: 600;
     color: var(--color-text-muted);
     text-align: center;
+  }
+
+  .work-context-summary__corner {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .work-context-summary__sort {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    width: 100%;
+    min-height: 1.75rem;
+    padding: 0.15rem 0.25rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-align: inherit;
+    cursor: pointer;
+  }
+
+  .work-context-summary__corner .work-context-summary__sort {
+    justify-content: flex-start;
+    color: var(--color-text-muted);
+  }
+
+  .work-context-summary__sort:hover {
+    background: var(--color-surface-dynamic);
+  }
+
+  .work-context-summary__sort:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+  }
+
+  .work-context-summary__sort-indicator {
+    flex: 0 0 auto;
+    font-size: 0.65rem;
+    line-height: 1;
+    color: var(--color-text-faint);
+  }
+
+  .work-context-summary__col[aria-sort='ascending'] .work-context-summary__sort-indicator,
+  .work-context-summary__col[aria-sort='descending'] .work-context-summary__sort-indicator,
+  .work-context-summary__corner[aria-sort='ascending'] .work-context-summary__sort-indicator,
+  .work-context-summary__corner[aria-sort='descending'] .work-context-summary__sort-indicator {
+    color: var(--color-text);
   }
 
   .work-context-summary__dot {

@@ -8,6 +8,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Arbeitssituations-Map sortierbar (#871)** — Die Arbeitssituations-Map auf dem Home-Screen
+  lässt sich per Klick auf die Spaltenüberschrift nach **Arbeitssituation**, **Stimmung**,
+  **Energie** oder **Stress** sortieren. Jede Spalte durchläuft aufsteigend → absteigend →
+  Standardreihenfolge; Metrik-Spalten sortieren numerisch (Zeilen ohne Wert stehen immer
+  hinten), die Arbeitssituation locale-aware (deutsch). Barrierefrei über `aria-sort` und per
+  Tastatur bedienbare Header-Buttons mit Richtungs-Indikator.
+
 ## [1.8.0] — 2026-09-08
 
 Feature-Release: Trends „Datenreife"-Panel, Home Analysis-Badge mit Daily-New-Insights,

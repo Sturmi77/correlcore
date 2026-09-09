@@ -80,6 +80,10 @@
       "work_context_legend_low": "lower",
       "work_context_legend_high": "better",
       "work_context_stress_note": "Stronger shading = better within the situations shown (stress inverted; colour scaled per column).",
+      "work_context_column_situation": "Work context",
+      "work_context_sort_action": "Sort by {column}",
+      "work_context_sort_ascending": "Sorted by {column}, ascending",
+      "work_context_sort_descending": "Sorted by {column}, descending",
       "none": "None"
     },
     "worker_run": {
