@@ -293,7 +293,7 @@
 
   .work-context-summary__sort-indicator {
     flex: 0 0 auto;
-    font-size: 0.65rem;
+    font-size: var(--text-2xs);
     line-height: 1;
     color: var(--color-text-faint);
   }
