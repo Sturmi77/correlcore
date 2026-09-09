@@ -80,6 +80,10 @@
       "work_context_legend_low": "geringer",
       "work_context_legend_high": "besser",
       "work_context_stress_note": "Stärkere Färbung = besser innerhalb der gezeigten Situationen (Stress invertiert; Farbe je Spalte skaliert).",
+      "work_context_column_situation": "Arbeitssituation",
+      "work_context_sort_action": "Nach {column} sortieren",
+      "work_context_sort_ascending": "Nach {column} aufsteigend sortiert",
+      "work_context_sort_descending": "Nach {column} absteigend sortiert",
       "none": "Keine"
     },
     "worker_run": {

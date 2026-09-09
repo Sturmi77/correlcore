@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
 import HomeWorkContextSummary from './HomeWorkContextSummary.svelte';
 
@@ -101,6 +101,66 @@ describe('HomeWorkContextSummary', () => {
     )?.[1];
     // vacation stress 2.2 -> goodness 3.8; office stress 3.6 -> goodness 2.4.
     expect(vacation).toBeGreaterThan(office as number);
+  });
+
+  it('re-sorts rows in both directions when a column header is clicked', async () => {
+    render(HomeWorkContextSummary, { props: { workContextSummary: summary } });
+
+    const rowLabels = () =>
+      [...document.querySelectorAll('.work-context-summary__label')].map((node) =>
+        (node.textContent ?? '').trim()
+      );
+
+    // Default: homeoffice first (best goodness).
+    expect(rowLabels()[0]).toContain('homeoffice');
+
+    const stressHeader = document.querySelector<HTMLButtonElement>('[data-column="stress"]')!;
+    const stressColumn = stressHeader.closest('[role="columnheader"]')!;
+
+    // Default order: no column is actively sorted, so aria-sort is omitted.
+    expect(stressColumn.hasAttribute('aria-sort')).toBe(false);
+
+    // First click → ascending by stress avg (homeoffice 2.1 < office 2.8).
+    await fireEvent.click(stressHeader);
+    expect(stressColumn.getAttribute('aria-sort')).toBe('ascending');
+    expect(rowLabels()[0]).toContain('homeoffice');
+
+    // Second click → descending (office 2.8 first).
+    await fireEvent.click(stressHeader);
+    expect(stressColumn.getAttribute('aria-sort')).toBe('descending');
+    expect(rowLabels()[0]).toContain('office');
+
+    // Third click → back to default order, attribute removed again.
+    await fireEvent.click(stressHeader);
+    expect(stressColumn.hasAttribute('aria-sort')).toBe(false);
+    expect(rowLabels()[0]).toContain('homeoffice');
+  });
+
+  it('sets aria-sort only on the actively sorted column', async () => {
+    render(HomeWorkContextSummary, { props: { workContextSummary: summary } });
+    const columns = [...document.querySelectorAll('[role="columnheader"]')];
+    // Nothing is sorted initially.
+    expect(columns.every((column) => !column.hasAttribute('aria-sort'))).toBe(true);
+
+    const stressHeader = document.querySelector<HTMLButtonElement>('[data-column="stress"]')!;
+    await fireEvent.click(stressHeader);
+    // Exactly one column carries aria-sort while a sort is active.
+    expect(columns.filter((column) => column.hasAttribute('aria-sort'))).toHaveLength(1);
+    expect(stressHeader.closest('[role="columnheader"]')!.getAttribute('aria-sort')).toBe(
+      'ascending'
+    );
+  });
+
+  it('exposes the situation column as a sortable header', async () => {
+    render(HomeWorkContextSummary, { props: { workContextSummary: summary } });
+    const situationHeader = document.querySelector<HTMLButtonElement>(
+      '[data-column="work_context"]'
+    )!;
+    expect(situationHeader).toBeTruthy();
+    const column = situationHeader.closest('[role="columnheader"]')!;
+    expect(column.hasAttribute('aria-sort')).toBe(false);
+    await fireEvent.click(situationHeader);
+    expect(column.getAttribute('aria-sort')).toBe('ascending');
   });
 
   it('renders nothing when there is no data and not loading', () => {

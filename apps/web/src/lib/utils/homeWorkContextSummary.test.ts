@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildWorkContextHeatmapRows,
+  nextWorkContextSort,
+  sortWorkContextHeatmapRows,
   WORK_CONTEXT_METRICS,
   WORK_CONTEXT_RELATIVE_MIN_SPAN,
   workContextColumnRange,
@@ -182,5 +184,89 @@ describe('homeWorkContextSummary', () => {
     const mood = rows[0].cells.find((cell) => cell.metric === 'mood')!;
     expect(mood.avg).toBeNull();
     expect(mood.trendDirection).toBeNull();
+  });
+
+  describe('nextWorkContextSort', () => {
+    it('cycles a column asc → desc → default', () => {
+      expect(nextWorkContextSort(null, 'stress')).toEqual({ column: 'stress', direction: 'asc' });
+      expect(nextWorkContextSort({ column: 'stress', direction: 'asc' }, 'stress')).toEqual({
+        column: 'stress',
+        direction: 'desc',
+      });
+      expect(nextWorkContextSort({ column: 'stress', direction: 'desc' }, 'stress')).toBeNull();
+    });
+
+    it('starts a fresh ascending sort when switching columns', () => {
+      expect(nextWorkContextSort({ column: 'stress', direction: 'desc' }, 'mood')).toEqual({
+        column: 'mood',
+        direction: 'asc',
+      });
+    });
+  });
+
+  describe('sortWorkContextHeatmapRows', () => {
+    const rows = buildWorkContextHeatmapRows(items);
+
+    it('keeps the default best-first order when sort is null', () => {
+      expect(sortWorkContextHeatmapRows(rows, null).map((row) => row.work_context)).toEqual(
+        rows.map((row) => row.work_context)
+      );
+    });
+
+    it('sorts by a metric average in both directions', () => {
+      const stressOf = (context: string) =>
+        rows
+          .find((row) => row.work_context === context)!
+          .cells.find((cell) => cell.metric === 'stress')!.avg;
+      // stress_avg: office 2.8, homeoffice 2.1, weekend 3.0
+      expect(stressOf('office')).toBe(2.8);
+
+      const asc = sortWorkContextHeatmapRows(rows, { column: 'stress', direction: 'asc' });
+      expect(asc.map((row) => row.work_context)).toEqual(['homeoffice', 'office', 'weekend']);
+
+      const desc = sortWorkContextHeatmapRows(rows, { column: 'stress', direction: 'desc' });
+      expect(desc.map((row) => row.work_context)).toEqual(['weekend', 'office', 'homeoffice']);
+    });
+
+    it('sorts by the situation label using the provided resolver', () => {
+      const labelFor = (wc: string) =>
+        ({ office: 'Büro', homeoffice: 'Homeoffice', weekend: 'Wochenende' })[wc] ?? wc;
+      const asc = sortWorkContextHeatmapRows(
+        rows,
+        { column: 'work_context', direction: 'asc' },
+        labelFor
+      );
+      expect(asc.map((row) => row.work_context)).toEqual(['office', 'homeoffice', 'weekend']);
+
+      const desc = sortWorkContextHeatmapRows(
+        rows,
+        { column: 'work_context', direction: 'desc' },
+        labelFor
+      );
+      expect(desc.map((row) => row.work_context)).toEqual(['weekend', 'homeoffice', 'office']);
+    });
+
+    it('always sorts rows without a value to the end', () => {
+      const withGap = buildWorkContextHeatmapRows([
+        ...items,
+        {
+          work_context: 'sick' as const,
+          entry_count: 3,
+          mood_avg: 3,
+          energy_avg: 3,
+          stress_avg: null,
+        },
+      ]);
+      const asc = sortWorkContextHeatmapRows(withGap, { column: 'stress', direction: 'asc' });
+      const desc = sortWorkContextHeatmapRows(withGap, { column: 'stress', direction: 'desc' });
+      expect(asc[asc.length - 1].work_context).toBe('sick');
+      expect(desc[desc.length - 1].work_context).toBe('sick');
+    });
+
+    it('does not mutate the input rows', () => {
+      const before = rows.map((row) => row.work_context);
+      sortWorkContextHeatmapRows(rows, { column: 'stress', direction: 'desc' });
+      expect(rows.map((row) => row.work_context)).toEqual(before);
+    });
   });
 });

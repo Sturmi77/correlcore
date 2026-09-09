@@ -190,3 +190,76 @@ export function buildWorkContextHeatmapRows(
 
   return rows;
 }
+
+/** Column the heatmap can be sorted by: the situation name or one metric. */
+export type WorkContextSortColumn = 'work_context' | WorkContextMetricKey;
+export type WorkContextSortDirection = 'asc' | 'desc';
+
+export interface WorkContextSort {
+  column: WorkContextSortColumn;
+  direction: WorkContextSortDirection;
+}
+
+/**
+ * Next sort state when a column header is activated.
+ *
+ * Cycles through the column: first click → ascending, second → descending,
+ * third → back to the default order (`null`). Activating a different column
+ * starts a fresh ascending sort on it.
+ */
+export function nextWorkContextSort(
+  current: WorkContextSort | null,
+  column: WorkContextSortColumn
+): WorkContextSort | null {
+  if (!current || current.column !== column) return { column, direction: 'asc' };
+  if (current.direction === 'asc') return { column, direction: 'desc' };
+  return null;
+}
+
+function metricAvgOf(row: WorkContextHeatmapRow, metric: WorkContextMetricKey): number | null {
+  return row.cells.find((cell) => cell.metric === metric)?.avg ?? null;
+}
+
+/**
+ * Reorder built heatmap rows by the chosen column and direction.
+ *
+ * - `null` sort keeps the default best-situation-first order from
+ *   {@link buildWorkContextHeatmapRows}.
+ * - The `work_context` column sorts by the resolved (localised) label using a
+ *   locale-aware comparison; pass `labelFor` to sort by the displayed name.
+ * - Metric columns sort by the raw average shown in the cell. Rows without a
+ *   value for that metric always sort to the end regardless of direction, and
+ *   the situation label breaks ties.
+ *
+ * Rows are copied, never mutated, so heatmap levels stay valid.
+ */
+export function sortWorkContextHeatmapRows(
+  rows: WorkContextHeatmapRow[],
+  sort: WorkContextSort | null,
+  labelFor: (workContext: WorkContextHeatmapRow['work_context']) => string = (wc) => wc
+): WorkContextHeatmapRow[] {
+  if (!sort) return rows;
+
+  const factor = sort.direction === 'asc' ? 1 : -1;
+  const byLabel = (a: WorkContextHeatmapRow, b: WorkContextHeatmapRow) =>
+    labelFor(a.work_context).localeCompare(labelFor(b.work_context), 'de');
+
+  const sorted = [...rows];
+
+  if (sort.column === 'work_context') {
+    sorted.sort((a, b) => factor * byLabel(a, b));
+    return sorted;
+  }
+
+  const metric = sort.column;
+  sorted.sort((a, b) => {
+    const av = metricAvgOf(a, metric);
+    const bv = metricAvgOf(b, metric);
+    if (av === null && bv === null) return byLabel(a, b);
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    if (av !== bv) return factor * (av - bv);
+    return byLabel(a, b);
+  });
+  return sorted;
+}
