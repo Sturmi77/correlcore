@@ -37,11 +37,14 @@
 
   // `current` is passed in explicitly so Svelte tracks `sort` as a reactive
   // dependency of every header expression that calls these helpers.
+  // Returns `undefined` for inactive columns so the `aria-sort` attribute is
+  // omitted entirely — the ARIA grid pattern expects it only on the single
+  // actively sorted header, not `"none"` on all of them.
   function ariaSortFor(
     column: WorkContextSortColumn,
     current: WorkContextSort | null
-  ): 'ascending' | 'descending' | 'none' {
-    if (!current || current.column !== column) return 'none';
+  ): 'ascending' | 'descending' | undefined {
+    if (!current || current.column !== column) return undefined;
     return current.direction === 'asc' ? 'ascending' : 'descending';
   }
 
@@ -264,6 +267,7 @@
     justify-content: center;
     gap: var(--space-1);
     width: 100%;
+    min-width: 0;
     min-height: 1.75rem;
     padding: 0.15rem 0.25rem;
     border: none;
@@ -274,6 +278,9 @@
     font-size: var(--text-xs);
     font-weight: 600;
     text-align: inherit;
+    /* Long single words (e.g. "Arbeitssituation") must break within the
+       narrow first track instead of spilling into the next column. */
+    overflow-wrap: anywhere;
     cursor: pointer;
   }
 
@@ -289,6 +296,13 @@
   .work-context-summary__sort:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 1px;
+  }
+
+  /* Touch layouts need the ≥44×44px target contract (docs/FRONTEND.md §1.6). */
+  @media (pointer: coarse) {
+    .work-context-summary__sort {
+      min-height: var(--tap-target);
+    }
   }
 
   .work-context-summary__sort-indicator {
