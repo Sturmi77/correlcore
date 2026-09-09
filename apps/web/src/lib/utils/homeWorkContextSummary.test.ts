@@ -160,4 +160,27 @@ describe('homeWorkContextSummary', () => {
     expect(energy.avg).toBe(3.4);
     expect(energy.trendDirection).toBeNull();
   });
+
+  it('does not show all-time as a 28-day average when the window is empty', () => {
+    const rows = buildWorkContextHeatmapRows([
+      {
+        work_context: 'office',
+        entry_count: 8,
+        mood_avg: 2.0,
+        energy_avg: 3.4,
+        stress_avg: 2.8,
+        mood_trend: {
+          current_avg: null,
+          previous_avg: null,
+          current_n: 0,
+          previous_n: 0,
+          delta: null,
+          direction: 'unknown',
+        },
+      },
+    ]);
+    const mood = rows[0].cells.find((cell) => cell.metric === 'mood')!;
+    expect(mood.avg).toBeNull();
+    expect(mood.trendDirection).toBeNull();
+  });
 });

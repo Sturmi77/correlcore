@@ -62,21 +62,34 @@
   }
 
   async function persistDayTrend(enabled: boolean): Promise<void> {
-    const previous = preferences;
+    const seq = persistGate.begin();
+    const previousFlag = preferences?.home_weekday_day_trend_enabled;
     if (preferences) {
       preferences = { ...preferences, home_weekday_day_trend_enabled: enabled };
     }
     busy = true;
     error = '';
-    try {
-      preferences = await updateUserPreferences({ home_weekday_day_trend_enabled: enabled });
-      sections = mergeHomeSections(preferences.home_sections);
-    } catch (err) {
-      preferences = previous;
-      error = err instanceof Error ? err.message : $_('settings.home.error_save');
-    } finally {
-      busy = false;
-    }
+    await persistGate.enqueue(async () => {
+      if (!persistGate.isCurrent(seq)) return;
+      try {
+        const saved = await updateUserPreferences({ home_weekday_day_trend_enabled: enabled });
+        if (!persistGate.isCurrent(seq)) return;
+        preferences = preferences
+          ? {
+              ...preferences,
+              home_weekday_day_trend_enabled: saved.home_weekday_day_trend_enabled,
+            }
+          : saved;
+      } catch (err) {
+        if (!persistGate.isCurrent(seq)) return;
+        if (preferences && previousFlag !== undefined) {
+          preferences = { ...preferences, home_weekday_day_trend_enabled: previousFlag };
+        }
+        error = err instanceof Error ? err.message : $_('settings.home.error_save');
+      } finally {
+        if (persistGate.isCurrent(seq)) busy = false;
+      }
+    });
   }
 
   onMount(() => {
@@ -104,7 +117,7 @@
     </div>
     <HomeSectionsEditor
       {sections}
-      disabled={loading}
+      disabled={loading || busy}
       on:change={({ detail }) => void persistSections(detail)}
     />
   </Panel>

@@ -183,4 +183,37 @@ describe('/settings/home layout editor', () => {
       });
     });
   });
+
+  it('does not reset section order from a day-trend PATCH response', async () => {
+    render(Page);
+    await screen.findByTestId('home-sections-editor');
+    await fireEvent.click(screen.getByTestId('home-section-down-first_week_banner'));
+    await waitFor(() => {
+      expect(updateUserPreferencesMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          home_sections: [
+            { key: 'daily_brief', enabled: true },
+            { key: 'first_week_banner', enabled: true },
+            { key: 'work_context', enabled: true },
+            { key: 'weekday_overview', enabled: true },
+          ],
+        })
+      );
+    });
+
+    await fireEvent.click(await screen.findByTestId('weekday-day-trend-toggle'));
+    await waitFor(() => {
+      expect(updateUserPreferencesMock).toHaveBeenCalledWith({
+        home_weekday_day_trend_enabled: false,
+      });
+    });
+
+    const rows = screen.getAllByTestId(/^home-section-row-/);
+    expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual([
+      'home-section-row-daily_brief',
+      'home-section-row-first_week_banner',
+      'home-section-row-work_context',
+      'home-section-row-weekday_overview',
+    ]);
+  });
 });

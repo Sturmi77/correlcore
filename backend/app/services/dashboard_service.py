@@ -140,10 +140,12 @@ def build_metric_trend(
 
     current_n = int(current_n or 0)
     previous_n = int(previous_n or 0)
-    current = round(float(current_avg), 2) if current_avg is not None else None
-    previous = round(float(previous_avg), 2) if previous_avg is not None else None
+    current_raw = float(current_avg) if current_avg is not None else None
+    previous_raw = float(previous_avg) if previous_avg is not None else None
+    current = round(current_raw, 2) if current_raw is not None else None
+    previous = round(previous_raw, 2) if previous_raw is not None else None
 
-    if current_n < min_n or previous_n < min_n or current is None or previous is None:
+    if current_n < min_n or previous_n < min_n or current_raw is None or previous_raw is None:
         return MetricTrend(
             current_avg=current,
             previous_avg=previous,
@@ -153,11 +155,14 @@ def build_metric_trend(
             direction="unknown",
         )
 
-    delta = round(current - previous, 2)
+    delta_raw = current_raw - previous_raw
     direction: TrendDirection
-    if abs(delta) < TREND_DELTA_THRESHOLD:
+    # Compare unrounded means so 2.00 vs 1.70 (true delta 0.296) stays flat.
+    # A tiny epsilon keeps exact 0.30 cases (3.4 − 3.1) on the `up`/`down` side
+    # despite binary-float noise.
+    if abs(delta_raw) + 1e-9 < TREND_DELTA_THRESHOLD:
         direction = "flat"
-    elif delta > 0:
+    elif delta_raw > 0:
         direction = "up"
     else:
         direction = "down"
@@ -167,8 +172,19 @@ def build_metric_trend(
         previous_avg=previous,
         current_n=current_n,
         previous_n=previous_n,
-        delta=delta,
+        delta=round(delta_raw, 2),
         direction=direction,
+    )
+
+
+def unknown_metric_trend() -> MetricTrend:
+    """Window was evaluated but had no usable current/previous mean."""
+
+    return build_metric_trend(
+        current_avg=None,
+        previous_avg=None,
+        current_n=0,
+        previous_n=0,
     )
 
 
@@ -466,8 +482,12 @@ async def get_dashboard_summary(
     )
 
     work_context_summary: list[WorkContextSummaryItem] = []
+    missing_context_trend = unknown_metric_trend()
     for row in work_context_rows:
-        mood_trend, energy_trend, stress_trend = context_trends.get(row[0], (None, None, None))
+        mood_trend, energy_trend, stress_trend = context_trends.get(
+            row[0],
+            (missing_context_trend, missing_context_trend, missing_context_trend),
+        )
         work_context_summary.append(
             WorkContextSummaryItem(
                 work_context=row[0],
@@ -520,7 +540,7 @@ async def get_dashboard_summary(
                     entry_count=int(row[1] or 0),
                     mood_avg=round(float(row[2]), 2) if row[2] is not None else None,
                     top_signal=top_signals.get(int(row[0])),
-                    mood_trend=weekday_trends.get(int(row[0])),
+                    mood_trend=weekday_trends.get(int(row[0]), unknown_metric_trend()),
                 )
                 for row in weekday_rows
             ]

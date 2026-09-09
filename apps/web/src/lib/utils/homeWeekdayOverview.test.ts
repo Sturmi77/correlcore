@@ -138,6 +138,29 @@ describe('homeWeekdayOverview', () => {
     expect(cells[0].moodAvg).toBe(3.1);
     expect(cells[0].moodTrendDirection).toBeNull();
   });
+
+  it('does not show all-time mood when the window current_avg is missing', () => {
+    const cells = buildWeekdayOverviewCells(
+      [],
+      [
+        {
+          weekday: 0,
+          entry_count: 10,
+          mood_avg: 3.1,
+          mood_trend: {
+            current_avg: null,
+            previous_avg: null,
+            current_n: 0,
+            previous_n: 0,
+            delta: null,
+            direction: 'unknown',
+          },
+        },
+      ]
+    );
+    expect(cells[0].moodAvg).toBeNull();
+    expect(cells[0].moodTrendDirection).toBeNull();
+  });
 });
 
 describe('selectNewestWeekdayPattern', () => {

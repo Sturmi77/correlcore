@@ -106,6 +106,9 @@ async def test_dashboard_summary_counts_distinct_entry_dates() -> None:
     assert out.work_context_summary[0].work_context == WorkContext.OFFICE
     assert out.work_context_summary[0].entry_count == 8
     assert out.work_context_summary[0].mood_avg == 3.75
+    assert out.work_context_summary[0].mood_trend is not None
+    assert out.work_context_summary[0].mood_trend.current_avg is None
+    assert out.work_context_summary[0].mood_trend.direction == "unknown"
     assert len(out.weekday_summary) == 7
     assert out.weekday_summary[4].weekday == 4
     assert out.weekday_summary[4].mood_avg == 3.8
@@ -298,6 +301,19 @@ class TestMetricTrend:
             previous_n=10,
         )
         assert just_under.direction == "flat"
+
+        # Rounding the means first would turn 2.0 vs 46/27≈1.704 into 2.00 vs 1.70
+        # and promote a 0.296 gap to an `up` at the 0.30 threshold.
+        unrounded = build_metric_trend(
+            current_avg=2.0,
+            previous_avg=46 / 27,
+            current_n=10,
+            previous_n=10,
+        )
+        assert abs(2.0 - 46 / 27) < TREND_DELTA_THRESHOLD
+        assert unrounded.direction == "flat"
+        assert unrounded.current_avg == 2.0
+        assert unrounded.previous_avg == 1.7
 
         at_threshold = build_metric_trend(
             current_avg=3.4, previous_avg=3.1, current_n=10, previous_n=10

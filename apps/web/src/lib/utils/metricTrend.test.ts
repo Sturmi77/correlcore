@@ -19,10 +19,13 @@ describe('metricTrend mapping', () => {
     expect(displayMetricAvg(2.0, trend({ current_avg: 3.8 }))).toBe(3.8);
   });
 
-  it('falls back to all-time when the window mean is missing', () => {
-    expect(displayMetricAvg(2.0, trend({ current_avg: null, direction: 'unknown' }))).toBe(2.0);
+  it('falls back to all-time only when the payload has no trend object', () => {
     expect(displayMetricAvg(2.0, null)).toBe(2.0);
     expect(displayMetricAvg(null, null)).toBeNull();
+  });
+
+  it('does not paint all-time as a window mean when current_avg is missing', () => {
+    expect(displayMetricAvg(2.0, trend({ current_avg: null, direction: 'unknown' }))).toBeNull();
   });
 
   it('hides the glyph when direction is unknown or the trend is absent', () => {
