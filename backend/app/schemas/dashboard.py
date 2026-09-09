@@ -10,6 +10,24 @@ from pydantic import BaseModel, Field
 from app.models.entry import WorkContext
 from app.models.insight import InsightTier
 
+TrendDirection = Literal["up", "down", "flat", "unknown"]
+
+
+class MetricTrend(BaseModel):
+    """Two-window comparison for a single 1–5 metric (#868).
+
+    ``current_avg`` is the display value (window mean). ``direction`` is
+    descriptive only — never a good/bad verdict. ``unknown`` when either
+    window has too few observations.
+    """
+
+    current_avg: float | None = None
+    previous_avg: float | None = None
+    current_n: int = Field(ge=0)
+    previous_n: int = Field(ge=0)
+    delta: float | None = None
+    direction: TrendDirection
+
 
 class WorkContextSummaryItem(BaseModel):
     work_context: WorkContext
@@ -17,6 +35,9 @@ class WorkContextSummaryItem(BaseModel):
     mood_avg: float | None = None
     energy_avg: float | None = None
     stress_avg: float | None = None
+    mood_trend: MetricTrend | None = None
+    energy_trend: MetricTrend | None = None
+    stress_trend: MetricTrend | None = None
 
 
 class WeekdayTopSignal(BaseModel):
@@ -42,6 +63,7 @@ class WeekdaySummaryItem(BaseModel):
     entry_count: int = Field(ge=0)
     mood_avg: float | None = None
     top_signal: WeekdayTopSignal | None = None
+    mood_trend: MetricTrend | None = None
 
 
 class DashboardSummaryResponse(BaseModel):
@@ -50,3 +72,5 @@ class DashboardSummaryResponse(BaseModel):
     confidence_score: float = Field(ge=0.0, le=1.0)
     work_context_summary: list[WorkContextSummaryItem] = Field(default_factory=list)
     weekday_summary: list[WeekdaySummaryItem] = Field(default_factory=list)
+    trend_window_days: int = Field(default=28, ge=1)
+    weekday_mood_trend: MetricTrend | None = None

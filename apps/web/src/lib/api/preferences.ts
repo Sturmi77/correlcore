@@ -33,6 +33,8 @@ export interface UserPreferencesResponse {
   cycle_tracking_enabled: boolean;
   // Additive (M8 Sprint 4): older mocks/fallbacks may omit it — treat as true.
   health_connect_sync_sleep_enabled?: boolean;
+  // Additive (#868): per-weekday Home trend caret. Default on; omit → true.
+  home_weekday_day_trend_enabled?: boolean;
   dismissed_insight_keys: string[];
   reached_milestone_keys: string[];
   last_seen_insight_at: string | null;
@@ -52,6 +54,7 @@ export interface UserPreferencesUpdate {
   onboarding_maturity_intro_seen?: boolean;
   cycle_tracking_enabled?: boolean;
   health_connect_sync_sleep_enabled?: boolean;
+  home_weekday_day_trend_enabled?: boolean;
   dismissed_insight_keys?: string[];
   reached_milestone_keys?: string[];
   last_seen_insight_at?: string | null;

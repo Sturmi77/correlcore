@@ -92,6 +92,75 @@ describe('homeWeekdayOverview', () => {
 
     expect(cells[4].moodAvg).toBe(3.8);
   });
+
+  it('prefers mood_trend.current_avg over all-time mood_avg (#868)', () => {
+    const cells = buildWeekdayOverviewCells(
+      [],
+      [
+        {
+          weekday: 4,
+          entry_count: 10,
+          mood_avg: 2.0,
+          mood_trend: {
+            current_avg: 3.8,
+            previous_avg: 3.2,
+            current_n: 4,
+            previous_n: 4,
+            delta: 0.6,
+            direction: 'up',
+          },
+        },
+      ]
+    );
+    expect(cells[4].moodAvg).toBe(3.8);
+    expect(cells[4].moodTrendDirection).toBe('up');
+  });
+
+  it('omits the per-day caret when the trend is unknown', () => {
+    const cells = buildWeekdayOverviewCells(
+      [],
+      [
+        {
+          weekday: 0,
+          entry_count: 10,
+          mood_avg: 3.1,
+          mood_trend: {
+            current_avg: 3.1,
+            previous_avg: null,
+            current_n: 1,
+            previous_n: 0,
+            delta: null,
+            direction: 'unknown',
+          },
+        },
+      ]
+    );
+    expect(cells[0].moodAvg).toBe(3.1);
+    expect(cells[0].moodTrendDirection).toBeNull();
+  });
+
+  it('does not show all-time mood when the window current_avg is missing', () => {
+    const cells = buildWeekdayOverviewCells(
+      [],
+      [
+        {
+          weekday: 0,
+          entry_count: 10,
+          mood_avg: 3.1,
+          mood_trend: {
+            current_avg: null,
+            previous_avg: null,
+            current_n: 0,
+            previous_n: 0,
+            delta: null,
+            direction: 'unknown',
+          },
+        },
+      ]
+    );
+    expect(cells[0].moodAvg).toBeNull();
+    expect(cells[0].moodTrendDirection).toBeNull();
+  });
 });
 
 describe('selectNewestWeekdayPattern', () => {

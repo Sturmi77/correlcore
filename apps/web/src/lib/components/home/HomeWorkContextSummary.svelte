@@ -6,9 +6,11 @@
     WORK_CONTEXT_METRICS,
     type WorkContextMetricKey,
   } from '$lib/utils/homeWorkContextSummary';
+  import TrendDirectionGlyph from './TrendDirectionGlyph.svelte';
 
   export let workContextSummary: WorkContextSummaryItem[] = [];
   export let loading = false;
+  export let trendWindowDays = 28;
 
   const METRIC_LABEL_KEY: Record<WorkContextMetricKey, string> = {
     mood: 'home.brief.metric_mood',
@@ -26,6 +28,13 @@
     return value === null ? $_('home.brief.none') : value.toFixed(1);
   }
 
+  function trendPhrase(direction: 'up' | 'down' | 'flat' | null): string {
+    if (!direction) return '';
+    return $_(`home.brief.work_context_trend_${direction}`, {
+      values: { n: trendWindowDays },
+    });
+  }
+
   $: rows = buildWorkContextHeatmapRows(workContextSummary);
 </script>
 
@@ -38,7 +47,7 @@
   >
     <div class="work-context-summary__header">
       <h3>{$_('home.brief.work_context_heading')}</h3>
-      <span>{$_('home.brief.work_context_hint')}</span>
+      <span>{$_('home.brief.work_context_hint_window', { values: { n: trendWindowDays } })}</span>
     </div>
 
     <div
@@ -71,17 +80,24 @@
               role="cell"
               data-metric={cell.metric}
               data-level={cell.level}
+              data-trend={cell.trendDirection ?? 'none'}
               aria-label={$_('home.brief.work_context_cell', {
                 values: {
                   context: $_(`entry.work_context.${row.work_context}`),
                   metric: $_(METRIC_LABEL_KEY[cell.metric]),
                   value: formatAverage(cell.avg),
+                  trend: trendPhrase(cell.trendDirection),
                 },
               })}
             >
               <span class="work-context-summary__value">
                 {cell.avg === null ? '–' : formatAverage(cell.avg)}
               </span>
+              {#if cell.trendDirection}
+                <span class="work-context-summary__trend" aria-hidden="true">
+                  <TrendDirectionGlyph direction={cell.trendDirection} />
+                </span>
+              {/if}
             </span>
           {/each}
         </div>
@@ -175,8 +191,10 @@
   }
 
   .work-context-summary__cell {
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
     min-height: 2rem;
     border-radius: var(--radius-sm);
     font-size: var(--text-sm);
@@ -184,6 +202,20 @@
     font-variant-numeric: tabular-nums;
     color: var(--color-text-faint);
     background: var(--color-surface-dynamic);
+    white-space: nowrap;
+  }
+
+  .work-context-summary__trend {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: var(--color-text-muted);
+    width: 0.65rem;
+    height: 0.65rem;
+  }
+
+  .work-context-summary__trend :global(svg) {
+    width: 0.65rem;
+    height: 0.65rem;
   }
 
   .work-context-summary__value {

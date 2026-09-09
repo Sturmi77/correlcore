@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from datetime import date as date_type
 from math import log1p
+from typing import Literal
 
-from sqlalchemy import Integer, cast, func, select
+from sqlalchemy import Integer, case, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.entry import Entry, EntrySlot
+from app.models.entry import Entry, EntrySlot, WorkContext
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag
 from app.schemas.dashboard import (
     DashboardSummaryResponse,
+    MetricTrend,
     WeekdaySummaryItem,
     WeekdayTopSignal,
     WorkContextSummaryItem,
@@ -25,6 +27,15 @@ from app.services.tag_service import analytics_tag_predicate, canonicalize_tags_
 #: A weekday only gets a top signal once it is more than a one-off.
 MIN_TOP_SIGNAL_COUNT = 2
 MIN_TOP_SIGNAL_SHARE = 0.3
+
+#: Home trend windows (#868). Current N days vs the N days before; V1 is fixed.
+TREND_WINDOW_DAYS = 28
+#: |delta| on the 1–5 scale must reach this to count as up/down rather than flat.
+TREND_DELTA_THRESHOLD = 0.3
+#: Minimum observations per window for the aggregate weekday trend and work-context trends.
+TREND_MIN_N = 3
+#: Per-weekday (W2) floor — a 28-day window has at most ~4 of each weekday.
+TREND_MIN_N_WEEKDAY = 2
 
 #: Ties resolve tag > symptom > work_context, then by label (#487).
 _KIND_RANK: dict[str, int] = {"tag": 0, "symptom": 1, "work_context": 2}
@@ -37,6 +48,8 @@ _CONFIDENCE_ANCHORS: tuple[tuple[int, float], ...] = (
     (30, 0.90),
     (100, 1.00),
 )
+
+TrendDirection = Literal["up", "down", "flat", "unknown"]
 
 
 def insight_confidence_score(entry_count: int) -> float:
@@ -98,6 +111,98 @@ def pick_top_signal(
         count=count,
         share=round(count / weekday_entry_count, 3),
     )
+
+
+def trend_windows(
+    as_of: date_type, *, days: int = TREND_WINDOW_DAYS
+) -> tuple[date_type, date_type, date_type]:
+    """Return ``(previous_start, previous_end, current_start)`` inclusive bounds.
+
+    Current window is ``[current_start, as_of]``; previous is
+    ``[previous_start, previous_end]``. Each spans ``days`` calendar days.
+    """
+
+    current_start = as_of - timedelta(days=days - 1)
+    previous_end = as_of - timedelta(days=days)
+    previous_start = as_of - timedelta(days=2 * days - 1)
+    return previous_start, previous_end, current_start
+
+
+def build_metric_trend(
+    *,
+    current_avg: float | None,
+    previous_avg: float | None,
+    current_n: int,
+    previous_n: int,
+    min_n: int = TREND_MIN_N,
+) -> MetricTrend:
+    """Compare two window means. Pure and separately testable (#868)."""
+
+    current_n = int(current_n or 0)
+    previous_n = int(previous_n or 0)
+    current_raw = float(current_avg) if current_avg is not None else None
+    previous_raw = float(previous_avg) if previous_avg is not None else None
+    current = round(current_raw, 2) if current_raw is not None else None
+    previous = round(previous_raw, 2) if previous_raw is not None else None
+
+    if current_n < min_n or previous_n < min_n or current_raw is None or previous_raw is None:
+        return MetricTrend(
+            current_avg=current,
+            previous_avg=previous,
+            current_n=current_n,
+            previous_n=previous_n,
+            delta=None,
+            direction="unknown",
+        )
+
+    delta_raw = current_raw - previous_raw
+    direction: TrendDirection
+    # Compare unrounded means so 2.00 vs 1.70 (true delta 0.296) stays flat.
+    # A tiny epsilon keeps exact 0.30 cases (3.4 − 3.1) on the `up`/`down` side
+    # despite binary-float noise.
+    if abs(delta_raw) + 1e-9 < TREND_DELTA_THRESHOLD:
+        direction = "flat"
+    elif delta_raw > 0:
+        direction = "up"
+    else:
+        direction = "down"
+
+    return MetricTrend(
+        current_avg=current,
+        previous_avg=previous,
+        current_n=current_n,
+        previous_n=previous_n,
+        delta=round(delta_raw, 2),
+        direction=direction,
+    )
+
+
+def unknown_metric_trend() -> MetricTrend:
+    """Window was evaluated but had no usable current/previous mean."""
+
+    return build_metric_trend(
+        current_avg=None,
+        previous_avg=None,
+        current_n=0,
+        previous_n=0,
+    )
+
+
+def weighted_window_avg(
+    parts: list[tuple[int, float | None]],
+) -> tuple[float | None, int]:
+    """Entry-weighted mean of ``(n, avg)`` pairs — not the mean of per-group deltas."""
+
+    total_n = 0
+    total = 0.0
+    for n, avg in parts:
+        if n <= 0 or avg is None:
+            continue
+        total_n += int(n)
+        total += int(n) * float(avg)
+    if total_n == 0:
+        return None, 0
+    return total / total_n, total_n
 
 
 async def _weekday_top_signals(
@@ -203,6 +308,142 @@ async def _weekday_top_signals(
     return signals
 
 
+async def _work_context_trends(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    as_of: date_type,
+) -> dict[WorkContext, tuple[MetricTrend, MetricTrend, MetricTrend]]:
+    """Mood / energy / stress trends per work context over the two windows."""
+
+    previous_start, previous_end, current_start = trend_windows(as_of)
+    in_current = Entry.entry_date >= current_start
+    in_previous = Entry.entry_date <= previous_end
+
+    result = await db.execute(
+        select(
+            Entry.work_context,
+            func.count(func.distinct(case((in_current, Entry.entry_date)))),
+            func.avg(case((in_current, Entry.mood_score))),
+            func.avg(case((in_current, Entry.energy))),
+            func.avg(case((in_current, Entry.stress))),
+            func.count(func.distinct(case((in_previous, Entry.entry_date)))),
+            func.avg(case((in_previous, Entry.mood_score))),
+            func.avg(case((in_previous, Entry.energy))),
+            func.avg(case((in_previous, Entry.stress))),
+        )
+        .where(
+            Entry.user_id == user_id,
+            Entry.slot == EntrySlot.DAY,
+            Entry.entry_date >= previous_start,
+            Entry.entry_date <= as_of,
+        )
+        .group_by(Entry.work_context)
+    )
+
+    trends: dict[WorkContext, tuple[MetricTrend, MetricTrend, MetricTrend]] = {}
+    for row in result.all():
+        context = row[0]
+        current_n = int(row[1] or 0)
+        previous_n = int(row[5] or 0)
+        trends[context] = (
+            build_metric_trend(
+                current_avg=row[2],
+                previous_avg=row[6],
+                current_n=current_n,
+                previous_n=previous_n,
+            ),
+            build_metric_trend(
+                current_avg=row[3],
+                previous_avg=row[7],
+                current_n=current_n,
+                previous_n=previous_n,
+            ),
+            build_metric_trend(
+                current_avg=row[4],
+                previous_avg=row[8],
+                current_n=current_n,
+                previous_n=previous_n,
+            ),
+        )
+    return trends
+
+
+async def _weekday_mood_trends(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    as_of: date_type,
+) -> tuple[MetricTrend, dict[int, MetricTrend]]:
+    """Aggregate weekday mood trend (W1) and per-weekday trends (W2).
+
+    Daily means first, then grouped by weekday. W1 is the entry-weighted mean
+    of those daily values — not the unweighted mean of seven weekday deltas.
+    """
+
+    previous_start, previous_end, current_start = trend_windows(as_of)
+    daily_subq = (
+        select(
+            Entry.entry_date,
+            func.avg(Entry.mood_score).label("mood_score"),
+        )
+        .where(
+            Entry.user_id == user_id,
+            Entry.slot == EntrySlot.DAY,
+            Entry.entry_date >= previous_start,
+            Entry.entry_date <= as_of,
+        )
+        .group_by(Entry.entry_date)
+        .subquery()
+    )
+    in_current = daily_subq.c.entry_date >= current_start
+    in_previous = daily_subq.c.entry_date <= previous_end
+    weekday_expr = cast(func.extract("isodow", daily_subq.c.entry_date), Integer) - 1
+
+    result = await db.execute(
+        select(
+            weekday_expr.label("weekday"),
+            func.count(case((in_current, daily_subq.c.entry_date))),
+            func.avg(case((in_current, daily_subq.c.mood_score))),
+            func.count(case((in_previous, daily_subq.c.entry_date))),
+            func.avg(case((in_previous, daily_subq.c.mood_score))),
+        )
+        .select_from(daily_subq)
+        .group_by(weekday_expr)
+        .order_by(weekday_expr)
+    )
+    rows = result.all()
+
+    per_weekday: dict[int, MetricTrend] = {}
+    current_parts: list[tuple[int, float | None]] = []
+    previous_parts: list[tuple[int, float | None]] = []
+    for row in rows:
+        weekday = int(row[0])
+        current_n = int(row[1] or 0)
+        previous_n = int(row[3] or 0)
+        current_avg = row[2]
+        previous_avg = row[4]
+        per_weekday[weekday] = build_metric_trend(
+            current_avg=current_avg,
+            previous_avg=previous_avg,
+            current_n=current_n,
+            previous_n=previous_n,
+            min_n=TREND_MIN_N_WEEKDAY,
+        )
+        current_parts.append((current_n, current_avg))
+        previous_parts.append((previous_n, previous_avg))
+
+    current_avg, current_n = weighted_window_avg(current_parts)
+    previous_avg, previous_n = weighted_window_avg(previous_parts)
+    aggregate = build_metric_trend(
+        current_avg=current_avg,
+        previous_avg=previous_avg,
+        current_n=current_n,
+        previous_n=previous_n,
+    )
+    return aggregate, per_weekday
+
+
 async def get_dashboard_summary(
     db: AsyncSession,
     *,
@@ -234,16 +475,31 @@ async def get_dashboard_summary(
         .group_by(Entry.work_context)
         .order_by(func.count(func.distinct(Entry.entry_date)).desc(), Entry.work_context)
     )
-    work_context_summary = [
-        WorkContextSummaryItem(
-            work_context=row[0],
-            entry_count=int(row[1] or 0),
-            mood_avg=round(float(row[2]), 2) if row[2] is not None else None,
-            energy_avg=round(float(row[3]), 2) if row[3] is not None else None,
-            stress_avg=round(float(row[4]), 2) if row[4] is not None else None,
+    work_context_rows = work_context_result.all()
+    context_trends = await _work_context_trends(db, user_id=user_id, as_of=as_of)
+    weekday_mood_trend, weekday_trends = await _weekday_mood_trends(
+        db, user_id=user_id, as_of=as_of
+    )
+
+    work_context_summary: list[WorkContextSummaryItem] = []
+    missing_context_trend = unknown_metric_trend()
+    for row in work_context_rows:
+        mood_trend, energy_trend, stress_trend = context_trends.get(
+            row[0],
+            (missing_context_trend, missing_context_trend, missing_context_trend),
         )
-        for row in work_context_result.all()
-    ]
+        work_context_summary.append(
+            WorkContextSummaryItem(
+                work_context=row[0],
+                entry_count=int(row[1] or 0),
+                mood_avg=round(float(row[2]), 2) if row[2] is not None else None,
+                energy_avg=round(float(row[3]), 2) if row[3] is not None else None,
+                stress_avg=round(float(row[4]), 2) if row[4] is not None else None,
+                mood_trend=mood_trend,
+                energy_trend=energy_trend,
+                stress_trend=stress_trend,
+            )
+        )
 
     top_signals: dict[int, WeekdayTopSignal] = {}
     weekday_summary: list[WeekdaySummaryItem] = []
@@ -284,6 +540,7 @@ async def get_dashboard_summary(
                     entry_count=int(row[1] or 0),
                     mood_avg=round(float(row[2]), 2) if row[2] is not None else None,
                     top_signal=top_signals.get(int(row[0])),
+                    mood_trend=weekday_trends.get(int(row[0]), unknown_metric_trend()),
                 )
                 for row in weekday_rows
             ]
@@ -294,4 +551,6 @@ async def get_dashboard_summary(
         confidence_score=insight_confidence_score(entry_count),
         work_context_summary=work_context_summary,
         weekday_summary=weekday_summary,
+        trend_window_days=TREND_WINDOW_DAYS,
+        weekday_mood_trend=weekday_mood_trend,
     )

@@ -61,6 +61,37 @@
     });
   }
 
+  async function persistDayTrend(enabled: boolean): Promise<void> {
+    const seq = persistGate.begin();
+    const previousFlag = preferences?.home_weekday_day_trend_enabled;
+    if (preferences) {
+      preferences = { ...preferences, home_weekday_day_trend_enabled: enabled };
+    }
+    busy = true;
+    error = '';
+    await persistGate.enqueue(async () => {
+      if (!persistGate.isCurrent(seq)) return;
+      try {
+        const saved = await updateUserPreferences({ home_weekday_day_trend_enabled: enabled });
+        if (!persistGate.isCurrent(seq)) return;
+        preferences = preferences
+          ? {
+              ...preferences,
+              home_weekday_day_trend_enabled: saved.home_weekday_day_trend_enabled,
+            }
+          : saved;
+      } catch (err) {
+        if (!persistGate.isCurrent(seq)) return;
+        if (preferences && previousFlag !== undefined) {
+          preferences = { ...preferences, home_weekday_day_trend_enabled: previousFlag };
+        }
+        error = err instanceof Error ? err.message : $_('settings.home.error_save');
+      } finally {
+        if (persistGate.isCurrent(seq)) busy = false;
+      }
+    });
+  }
+
   onMount(() => {
     void loadPreferences();
     return registerPageRefresh(loadPreferences);
@@ -86,9 +117,27 @@
     </div>
     <HomeSectionsEditor
       {sections}
-      disabled={loading}
+      disabled={loading || busy}
       on:change={({ detail }) => void persistSections(detail)}
     />
+  </Panel>
+
+  <Panel variant="bordered">
+    <div class="home-settings__intro">
+      <h2>{$_('settings.home.day_trend_enabled')}</h2>
+      <p>{$_('settings.home.day_trend_hint')}</p>
+    </div>
+    <label class="home-settings__toggle-label">
+      <input
+        type="checkbox"
+        class="home-settings__toggle"
+        checked={preferences?.home_weekday_day_trend_enabled !== false}
+        disabled={busy || loading}
+        data-testid="weekday-day-trend-toggle"
+        on:change={(e) => void persistDayTrend(e.currentTarget.checked)}
+      />
+      <span>{$_('settings.home.day_trend_enabled')}</span>
+    </label>
   </Panel>
 
   {#if error}
@@ -121,5 +170,23 @@
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     line-height: 1.5;
+  }
+
+  .home-settings__toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    min-height: 2.75rem;
+    padding-block: 0.25rem;
+    user-select: none;
+  }
+
+  .home-settings__toggle {
+    width: 1.25rem;
+    height: 1.25rem;
+    min-width: 1.25rem;
+    cursor: pointer;
+    accent-color: var(--color-primary);
   }
 </style>
