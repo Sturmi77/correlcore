@@ -1,8 +1,13 @@
 # [FEATURE] Home: Trendindikator für Wochenmuster & Arbeitssituationsmuster
 
 > Analyse / Design-Vorschlag. Noch keine Implementierung.
-> Labels: `enhancement`, `design`
+> Labels: `enhancement`
 > Milestone: Backlog / Post-M10.1
+>
+> **Tracking:**
+> - PR dieses Dokuments: #866
+> - V1-Umsetzung (fixes 28-Tage-Fenster): #868
+> - Nachgelagert (Could) — global einstellbarer Zeitraum: #867
 
 ---
 
