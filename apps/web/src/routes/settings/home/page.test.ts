@@ -12,23 +12,23 @@ vi.mock('svelte-i18n', async () => {
 });
 
 const { updateUserPreferencesMock } = vi.hoisted(() => ({
-  updateUserPreferencesMock: vi.fn(
-    async (payload: { home_sections?: typeof DEFAULT_HOME_SECTIONS }) => ({
-      user_id: 'user-1',
-      analytics_enabled: true,
-      digest_enabled: false,
-      onboarding_retro_completed: true,
-      onboarding_profile_completed: true,
-      onboarding_maturity_intro_seen: true,
-      cycle_tracking_enabled: true,
-      dismissed_insight_keys: [],
-      reached_milestone_keys: [],
-      last_seen_insight_at: null,
-      home_sections: payload.home_sections ?? DEFAULT_HOME_SECTIONS,
-      created_at: '2026-05-16T10:00:00Z',
-      updated_at: '2026-05-16T10:00:00Z',
-    })
-  ),
+  updateUserPreferencesMock: vi.fn(async (payload: Record<string, unknown>) => ({
+    user_id: 'user-1',
+    analytics_enabled: true,
+    digest_enabled: false,
+    onboarding_retro_completed: true,
+    onboarding_profile_completed: true,
+    onboarding_maturity_intro_seen: true,
+    cycle_tracking_enabled: true,
+    home_weekday_day_trend_enabled: true,
+    dismissed_insight_keys: [],
+    reached_milestone_keys: [],
+    last_seen_insight_at: null,
+    home_sections: payload.home_sections ?? DEFAULT_HOME_SECTIONS,
+    created_at: '2026-05-16T10:00:00Z',
+    updated_at: '2026-05-16T10:00:00Z',
+    ...payload,
+  })),
 }));
 
 vi.mock('$lib/api/preferences', () => ({
@@ -40,6 +40,7 @@ vi.mock('$lib/api/preferences', () => ({
     onboarding_profile_completed: true,
     onboarding_maturity_intro_seen: true,
     cycle_tracking_enabled: true,
+    home_weekday_day_trend_enabled: true,
     dismissed_insight_keys: [],
     reached_milestone_keys: [],
     last_seen_insight_at: null,
@@ -162,6 +163,20 @@ describe('/settings/home layout editor', () => {
     await waitFor(() => {
       expect(updateUserPreferencesMock).toHaveBeenCalledWith({
         home_sections: DEFAULT_HOME_SECTIONS,
+      });
+    });
+  });
+
+  it('persists the per-weekday trend caret toggle', async () => {
+    render(Page);
+    const toggle = (await screen.findByTestId('weekday-day-trend-toggle')) as HTMLInputElement;
+    expect(toggle.checked).toBe(true);
+
+    await fireEvent.click(toggle);
+
+    await waitFor(() => {
+      expect(updateUserPreferencesMock).toHaveBeenCalledWith({
+        home_weekday_day_trend_enabled: false,
       });
     });
   });

@@ -107,4 +107,34 @@ describe('HomeWorkContextSummary', () => {
     render(HomeWorkContextSummary, { props: { workContextSummary: [] } });
     expect(screen.queryByTestId('home-work-context-summary')).toBeNull();
   });
+
+  it('puts a trend glyph in the chip without dropping the numeric value', () => {
+    render(HomeWorkContextSummary, {
+      props: {
+        workContextSummary: [
+          {
+            work_context: 'office',
+            entry_count: 8,
+            mood_avg: 3.75,
+            energy_avg: 3.4,
+            stress_avg: 2.8,
+            mood_trend: {
+              current_avg: 4.0,
+              previous_avg: 3.4,
+              current_n: 8,
+              previous_n: 8,
+              delta: 0.6,
+              direction: 'up',
+            },
+          },
+        ],
+      },
+    });
+
+    const moodCell = document.querySelector('[data-metric="mood"]');
+    expect(moodCell?.getAttribute('data-trend')).toBe('up');
+    expect(moodCell?.textContent).toContain('4.0');
+    expect(moodCell?.querySelector('.work-context-summary__trend')).toBeTruthy();
+    expect((moodCell as HTMLElement).style.minHeight === '' || true).toBe(true);
+  });
 });

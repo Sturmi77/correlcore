@@ -61,6 +61,24 @@
     });
   }
 
+  async function persistDayTrend(enabled: boolean): Promise<void> {
+    const previous = preferences;
+    if (preferences) {
+      preferences = { ...preferences, home_weekday_day_trend_enabled: enabled };
+    }
+    busy = true;
+    error = '';
+    try {
+      preferences = await updateUserPreferences({ home_weekday_day_trend_enabled: enabled });
+      sections = mergeHomeSections(preferences.home_sections);
+    } catch (err) {
+      preferences = previous;
+      error = err instanceof Error ? err.message : $_('settings.home.error_save');
+    } finally {
+      busy = false;
+    }
+  }
+
   onMount(() => {
     void loadPreferences();
     return registerPageRefresh(loadPreferences);
@@ -89,6 +107,24 @@
       disabled={loading}
       on:change={({ detail }) => void persistSections(detail)}
     />
+  </Panel>
+
+  <Panel variant="bordered">
+    <div class="home-settings__intro">
+      <h2>{$_('settings.home.day_trend_enabled')}</h2>
+      <p>{$_('settings.home.day_trend_hint')}</p>
+    </div>
+    <label class="home-settings__toggle-label">
+      <input
+        type="checkbox"
+        class="home-settings__toggle"
+        checked={preferences?.home_weekday_day_trend_enabled !== false}
+        disabled={busy || loading}
+        data-testid="weekday-day-trend-toggle"
+        on:change={(e) => void persistDayTrend(e.currentTarget.checked)}
+      />
+      <span>{$_('settings.home.day_trend_enabled')}</span>
+    </label>
   </Panel>
 
   {#if error}
@@ -121,5 +157,23 @@
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     line-height: 1.5;
+  }
+
+  .home-settings__toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    min-height: 2.75rem;
+    padding-block: 0.25rem;
+    user-select: none;
+  }
+
+  .home-settings__toggle {
+    width: 1.25rem;
+    height: 1.25rem;
+    min-width: 1.25rem;
+    cursor: pointer;
+    accent-color: var(--color-primary);
   }
 </style>

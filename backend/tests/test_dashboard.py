@@ -14,9 +14,14 @@ from app.models.insight import InsightTier
 from app.models.user import User
 from app.schemas.dashboard import DashboardSummaryResponse
 from app.services.dashboard_service import (
+    TREND_DELTA_THRESHOLD,
+    TREND_WINDOW_DAYS,
+    build_metric_trend,
     get_dashboard_summary,
     insight_confidence_score,
     pick_top_signal,
+    trend_windows,
+    weighted_window_avg,
 )
 from app.services.insight_engine import confidence_tier_for_sample
 from tests.conftest import make_user
@@ -68,6 +73,10 @@ async def test_dashboard_summary_counts_distinct_entry_dates() -> None:
         side_effect=[
             _scalar_one_result(15),
             _all_result([(WorkContext.OFFICE, 8, 3.75, 3.5, 2.25)]),
+            # #868 work-context window trends.
+            _all_result([]),
+            # #868 weekday window trends (W1 + W2).
+            _all_result([]),
             _all_result(
                 [
                     (0, 2, 3.5),
@@ -91,6 +100,9 @@ async def test_dashboard_summary_counts_distinct_entry_dates() -> None:
     assert out.entry_count == 15
     assert out.insight_tier == InsightTier.DEVELOPING
     assert out.confidence_score == insight_confidence_score(15)
+    assert out.trend_window_days == TREND_WINDOW_DAYS
+    assert out.weekday_mood_trend is not None
+    assert out.weekday_mood_trend.direction == "unknown"
     assert out.work_context_summary[0].work_context == WorkContext.OFFICE
     assert out.work_context_summary[0].entry_count == 8
     assert out.work_context_summary[0].mood_avg == 3.75
@@ -109,6 +121,8 @@ async def test_dashboard_summary_omits_weekday_summary_without_full_week_coverag
     db.execute = AsyncMock(
         side_effect=[
             _scalar_one_result(9),
+            _all_result([]),
+            _all_result([]),
             _all_result([]),
             _all_result([(0, 3, 3.5), (1, 3, 3.6), (2, 3, 3.4)]),
         ]
@@ -172,14 +186,31 @@ async def test_dashboard_summary_endpoint_returns_confidence_fields(
                 "mood_avg": 3.8,
                 "energy_avg": 3.4,
                 "stress_avg": 2.6,
+                "mood_trend": None,
+                "energy_trend": None,
+                "stress_trend": None,
             }
         ],
         "weekday_summary": [
             # top_signal is always serialised; null when no signal clears the
-            # count/share floor (#487).
-            {"weekday": 0, "entry_count": 4, "mood_avg": 3.2, "top_signal": None},
-            {"weekday": 4, "entry_count": 5, "mood_avg": 3.9, "top_signal": None},
+            # count/share floor (#487). mood_trend is additive (#868).
+            {
+                "weekday": 0,
+                "entry_count": 4,
+                "mood_avg": 3.2,
+                "top_signal": None,
+                "mood_trend": None,
+            },
+            {
+                "weekday": 4,
+                "entry_count": 5,
+                "mood_avg": 3.9,
+                "top_signal": None,
+                "mood_trend": None,
+            },
         ],
+        "trend_window_days": 28,
+        "weekday_mood_trend": None,
     }
 
 
@@ -238,3 +269,149 @@ class TestWeekdayTopSignal:
 
     def test_returns_none_without_candidates(self) -> None:
         assert pick_top_signal([], weekday_entry_count=8) is None
+
+
+class TestMetricTrend:
+    """#868 — two-window comparison, thresholds, and weighted W1."""
+
+    def test_windows_are_adjacent_inclusive_spans(self) -> None:
+        previous_start, previous_end, current_start = trend_windows(date(2026, 9, 9), days=28)
+        assert current_start == date(2026, 8, 13)
+        assert previous_end == date(2026, 8, 12)
+        assert previous_start == date(2026, 7, 16)
+        assert (date(2026, 9, 9) - current_start).days == 27
+        assert (previous_end - previous_start).days == 27
+
+    def test_up_down_require_threshold(self) -> None:
+        up = build_metric_trend(current_avg=3.5, previous_avg=3.1, current_n=10, previous_n=10)
+        assert up.direction == "up"
+        assert up.delta == 0.4
+
+        down = build_metric_trend(current_avg=2.7, previous_avg=3.2, current_n=10, previous_n=10)
+        assert down.direction == "down"
+        assert down.delta == -0.5
+
+        just_under = build_metric_trend(
+            current_avg=3.2,
+            previous_avg=3.2 - (TREND_DELTA_THRESHOLD - 0.01),
+            current_n=10,
+            previous_n=10,
+        )
+        assert just_under.direction == "flat"
+
+        at_threshold = build_metric_trend(
+            current_avg=3.4, previous_avg=3.1, current_n=10, previous_n=10
+        )
+        assert at_threshold.direction == "up"
+        assert at_threshold.delta == 0.3
+
+    def test_unknown_when_a_window_is_thin(self) -> None:
+        thin = build_metric_trend(current_avg=4.0, previous_avg=2.0, current_n=2, previous_n=10)
+        assert thin.direction == "unknown"
+        assert thin.delta is None
+        assert thin.current_avg == 4.0
+
+        missing = build_metric_trend(
+            current_avg=None, previous_avg=3.0, current_n=10, previous_n=10
+        )
+        assert missing.direction == "unknown"
+
+    def test_weekday_min_n_is_lower_than_aggregate(self) -> None:
+        per_day = build_metric_trend(
+            current_avg=4.0,
+            previous_avg=3.0,
+            current_n=2,
+            previous_n=2,
+            min_n=2,
+        )
+        assert per_day.direction == "up"
+
+        aggregate = build_metric_trend(current_avg=4.0, previous_avg=3.0, current_n=2, previous_n=2)
+        assert aggregate.direction == "unknown"
+
+    def test_weighted_avg_is_not_the_mean_of_group_deltas(self) -> None:
+        # Mon dominates (n=10); Tue is a one-off. Unweighted deltas cancel;
+        # weighted current/previous still move up.
+        current, current_n = weighted_window_avg([(10, 4.0), (1, 3.0)])
+        previous, previous_n = weighted_window_avg([(10, 2.0), (1, 5.0)])
+        trend = build_metric_trend(
+            current_avg=current,
+            previous_avg=previous,
+            current_n=current_n,
+            previous_n=previous_n,
+        )
+        assert current_n == 11
+        assert previous_n == 11
+        assert trend.direction == "up"
+        unweighted_delta_mean = ((4.0 - 2.0) + (3.0 - 5.0)) / 2
+        assert unweighted_delta_mean == 0.0
+        assert trend.delta is not None and trend.delta > 0
+
+
+@pytest.mark.asyncio
+async def test_dashboard_summary_attaches_window_trends() -> None:
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_result(15),
+            _all_result([(WorkContext.OFFICE, 8, 3.75, 3.5, 2.25)]),
+            # work-context windows: current_n, mood/energy/stress, previous_n, ...
+            _all_result(
+                [
+                    (WorkContext.OFFICE, 8, 4.0, 3.6, 2.0, 6, 3.4, 3.5, 2.4),
+                ]
+            ),
+            # weekday windows: weekday, current_n, current_avg, previous_n, previous_avg
+            _all_result(
+                [
+                    (0, 4, 4.0, 4, 2.0),
+                    (1, 1, 3.0, 1, 5.0),
+                    (2, 4, 3.5, 4, 3.4),
+                    (3, 4, 3.4, 4, 3.4),
+                    (4, 4, 3.8, 4, 3.5),
+                    (5, 4, 3.2, 4, 3.1),
+                    (6, 3, 3.0, 3, 3.0),
+                ]
+            ),
+            _all_result(
+                [
+                    (0, 2, 3.5),
+                    (1, 2, 3.6),
+                    (2, 2, 3.4),
+                    (3, 2, 3.7),
+                    (4, 2, 3.8),
+                    (5, 2, 3.3),
+                    (6, 3, 3.2),
+                ]
+            ),
+            _all_result([]),
+            _all_result([]),
+            _all_result([]),
+        ]
+    )
+
+    out = await get_dashboard_summary(db, user_id=user.id, as_of=date(2026, 5, 12))
+
+    office = out.work_context_summary[0]
+    assert office.mood_trend is not None
+    assert office.mood_trend.direction == "up"
+    assert office.mood_trend.current_avg == 4.0
+    assert office.energy_trend is not None
+    assert office.energy_trend.direction == "flat"
+    assert office.stress_trend is not None
+    assert office.stress_trend.direction == "down"
+
+    monday = out.weekday_summary[0]
+    assert monday.mood_trend is not None
+    assert monday.mood_trend.direction == "up"
+    tuesday = out.weekday_summary[1]
+    assert tuesday.mood_trend is not None
+    # n=1 is below TREND_MIN_N_WEEKDAY, so the per-day caret stays hidden.
+    assert tuesday.mood_trend.direction == "unknown"
+
+    assert out.weekday_mood_trend is not None
+    # Weighted W1 must follow the heavy Monday, not the unweighted zero-mean of deltas.
+    assert out.weekday_mood_trend.direction == "up"
+    assert out.weekday_mood_trend.current_n == 24
+    assert out.weekday_mood_trend.previous_n == 24

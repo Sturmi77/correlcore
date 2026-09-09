@@ -126,4 +126,38 @@ describe('homeWorkContextSummary', () => {
     expect(moodLevel('vacation')).toBe(4);
     expect(workContextColumnRange(rows, 'mood')).toEqual({ min: 1.8, max: 4.0 });
   });
+
+  it('prefers window current_avg and exposes a visible trend direction (#868)', () => {
+    const rows = buildWorkContextHeatmapRows([
+      {
+        work_context: 'office',
+        entry_count: 8,
+        mood_avg: 2.0,
+        energy_avg: 3.4,
+        stress_avg: 2.8,
+        mood_trend: {
+          current_avg: 3.9,
+          previous_avg: 3.2,
+          current_n: 8,
+          previous_n: 8,
+          delta: 0.7,
+          direction: 'up',
+        },
+        energy_trend: {
+          current_avg: 3.4,
+          previous_avg: null,
+          current_n: 8,
+          previous_n: 1,
+          delta: null,
+          direction: 'unknown',
+        },
+      },
+    ]);
+    const mood = rows[0].cells.find((cell) => cell.metric === 'mood')!;
+    const energy = rows[0].cells.find((cell) => cell.metric === 'energy')!;
+    expect(mood.avg).toBe(3.9);
+    expect(mood.trendDirection).toBe('up');
+    expect(energy.avg).toBe(3.4);
+    expect(energy.trendDirection).toBeNull();
+  });
 });
