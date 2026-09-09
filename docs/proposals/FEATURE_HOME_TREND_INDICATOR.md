@@ -5,6 +5,7 @@
 > Milestone: Backlog / Post-M10.1
 >
 > **Tracking:**
+>
 > - PR dieses Dokuments: #866
 > - V1-Umsetzung (fixes 28-Tage-Fenster): #868
 > - Nachgelagert (Could) — global einstellbarer Zeitraum: #867
@@ -103,7 +104,7 @@ je einem Wert-Chip. Die Zellen sind bewusst quadratisch-kompakt (`min-height: 2r
 damit das Frontend die Copy korrekt beschriften kann (→ Codex #3).
 
 **Wichtig (→ Codex #1, #2):** Es genügt **nicht**, nur ein Delta zu liefern. Das
-Frontend braucht (a) den **Fenster-Mittelwert**, der *neben* dem Trend
+Frontend braucht (a) den **Fenster-Mittelwert**, der _neben_ dem Trend
 angezeigt wird, und (b) genug Rohdaten, um einen **korrekten Aggregat-Trend**
 zu bilden (gewichtet nach Einträgen, nicht als naiver Mittelwert der Einzeldeltas).
 
@@ -175,7 +176,7 @@ Das 7-Spalten-Grid hat **horizontal keinen** Platz. Optionen:
   drittes konkurrierendes Element (→ Codex #5): Der Header trägt bei aktivem
   Frühsignal schon Überschrift + `weekday-overview__tier`-Badge. Lösung:
   - Trend und Tier-Badge in einer **gemeinsamen, rechtsbündigen Badge-Gruppe**
-    bündeln (ein Flex-Container als *ein* Kind der `space-between`-Zeile), sodass
+    bündeln (ein Flex-Container als _ein_ Kind der `space-between`-Zeile), sodass
     weiterhin nur zwei Top-Level-Kinder existieren.
   - Trend als **kompaktes Badge** (Glyph + `--text-2xs`-Kurzlabel) im selben Stil
     wie `__tier`; bei `unknown` wird es weggelassen.
@@ -221,7 +222,7 @@ vor. Das ist ein **Ampel-Urteil** und wird gestrichen: Die Vorgabe (ADR-0035 /
 `FRONTEND.md:173–181`) verbietet Rot/Grün-Wertungen, und für Mood/Energy/Stress
 gibt es **kein nutzerdefiniertes Ziel**, das „besser/schlechter" rechtfertigen
 würde (anders als Habit-Adherence). Auch die metrik-bewusste Invertierung
-(Stress hoch = schlecht) behebt nur die *Richtung*, nicht das *Urteil*.
+(Stress hoch = schlecht) behebt nur die _Richtung_, nicht das _Urteil_.
 
 Verbindliche Regel:
 
