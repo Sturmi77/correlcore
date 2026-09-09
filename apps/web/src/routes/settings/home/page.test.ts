@@ -108,6 +108,7 @@ describe('/settings/home layout editor', () => {
               onboarding_profile_completed: true,
               onboarding_maturity_intro_seen: true,
               cycle_tracking_enabled: true,
+              home_weekday_day_trend_enabled: true,
               dismissed_insight_keys: [],
               reached_milestone_keys: [],
               last_seen_insight_at: null,
@@ -143,8 +144,10 @@ describe('/settings/home layout editor', () => {
     await waitFor(() => {
       expect(updateUserPreferencesMock).toHaveBeenCalledTimes(2);
     });
-    const lastPayload = updateUserPreferencesMock.mock.calls.at(-1)?.[0]?.home_sections ?? [];
-    expect(lastPayload.map((section: { key: string }) => section.key)).toEqual(latestOrder);
+    const lastPayload = (updateUserPreferencesMock.mock.calls.at(-1)?.[0]?.home_sections ?? []) as {
+      key: string;
+    }[];
+    expect(lastPayload.map((section) => section.key)).toEqual(latestOrder);
 
     await waitFor(() => {
       const rows = screen.getAllByTestId(/^home-section-row-/);

@@ -95,7 +95,7 @@
               </span>
               {#if cell.trendDirection}
                 <span class="work-context-summary__trend" aria-hidden="true">
-                  <TrendDirectionGlyph direction={cell.trendDirection} size={10} />
+                  <TrendDirectionGlyph direction={cell.trendDirection} />
                 </span>
               {/if}
             </span>

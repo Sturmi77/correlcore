@@ -1,7 +1,7 @@
-"""045 home_weekday_day_trend_enabled preference
+"""046 home_weekday_day_trend_enabled preference
 
-Revision ID: 045
-Revises: 044
+Revision ID: 046
+Revises: 045
 Create Date: 2026-09-09
 
 Opt-out toggle for the per-weekday (W2) trend caret on Home (#868). Default
@@ -14,8 +14,8 @@ from __future__ import annotations
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "045"
-down_revision: str | None = "044"
+revision: str = "046"
+down_revision: str | None = "045"
 branch_labels: str | tuple[str, ...] | None = None
 depends_on: str | tuple[str, ...] | None = None
 

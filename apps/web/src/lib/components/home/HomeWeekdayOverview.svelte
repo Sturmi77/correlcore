@@ -134,7 +134,7 @@
                 data-testid="home-weekday-day-trend"
                 data-trend={cell.moodTrendDirection}
               >
-                <TrendDirectionGlyph direction={cell.moodTrendDirection} size={11} />
+                <TrendDirectionGlyph direction={cell.moodTrendDirection} />
               </span>
             {/if}
           </span>
@@ -358,7 +358,7 @@
     font-size: var(--text-2xs);
   }
 
-  @media (max-width: 28rem) {
+  @media (max-width: 480px) {
     .weekday-overview__header {
       flex-wrap: wrap;
     }
