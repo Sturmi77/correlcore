@@ -56,7 +56,7 @@ für den Copy-on-Write-Override-Mechanismus. Die Bausteine sind wiederverwendbar
 **Wichtig:** Der `slug` ist bewusst **nicht** patchbar (siehe
 [`schemas/tag.py`](../../backend/app/schemas/tag.py) `TagUpdate`-Docstring),
 weil ein Slug-Wechsel alle historischen Verknüpfungen bräche. Genau das ist der
-Grund, warum ein *Merge* (Tag löschen, Einträge umhängen) und **kein** Rename
+Grund, warum ein _Merge_ (Tag löschen, Einträge umhängen) und **kein** Rename
 der richtige Weg ist.
 
 ### 2.2 Der wiederverwendbare Merge-Primitiv
@@ -103,8 +103,8 @@ Silhouette). Die **`pgvector`-Extension ist aktiv** und Migration
 [`016_add_tag_vectors`](../../backend/migrations/versions/016_add_tag_vectors.py)
 speichert pro `(user_id, tag_id)` ein `embedding vector` (Co-Occurrence-Profil).
 
-Das ist *eine* Ähnlichkeitsdimension „diese Tags treten in denselben Einträgen
-auf" — orthogonal zur *lexikalischen* Ähnlichkeit „diese Namen sehen ähnlich aus".
+Das ist _eine_ Ähnlichkeitsdimension „diese Tags treten in denselben Einträgen
+auf" — orthogonal zur _lexikalischen_ Ähnlichkeit „diese Namen sehen ähnlich aus".
 
 ### 2.5 Symptome sind das analoge Schwesterproblem
 
@@ -159,33 +159,33 @@ Vergleich von `slug`/`name` über normalisierte Distanzmaße.
   `CREATE EXTENSION`. Bei ~30–100 Tags/Nutzer ist der O(n²)-Vergleich in Python
   trivial (< 10k Paare) — **kein** DB-Index nötig.
 
-| | |
-|---|---|
-| **Stärken** | Löst genau den genannten Fall („krank"/„Krankheitstag"). Deterministisch, erklärbar („89 % Namensähnlichkeit"). Kein Netzwerk, keine Modelle, DSGVO-neutral (Tag-Namen sind für Default-Tags ohnehin unkritisch). Läuft on-demand, kein Worker. |
-| **Schwächen** | Erkennt **keine** Synonyme ohne Zeichenüberlappung („Sport"/„Bewegung", „Arbeit"/„Büro"). Deutsche Komposita brauchen Handarbeit beim Stemming. Fehlalarme bei kurzen Slugs („bad"/„rad"). |
-| **Aufwand** | **Niedrig** (Python) / mittel (`pg_trgm`-Migration). |
+|               |                                                                                                                                                                                                                                                 |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stärken**   | Löst genau den genannten Fall („krank"/„Krankheitstag"). Deterministisch, erklärbar („89 % Namensähnlichkeit"). Kein Netzwerk, keine Modelle, DSGVO-neutral (Tag-Namen sind für Default-Tags ohnehin unkritisch). Läuft on-demand, kein Worker. |
+| **Schwächen** | Erkennt **keine** Synonyme ohne Zeichenüberlappung („Sport"/„Bewegung", „Arbeit"/„Büro"). Deutsche Komposita brauchen Handarbeit beim Stemming. Fehlalarme bei kurzen Slugs („bad"/„rad").                                                      |
+| **Aufwand**   | **Niedrig** (Python) / mittel (`pg_trgm`-Migration).                                                                                                                                                                                            |
 
 ### Option A2 — Verhaltensbasierte Ähnlichkeit (Co-Occurrence)
 
 `tag_vectors`-Embeddings bzw. `tag_cluster_service`-Cofrequenzen nutzen:
 Tags, die in denselben Einträgen auftreten, sind verhaltensähnlich.
 
-| | |
-|---|---|
-| **Stärken** | Infrastruktur existiert (`pgvector`, Vektoren pro Nutzer). Findet Synonyme, die A1 entgehen, wenn sie gemeinsam/abwechselnd genutzt werden. |
-| **Schwächen** | **Falsche Richtung für Dubletten:** echte Synonyme werden vom Nutzer meist *alternativ* verwendet (mal „krank", mal „Krankheitstag"), tauchen also **selten gemeinsam** auf → niedrige Co-Occurrence. Braucht Datenreife (min. ~30–90 Einträge, sonst `insufficient_data`). Nur schwaches Zusatzsignal. |
-| **Aufwand** | Niedrig (wiederverwenden), aber geringer Nutzen als Primärsignal. |
+|               |                                                                                                                                                                                                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stärken**   | Infrastruktur existiert (`pgvector`, Vektoren pro Nutzer). Findet Synonyme, die A1 entgehen, wenn sie gemeinsam/abwechselnd genutzt werden.                                                                                                                                                             |
+| **Schwächen** | **Falsche Richtung für Dubletten:** echte Synonyme werden vom Nutzer meist _alternativ_ verwendet (mal „krank", mal „Krankheitstag"), tauchen also **selten gemeinsam** auf → niedrige Co-Occurrence. Braucht Datenreife (min. ~30–90 Einträge, sonst `insufficient_data`). Nur schwaches Zusatzsignal. |
+| **Aufwand**   | Niedrig (wiederverwenden), aber geringer Nutzen als Primärsignal.                                                                                                                                                                                                                                       |
 
 ### Option A3 — Semantische Text-Embeddings
 
 Multilinguales Embedding der Tag-Namen (z. B. Sentence-Transformer), Kosinus-
 Ähnlichkeit; `pgvector` könnte die Vektoren speichern.
 
-| | |
-|---|---|
-| **Stärken** | Einziger Ansatz, der echte Synonyme **ohne** Zeichenüberlappung erkennt („Bewegung"/„Sport"). |
+|               |                                                                                                                                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stärken**   | Einziger Ansatz, der echte Synonyme **ohne** Zeichenüberlappung erkennt („Bewegung"/„Sport").                                                                                                                                                                 |
 | **Schwächen** | **Konflikt mit Kernprinzipien:** privacy-first, self-hosted, offline-fähig. Ein lokales Modell (~100–400 MB) bläht das Backend-Image; eine externe Embedding-API scheidet für Gesundheitsdaten aus. Betrieblich schwer, für ~50 Tags stark überdimensioniert. |
-| **Aufwand** | **Hoch** (Modell-Hosting, Image-Größe, Inferenz-Pfad). |
+| **Aufwand**   | **Hoch** (Modell-Hosting, Image-Größe, Inferenz-Pfad).                                                                                                                                                                                                        |
 
 ### Option A4 — Kuratiertes Synonym-Wörterbuch
 
@@ -193,11 +193,11 @@ Gepflegte Synonym-Gruppen für die **Default-Tags** (`krank`↔`krankheitstag`,
 `sport`↔`training`↔`bewegung`, `arbeit`↔`büro`…), analog zu den kuratierten
 Onboarding-Vorschlägen ([ADR-0030](../adr/0030-onboarding-tag-suggestions.md)).
 
-| | |
-|---|---|
-| **Stärken** | Höchste Präzision für die häufigsten Fälle, null Fehlalarme, komplett offline/deterministisch, DSGVO-neutral, trivial zu testen. Sofort wirksam als „Bootstrap". |
-| **Schwächen** | Deckt nur kuratierte Begriffe ab, nicht beliebige Custom-Namen. Pflegeaufwand; nur Deutsch (i18n-Erweiterung nötig). |
-| **Aufwand** | Niedrig. |
+|               |                                                                                                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stärken**   | Höchste Präzision für die häufigsten Fälle, null Fehlalarme, komplett offline/deterministisch, DSGVO-neutral, trivial zu testen. Sofort wirksam als „Bootstrap". |
+| **Schwächen** | Deckt nur kuratierte Begriffe ab, nicht beliebige Custom-Namen. Pflegeaufwand; nur Deutsch (i18n-Erweiterung nötig).                                             |
+| **Aufwand**   | Niedrig.                                                                                                                                                         |
 
 ### Empfehlung Teilproblem A — **Hybrid A1 + A4**
 
@@ -263,7 +263,7 @@ Beim Anlegen eines Custom-Tags gegen bestehende sichtbare Tags prüfen.
   Submit aufruft. Anlage bleibt immer möglich (der Nutzer entscheidet).
 - **Frontend:** in [`TagPicker.svelte`](../../apps/web/src/lib/components/entries/TagPicker.svelte)
   bei Namenseingabe (debounced) Vorschläge zeigen: „Ähnlich zu **krank** —
-  diesen verwenden?" mit Buttons *[krank wählen]* / *[trotzdem neu anlegen]*.
+  diesen verwenden?" mit Buttons _[krank wählen]_ / _[trotzdem neu anlegen]_.
   Rein additiv, kein Merge nötig — verhindert die Dublette an der Quelle.
 
 ---
@@ -272,11 +272,11 @@ Beim Anlegen eines Custom-Tags gegen bestehende sichtbare Tags prüfen.
 
 Alle unter `/api/v1`, auth + verified, Rate-Limits analog Tag-Endpoints.
 
-| Methode & Pfad | Zweck |
-|---|---|
-| `GET /tags/similar?name=…&slug=…` | Präventiv: Ähnlichkeitskandidaten zu einem (noch nicht angelegten) Namen. Nicht-blockierend. |
-| `GET /tags/duplicates` | Retrospektiv: Liste erkannter Ähnlichkeitspaare/-gruppen des Nutzers mit Score & Vorschlags-Zielwahl. |
-| `POST /tags/{keep_id}/merge` | Body `{ "drop_ids": [...] }` — führt Merge aus (§4), gibt `T_keep` + Zähler (umgehängt/dedupliziert) zurück. |
+| Methode & Pfad                    | Zweck                                                                                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `GET /tags/similar?name=…&slug=…` | Präventiv: Ähnlichkeitskandidaten zu einem (noch nicht angelegten) Namen. Nicht-blockierend.                 |
+| `GET /tags/duplicates`            | Retrospektiv: Liste erkannter Ähnlichkeitspaare/-gruppen des Nutzers mit Score & Vorschlags-Zielwahl.        |
+| `POST /tags/{keep_id}/merge`      | Body `{ "drop_ids": [...] }` — führt Merge aus (§4), gibt `T_keep` + Zähler (umgehängt/dedupliziert) zurück. |
 
 Schemas: `SimilarTagCandidate { tag, score, reason }`,
 `DuplicateGroup { candidates[], suggested_keep_id }`,
@@ -316,21 +316,21 @@ Schemas: `SimilarTagCandidate { tag, score, reason }`,
 
 Erkennungs-Ansätze:
 
-| Ansatz | Deckt „krank/Krankheitstag" | Deckt Synonyme o. Überlappung | Offline/Privacy | Aufwand | Empfehlung |
-|---|:---:|:---:|:---:|:---:|:---:|
-| A1 Lexikalisch (rapidfuzz) | ✅ | ❌ | ✅ | Niedrig | **Kern** |
-| A2 Co-Occurrence | ⚠️ | ⚠️ | ✅ | Niedrig* | Optional |
-| A3 Semantic Embeddings | ✅ | ✅ | ❌ | Hoch | Zurückstellen |
-| A4 Synonym-Lexikon | ✅ | ✅ (kuratiert) | ✅ | Niedrig | **Bootstrap** |
+| Ansatz                     | Deckt „krank/Krankheitstag" | Deckt Synonyme o. Überlappung | Offline/Privacy | Aufwand  |  Empfehlung   |
+| -------------------------- | :-------------------------: | :---------------------------: | :-------------: | :------: | :-----------: |
+| A1 Lexikalisch (rapidfuzz) |             ✅              |              ❌               |       ✅        | Niedrig  |   **Kern**    |
+| A2 Co-Occurrence           |             ⚠️              |              ⚠️               |       ✅        | Niedrig* |   Optional    |
+| A3 Semantic Embeddings     |             ✅              |              ✅               |       ❌        |   Hoch   | Zurückstellen |
+| A4 Synonym-Lexikon         |             ✅              |        ✅ (kuratiert)         |       ✅        | Niedrig  | **Bootstrap** |
 
 <sub>*wiederverwendbar, aber schwacher Nutzen als Dubletten-Signal.</sub>
 
 Merge-Reversibilität:
 
-| Variante | Aufwand | Offline-Risiko | Empfehlung |
-|---|:---:|:---:|:---:|
-| B-i ohne Undo (Bestätigungsdialog) | Niedrig | Gering | **V1** |
-| B-ii mit `tag_merge_log`/Undo | Mittel–Hoch | Mittel | Später |
+| Variante                           |   Aufwand   | Offline-Risiko | Empfehlung |
+| ---------------------------------- | :---------: | :------------: | :--------: |
+| B-i ohne Undo (Bestätigungsdialog) |   Niedrig   |     Gering     |   **V1**   |
+| B-ii mit `tag_merge_log`/Undo      | Mittel–Hoch |     Mittel     |   Später   |
 
 ---
 
@@ -350,8 +350,9 @@ Merge-Reversibilität:
   rein self-hosted-lokal.
 
 **Kernaussagen der Analyse:**
+
 - Der Merge ist **kein Greenfield** — `remap_entry_tags_from_default_to_override`
-  + `canonicalize_tags_by_slug` liefern die erprobte Mechanik.
+  - `canonicalize_tags_by_slug` liefern die erprobte Mechanik.
 - Der **eigentliche Fallstrick ist Offline-Sync-LWW**, nicht die Erkennung: ohne
   `updated_at`-Bump + Entry-Revisions kehrt die Dublette zurück.
 - Für den genannten Fall reicht **lexikalische Ähnlichkeit + Synonym-Lexikon**;
@@ -361,7 +362,7 @@ Merge-Reversibilität:
 ## 11. Offene Fragen
 
 1. Merge **irreversibel** (B-i) für V1 akzeptabel, oder Undo (B-ii) gewünscht?
-2. Ähnlichkeits-**Schwellwert** `τ` und ob Kandidaten *nur* auf Nachfrage
+2. Ähnlichkeits-**Schwellwert** `τ` und ob Kandidaten _nur_ auf Nachfrage
    (Settings) oder auch **proaktiv** (Badge) gezeigt werden.
 3. Sollen **Gruppen** (>2 ähnliche Tags) in einem Schritt mergebar sein, oder
    nur paarweise?
