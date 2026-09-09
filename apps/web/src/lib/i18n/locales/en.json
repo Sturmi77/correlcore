@@ -68,11 +68,15 @@
       "top_symptom": "Notable symptom",
       "work_context_heading": "Work context pattern",
       "work_context_hint": "Average per situation",
+      "work_context_hint_window": "Average last {n} days per situation",
       "metric_mood": "Mood",
       "metric_energy": "Energy",
       "metric_stress": "Stress",
       "work_context_days": "{count} days",
-      "work_context_cell": "{context} – {metric}: {value} of 5",
+      "work_context_cell": "{context} – {metric}: {value} of 5{trend}",
+      "work_context_trend_up": ", last {n} days higher than the {n} days before",
+      "work_context_trend_down": ", last {n} days lower than the {n} days before",
+      "work_context_trend_flat": ", last {n} days about the same as the {n} days before",
       "work_context_legend_low": "lower",
       "work_context_legend_high": "better",
       "work_context_stress_note": "Stronger shading = better (stress inverted).",
@@ -109,7 +113,11 @@
       "finding_top_signal": "Most frequent: ",
       "hint": "Mood bars and early findings per weekday. More entries make patterns more stable.",
       "empty": "No weekday pattern yet",
-      "empty_hint": "Keep logging across different weekdays to see how your mood varies."
+      "empty_hint": "Keep logging across different weekdays to see how your mood varies.",
+      "trend_short": "{n}d",
+      "trend_aria_up": "Average mood over the last {n} days is higher than in the {n} days before",
+      "trend_aria_down": "Average mood over the last {n} days is lower than in the {n} days before",
+      "trend_aria_flat": "Average mood over the last {n} days is about the same as in the {n} days before"
     },
     "weekday": {
       "mon": "Mon",
@@ -994,6 +1002,8 @@
       "reset_defaults": "Reset to default layout",
       "error_load": "Could not load Home layout settings.",
       "error_save": "Could not save Home layout settings.",
+      "day_trend_enabled": "Per-weekday trend marks",
+      "day_trend_hint": "Tiny arrows next to each weekday mood. With a 28-day window each day has only about four values, so this can be noisy. The header trend is unaffected.",
       "sections": {
         "first_week_banner": {
           "label": "Early pattern notice",

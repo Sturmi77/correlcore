@@ -1,5 +1,10 @@
-import type { WorkContextSummaryItem } from '$lib/api/dashboard';
+import type { MetricTrend, WorkContextSummaryItem } from '$lib/api/dashboard';
 import { heatmapLevel } from '$lib/utils/charts';
+import {
+  displayMetricAvg,
+  visibleTrendDirection,
+  type VisibleTrendDirection,
+} from '$lib/utils/metricTrend';
 import { displayMetricValue } from '$lib/utils/metrics';
 
 /** Metrics shown per work context, in column order. */
@@ -14,13 +19,33 @@ const METRIC_FIELD: Record<WorkContextMetricKey, keyof WorkContextSummaryItem> =
   stress: 'stress_avg',
 };
 
-/** Raw average for a metric, or null when unavailable. */
+const METRIC_TREND_FIELD: Record<WorkContextMetricKey, keyof WorkContextSummaryItem> = {
+  mood: 'mood_trend',
+  energy: 'energy_trend',
+  stress: 'stress_trend',
+};
+
+/** Raw average for a metric, or null when unavailable. Prefers the window mean. */
 export function workContextMetricAvg(
   item: WorkContextSummaryItem,
   metric: WorkContextMetricKey
 ): number | null {
-  const value = item[METRIC_FIELD[metric]];
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  const allTime = item[METRIC_FIELD[metric]];
+  const trend = item[METRIC_TREND_FIELD[metric]];
+  return displayMetricAvg(
+    typeof allTime === 'number' ? allTime : null,
+    trend && typeof trend === 'object' && 'direction' in trend ? (trend as MetricTrend) : null
+  );
+}
+
+export function workContextMetricTrend(
+  item: WorkContextSummaryItem,
+  metric: WorkContextMetricKey
+): VisibleTrendDirection | null {
+  const trend = item[METRIC_TREND_FIELD[metric]];
+  return visibleTrendDirection(
+    trend && typeof trend === 'object' && 'direction' in trend ? (trend as MetricTrend) : null
+  );
 }
 
 /**
@@ -51,6 +76,8 @@ export interface WorkContextHeatmapCell {
   goodness: number | null;
   /** Heatmap intensity bucket 0–4. */
   level: number;
+  /** Chip glyph; null when unknown or missing. */
+  trendDirection: VisibleTrendDirection | null;
 }
 
 export interface WorkContextHeatmapRow {
@@ -75,7 +102,13 @@ export function buildWorkContextHeatmapRows(
       const cells: WorkContextHeatmapCell[] = WORK_CONTEXT_METRICS.map((metric) => {
         const avg = workContextMetricAvg(item, metric);
         const goodness = workContextMetricGoodness(item, metric);
-        return { metric, avg, goodness, level: workContextGoodnessLevel(goodness) };
+        return {
+          metric,
+          avg,
+          goodness,
+          level: workContextGoodnessLevel(goodness),
+          trendDirection: workContextMetricTrend(item, metric),
+        };
       });
       const goodnessValues = cells
         .map((cell) => cell.goodness)

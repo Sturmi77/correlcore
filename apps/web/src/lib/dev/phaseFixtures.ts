@@ -1,4 +1,4 @@
-import type { DashboardSummaryResponse } from '$lib/api/dashboard';
+import type { DashboardSummaryResponse, MetricTrend } from '$lib/api/dashboard';
 import type { EntryResponse } from '$lib/api/entries';
 import type { HabitStatsResponse } from '$lib/api/habits';
 import type {
@@ -71,6 +71,49 @@ export interface DevPhaseFixture {
 const today = localIsoDate(new Date());
 const userId = 'mock-user';
 const generatedAt = `${today}T09:00:00Z`;
+const TREND_WINDOW_DAYS = 28;
+
+function mean(values: number[]): number | null {
+  if (!values.length) return null;
+  return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2));
+}
+
+function makeMetricTrend(current: number[], previous: number[], minN = 3): MetricTrend {
+  const current_avg = mean(current);
+  const previous_avg = mean(previous);
+  const current_n = current.length;
+  const previous_n = previous.length;
+  if (current_n < minN || previous_n < minN || current_avg === null || previous_avg === null) {
+    return {
+      current_avg,
+      previous_avg,
+      current_n,
+      previous_n,
+      delta: null,
+      direction: 'unknown',
+    };
+  }
+  const delta = Number((current_avg - previous_avg).toFixed(2));
+  const direction = Math.abs(delta) < 0.3 ? 'flat' : delta > 0 ? 'up' : 'down';
+  return { current_avg, previous_avg, current_n, previous_n, delta, direction };
+}
+
+function daysInWindow(days: PersonaDay[], start: string, end: string): PersonaDay[] {
+  return days.filter((day) => day.date >= start && day.date <= end);
+}
+
+function trendWindowsFromToday(): {
+  current: { start: string; end: string };
+  previous: { start: string; end: string };
+} {
+  return {
+    current: { start: shiftIsoDate(today, -(TREND_WINDOW_DAYS - 1)), end: today },
+    previous: {
+      start: shiftIsoDate(today, -(TREND_WINDOW_DAYS * 2 - 1)),
+      end: shiftIsoDate(today, -TREND_WINDOW_DAYS),
+    },
+  };
+}
 
 export const DEV_PHASE_PRESETS: Record<DevPhasePresetId, DevPhasePresetMeta> = {
   collecting: {
@@ -693,12 +736,33 @@ function makeWorkContextSummary(
     bucket.stress += day.stress;
     groups.set(day.workContext, bucket);
   }
+  const windows = trendWindowsFromToday();
+  const currentDays = daysInWindow(days, windows.current.start, windows.current.end);
+  const previousDays = daysInWindow(days, windows.previous.start, windows.previous.end);
+  const values = (
+    subset: PersonaDay[],
+    context: EntryResponse['work_context'],
+    key: 'mood' | 'energy' | 'stress'
+  ) => subset.filter((day) => day.workContext === context).map((day) => day[key]);
+
   return [...groups.entries()].map(([work_context, bucket]) => ({
     work_context,
     entry_count: bucket.count,
     mood_avg: Number((bucket.mood / bucket.count).toFixed(2)),
     energy_avg: Number((bucket.energy / bucket.count).toFixed(2)),
     stress_avg: Number((bucket.stress / bucket.count).toFixed(2)),
+    mood_trend: makeMetricTrend(
+      values(currentDays, work_context, 'mood'),
+      values(previousDays, work_context, 'mood')
+    ),
+    energy_trend: makeMetricTrend(
+      values(currentDays, work_context, 'energy'),
+      values(previousDays, work_context, 'energy')
+    ),
+    stress_trend: makeMetricTrend(
+      values(currentDays, work_context, 'stress'),
+      values(previousDays, work_context, 'stress')
+    ),
   }));
 }
 
@@ -732,6 +796,12 @@ function makeWeekdaySummary(days: PersonaDay[]): DashboardSummaryResponse['weekd
 
   if (byWeekday.size < 7) return [];
 
+  const windows = trendWindowsFromToday();
+  const currentDays = daysInWindow(days, windows.current.start, windows.current.end);
+  const previousDays = daysInWindow(days, windows.previous.start, windows.previous.end);
+  const moodsFor = (subset: PersonaDay[], weekday: number) =>
+    subset.filter((day) => pythonWeekday(day.date) === weekday).map((day) => day.mood);
+
   return [...byWeekday.entries()]
     .sort(([left], [right]) => left - right)
     .map(([weekday, bucket]) => {
@@ -751,6 +821,11 @@ function makeWeekdaySummary(days: PersonaDay[]): DashboardSummaryResponse['weekd
               share: Number((top.n / bucket.count).toFixed(2)),
             }
           : null,
+        mood_trend: makeMetricTrend(
+          moodsFor(currentDays, weekday),
+          moodsFor(previousDays, weekday),
+          2
+        ),
       };
     });
 }
@@ -768,6 +843,7 @@ function makePreferences(
     // Dev fixtures skip the one-time intro so phase QA stays unblocked.
     onboarding_maturity_intro_seen: true,
     cycle_tracking_enabled: true,
+    home_weekday_day_trend_enabled: true,
     dismissed_insight_keys: [],
     reached_milestone_keys: presetId === 'collecting' ? [] : [`maturity_phase_${presetId}`],
     last_seen_insight_at: null,
@@ -788,6 +864,9 @@ export function getDevPhaseFixture(state: DevPhaseStateLike): DevPhaseFixture {
   const insightEnabled = state.presetId !== 'collecting';
   const analyticsEnabled = state.presetId === 'provisional' || state.presetId === 'robust';
   const robustEnabled = state.presetId === 'robust';
+  const windows = trendWindowsFromToday();
+  const currentDays = daysInWindow(days, windows.current.start, windows.current.end);
+  const previousDays = daysInWindow(days, windows.previous.start, windows.previous.end);
   return {
     presetId: state.presetId,
     entryCount,
@@ -808,6 +887,11 @@ export function getDevPhaseFixture(state: DevPhaseStateLike): DevPhaseFixture {
         state.presetId === 'robust' ? 0.66 : state.presetId === 'provisional' ? 0.48 : 0.22,
       work_context_summary: makeWorkContextSummary(days),
       weekday_summary: makeWeekdaySummary(days),
+      trend_window_days: TREND_WINDOW_DAYS,
+      weekday_mood_trend: makeMetricTrend(
+        currentDays.map((day) => day.mood),
+        previousDays.map((day) => day.mood)
+      ),
     },
     preferences: makePreferences(state.onboardingCompleted, state.presetId),
     timeseries: makeTimeseries(entries),

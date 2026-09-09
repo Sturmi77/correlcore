@@ -1,15 +1,22 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
-  import type { WeekdaySummaryItem } from '$lib/api/dashboard';
+  import type { MetricTrend, WeekdaySummaryItem } from '$lib/api/dashboard';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import {
     buildWeekdayOverviewCells,
     hasWeekdayOverviewContent,
   } from '$lib/utils/homeWeekdayOverview';
+  import { visibleTrendDirection } from '$lib/utils/metricTrend';
+  import TrendDirectionGlyph from './TrendDirectionGlyph.svelte';
+
   export let insights: InsightResponse[] = [];
   export let weekdayInsight: InsightResponse | null = null;
   export let weekdaySummary: WeekdaySummaryItem[] = [];
+  export let weekdayMoodTrend: MetricTrend | null = null;
+  export let trendWindowDays = 28;
+  /** Per-day (W2) carets. Default on; Settings can hide them. W1 is unaffected. */
+  export let showDayTrends = true;
   /** While true, suppress the empty state — insights haven't finished loading
    * (or failed to load) yet, so "no weekday pattern yet" would be premature. */
   export let loading = false;
@@ -29,6 +36,11 @@
   $: highMood = knownMood.length ? Math.max(...knownMood) : null;
   $: minMood = knownMood.length ? Math.min(...knownMood) : null;
   $: showOverview = hasWeekdayOverviewContent(cells);
+  $: headerTrendDirection = visibleTrendDirection(weekdayMoodTrend);
+
+  function trendAriaKey(direction: 'up' | 'down' | 'flat'): string {
+    return `home.weekday_overview.trend_aria_${direction}`;
+  }
 
   /** Resolve the label, translating the work_context enum but not user data. */
   function labelFor(cell: (typeof cells)[number]): string {
@@ -42,20 +54,31 @@
   /**
    * The chart is `role="img"`, whose descendants are presented as one atomic
    * image — per-cell text inside it is never announced. The findings therefore
-   * have to live in the chart's own accessible name (#487 review).
+   * have to live in the chart's own accessible name (#487 review). W2 day
+   * trends are included here for the same reason (#868).
    */
   $: chartLabel = [
     $_('home.weekday_overview.aria'),
-    ...cells
-      .filter((cell) => cell.findingLabel)
-      .map(
-        (cell) =>
+    ...cells.flatMap((cell) => {
+      const parts: string[] = [];
+      if (cell.findingLabel) {
+        parts.push(
           `${$_(`home.weekday.${cell.weekday}`)} — ${$_(
             cell.findingSource === 'confounder'
               ? 'home.weekday_overview.finding_confounder'
               : 'home.weekday_overview.finding_top_signal'
           )}${labelFor(cell)}`
-      ),
+        );
+      }
+      if (showDayTrends && cell.moodTrendDirection) {
+        parts.push(
+          `${$_(`home.weekday.${cell.weekday}`)} — ${$_(trendAriaKey(cell.moodTrendDirection), {
+            values: { n: trendWindowDays },
+          })}`
+        );
+      }
+      return parts;
+    }),
   ].join('. ');
 </script>
 
@@ -67,8 +90,27 @@
   >
     <header class="weekday-overview__header">
       <h2 class="weekday-overview__heading">{$_('home.weekday_overview.heading')}</h2>
-      {#if weekdayInsight}
-        <span class="weekday-overview__tier">{$_('home.weekday_pattern.early_signal')}</span>
+      {#if weekdayInsight || headerTrendDirection}
+        <div class="weekday-overview__badges" data-testid="home-weekday-overview-badges">
+          {#if weekdayInsight}
+            <span class="weekday-overview__tier">{$_('home.weekday_pattern.early_signal')}</span>
+          {/if}
+          {#if headerTrendDirection}
+            <span
+              class="weekday-overview__trend"
+              data-testid="home-weekday-trend-badge"
+              data-trend={headerTrendDirection}
+              aria-label={$_(trendAriaKey(headerTrendDirection), {
+                values: { n: trendWindowDays },
+              })}
+            >
+              <TrendDirectionGlyph direction={headerTrendDirection} />
+              <span class="weekday-overview__trend-label"
+                >{$_('home.weekday_overview.trend_short', { values: { n: trendWindowDays } })}</span
+              >
+            </span>
+          {/if}
+        </div>
       {/if}
     </header>
 
@@ -86,6 +128,15 @@
         >
           <span class="weekday-overview__value">
             {cell.moodAvg === null ? '-' : cell.moodAvg.toFixed(1)}
+            {#if showDayTrends && cell.moodTrendDirection}
+              <span
+                class="weekday-overview__day-trend"
+                data-testid="home-weekday-day-trend"
+                data-trend={cell.moodTrendDirection}
+              >
+                <TrendDirectionGlyph direction={cell.moodTrendDirection} size={11} />
+              </span>
+            {/if}
           </span>
           <span
             class="weekday-overview__bar"
@@ -143,6 +194,14 @@
     gap: 0.75rem;
   }
 
+  .weekday-overview__badges {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
   .weekday-overview__heading {
     font-size: var(--text-sm, 0.85rem);
     font-weight: 600;
@@ -159,6 +218,31 @@
     font-weight: 600;
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
     color: var(--color-primary);
+  }
+
+  .weekday-overview__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    border-radius: var(--radius-full);
+    padding: 0.18rem 0.55rem;
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    background: color-mix(in srgb, var(--color-text-muted) 12%, transparent);
+    color: var(--color-text-muted);
+  }
+
+  .weekday-overview__day-trend {
+    display: inline-flex;
+    width: 0.82em;
+    height: 0.82em;
+    flex: 0 0 auto;
+    color: var(--color-text-muted);
+  }
+
+  .weekday-overview__day-trend :global(svg) {
+    width: 0.82em;
+    height: 0.82em;
   }
 
   .weekday-overview__chart {
@@ -186,6 +270,13 @@
   .weekday-overview__label {
     font-size: var(--text-2xs);
     color: var(--color-text-muted);
+  }
+
+  .weekday-overview__value {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1em;
+    white-space: nowrap;
   }
 
   .weekday-overview__finding {
@@ -265,5 +356,15 @@
   .weekday-overview__hint {
     color: var(--color-text-muted);
     font-size: var(--text-2xs);
+  }
+
+  @media (max-width: 28rem) {
+    .weekday-overview__header {
+      flex-wrap: wrap;
+    }
+
+    .weekday-overview__trend-label {
+      display: none;
+    }
   }
 </style>

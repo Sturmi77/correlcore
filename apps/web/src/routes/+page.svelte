@@ -319,6 +319,7 @@
             <HomeWorkContextSummary
               workContextSummary={dashboardSummary?.work_context_summary ?? []}
               loading={dashboardLoading && !dashboardLoaded}
+              trendWindowDays={dashboardSummary?.trend_window_days ?? 28}
             />
           </div>
         {:else if section.key === 'weekday_overview'}
@@ -327,6 +328,9 @@
               insights={$rankedInsights}
               {weekdayInsight}
               weekdaySummary={dashboardSummary?.weekday_summary ?? []}
+              weekdayMoodTrend={dashboardSummary?.weekday_mood_trend ?? null}
+              trendWindowDays={dashboardSummary?.trend_window_days ?? 28}
+              showDayTrends={userPreferences?.home_weekday_day_trend_enabled !== false}
               loading={(insightLoading || (dashboardLoading && !dashboardLoaded)) &&
                 !(dashboardSummary?.weekday_summary?.length ?? 0) &&
                 !weekdayInsight}

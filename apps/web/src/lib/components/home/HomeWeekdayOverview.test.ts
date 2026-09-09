@@ -62,6 +62,7 @@ describe('HomeWeekdayOverview', () => {
     expect(screen.getByTestId('home-weekday-overview')).toBeTruthy();
     expect(screen.getByText('3.8')).toBeTruthy();
     expect(screen.queryByText('home.weekday_pattern.early_signal')).toBeNull();
+    expect(screen.queryByTestId('home-weekday-overview-badges')).toBeNull();
   });
 
   it('renders seven weekday columns with mood and findings', () => {
@@ -166,5 +167,80 @@ describe('HomeWeekdayOverview', () => {
 
     expect(screen.getByTestId('home-weekday-overview')).toBeTruthy();
     expect(screen.queryByTestId('home-weekday-overview-empty')).toBeNull();
+  });
+
+  const moodTrend = {
+    current_avg: 3.8,
+    previous_avg: 3.2,
+    current_n: 20,
+    previous_n: 20,
+    delta: 0.6,
+    direction: 'up' as const,
+  };
+
+  const summaryWithDayTrend = [
+    { weekday: 0, entry_count: 10, mood_avg: 3.1 },
+    { weekday: 1, entry_count: 9, mood_avg: 3.0 },
+    { weekday: 2, entry_count: 10, mood_avg: 3.2 },
+    { weekday: 3, entry_count: 9, mood_avg: 3.1 },
+    {
+      weekday: 4,
+      entry_count: 10,
+      mood_avg: 2.0,
+      mood_trend: { ...moodTrend, current_avg: 3.8 },
+    },
+    { weekday: 5, entry_count: 9, mood_avg: 3.3 },
+    { weekday: 6, entry_count: 10, mood_avg: 3.0 },
+  ];
+
+  it('groups the early-signal and aggregate trend in one header badge cluster', () => {
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight,
+        insights: [weekdayInsight],
+        weekdayMoodTrend: moodTrend,
+        weekdaySummary: summaryWithDayTrend,
+      },
+    });
+
+    const badges = screen.getByTestId('home-weekday-overview-badges');
+    expect(badges.textContent).toContain('home.weekday_pattern.early_signal');
+    expect(screen.getByTestId('home-weekday-trend-badge')).toBeTruthy();
+    expect(screen.getByTestId('home-weekday-trend-badge').getAttribute('data-trend')).toBe('up');
+  });
+
+  it('shows per-day carets by default and hides them when showDayTrends is false', () => {
+    const { unmount } = render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight: null,
+        insights: [],
+        weekdaySummary: summaryWithDayTrend,
+      },
+    });
+    expect(screen.getAllByTestId('home-weekday-day-trend').length).toBeGreaterThan(0);
+    unmount();
+
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight: null,
+        insights: [],
+        weekdaySummary: summaryWithDayTrend,
+        showDayTrends: false,
+      },
+    });
+    expect(screen.queryByTestId('home-weekday-day-trend')).toBeNull();
+    expect(screen.getByText('3.8')).toBeTruthy();
+  });
+
+  it('omits the header trend badge when the aggregate direction is unknown', () => {
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight,
+        insights: [weekdayInsight],
+        weekdayMoodTrend: { ...moodTrend, direction: 'unknown', delta: null },
+      },
+    });
+    expect(screen.getByText('home.weekday_pattern.early_signal')).toBeTruthy();
+    expect(screen.queryByTestId('home-weekday-trend-badge')).toBeNull();
   });
 });

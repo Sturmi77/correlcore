@@ -388,6 +388,22 @@
           "insight_tier": {
             "$ref": "#/components/schemas/InsightTier"
           },
+          "trend_window_days": {
+            "default": 28,
+            "minimum": 1.0,
+            "title": "Trend Window Days",
+            "type": "integer"
+          },
+          "weekday_mood_trend": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetricTrend"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "weekday_summary": {
             "items": {
               "$ref": "#/components/schemas/WeekdaySummaryItem"
@@ -3045,6 +3061,71 @@
         "title": "MessageResponse",
         "type": "object"
       },
+      "MetricTrend": {
+        "description": "Two-window comparison for a single 1–5 metric (#868).\n\n``current_avg`` is the display value (window mean). ``direction`` is\ndescriptive only — never a good/bad verdict. ``unknown`` when either\nwindow has too few observations.",
+        "properties": {
+          "current_avg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Avg"
+          },
+          "current_n": {
+            "minimum": 0.0,
+            "title": "Current N",
+            "type": "integer"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "direction": {
+            "enum": [
+              "up",
+              "down",
+              "flat",
+              "unknown"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "previous_avg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Avg"
+          },
+          "previous_n": {
+            "minimum": 0.0,
+            "title": "Previous N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "current_n",
+          "previous_n",
+          "direction"
+        ],
+        "title": "MetricTrend",
+        "type": "object"
+      },
       "NoteMarkerSource": {
         "enum": [
           "user",
@@ -5240,6 +5321,11 @@
             ],
             "title": "Home Sections"
           },
+          "home_weekday_day_trend_enabled": {
+            "default": true,
+            "title": "Home Weekday Day Trend Enabled",
+            "type": "boolean"
+          },
           "insight_sections": {
             "anyOf": [
               {
@@ -5396,6 +5482,17 @@
               }
             ],
             "title": "Home Sections"
+          },
+          "home_weekday_day_trend_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Home Weekday Day Trend Enabled"
           },
           "insight_sections": {
             "anyOf": [
@@ -5716,6 +5813,16 @@
             ],
             "title": "Mood Avg"
           },
+          "mood_trend": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetricTrend"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "top_signal": {
             "anyOf": [
               {
@@ -5853,6 +5960,16 @@
             ],
             "title": "Energy Avg"
           },
+          "energy_trend": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetricTrend"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "entry_count": {
             "minimum": 0.0,
             "title": "Entry Count",
@@ -5869,6 +5986,16 @@
             ],
             "title": "Mood Avg"
           },
+          "mood_trend": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetricTrend"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "stress_avg": {
             "anyOf": [
               {
@@ -5879,6 +6006,16 @@
               }
             ],
             "title": "Stress Avg"
+          },
+          "stress_trend": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetricTrend"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "work_context": {
             "$ref": "#/components/schemas/WorkContext"

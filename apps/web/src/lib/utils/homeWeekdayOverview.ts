@@ -1,5 +1,10 @@
 import type { InsightResponse } from '$lib/api/insights';
 import type { WeekdaySummaryItem } from '$lib/api/dashboard';
+import {
+  displayMetricAvg,
+  visibleTrendDirection,
+  type VisibleTrendDirection,
+} from '$lib/utils/metricTrend';
 
 export const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 export type WeekdayKey = (typeof WEEKDAY_KEYS)[number];
@@ -8,6 +13,8 @@ export type WeekdayOverviewCell = {
   weekday: WeekdayKey;
   weekdayIndex: number;
   moodAvg: number | null;
+  /** Per-day (W2) glyph; null when unknown or missing. */
+  moodTrendDirection: VisibleTrendDirection | null;
   findingLabel: string | null;
   findingType: 'mood' | 'tag' | 'symptom' | 'context' | null;
   /**
@@ -107,11 +114,7 @@ export function buildWeekdayOverviewCells(
   insights: readonly InsightResponse[],
   weekdaySummary: readonly WeekdaySummaryItem[] = []
 ): WeekdayOverviewCell[] {
-  const summaryMoods = new Map(
-    weekdaySummary
-      .filter((item) => item.mood_avg !== null)
-      .map((item) => [item.weekday, item.mood_avg as number])
-  );
+  const summaryByDay = new Map(weekdaySummary.map((item) => [item.weekday, item]));
 
   const weekdayInsight = insights.find((insight) => insight.insight_type === 'weekday_pattern');
   const insightMoods = numericPayload(weekdayInsight?.payload?.weekday_mood_avgs);
@@ -148,10 +151,15 @@ export function buildWeekdayOverviewCells(
   return WEEKDAY_KEYS.map((weekday, weekdayIndex) => {
     const confounder = findingByDay.get(weekdayIndex);
     const topSignal = confounder ? undefined : topSignalByDay.get(weekdayIndex);
+    const summary = summaryByDay.get(weekdayIndex);
     return {
       weekday,
       weekdayIndex,
-      moodAvg: summaryMoods.get(weekdayIndex) ?? insightMoods[String(weekdayIndex)] ?? null,
+      moodAvg:
+        displayMetricAvg(summary?.mood_avg, summary?.mood_trend) ??
+        insightMoods[String(weekdayIndex)] ??
+        null,
+      moodTrendDirection: visibleTrendDirection(summary?.mood_trend),
       findingLabel: confounder?.label ?? topSignal?.label ?? null,
       findingType:
         confounder?.type ?? (topSignal ? TOP_SIGNAL_KIND_TO_FINDING_TYPE[topSignal.kind] : null),

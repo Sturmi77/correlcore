@@ -1702,6 +1702,12 @@ export interface components {
             /** Entry Count */
             entry_count: number;
             insight_tier: components["schemas"]["InsightTier"];
+            /**
+             * Trend Window Days
+             * @default 28
+             */
+            trend_window_days: number;
+            weekday_mood_trend?: components["schemas"]["MetricTrend"] | null;
             /** Weekday Summary */
             weekday_summary?: components["schemas"]["WeekdaySummaryItem"][];
             /** Work Context Summary */
@@ -2848,6 +2854,31 @@ export interface components {
             message: string;
         };
         /**
+         * MetricTrend
+         * @description Two-window comparison for a single 1–5 metric (#868).
+         *
+         *     ``current_avg`` is the display value (window mean). ``direction`` is
+         *     descriptive only — never a good/bad verdict. ``unknown`` when either
+         *     window has too few observations.
+         */
+        MetricTrend: {
+            /** Current Avg */
+            current_avg?: number | null;
+            /** Current N */
+            current_n: number;
+            /** Delta */
+            delta?: number | null;
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "up" | "down" | "flat" | "unknown";
+            /** Previous Avg */
+            previous_avg?: number | null;
+            /** Previous N */
+            previous_n: number;
+        };
+        /**
          * NoteMarkerSource
          * @enum {string}
          */
@@ -3789,6 +3820,11 @@ export interface components {
             health_connect_sync_sleep_enabled: boolean;
             /** Home Sections */
             home_sections?: components["schemas"]["HomeSectionPreference"][] | null;
+            /**
+             * Home Weekday Day Trend Enabled
+             * @default true
+             */
+            home_weekday_day_trend_enabled: boolean;
             /** Insight Sections */
             insight_sections?: components["schemas"]["InsightSectionPreference"][] | null;
             /** Last Seen Digest At */
@@ -3834,6 +3870,8 @@ export interface components {
             health_connect_sync_sleep_enabled?: boolean | null;
             /** Home Sections */
             home_sections?: components["schemas"]["HomeSectionPreference"][] | null;
+            /** Home Weekday Day Trend Enabled */
+            home_weekday_day_trend_enabled?: boolean | null;
             /** Insight Sections */
             insight_sections?: components["schemas"]["InsightSectionPreference"][] | null;
             /** Last Seen Digest At */
@@ -3930,6 +3968,7 @@ export interface components {
             entry_count: number;
             /** Mood Avg */
             mood_avg?: number | null;
+            mood_trend?: components["schemas"]["MetricTrend"] | null;
             top_signal?: components["schemas"]["WeekdayTopSignal"] | null;
             /** Weekday */
             weekday: number;
@@ -3983,12 +4022,15 @@ export interface components {
         WorkContextSummaryItem: {
             /** Energy Avg */
             energy_avg?: number | null;
+            energy_trend?: components["schemas"]["MetricTrend"] | null;
             /** Entry Count */
             entry_count: number;
             /** Mood Avg */
             mood_avg?: number | null;
+            mood_trend?: components["schemas"]["MetricTrend"] | null;
             /** Stress Avg */
             stress_avg?: number | null;
+            stress_trend?: components["schemas"]["MetricTrend"] | null;
             work_context: components["schemas"]["WorkContext"];
         };
         /**

@@ -52,6 +52,7 @@ class UserPreferencesUpdate(BaseModel):
     onboarding_profile_completed: bool | None = None
     onboarding_maturity_intro_seen: bool | None = None
     cycle_tracking_enabled: bool | None = None
+    home_weekday_day_trend_enabled: bool | None = None
     health_connect_sync_sleep_enabled: bool | None = None
     dismissed_insight_keys: list[str] | None = Field(default=None, max_length=128)
     reached_milestone_keys: list[str] | None = Field(default=None, max_length=128)
@@ -73,6 +74,7 @@ class UserPreferencesResponse(BaseModel):
     onboarding_profile_completed: bool
     onboarding_maturity_intro_seen: bool = False
     cycle_tracking_enabled: bool = True
+    home_weekday_day_trend_enabled: bool = True
     health_connect_sync_sleep_enabled: bool = True
     dismissed_insight_keys: list[str] = Field(default_factory=list)
     reached_milestone_keys: list[str] = Field(default_factory=list)

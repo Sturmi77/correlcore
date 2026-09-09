@@ -68,11 +68,15 @@
       "top_symptom": "Auffaelliges Symptom",
       "work_context_heading": "Arbeitssituation-Muster",
       "work_context_hint": "Durchschnitt pro Situation",
+      "work_context_hint_window": "Durchschnitt der letzten {n} Tage pro Situation",
       "metric_mood": "Stimmung",
       "metric_energy": "Energie",
       "metric_stress": "Stress",
       "work_context_days": "{count} Tage",
-      "work_context_cell": "{context} – {metric}: {value} von 5",
+      "work_context_cell": "{context} – {metric}: {value} von 5{trend}",
+      "work_context_trend_up": ", letzte {n} Tage hoeher als in den {n} Tagen davor",
+      "work_context_trend_down": ", letzte {n} Tage niedriger als in den {n} Tagen davor",
+      "work_context_trend_flat": ", letzte {n} Tage etwa wie in den {n} Tagen davor",
       "work_context_legend_low": "geringer",
       "work_context_legend_high": "besser",
       "work_context_stress_note": "Stärkere Färbung = besser (Stress invertiert).",
@@ -109,7 +113,11 @@
       "finding_top_signal": "Am häufigsten: ",
       "hint": "Stimmungsbalken und erste Muster pro Wochentag. Mehr Eintraege machen die Muster stabiler.",
       "empty": "Noch kein Wochentagsmuster erkennbar",
-      "empty_hint": "Trage weiter an unterschiedlichen Wochentagen ein, um zu sehen, wie sich deine Stimmung veraendert."
+      "empty_hint": "Trage weiter an unterschiedlichen Wochentagen ein, um zu sehen, wie sich deine Stimmung veraendert.",
+      "trend_short": "{n} T",
+      "trend_aria_up": "Durchschnittliche Stimmung der letzten {n} Tage hoeher als in den {n} Tagen davor",
+      "trend_aria_down": "Durchschnittliche Stimmung der letzten {n} Tage niedriger als in den {n} Tagen davor",
+      "trend_aria_flat": "Durchschnittliche Stimmung der letzten {n} Tage etwa wie in den {n} Tagen davor"
     },
     "weekday": {
       "mon": "Mo",
@@ -994,6 +1002,8 @@
       "reset_defaults": "Standardlayout wiederherstellen",
       "error_load": "Home-Aufbau konnte nicht geladen werden.",
       "error_save": "Home-Aufbau konnte nicht gespeichert werden.",
+      "day_trend_enabled": "Trendmarken pro Wochentag",
+      "day_trend_hint": "Kleine Pfeile neben dem Stimmungswert jedes Tages. Bei einem 28-Tage-Fenster hat jeder Wochentag nur etwa vier Werte, daher kann das rauschen. Der Trend in der Ueberschrift bleibt davon unberuehrt.",
       "sections": {
         "first_week_banner": {
           "label": "Frueh-Hinweis",
