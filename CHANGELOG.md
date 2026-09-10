@@ -10,6 +10,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Worker-Laufdauer im Home-Badge und Dev/Workers (#874)** — Das Home Analysis-Badge und die
+  Dev/Workers-UI zeigen jetzt die Laufdauer eines Worker-Runs, abgeleitet aus
+  `finished_at − started_at` (kein neues DB-Feld). Das Badge hängt die Dauer an (z. B. „heute
+  03:12 · 5 min 0 s") für erfolgreiche und fehlgeschlagene Läufe; Dev/Workers zeigt die Dauer
+  je Run-Card und als Spalte in der Verlaufstabelle (Fleet-Gesamtdauer bzw. per-User-Dauer je
+  Run-Typ). Laufende Runs (`finished_at` null) werden als „läuft…" gekennzeichnet, fehlende
+  Timestamps ausgeblendet. i18n (de/en) für ms/s/min/h-Formatierung.
+
 - **Arbeitssituations-Map sortierbar (#871)** — Die Arbeitssituations-Map auf dem Home-Screen
   lässt sich per Klick auf die Spaltenüberschrift nach **Arbeitssituation**, **Stimmung**,
   **Energie** oder **Stress** sortieren. Jede Spalte durchläuft aufsteigend → absteigend →

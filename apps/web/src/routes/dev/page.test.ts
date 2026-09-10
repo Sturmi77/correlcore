@@ -123,6 +123,37 @@ describe('/dev consolidation (#695)', () => {
     expect(screen.getByTestId('dev-health-minio').textContent).toContain('unresolved');
   });
 
+  it('shows worker run duration in the cards and history (#874)', async () => {
+    fetchDevInfo.mockResolvedValue(sampleInfo);
+    const run = {
+      id: 'r1',
+      worker_name: 'insight-worker',
+      job_kind: 'USER_INSIGHTS',
+      trigger_source: 'scheduled',
+      status: 'succeeded',
+      started_at: '2026-05-15T02:55:00Z',
+      finished_at: '2026-05-15T03:00:00Z',
+      scope_user_id: 'u1',
+      result: { insight_count: 3 },
+      error_message: null,
+    };
+    fetchWorkerRunsLatest.mockResolvedValue({
+      daily_bundle: null,
+      fleet_insights: null,
+      user_insights: run,
+    });
+    fetchWorkerRuns.mockResolvedValue({ items: [run] });
+    fetchDevDbBackups.mockResolvedValue({ items: [], backup_dir: '/tmp' });
+
+    render(Page);
+    await fireEvent.click(await screen.findByTestId('dev-tab-workers'));
+
+    // Duration label appears in both the card and the history table header.
+    expect((await screen.findAllByText('dev.workers.duration')).length).toBeGreaterThan(0);
+    // 02:55 → 03:00 = 5 minutes → duration_minutes formatter key rendered.
+    expect(screen.getAllByText('home.worker_run.duration_minutes').length).toBeGreaterThan(0);
+  });
+
   it('renders Docker container state on the runtime tab', async () => {
     fetchDevInfo.mockResolvedValue({
       ...sampleInfo,
