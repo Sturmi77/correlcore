@@ -95,7 +95,9 @@
   let trendsSummaryTagHeatmap: TagHeatmapResponse | null = null;
   let trendsSummarySymptomHeatmap: SymptomHeatmapResponse | null = null;
   let trendsSummaryLoading = false;
-  let trendsSummaryLoaded = false;
+  // Window (days) the summary was last fetched for, or null before the first
+  // attempt. Keying by window lets a later trend_window_days change refetch.
+  let trendsSummaryLoadedKey: number | null = null;
 
   $: entrySheetOpen = $entrySheetStore.open;
 
@@ -147,12 +149,15 @@
   $: trendsWindowDays = dashboardSummary?.trend_window_days ?? 28;
   $: trendsSummaryEnabled = enabledHomeSections.some((section) => section.key === 'trends_summary');
   // Section-gated, best-effort fetch: never blocks the home render or the CTA.
+  // Wait for the dashboard (source of trend_window_days) so the first fetch uses
+  // the correct window, and refetch whenever that window changes.
   $: if (
     $auth.status === 'authenticated' &&
     trendsSummaryEnabled &&
     !$devForceVisualizations &&
-    !trendsSummaryLoaded &&
-    !trendsSummaryLoading
+    dashboardLoaded &&
+    !trendsSummaryLoading &&
+    trendsSummaryLoadedKey !== trendsWindowDays
   ) {
     void loadTrendsSummary(trendsWindowDays);
   }
@@ -274,7 +279,9 @@
       trendsSummarySymptomHeatmap = null;
     } finally {
       trendsSummaryLoading = false;
-      trendsSummaryLoaded = true;
+      // Record the attempted window (success or best-effort failure) so the
+      // reactive guard settles but still refetches if the window changes.
+      trendsSummaryLoadedKey = windowDays;
     }
   }
 
@@ -451,7 +458,7 @@
               tagHeatmap={trendsSummaryTagHeatmap}
               symptomHeatmap={trendsSummarySymptomHeatmap}
               windowDays={trendsWindowDays}
-              loading={trendsSummaryLoading && !trendsSummaryLoaded}
+              loading={trendsSummaryLoading || trendsSummaryLoadedKey === null}
             />
           </div>
         {/if}
