@@ -98,6 +98,9 @@
   // Window (days) the summary was last fetched for, or null before the first
   // attempt. Keying by window lets a later trend_window_days change refetch.
   let trendsSummaryLoadedKey: number | null = null;
+  // Monotonic token: a dashboard (re)load bumps it to invalidate any in-flight
+  // summary fetch, so a stale fetch's finally cannot clobber the reset key.
+  let trendsSummaryToken = 0;
 
   $: entrySheetOpen = $entrySheetStore.open;
 
@@ -257,9 +260,11 @@
     } finally {
       dashboardLoading = false;
       dashboardLoaded = true;
-      // Refetch the trends summary after every real dashboard (re)load — a new
-      // entry or page refresh must update it too. Skip in forced-visualization
-      // mode, where the fixture branch already populated it (#878 review).
+      // Invalidate any in-flight summary fetch so its finally cannot clobber the
+      // reset below. Then refetch the trends summary after every real dashboard
+      // (re)load — a new entry or page refresh must update it too. Skip the reset
+      // in forced-visualization mode, where the fixture branch populated it.
+      trendsSummaryToken++;
       if (!get(devForceVisualizations)) trendsSummaryLoadedKey = null;
     }
   }
@@ -273,6 +278,7 @@
   }
 
   async function loadTrendsSummary(windowDays: number): Promise<void> {
+    const token = ++trendsSummaryToken;
     trendsSummaryLoading = true;
     try {
       const start = shiftIsoDate(todayIso, -(Math.max(1, windowDays) - 1));
@@ -281,18 +287,25 @@
         fetchTagHeatmap({ start_date: start, end_date: todayIso }),
         fetchSymptomHeatmap({ start_date: start, end_date: todayIso }),
       ]);
+      // A newer load (e.g. an entry-save refresh) superseded this fetch: drop
+      // its result so it cannot show stale data or settle the window key.
+      if (token !== trendsSummaryToken) return;
       trendsSummaryPoints = timeseries.status === 'fulfilled' ? timeseries.value.points : [];
       trendsSummaryTagHeatmap = tags.status === 'fulfilled' ? tags.value : null;
       trendsSummarySymptomHeatmap = symptoms.status === 'fulfilled' ? symptoms.value : null;
     } catch {
-      trendsSummaryPoints = [];
-      trendsSummaryTagHeatmap = null;
-      trendsSummarySymptomHeatmap = null;
+      if (token === trendsSummaryToken) {
+        trendsSummaryPoints = [];
+        trendsSummaryTagHeatmap = null;
+        trendsSummarySymptomHeatmap = null;
+      }
     } finally {
-      trendsSummaryLoading = false;
-      // Record the attempted window (success or best-effort failure) so the
-      // reactive guard settles but still refetches if the window changes.
-      trendsSummaryLoadedKey = windowDays;
+      if (token === trendsSummaryToken) {
+        trendsSummaryLoading = false;
+        // Record the attempted window (success or best-effort failure) so the
+        // reactive guard settles but still refetches if the window changes.
+        trendsSummaryLoadedKey = windowDays;
+      }
     }
   }
 
