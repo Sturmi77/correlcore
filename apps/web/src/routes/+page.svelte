@@ -300,10 +300,12 @@
         trendsSummarySymptomHeatmap = null;
       }
     } finally {
+      // Always clear the loading flag — even a superseded fetch must release the
+      // reactive guard so the follow-up refetch can start (spinner never sticks).
+      trendsSummaryLoading = false;
+      // Only settle the window key when still current, so an invalidating
+      // dashboard reload keeps key=null and the refetch runs.
       if (token === trendsSummaryToken) {
-        trendsSummaryLoading = false;
-        // Record the attempted window (success or best-effort failure) so the
-        // reactive guard settles but still refetches if the window changes.
         trendsSummaryLoadedKey = windowDays;
       }
     }
