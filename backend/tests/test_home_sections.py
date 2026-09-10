@@ -26,6 +26,7 @@ def test_merge_home_sections_preserves_user_order() -> None:
         "daily_brief",
         "first_week_banner",
         "work_context",
+        "trends_summary",
     ]
     assert merged[1]["enabled"] is False
 

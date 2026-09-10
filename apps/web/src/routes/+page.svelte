@@ -156,6 +156,7 @@
     trendsSummaryEnabled &&
     !$devForceVisualizations &&
     dashboardLoaded &&
+    !dashboardLoading &&
     !trendsSummaryLoading &&
     trendsSummaryLoadedKey !== trendsWindowDays
   ) {
@@ -200,6 +201,12 @@
         dashboardSummary = fixture.dashboard;
         userPreferences = fixture.preferences;
         preferencesLoaded = true;
+        // Force-visualization mode has no network: drive the trends summary from
+        // the selected phase fixture instead (#878 review).
+        trendsSummaryPoints = fixture.timeseries.points;
+        trendsSummaryTagHeatmap = fixture.tagHeatmap;
+        trendsSummarySymptomHeatmap = fixture.symptomHeatmap;
+        trendsSummaryLoadedKey = fixture.dashboard.trend_window_days ?? 28;
         return;
       }
 
@@ -250,6 +257,10 @@
     } finally {
       dashboardLoading = false;
       dashboardLoaded = true;
+      // Refetch the trends summary after every real dashboard (re)load — a new
+      // entry or page refresh must update it too. Skip in forced-visualization
+      // mode, where the fixture branch already populated it (#878 review).
+      if (!get(devForceVisualizations)) trendsSummaryLoadedKey = null;
     }
   }
 
