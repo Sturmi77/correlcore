@@ -515,7 +515,9 @@
       "show_details": "Show detailed charts",
       "hide_details": "Hide detailed charts",
       "detail_filters": "Detailed trend filters",
-      "customize": "Customize"
+      "customize": "Customize",
+      "window": "Last {n} days",
+      "view_all": "All trends"
     },
     "settings": {
       "title": "Customize compare view",
@@ -1072,6 +1074,10 @@
         "weekday_overview": {
           "label": "Weekday overview",
           "description": "Seven-day mood strip with weekday top signals."
+        },
+        "trends_summary": {
+          "label": "At a glance",
+          "description": "Compact trends summary: strongest movement, most frequent tag and symptom over the Home window."
         }
       }
     },

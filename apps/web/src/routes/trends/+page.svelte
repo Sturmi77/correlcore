@@ -46,7 +46,6 @@
   import TrendsCompareQuickFilters from '$lib/components/trends/TrendsCompareQuickFilters.svelte';
   import TrendsCompareSettingsSheet from '$lib/components/trends/TrendsCompareSettingsSheet.svelte';
   import TrendsHealthContext from '$lib/components/trends/TrendsHealthContext.svelte';
-  import MobileTrendsSummary from '$lib/components/trends/MobileTrendsSummary.svelte';
   import HabitsPanel from '$lib/components/trends/HabitsPanel.svelte';
   import EntryHistorySheet, {
     type EntryHistoryDetail,
@@ -497,16 +496,6 @@
     {/if}
 
     {#if activeTab === 'compare'}
-      {#if compactTrends}
-        <MobileTrendsSummary
-          points={displayTimeseries?.points ?? []}
-          tagHeatmap={heatmap}
-          {symptomHeatmap}
-          {range}
-          {loading}
-        />
-      {/if}
-
       <div id="mobile-trends-detail" class="trends__detail" data-testid="mobile-trends-detail">
         <div
           class="trends__panel trends__panel--compare"

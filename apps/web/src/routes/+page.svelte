@@ -44,6 +44,16 @@
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
   import HomeWorkContextSummary from '$lib/components/home/HomeWorkContextSummary.svelte';
   import HomeWeekdayOverview from '$lib/components/home/HomeWeekdayOverview.svelte';
+  import MobileTrendsSummary from '$lib/components/trends/MobileTrendsSummary.svelte';
+  import {
+    fetchTimeseries,
+    fetchTagHeatmap,
+    fetchSymptomHeatmap,
+    type TimeseriesPoint,
+    type TimeseriesRange,
+    type TagHeatmapResponse,
+    type SymptomHeatmapResponse,
+  } from '$lib/api/stats';
   import { mergeHomeSections, resolveEnabledSections } from '$lib/utils/homeSections';
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
@@ -79,6 +89,13 @@
   let faultyContainers: FaultyHomeContainer[] = [];
   let containerHealthKey = '';
   let containerHealthGeneration = 0;
+
+  // Trends summary section (#877): moved here from Trends, fixed window.
+  let trendsSummaryPoints: TimeseriesPoint[] = [];
+  let trendsSummaryTagHeatmap: TagHeatmapResponse | null = null;
+  let trendsSummarySymptomHeatmap: SymptomHeatmapResponse | null = null;
+  let trendsSummaryLoading = false;
+  let trendsSummaryLoaded = false;
 
   $: entrySheetOpen = $entrySheetStore.open;
 
@@ -125,6 +142,20 @@
     preferencesLoaded ? (userPreferences?.home_sections ?? null) : null
   );
   $: enabledHomeSections = preferencesLoaded ? resolveEnabledSections(homeSections) : [];
+
+  // Same window Home already uses for the work-context / weekday sections.
+  $: trendsWindowDays = dashboardSummary?.trend_window_days ?? 28;
+  $: trendsSummaryEnabled = enabledHomeSections.some((section) => section.key === 'trends_summary');
+  // Section-gated, best-effort fetch: never blocks the home render or the CTA.
+  $: if (
+    $auth.status === 'authenticated' &&
+    trendsSummaryEnabled &&
+    !$devForceVisualizations &&
+    !trendsSummaryLoaded &&
+    !trendsSummaryLoading
+  ) {
+    void loadTrendsSummary(trendsWindowDays);
+  }
 
   async function loadFaultyContainers(generation: number): Promise<void> {
     try {
@@ -214,6 +245,36 @@
     } finally {
       dashboardLoading = false;
       dashboardLoaded = true;
+    }
+  }
+
+  /** Nearest named timeseries range for a day-count window (#877). */
+  function rangeForWindow(days: number): TimeseriesRange {
+    if (days <= 7) return 'week';
+    if (days <= 30) return 'month';
+    if (days <= 90) return 'quarter';
+    return 'year';
+  }
+
+  async function loadTrendsSummary(windowDays: number): Promise<void> {
+    trendsSummaryLoading = true;
+    try {
+      const start = shiftIsoDate(todayIso, -(Math.max(1, windowDays) - 1));
+      const [timeseries, tags, symptoms] = await Promise.allSettled([
+        fetchTimeseries(rangeForWindow(windowDays)),
+        fetchTagHeatmap({ start_date: start, end_date: todayIso }),
+        fetchSymptomHeatmap({ start_date: start, end_date: todayIso }),
+      ]);
+      trendsSummaryPoints = timeseries.status === 'fulfilled' ? timeseries.value.points : [];
+      trendsSummaryTagHeatmap = tags.status === 'fulfilled' ? tags.value : null;
+      trendsSummarySymptomHeatmap = symptoms.status === 'fulfilled' ? symptoms.value : null;
+    } catch {
+      trendsSummaryPoints = [];
+      trendsSummaryTagHeatmap = null;
+      trendsSummarySymptomHeatmap = null;
+    } finally {
+      trendsSummaryLoading = false;
+      trendsSummaryLoaded = true;
     }
   }
 
@@ -380,6 +441,17 @@
               loading={(insightLoading || (dashboardLoading && !dashboardLoaded)) &&
                 !(dashboardSummary?.weekday_summary?.length ?? 0) &&
                 !weekdayInsight}
+            />
+          </div>
+        {:else if section.key === 'trends_summary'}
+          <div data-testid="home-section-trends_summary">
+            <MobileTrendsSummary
+              compact
+              points={trendsSummaryPoints}
+              tagHeatmap={trendsSummaryTagHeatmap}
+              symptomHeatmap={trendsSummarySymptomHeatmap}
+              windowDays={trendsWindowDays}
+              loading={trendsSummaryLoading && !trendsSummaryLoaded}
             />
           </div>
         {/if}

@@ -73,4 +73,17 @@ describe('MobileTrendsSummary', () => {
     render(MobileTrendsSummary);
     expect(screen.getByTestId('mobile-trends-summary-empty')).toBeTruthy();
   });
+
+  it('renders the compact Home variant with a window label and a link to Trends (#877)', () => {
+    render(MobileTrendsSummary, {
+      props: { points, compact: true, windowDays: 28 },
+    });
+
+    const summary = screen.getByTestId('mobile-trends-summary');
+    expect(summary.classList.contains('mobile-summary--compact')).toBe(true);
+    // Window label replaces the range chip in compact mode.
+    expect(screen.getByText('trends.mobile.window')).toBeTruthy();
+    const link = screen.getByTestId('mobile-trends-summary-link');
+    expect(link.getAttribute('href')).toBe('/trends');
+  });
 });

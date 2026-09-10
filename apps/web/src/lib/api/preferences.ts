@@ -1,7 +1,7 @@
 import { api } from './client';
 
 export type HomeSectionKey =
-  'first_week_banner' | 'daily_brief' | 'work_context' | 'weekday_overview';
+  'first_week_banner' | 'daily_brief' | 'work_context' | 'weekday_overview' | 'trends_summary';
 
 export interface HomeSectionPreference {
   key: HomeSectionKey;

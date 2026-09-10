@@ -19,6 +19,13 @@
   export let symptomHeatmap: SymptomHeatmapResponse | null = null;
   export let range: TimeseriesRange = 'week';
   export let loading = false;
+  /**
+   * Compact Home variant (#877): smaller heading, tighter spacing, a fixed
+   * "last N days" window label instead of the range chip, and a link to Trends.
+   */
+  export let compact = false;
+  /** Fixed window (days) shown as the period label in compact mode. */
+  export let windowDays: number | null = null;
 
   const metricLabels = {
     mood_avg: 'trends.metric.mood',
@@ -43,16 +50,29 @@
 
 <section
   class="mobile-summary"
+  class:mobile-summary--compact={compact}
   aria-labelledby="mobile-trends-summary-title"
   aria-busy={loading}
   data-testid="mobile-trends-summary"
 >
   <header class="mobile-summary__header">
     <div>
-      <span>{$_(`trends.range.${range}`)}</span>
+      <span>
+        {#if compact && windowDays}
+          {$_('trends.mobile.window', { values: { n: windowDays } })}
+        {:else}
+          {$_(`trends.range.${range}`)}
+        {/if}
+      </span>
       <h2 id="mobile-trends-summary-title">{$_('trends.mobile.heading')}</h2>
     </div>
-    {#if loading}<small>{$_('trends.mobile.updating')}</small>{/if}
+    {#if loading}
+      <small>{$_('trends.mobile.updating')}</small>
+    {:else if compact}
+      <a class="mobile-summary__link" href="/trends" data-testid="mobile-trends-summary-link">
+        {$_('trends.mobile.view_all')}
+      </a>
+    {/if}
   </header>
 
   {#if summary.entryCount === 0 && !loading}
@@ -133,6 +153,45 @@
   .mobile-summary {
     display: grid;
     gap: var(--space-3);
+  }
+
+  /* Compact Home variant (#877): card container, denser layout, smaller heading. */
+  .mobile-summary--compact {
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-chart, var(--color-border));
+    border-radius: var(--radius-md);
+    background: var(--color-surface-chart-bg, var(--color-surface));
+  }
+
+  .mobile-summary--compact .mobile-summary__header h2 {
+    margin-top: 0;
+    font-size: var(--text-base);
+  }
+
+  .mobile-summary--compact .mobile-summary__count {
+    font-size: var(--text-xs);
+  }
+
+  .mobile-summary--compact .mobile-summary__grid {
+    gap: var(--space-1);
+  }
+
+  .mobile-summary--compact .mobile-summary__card {
+    padding: var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .mobile-summary--compact .mobile-summary__card strong {
+    font-size: var(--text-base);
+  }
+
+  .mobile-summary__link {
+    align-self: end;
+    color: var(--color-primary);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    white-space: nowrap;
   }
 
   .mobile-summary__header {

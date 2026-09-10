@@ -201,7 +201,7 @@ describe('/trends page', () => {
     expect(screen.getByText('trends.compare.work_contexts')).toBeTruthy();
   });
 
-  it('uses scroll-first composition on mobile with summary, sticky quick filters, and detail canvas', async () => {
+  it('uses scroll-first composition on mobile with sticky quick filters and detail canvas', async () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       value: vi.fn(() => ({
@@ -217,8 +217,9 @@ describe('/trends page', () => {
     });
 
     render(Page);
-    expect(await screen.findByTestId('mobile-trends-summary')).toBeTruthy();
-    expect(screen.getByTestId('mobile-trends-detail')).toBeTruthy();
+    // #877: the "At a glance" summary moved to Home; Trends no longer renders it.
+    expect(await screen.findByTestId('mobile-trends-detail')).toBeTruthy();
+    expect(screen.queryByTestId('mobile-trends-summary')).toBeNull();
     // #786: quick filters live in the sticky ScreenHeader controls slot.
     expect(screen.getByTestId('trends-compare-quick-filters')).toBeTruthy();
     expect(screen.getByTestId('trends-filters-toolbar')).toBeTruthy();
