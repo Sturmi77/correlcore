@@ -71,15 +71,25 @@ export function formatRunDuration(
   }
 
   const totalSeconds = ms / 1000;
-  if (totalSeconds < 60) {
-    const seconds = formatLocaleNumber(totalSeconds, locale, totalSeconds < 10 ? 1 : 0);
-    return _('home.worker_run.duration_seconds', { values: { seconds } });
+  // Below 10s keep one decimal for precision; the raw value never needs a
+  // minute carry here.
+  if (totalSeconds < 10) {
+    return _('home.worker_run.duration_seconds', {
+      values: { seconds: formatLocaleNumber(totalSeconds, locale, 1) },
+    });
   }
 
-  const totalMinutes = Math.floor(totalSeconds / 60);
+  // Round to whole seconds *before* splitting so a remainder like 59.6s carries
+  // into the next minute (→ "2 min 0 s") instead of rendering "1 min 60 s".
+  const roundedSeconds = Math.round(totalSeconds);
+  if (roundedSeconds < 60) {
+    return _('home.worker_run.duration_seconds', { values: { seconds: roundedSeconds } });
+  }
+
+  const totalMinutes = Math.floor(roundedSeconds / 60);
   if (totalMinutes < 60) {
     return _('home.worker_run.duration_minutes', {
-      values: { minutes: totalMinutes, seconds: Math.round(totalSeconds % 60) },
+      values: { minutes: totalMinutes, seconds: roundedSeconds % 60 },
     });
   }
 

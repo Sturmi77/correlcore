@@ -119,6 +119,22 @@ describe('formatRunDuration', () => {
     expect(result).toContain('"seconds":30');
   });
 
+  it('carries a rounded 60s remainder into the next minute (no "1 min 60 s")', () => {
+    // 1 min 59.6s → rounds to 2 min 0 s, not 1 min 60 s.
+    const result = formatRunDuration('2026-09-07T02:55:00.000Z', '2026-09-07T02:56:59.600Z', t);
+    expect(result).toContain('duration_minutes');
+    expect(result).toContain('"minutes":2');
+    expect(result).toContain('"seconds":0');
+  });
+
+  it('carries a rounded 60min remainder into the next hour', () => {
+    // 59 min 59.6s → rounds to 1 h 0 min, not 0 h 60 min.
+    const result = formatRunDuration('2026-09-07T02:00:00.000Z', '2026-09-07T02:59:59.600Z', t);
+    expect(result).toContain('duration_hours');
+    expect(result).toContain('"hours":1');
+    expect(result).toContain('"minutes":0');
+  });
+
   it('formats hour-long runs in hours and minutes', () => {
     const result = formatRunDuration('2026-09-07T01:00:00Z', '2026-09-07T03:30:00Z', t);
     expect(result).toContain('duration_hours');
