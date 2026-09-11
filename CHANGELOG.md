@@ -8,6 +8,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-09-11
+
+Feature-Release: Home-Screen-Ausbau — „Auf einen Blick"-Trendzusammenfassung als
+Home-Sektion, 28-Tage-Trendindikatoren auf Wochentags- und Arbeitskontext-Karten,
+sortierbare Arbeitssituations-Map und Worker-Laufdauer im Analysis-Badge / Dev/Workers.
+
 ### Changed
 
 - **„Auf einen Blick" auf den Home-Screen verschoben (#877)** — Die Trends-Zusammenfassung
@@ -34,6 +40,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   Standardreihenfolge; Metrik-Spalten sortieren numerisch (Zeilen ohne Wert stehen immer
   hinten), die Arbeitssituation locale-aware (deutsch). Barrierefrei über `aria-sort` und per
   Tastatur bedienbare Header-Buttons mit Richtungs-Indikator.
+
+- **28-Tage-Trendindikatoren auf Home-Karten (#869)** — Die Wochentags- und
+  Arbeitskontext-Karten auf dem Home-Screen zeigen jetzt an, ob sich die Durchschnitte
+  zuletzt bewegt haben, indem das aktuelle mit dem vorherigen 28-Tage-Fenster verglichen wird
+  (Richtung aus ungerundeten Mittelwerten, ohne Ampel-Verdikt). Leere Fenster weisen das
+  Gesamtmittel nicht mehr als 28-Tage-Schnitt aus; der Tages-Trend-Toggle nutzt das
+  bestehende „latest-wins"-Persist-Gate. Neue Präferenz über Alembic-Migration **046**
+  (`home_weekday_day_trend_enabled`). i18n (de/en) ergänzt.
 
 ## [1.8.0] — 2026-09-08
 
