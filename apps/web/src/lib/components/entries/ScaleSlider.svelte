@@ -1,7 +1,7 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
 
-  type ScaleType = 'mood' | 'energy' | 'stress' | 'default';
+  type ScaleType = 'mood' | 'energy' | 'stress' | 'sleep' | 'default';
 
   export let value: number;
   export let label: string;
@@ -16,6 +16,7 @@
     mood: { low: 'entry.scale.mood_low', high: 'entry.scale.mood_high' },
     energy: { low: 'entry.scale.energy_low', high: 'entry.scale.energy_high' },
     stress: { low: 'entry.scale.stress_low', high: 'entry.scale.stress_high' },
+    sleep: { low: 'entry.scale.sleep_low', high: 'entry.scale.sleep_high' },
     default: { low: 'entry.scale.default_low', high: 'entry.scale.default_high' },
   };
 

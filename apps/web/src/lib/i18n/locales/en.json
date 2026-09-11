@@ -255,7 +255,7 @@
       "error_range": "Sleep duration must be between 0 and 1440 minutes."
     },
     "sleep_quality": {
-      "label": "Sleep quality (optional)",
+      "label": "Sleep quality",
       "unset": "Not set",
       "hint": "Your subjective rating from 1 (poor) to 5 (great).",
       "add": "Rate sleep quality",

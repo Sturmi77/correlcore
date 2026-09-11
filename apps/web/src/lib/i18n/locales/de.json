@@ -255,7 +255,7 @@
       "error_range": "Die Schlafdauer muss zwischen 0 und 1440 Minuten liegen."
     },
     "sleep_quality": {
-      "label": "Schlafqualität (optional)",
+      "label": "Schlafqualität",
       "unset": "Nicht gesetzt",
       "hint": "Deine subjektive Bewertung von 1 (schlecht) bis 5 (super).",
       "add": "Schlafqualität bewerten",
