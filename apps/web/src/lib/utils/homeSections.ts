@@ -8,10 +8,17 @@ export const DEFAULT_HOME_SECTIONS: HomeSectionPreference[] = [
   { key: 'daily_brief', enabled: true },
   { key: 'work_context', enabled: true },
   { key: 'weekday_overview', enabled: true },
+  { key: 'trends_summary', enabled: true },
 ];
 
 const homeSectionUtils = createSectionUtils<HomeSectionKey>({
-  validKeys: ['first_week_banner', 'daily_brief', 'work_context', 'weekday_overview'],
+  validKeys: [
+    'first_week_banner',
+    'daily_brief',
+    'work_context',
+    'weekday_overview',
+    'trends_summary',
+  ],
   defaults: DEFAULT_HOME_SECTIONS,
 });
 

@@ -24,6 +24,7 @@ describe('homeSections', () => {
       'daily_brief',
       'first_week_banner',
       'work_context',
+      'trends_summary',
     ]);
     expect(merged[1]?.enabled).toBe(false);
   });

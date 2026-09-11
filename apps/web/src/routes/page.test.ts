@@ -89,6 +89,14 @@ describe('/ home screen ownership contract', () => {
     expect(source).toContain('data-testid="home-section-daily_brief"');
     expect(source).toContain('data-testid="home-section-work_context"');
     expect(source).toContain('data-testid="home-section-weekday_overview"');
+    expect(source).toContain('data-testid="home-section-trends_summary"');
+  });
+
+  it('loads the trends summary section with the shared Home window (#877)', () => {
+    expect(source).toContain('MobileTrendsSummary');
+    expect(source).toContain('loadTrendsSummary');
+    expect(source).toContain('trendsWindowDays');
+    expect(source).toContain("section.key === 'trends_summary'");
   });
 
   it('defers the PWA install banner until after the first entry or retro onboarding', () => {

@@ -20,6 +20,7 @@ HomeSectionKey = Literal[
     "daily_brief",
     "work_context",
     "weekday_overview",
+    "trends_summary",
 ]
 
 VALID_HOME_SECTION_KEYS: frozenset[str] = frozenset(
@@ -28,6 +29,7 @@ VALID_HOME_SECTION_KEYS: frozenset[str] = frozenset(
         "daily_brief",
         "work_context",
         "weekday_overview",
+        "trends_summary",
     }
 )
 
@@ -40,6 +42,7 @@ DEFAULT_HOME_SECTIONS: list[SectionPreference] = [
     {"key": "daily_brief", "enabled": True},
     {"key": "work_context", "enabled": True},
     {"key": "weekday_overview", "enabled": True},
+    {"key": "trends_summary", "enabled": True},
 ]
 
 

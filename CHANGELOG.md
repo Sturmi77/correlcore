@@ -8,6 +8,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **„Auf einen Blick" auf den Home-Screen verschoben (#877)** — Die Trends-Zusammenfassung
+  (`MobileTrendsSummary`: stärkste Bewegung, häufigster Tag, häufigstes Symptom) wandert von der
+  Trends-Seite auf den Home-Screen. Sie ist als neue, kompakte Home-Sektion `trends_summary` in
+  den Settings **sortier- und ein-/ausschaltbar** und nutzt **dasselbe Zeitfenster wie Home**
+  (`trend_window_days`, Default 28 Tage) statt eines Perioden-Pickers. Datenladen ist
+  section-gated und blockiert Home-Render/CTA nicht; ein „Alle Trends"-Link führt weiter zur
+  Trends-Seite. i18n (de/en) ergänzt.
+
 ### Added
 
 - **Worker-Laufdauer im Home-Badge und Dev/Workers (#874)** — Das Home Analysis-Badge und die

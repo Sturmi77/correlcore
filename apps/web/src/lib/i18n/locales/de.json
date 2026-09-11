@@ -520,7 +520,9 @@
       "show_details": "Detaillierte Diagramme anzeigen",
       "hide_details": "Detaillierte Diagramme ausblenden",
       "detail_filters": "Detaillierte Trend-Filter",
-      "customize": "Anpassen"
+      "customize": "Anpassen",
+      "window": "Letzte {n} Tage",
+      "view_all": "Alle Trends"
     },
     "settings": {
       "title": "Vergleich anpassen",
@@ -1077,6 +1079,10 @@
         "weekday_overview": {
           "label": "Wochenuebersicht",
           "description": "Sieben-Tage-Stimmungsstrip mit Top-Signalen je Wochentag."
+        },
+        "trends_summary": {
+          "label": "Auf einen Blick",
+          "description": "Kompakte Trend-Zusammenfassung: staerkste Bewegung, haeufigster Tag und haeufigstes Symptom im Home-Zeitfenster."
         }
       }
     },

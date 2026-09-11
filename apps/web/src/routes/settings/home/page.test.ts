@@ -89,6 +89,7 @@ describe('/settings/home layout editor', () => {
           { key: 'first_week_banner', enabled: true },
           { key: 'work_context', enabled: true },
           { key: 'weekday_overview', enabled: true },
+          { key: 'trends_summary', enabled: true },
         ],
       });
     });
@@ -117,6 +118,7 @@ describe('/settings/home layout editor', () => {
                 { key: 'first_week_banner', enabled: true },
                 { key: 'work_context', enabled: true },
                 { key: 'weekday_overview', enabled: true },
+                { key: 'trends_summary', enabled: true },
               ],
               created_at: '2026-05-16T10:00:00Z',
               updated_at: '2026-05-16T10:00:00Z',
@@ -139,7 +141,13 @@ describe('/settings/home layout editor', () => {
 
     resolveFirst?.();
 
-    const latestOrder = ['daily_brief', 'work_context', 'first_week_banner', 'weekday_overview'];
+    const latestOrder = [
+      'daily_brief',
+      'work_context',
+      'first_week_banner',
+      'weekday_overview',
+      'trends_summary',
+    ];
 
     await waitFor(() => {
       expect(updateUserPreferencesMock).toHaveBeenCalledTimes(2);
@@ -196,6 +204,7 @@ describe('/settings/home layout editor', () => {
             { key: 'first_week_banner', enabled: true },
             { key: 'work_context', enabled: true },
             { key: 'weekday_overview', enabled: true },
+            { key: 'trends_summary', enabled: true },
           ],
         })
       );
@@ -214,6 +223,7 @@ describe('/settings/home layout editor', () => {
       'home-section-row-first_week_banner',
       'home-section-row-work_context',
       'home-section-row-weekday_overview',
+      'home-section-row-trends_summary',
     ]);
   });
 });

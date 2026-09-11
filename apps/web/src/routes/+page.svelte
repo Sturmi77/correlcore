@@ -44,6 +44,16 @@
   import HomeDailyBrief from '$lib/components/home/HomeDailyBrief.svelte';
   import HomeWorkContextSummary from '$lib/components/home/HomeWorkContextSummary.svelte';
   import HomeWeekdayOverview from '$lib/components/home/HomeWeekdayOverview.svelte';
+  import MobileTrendsSummary from '$lib/components/trends/MobileTrendsSummary.svelte';
+  import {
+    fetchTimeseries,
+    fetchTagHeatmap,
+    fetchSymptomHeatmap,
+    type TimeseriesPoint,
+    type TimeseriesRange,
+    type TagHeatmapResponse,
+    type SymptomHeatmapResponse,
+  } from '$lib/api/stats';
   import { mergeHomeSections, resolveEnabledSections } from '$lib/utils/homeSections';
   import { entrySheetSaveSignal, entrySheetStore, openEntrySheet } from '$lib/stores/entrySheet';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
@@ -79,6 +89,18 @@
   let faultyContainers: FaultyHomeContainer[] = [];
   let containerHealthKey = '';
   let containerHealthGeneration = 0;
+
+  // Trends summary section (#877): moved here from Trends, fixed window.
+  let trendsSummaryPoints: TimeseriesPoint[] = [];
+  let trendsSummaryTagHeatmap: TagHeatmapResponse | null = null;
+  let trendsSummarySymptomHeatmap: SymptomHeatmapResponse | null = null;
+  let trendsSummaryLoading = false;
+  // Window (days) the summary was last fetched for, or null before the first
+  // attempt. Keying by window lets a later trend_window_days change refetch.
+  let trendsSummaryLoadedKey: number | null = null;
+  // Monotonic token: a dashboard (re)load bumps it to invalidate any in-flight
+  // summary fetch, so a stale fetch's finally cannot clobber the reset key.
+  let trendsSummaryToken = 0;
 
   $: entrySheetOpen = $entrySheetStore.open;
 
@@ -126,6 +148,24 @@
   );
   $: enabledHomeSections = preferencesLoaded ? resolveEnabledSections(homeSections) : [];
 
+  // Same window Home already uses for the work-context / weekday sections.
+  $: trendsWindowDays = dashboardSummary?.trend_window_days ?? 28;
+  $: trendsSummaryEnabled = enabledHomeSections.some((section) => section.key === 'trends_summary');
+  // Section-gated, best-effort fetch: never blocks the home render or the CTA.
+  // Wait for the dashboard (source of trend_window_days) so the first fetch uses
+  // the correct window, and refetch whenever that window changes.
+  $: if (
+    $auth.status === 'authenticated' &&
+    trendsSummaryEnabled &&
+    !$devForceVisualizations &&
+    dashboardLoaded &&
+    !dashboardLoading &&
+    !trendsSummaryLoading &&
+    trendsSummaryLoadedKey !== trendsWindowDays
+  ) {
+    void loadTrendsSummary(trendsWindowDays);
+  }
+
   async function loadFaultyContainers(generation: number): Promise<void> {
     try {
       const info = await fetchDevInfo();
@@ -164,6 +204,12 @@
         dashboardSummary = fixture.dashboard;
         userPreferences = fixture.preferences;
         preferencesLoaded = true;
+        // Force-visualization mode has no network: drive the trends summary from
+        // the selected phase fixture instead (#878 review).
+        trendsSummaryPoints = fixture.timeseries.points;
+        trendsSummaryTagHeatmap = fixture.tagHeatmap;
+        trendsSummarySymptomHeatmap = fixture.symptomHeatmap;
+        trendsSummaryLoadedKey = fixture.dashboard.trend_window_days ?? 28;
         return;
       }
 
@@ -214,6 +260,54 @@
     } finally {
       dashboardLoading = false;
       dashboardLoaded = true;
+      // Invalidate any in-flight summary fetch so its finally cannot clobber the
+      // reset below. Then refetch the trends summary after every real dashboard
+      // (re)load — a new entry or page refresh must update it too. Skip the reset
+      // in forced-visualization mode, where the fixture branch populated it.
+      trendsSummaryToken++;
+      if (!get(devForceVisualizations)) trendsSummaryLoadedKey = null;
+    }
+  }
+
+  /** Nearest named timeseries range for a day-count window (#877). */
+  function rangeForWindow(days: number): TimeseriesRange {
+    if (days <= 7) return 'week';
+    if (days <= 30) return 'month';
+    if (days <= 90) return 'quarter';
+    return 'year';
+  }
+
+  async function loadTrendsSummary(windowDays: number): Promise<void> {
+    const token = ++trendsSummaryToken;
+    trendsSummaryLoading = true;
+    try {
+      const start = shiftIsoDate(todayIso, -(Math.max(1, windowDays) - 1));
+      const [timeseries, tags, symptoms] = await Promise.allSettled([
+        fetchTimeseries(rangeForWindow(windowDays)),
+        fetchTagHeatmap({ start_date: start, end_date: todayIso }),
+        fetchSymptomHeatmap({ start_date: start, end_date: todayIso }),
+      ]);
+      // A newer load (e.g. an entry-save refresh) superseded this fetch: drop
+      // its result so it cannot show stale data or settle the window key.
+      if (token !== trendsSummaryToken) return;
+      trendsSummaryPoints = timeseries.status === 'fulfilled' ? timeseries.value.points : [];
+      trendsSummaryTagHeatmap = tags.status === 'fulfilled' ? tags.value : null;
+      trendsSummarySymptomHeatmap = symptoms.status === 'fulfilled' ? symptoms.value : null;
+    } catch {
+      if (token === trendsSummaryToken) {
+        trendsSummaryPoints = [];
+        trendsSummaryTagHeatmap = null;
+        trendsSummarySymptomHeatmap = null;
+      }
+    } finally {
+      // Always clear the loading flag — even a superseded fetch must release the
+      // reactive guard so the follow-up refetch can start (spinner never sticks).
+      trendsSummaryLoading = false;
+      // Only settle the window key when still current, so an invalidating
+      // dashboard reload keeps key=null and the refetch runs.
+      if (token === trendsSummaryToken) {
+        trendsSummaryLoadedKey = windowDays;
+      }
     }
   }
 
@@ -380,6 +474,17 @@
               loading={(insightLoading || (dashboardLoading && !dashboardLoaded)) &&
                 !(dashboardSummary?.weekday_summary?.length ?? 0) &&
                 !weekdayInsight}
+            />
+          </div>
+        {:else if section.key === 'trends_summary'}
+          <div data-testid="home-section-trends_summary">
+            <MobileTrendsSummary
+              compact
+              points={trendsSummaryPoints}
+              tagHeatmap={trendsSummaryTagHeatmap}
+              symptomHeatmap={trendsSummarySymptomHeatmap}
+              windowDays={trendsWindowDays}
+              loading={trendsSummaryLoading || trendsSummaryLoadedKey === null}
             />
           </div>
         {/if}
