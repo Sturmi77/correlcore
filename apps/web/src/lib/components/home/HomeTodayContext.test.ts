@@ -109,6 +109,9 @@ describe('HomeTodayContext', () => {
     expect(badge.getAttribute('href')).toBe('/insights');
     expect(badge.textContent).toContain('home.worker_run.label');
     expect(badge.textContent).toContain('badge_succeeded_with_count');
+    // 02:55 → 03:00 run duration is appended to the badge (#874).
+    expect(badge.textContent).toContain('home.worker_run.badge_with_duration');
+    expect(badge.textContent).toContain('duration_minutes');
   });
 
   it('shows defective stack containers next to the date in developer diagnostics', () => {

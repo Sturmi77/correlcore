@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { onDestroy, onMount } from 'svelte';
   import { get } from 'svelte/store';
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import IconRender from '$lib/components/common/IconRender.svelte';
   import IconButton from '$lib/components/common/IconButton.svelte';
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
@@ -23,6 +23,7 @@
   } from '$lib/api/dev';
   import { ICON_SIZE_MD } from '$lib/constants/iconSizes';
   import { regenerateInsights } from '$lib/api/insights';
+  import { formatRunDuration } from '$lib/utils/insightWorkerRunStatus';
   import {
     devPhase,
     devForceVisualizations,
@@ -111,6 +112,16 @@
     } catch {
       return iso;
     }
+  }
+
+  /**
+   * Run duration from `finished_at - started_at`. Shows "running…" for a run
+   * still in flight (started but not finished) and "—" when unavailable.
+   */
+  function formatRunDurationLabel(run: WorkerRunResponse | null | undefined): string {
+    if (!run) return '—';
+    if (!run.finished_at) return run.started_at ? $_('dev.workers.running') : '—';
+    return formatRunDuration(run.started_at, run.finished_at, $_, $locale ?? 'en') ?? '—';
   }
 
   function formatBytes(size: number): string {
@@ -571,6 +582,10 @@
                     <dd>{formatWhen(card.run.finished_at ?? card.run.started_at)}</dd>
                   </div>
                   <div>
+                    <dt>{$_('dev.workers.duration')}</dt>
+                    <dd>{formatRunDurationLabel(card.run)}</dd>
+                  </div>
+                  <div>
                     <dt>{$_('dev.workers.result')}</dt>
                     <dd>{resultPreview(card.run)}</dd>
                   </div>
@@ -594,6 +609,7 @@
                   <th>{$_('dev.workers.kind')}</th>
                   <th>{$_('dev.workers.trigger')}</th>
                   <th>{$_('dev.workers.status')}</th>
+                  <th>{$_('dev.workers.duration')}</th>
                   <th>{$_('dev.workers.result')}</th>
                 </tr>
               </thead>
@@ -604,6 +620,7 @@
                     <td>{run.job_kind}</td>
                     <td>{run.trigger_source}</td>
                     <td>{run.status}</td>
+                    <td>{formatRunDurationLabel(run)}</td>
                     <td>
                       {resultPreview(run)}
                       {#if run.error_message}

@@ -97,7 +97,12 @@
       "failed": "Letzter Lauf fehlgeschlagen {when}",
       "badge_succeeded": "{when}",
       "badge_succeeded_with_count": "{when} · {count}",
-      "badge_failed": "fehlgeschlagen · {when}"
+      "badge_failed": "fehlgeschlagen · {when}",
+      "badge_with_duration": "{base} · {duration}",
+      "duration_ms": "{ms} ms",
+      "duration_seconds": "{seconds} s",
+      "duration_minutes": "{minutes} min {seconds} s",
+      "duration_hours": "{hours} h {minutes} min"
     },
     "container_health": {
       "label": "Stack",
@@ -1772,6 +1777,8 @@
       "status": "Status",
       "trigger": "Trigger",
       "finished": "Wann",
+      "duration": "Dauer",
+      "running": "läuft…",
       "result": "Ergebnis",
       "none": "Noch keine Laeufe gespeichert.",
       "history": "Letzte Laeufe",
