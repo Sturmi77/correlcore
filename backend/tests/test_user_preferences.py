@@ -23,6 +23,7 @@ from app.services.user_preferences_service import (
     add_dismissed_insight_keys,
     prune_orphaned_dismissed_insight_keys,
     remove_dismissed_insight_keys,
+    to_preferences_response,
     update_user_preferences,
 )
 from app.services.user_profile_service import get_or_create_user_profile, upsert_user_profile
@@ -115,6 +116,51 @@ async def test_update_user_preferences_sets_last_seen_digest_at() -> None:
     )
 
     assert out.last_seen_digest_at == seen_at
+
+
+@pytest.mark.asyncio
+async def test_update_user_preferences_persists_trends_summary_custom_order() -> None:
+    user = make_user()
+    preferences = _make_preferences(user)
+    preferences.home_sections = [
+        {"key": "daily_brief", "enabled": True},
+        {"key": "work_context", "enabled": True},
+        {"key": "weekday_overview", "enabled": True},
+        {"key": "first_week_banner", "enabled": True},
+    ]
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_optional_result(preferences))
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    custom_order = [
+        {"key": "trends_summary", "enabled": True},
+        {"key": "daily_brief", "enabled": True},
+        {"key": "work_context", "enabled": True},
+        {"key": "weekday_overview", "enabled": True},
+        {"key": "first_week_banner", "enabled": True},
+    ]
+    out = await update_user_preferences(
+        db,
+        user_id=user.id,
+        payload=UserPreferencesUpdate(home_sections=custom_order),
+    )
+
+    assert [item["key"] for item in (out.home_sections or [])] == [
+        "trends_summary",
+        "daily_brief",
+        "work_context",
+        "weekday_overview",
+        "first_week_banner",
+    ]
+    response = to_preferences_response(out)
+    assert [item.key for item in (response.home_sections or [])] == [
+        "trends_summary",
+        "daily_brief",
+        "work_context",
+        "weekday_overview",
+        "first_week_banner",
+    ]
 
 
 @pytest.mark.asyncio

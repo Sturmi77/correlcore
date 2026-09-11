@@ -180,12 +180,12 @@
             >
               <span class="work-context-summary__value">
                 {cell.avg === null ? '–' : formatAverage(cell.avg)}
+                {#if cell.trendDirection}
+                  <span class="work-context-summary__trend" aria-hidden="true">
+                    <TrendDirectionGlyph direction={cell.trendDirection} />
+                  </span>
+                {/if}
               </span>
-              {#if cell.trendDirection}
-                <span class="work-context-summary__trend" aria-hidden="true">
-                  <TrendDirectionGlyph direction={cell.trendDirection} />
-                </span>
-              {/if}
             </span>
           {/each}
         </div>
@@ -347,6 +347,8 @@
     justify-content: center;
     gap: 0.15rem;
     min-height: 2rem;
+    min-width: 0;
+    overflow: visible;
     border-radius: var(--radius-sm);
     font-size: var(--text-sm);
     font-weight: 600;
@@ -360,20 +362,17 @@
     display: inline-flex;
     flex: 0 0 auto;
     color: var(--color-text-muted);
-    width: 0.65rem;
-    height: 0.65rem;
-  }
-
-  .work-context-summary__trend :global(svg) {
-    width: 0.65rem;
-    height: 0.65rem;
+    font-size: 0.7em;
+    line-height: 0;
   }
 
   .work-context-summary__value {
-    display: inline-grid;
-    place-items: center;
-    min-width: 1.75rem;
-    padding: 0.1rem 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.12rem;
+    min-width: 1.5rem;
+    padding: 0.1rem 0.28rem;
     border-radius: var(--radius-sm);
     background: color-mix(in oklch, var(--color-surface) 88%, transparent);
     color: var(--color-text);

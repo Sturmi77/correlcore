@@ -18,6 +18,9 @@ const user = {
 const preferences = {
   ...mockUserPreferences,
   user_id: user.id,
+  // Ack the mock batch so NewInsightsModal does not auto-open over the page
+  // (it intercepts the 90D range tap in the M7 mobile spec).
+  last_seen_insight_at: '2099-01-01T00:00:00Z',
 };
 
 function json(route: import('@playwright/test').Route, status: number, body: unknown) {
@@ -87,6 +90,10 @@ export async function installInsightsApiMock(
       });
     }
     if (path === '/user/preferences' && method === 'GET') return json(route, 200, preferences);
+    if (path === '/user/preferences' && method === 'PATCH') {
+      const patch = (request.postDataJSON() ?? {}) as Record<string, unknown>;
+      return json(route, 200, { ...preferences, ...patch });
+    }
     if (path === '/insights/dismissals' && method === 'GET') {
       return json(route, 200, { dismissals: [] });
     }

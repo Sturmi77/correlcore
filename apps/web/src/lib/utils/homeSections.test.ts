@@ -29,6 +29,24 @@ describe('homeSections', () => {
     expect(merged[1]?.enabled).toBe(false);
   });
 
+  it('keeps trends_summary where the user placed it instead of appending it', () => {
+    const merged = mergeHomeSections([
+      { key: 'trends_summary', enabled: true },
+      { key: 'daily_brief', enabled: true },
+      { key: 'work_context', enabled: true },
+      { key: 'weekday_overview', enabled: true },
+      { key: 'first_week_banner', enabled: true },
+    ]);
+
+    expect(merged.map((section) => section.key)).toEqual([
+      'trends_summary',
+      'daily_brief',
+      'work_context',
+      'weekday_overview',
+      'first_week_banner',
+    ]);
+  });
+
   it('drops unknown keys', () => {
     const merged = mergeHomeSections([
       { key: 'daily_brief', enabled: true },

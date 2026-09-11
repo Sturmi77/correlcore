@@ -6701,7 +6701,7 @@
   "info": {
     "description": "Privacy-first wellbeing correlation-analysis API",
     "title": "CorrelCore API",
-    "version": "1.9.0"
+    "version": "1.9.1"
   },
   "openapi": "3.1.0",
   "paths": {

@@ -165,6 +165,60 @@ describe('/settings/home layout editor', () => {
     });
   });
 
+  it('keeps Auf einen Blick (trends_summary) where it was moved, even if the API omits it', async () => {
+    updateUserPreferencesMock.mockImplementationOnce(async (payload: Record<string, unknown>) => ({
+      user_id: 'user-1',
+      analytics_enabled: true,
+      digest_enabled: false,
+      onboarding_retro_completed: true,
+      onboarding_profile_completed: true,
+      onboarding_maturity_intro_seen: true,
+      cycle_tracking_enabled: true,
+      home_weekday_day_trend_enabled: true,
+      dismissed_insight_keys: [],
+      reached_milestone_keys: [],
+      last_seen_insight_at: null,
+      created_at: '2026-05-16T10:00:00Z',
+      updated_at: '2026-05-16T10:00:00Z',
+      ...payload,
+      // Simulate a backend that persisted the pre-1.9 four-key list.
+      home_sections: [
+        { key: 'daily_brief', enabled: true },
+        { key: 'work_context', enabled: true },
+        { key: 'weekday_overview', enabled: true },
+        { key: 'first_week_banner', enabled: true },
+      ],
+    }));
+
+    render(Page);
+    await screen.findByTestId('home-sections-editor');
+
+    await fireEvent.click(screen.getByTestId('home-section-up-trends_summary'));
+
+    await waitFor(() => {
+      expect(updateUserPreferencesMock).toHaveBeenCalledWith({
+        home_sections: [
+          { key: 'first_week_banner', enabled: true },
+          { key: 'daily_brief', enabled: true },
+          { key: 'work_context', enabled: true },
+          { key: 'trends_summary', enabled: true },
+          { key: 'weekday_overview', enabled: true },
+        ],
+      });
+    });
+
+    await waitFor(() => {
+      const rows = screen.getAllByTestId(/^home-section-row-/);
+      expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual([
+        'home-section-row-first_week_banner',
+        'home-section-row-daily_brief',
+        'home-section-row-work_context',
+        'home-section-row-trends_summary',
+        'home-section-row-weekday_overview',
+      ]);
+    });
+  });
+
   it('resets to the default layout', async () => {
     render(Page);
     await screen.findByTestId('home-sections-editor');

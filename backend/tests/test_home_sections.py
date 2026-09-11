@@ -31,6 +31,32 @@ def test_merge_home_sections_preserves_user_order() -> None:
     assert merged[1]["enabled"] is False
 
 
+def test_merge_home_sections_keeps_trends_summary_custom_position() -> None:
+    stored = [
+        {"key": "trends_summary", "enabled": True},
+        {"key": "daily_brief", "enabled": True},
+        {"key": "work_context", "enabled": True},
+        {"key": "weekday_overview", "enabled": True},
+        {"key": "first_week_banner", "enabled": True},
+    ]
+    merged = merge_home_sections(stored)
+    assert [item["key"] for item in merged] == [
+        "trends_summary",
+        "daily_brief",
+        "work_context",
+        "weekday_overview",
+        "first_week_banner",
+    ]
+
+
+def test_normalize_home_sections_keeps_trends_summary() -> None:
+    stored = [
+        {"key": "trends_summary", "enabled": True},
+        {"key": "daily_brief", "enabled": True},
+    ]
+    assert normalize_home_sections(stored) == stored
+
+
 def test_merge_home_sections_drops_unknown_keys() -> None:
     stored = [
         {"key": "legacy_block", "enabled": True},
