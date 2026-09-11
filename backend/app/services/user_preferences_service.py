@@ -7,6 +7,7 @@ import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.insight import Insight
 from app.models.user_preference import UserPreference
@@ -173,12 +174,17 @@ async def update_user_preferences(
         if key == "home_sections":
             normalized = normalize_home_sections(value)
             if normalized is not None:
-                setattr(preferences, key, normalized)
+                # Copy so SQLAlchemy JSONB sees a new value; flag_modified covers
+                # in-place list/dict identity that would otherwise skip UPDATE
+                # and make a moved `trends_summary` jump back to the merge tail.
+                preferences.home_sections = [dict(section) for section in normalized]
+                flag_modified(preferences, "home_sections")
             continue
         if key == "insight_sections":
             normalized = normalize_insight_sections(value)
             if normalized is not None:
-                setattr(preferences, key, normalized)
+                preferences.insight_sections = [dict(section) for section in normalized]
+                flag_modified(preferences, "insight_sections")
             continue
         if key == "last_seen_digest_at":
             # High-water mark (#739): never move it backward. A stale client

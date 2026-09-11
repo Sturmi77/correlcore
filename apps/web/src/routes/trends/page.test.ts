@@ -174,6 +174,12 @@ describe('/trends page', () => {
     expect(screen.getByTestId('trends-tab-habits')).toBeTruthy();
     expect(screen.getByTestId('trends-health-context')).toBeTruthy();
     expect(screen.getByText('trends.maturity.heading')).toBeTruthy();
+    expect(screen.getByText('trends.metrics_label')).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'trends.metric.mood' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'trends.metric.energy' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'trends.metric.stress' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'trends.metric.sleep_quality' })).toBeTruthy();
+    expect(screen.queryByTestId('trends-quick-metric-mood_avg')).toBeNull();
   });
 
   it('switches to Habits tab', async () => {
@@ -223,6 +229,11 @@ describe('/trends page', () => {
     // #786: quick filters live in the sticky ScreenHeader controls slot.
     expect(screen.getByTestId('trends-compare-quick-filters')).toBeTruthy();
     expect(screen.getByTestId('trends-filters-toolbar')).toBeTruthy();
+    expect(screen.queryByTestId('trends-quick-metric-mood_avg')).toBeNull();
+    expect(screen.queryByTestId('trends-quick-metric-energy_avg')).toBeNull();
+    expect(screen.queryByTestId('trends-quick-metric-stress_avg')).toBeNull();
+    expect(screen.queryByTestId('trends-quick-metric-sleep_quality_avg')).toBeNull();
+    expect(screen.queryByText('trends.metrics_label')).toBeNull();
     expect(screen.queryByTestId('mobile-trends-detail-toggle')).toBeNull();
   });
 

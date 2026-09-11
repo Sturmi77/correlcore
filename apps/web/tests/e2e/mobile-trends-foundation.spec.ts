@@ -229,9 +229,17 @@ test('mobile compare filters and analysis canvas are reachable by scroll at 430p
   await expect(page.getByTestId('mobile-trends-detail')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('mobile-trends-summary')).toHaveCount(0);
   await expect(page.getByTestId('trends-compare-quick-filters')).toBeVisible();
+  await expect(page.getByTestId('trends-quick-metric-mood_avg')).toHaveCount(0);
+  await expect(page.getByTestId('trends-quick-metric-energy_avg')).toHaveCount(0);
+  await expect(page.getByTestId('trends-quick-metric-stress_avg')).toHaveCount(0);
+  await expect(page.getByTestId('trends-quick-metric-sleep_quality_avg')).toHaveCount(0);
   await page.getByTestId('trends-compare-customize').click();
   await expect(page.getByTestId('trends-compare-settings-sheet')).toBeVisible();
   await expect(page.getByTestId('trends-compare-filters')).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Mood' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Energy' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Stress' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Sleep quality' })).toBeVisible();
   await page.getByTestId('trends-compare-settings-close').click();
   await page.getByTestId('trends-compare-panel').scrollIntoViewIfNeeded();
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible();

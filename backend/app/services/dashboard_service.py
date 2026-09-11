@@ -8,7 +8,7 @@ from datetime import date as date_type
 from math import log1p
 from typing import Literal
 
-from sqlalchemy import Integer, case, cast, func, select
+from sqlalchemy import Integer, case, cast, distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry, EntrySlot, WorkContext
@@ -323,11 +323,11 @@ async def _work_context_trends(
     result = await db.execute(
         select(
             Entry.work_context,
-            func.count(func.distinct(case((in_current, Entry.entry_date)))),
+            func.count(distinct(case((in_current, Entry.entry_date)))),
             func.avg(case((in_current, Entry.mood_score))),
             func.avg(case((in_current, Entry.energy))),
             func.avg(case((in_current, Entry.stress))),
-            func.count(func.distinct(case((in_previous, Entry.entry_date)))),
+            func.count(distinct(case((in_previous, Entry.entry_date)))),
             func.avg(case((in_previous, Entry.mood_score))),
             func.avg(case((in_previous, Entry.energy))),
             func.avg(case((in_previous, Entry.stress))),

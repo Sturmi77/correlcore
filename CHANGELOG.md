@@ -8,6 +8,32 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.1] — 2026-09-11
+
+Bugfix-Patch nach v1.9.0 (Home-Reihenfolge, Trendglyphen, Trends-Chips, E2E).
+
+### Fixed
+
+- **Home: „Auf einen Blick" behält die gewählte Reihenfolge** — Ein PATCH, der
+  `trends_summary` nicht in der gespeicherten Liste behielt, ließ Merge die
+  Sektion wieder ans Ende hängen. JSONB-Writes werden jetzt explizit markiert;
+  Settings behält die gesendete Reihenfolge auch dann, wenn die API-Antwort den
+  Key weglässt.
+- **Home: Trendindikatoren in Wochentags- und Arbeitskontext-Karten** — Die
+  Glyphen saßen neben dem Wert-Chip in zu schmalen Grid-Zellen und wurden
+  abgeschnitten. Sie liegen jetzt im Chip, skalieren auf `1em` und das
+  28-Tage-Fenster zählt Distinct-Tage über SQLAlchemy `distinct()`.
+- **E2E: Insights-Nightly** — Das einmal-täglich „Neue Insights“-Sheet blieb
+  über der Insights-Seite offen (`last_seen_insight_at: null`) und fing den
+  90D-Tap ab. Der Insights-API-Mock setzt den High-Water-Mark jetzt, damit
+  das Modal in den Mobile-Specs nicht auto-öffnet.
+
+### Changed
+
+- **Trends: Metrik-Chips zum Abwählen entfernt** — Stimmung, Energie, Stress
+  und Schlafqualität lassen sich weiter über die Compare-Filter-Checkboxen
+  ein- und ausblenden; die kompakten Header-Chips entfallen.
+
 ## [1.9.0] — 2026-09-11
 
 Feature-Release: Home-Screen-Ausbau — „Auf einen Blick"-Trendzusammenfassung als

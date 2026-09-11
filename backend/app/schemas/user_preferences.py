@@ -14,6 +14,7 @@ HomeSectionKey = Literal[
     "daily_brief",
     "work_context",
     "weekday_overview",
+    "trends_summary",
 ]
 
 # Documented allowed keys — validated in ``normalize_insight_sections`` (#821).

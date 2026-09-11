@@ -37,6 +37,7 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
     page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
   ).toBeVisible();
 
+  await expect(page.getByTestId('new-insights-modal')).toHaveCount(0);
   await page.getByRole('button', { name: '90D' }).tap();
   await expect(page.getByRole('button', { name: '90D' })).toHaveAttribute('aria-pressed', 'true');
   await expect(

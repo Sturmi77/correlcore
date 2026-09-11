@@ -47,9 +47,12 @@
       try {
         const toSend = sections;
         const saved = await updateUserPreferences({ home_sections: toSend });
-        confirmedSections = mergeHomeSections(saved.home_sections);
+        // Prefer the payload we just saved. If the API echoed a stored list that
+        // omitted `trends_summary`, merge would append it at the end and the
+        // row would jump back on Home/Settings.
+        confirmedSections = mergeHomeSections(toSend);
         if (!persistGate.isCurrent(seq)) return;
-        preferences = saved;
+        preferences = { ...saved, home_sections: confirmedSections };
         sections = confirmedSections;
       } catch (err) {
         if (!persistGate.isCurrent(seq)) return;

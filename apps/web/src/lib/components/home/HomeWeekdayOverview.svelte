@@ -232,17 +232,16 @@
     color: var(--color-text-muted);
   }
 
-  .weekday-overview__day-trend {
-    display: inline-flex;
-    width: 0.82em;
-    height: 0.82em;
-    flex: 0 0 auto;
-    color: var(--color-text-muted);
+  .weekday-overview__trend :global(.trend-direction-glyph) {
+    font-size: 0.95em;
   }
 
-  .weekday-overview__day-trend :global(svg) {
-    width: 0.82em;
-    height: 0.82em;
+  .weekday-overview__day-trend {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: var(--color-text-muted);
+    font-size: 0.95em;
+    line-height: 0;
   }
 
   .weekday-overview__chart {
@@ -255,10 +254,12 @@
     border: 1px solid var(--color-border-chart);
     background: var(--color-surface-chart-bg);
     border-radius: var(--radius-md);
+    overflow: visible;
   }
 
   .weekday-overview__cell {
     min-width: 0;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -277,6 +278,7 @@
     align-items: center;
     gap: 0.1em;
     white-space: nowrap;
+    overflow: visible;
   }
 
   .weekday-overview__finding {

@@ -452,9 +452,7 @@
           <svelte:fragment slot="compare-filters">
             {#if compactTrends}
               <TrendsCompareQuickFilters
-                {metrics}
                 {selectedCategory}
-                on:metricToggle={(event) => toggleMetric(event.detail.metric)}
                 on:categoryChange={(event) => {
                   selectedCategory = event.detail.category;
                   void loadTrends();
