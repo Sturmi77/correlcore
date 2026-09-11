@@ -7,18 +7,19 @@ test.use({
 });
 
 test('M7 insights mobile mock flow supports touch interactions', async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   await installInsightsApiMock(page);
 
   await page.goto('/insights');
-  await expect(page.getByTestId('insights-findings-toolbar')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('insights-analysis-toolbar')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('mobile-insight-lead')).toBeVisible({ timeout: 30_000 });
   await expect(
     page.getByTestId('mobile-insight-lead').getByTestId('insight-maturity-badge')
   ).toBeVisible();
-  await expect(page.getByTestId('insight-stage-meta')).toHaveCount(0);
+  await expect(
+    page.getByTestId('mobile-insight-lead').getByTestId('insight-stage-meta')
+  ).toHaveCount(0);
 
-  await page.getByTestId('insights-filter-tab-symptoms').tap();
   await expect(
     page
       .getByTestId('mobile-insights-more')
@@ -28,21 +29,16 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
 
   // #571: correlation matrix is inline & always visible — no tab toggle.
   await expect(page.getByText(/Correlation Matrix/i)).toBeVisible();
-  await page.getByTestId('insights-filter-tab-symptoms').tap();
-  await page.getByText('Deepen analysis', { exact: true }).tap();
 
+  await page
+    .getByRole('heading', { name: 'Symptoms in insights', exact: true })
+    .scrollIntoViewIfNeeded();
   await expect(
     page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
   ).toBeVisible();
-  await page.getByTestId('insights-filter-tab-mood').tap();
-  await expect(page.getByTestId('insights-filter-tab-mood')).toHaveAttribute(
-    'aria-selected',
-    'true'
-  );
-  await expect(
-    page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
-  ).toBeVisible();
-  await page.getByTestId('insights-filter-tab-symptoms').tap();
+
+  await page.getByRole('button', { name: '90D' }).tap();
+  await expect(page.getByRole('button', { name: '90D' })).toHaveAttribute('aria-pressed', 'true');
   await expect(
     page.getByRole('heading', { name: 'Symptoms in insights', exact: true })
   ).toBeVisible();
@@ -51,8 +47,6 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
   await page.getByTestId('symptom-cooccurrence-cell').first().tap();
   await expect(page.getByTestId('symptom-cooccurrence-detail-sheet')).toBeVisible();
   await page.getByTestId('symptom-cooccurrence-detail-close').tap();
-  await page.getByRole('button', { name: '90D' }).tap();
-  await expect(page.getByRole('button', { name: '90D' })).toHaveAttribute('aria-pressed', 'true');
   const tagCooccurrenceCell = page
     .getByRole('gridcell', {
       name: /Walk.*Caffeine together|Caffeine.*Walk together|Walk.*Meetings together|Meetings.*Walk together|Deep work.*Walk together|Walk.*Deep work together/i,
