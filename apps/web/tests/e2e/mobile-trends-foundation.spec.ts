@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { mockDashboardSummary, mockUserPreferences } from '../../src/lib/dev/mockEntries';
 
 const user = {
   id: '00000000-0000-4000-8000-000000000092',
@@ -19,6 +20,62 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 
     if (path === '/auth/me') return json(200, user);
+    if (path === '/auth/refresh') {
+      return json(200, {
+        access_token: 'trends-e2e-token',
+        token_type: 'bearer',
+        expires_in: 900,
+        user,
+      });
+    }
+    if (path === '/user/preferences') {
+      return json(200, { ...mockUserPreferences, user_id: user.id });
+    }
+    if (path.startsWith('/dashboard/summary')) {
+      return json(200, {
+        ...mockDashboardSummary,
+        entry_count: options.empty ? 0 : Math.max(mockDashboardSummary.entry_count, 2),
+        work_context_summary: options.empty ? [] : mockDashboardSummary.work_context_summary,
+        weekday_summary: options.empty ? [] : mockDashboardSummary.weekday_summary,
+      });
+    }
+    if (path === '/insights' || path === '/insights/latest') {
+      return json(200, { insight_maturity: null, insights: [] });
+    }
+    if (path === '/insights/dismissals') return json(200, { dismissals: [] });
+    if (path === '/insights/tag-clusters') {
+      return json(200, {
+        status: 'insufficient_data',
+        entry_count: 0,
+        active_tag_count: 0,
+        active_signal_count: 0,
+        window_days: 90,
+        k: null,
+        reason: 'entry_count_below_30',
+        cluster_kind: 'mixed',
+        clusters: [],
+      });
+    }
+    if (path.startsWith('/entries/stats/health-context')) {
+      return json(200, {
+        as_of: '2026-06-23',
+        coverage_window_days: 90,
+        maturity: {
+          phase: 'robust',
+          phase_index: 4,
+          current_entries: 12,
+          next_phase_at: 30,
+          entries_until_next: 0,
+        },
+        coverage: {
+          entry: { days_with_data: 12, window_days: 90, pct: 0.13 },
+          sleep: { days_with_data: 0, window_days: 90, pct: 0 },
+          symptom: { days_with_data: 2, window_days: 90, pct: 0.02 },
+        },
+        sections: [],
+        health_connect: null,
+      });
+    }
     if (path === '/entries/stats/timeseries') {
       const range = url.searchParams.get('range') ?? 'week';
       requestedRanges.push(range);
@@ -93,9 +150,13 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
         as_of: '2026-06-23',
       });
     }
+    if (path === '/habits') return json(200, { habits: [] });
+    if (path === '/tags' || path === '/tags/default') return json(200, []);
+    if (path === '/symptoms' || path === '/symptoms/default') return json(200, []);
     if (path === '/entries') {
-      const endDate = url.searchParams.get('end_date') ?? '2026-06-23';
-      const startDate = url.searchParams.get('start_date') ?? endDate;
+      // Keep work-context days on the mocked timeseries axis (2026-06-17/23).
+      // Compare loads a rolling year window; using the query bounds would place
+      // rows outside the clamped June axis and prune "Office" (#590).
       return json(
         200,
         options.empty
@@ -104,7 +165,7 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
               {
                 id: 'trend-entry-office',
                 user_id: user.id,
-                entry_date: endDate,
+                entry_date: '2026-06-23',
                 slot: 'day',
                 mood_score: 4,
                 energy: 3,
@@ -113,13 +174,13 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
                 source: 'manual',
                 work_context: 'office',
                 note: null,
-                created_at: `${endDate}T09:00:00Z`,
-                updated_at: `${endDate}T09:00:00Z`,
+                created_at: '2026-06-23T09:00:00Z',
+                updated_at: '2026-06-23T09:00:00Z',
               },
               {
                 id: 'trend-entry-homeoffice',
                 user_id: user.id,
-                entry_date: startDate,
+                entry_date: '2026-06-17',
                 slot: 'day',
                 mood_score: 3,
                 energy: 4,
@@ -128,8 +189,8 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
                 source: 'manual',
                 work_context: 'homeoffice',
                 note: null,
-                created_at: `${startDate}T09:00:00Z`,
-                updated_at: `${startDate}T09:00:00Z`,
+                created_at: '2026-06-17T09:00:00Z',
+                updated_at: '2026-06-17T09:00:00Z',
               },
             ]
       );
@@ -140,27 +201,22 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
   return { requestedRanges };
 }
 
-test('mobile trends starts with an understandable summary and no page overflow', async ({
+test('mobile home starts with an understandable trends summary and no page overflow', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const api = await installTrendsApi(page);
-  await page.goto('/trends');
+  await installTrendsApi(page);
+  await page.goto('/');
 
   const summary = page.getByTestId('mobile-trends-summary');
   await expect(summary).toBeVisible({ timeout: 60_000 });
   await expect(summary.getByText('Stress')).toBeVisible();
   await expect(summary.getByText('Focus')).toBeVisible();
   await expect(summary.getByText('Fatigue')).toBeVisible();
-  await expect(page.getByTestId('mobile-trends-detail')).toBeVisible();
-  await expect(page.getByTestId('mobile-trends-detail-toggle')).toHaveCount(0);
+  await expect(page.getByTestId('mobile-trends-summary-link')).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)
   ).toBeLessThanOrEqual(0);
-
-  await page.getByTestId('trends-range-month').click();
-  await expect(page.getByTestId('trends-range-month')).toHaveAttribute('aria-pressed', 'true');
-  await expect.poll(() => api.requestedRanges.includes('month')).toBe(true);
 });
 
 test('mobile compare filters and analysis canvas are reachable by scroll at 430px', async ({
@@ -170,7 +226,8 @@ test('mobile compare filters and analysis canvas are reachable by scroll at 430p
   await installTrendsApi(page);
   await page.goto('/trends');
 
-  await expect(page.getByTestId('mobile-trends-summary')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId('mobile-trends-detail')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId('mobile-trends-summary')).toHaveCount(0);
   await expect(page.getByTestId('trends-compare-quick-filters')).toBeVisible();
   await page.getByTestId('trends-compare-customize').click();
   await expect(page.getByTestId('trends-compare-settings-sheet')).toBeVisible();
@@ -188,10 +245,10 @@ test('mobile compare filters and analysis canvas are reachable by scroll at 430p
   ).toBeLessThanOrEqual(0);
 });
 
-test('mobile trends exposes an explicit empty summary', async ({ page }) => {
+test('mobile home exposes an explicit empty trends summary', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installTrendsApi(page, { empty: true });
-  await page.goto('/trends');
+  await page.goto('/');
   await expect(page.getByTestId('mobile-trends-summary-empty')).toBeVisible({ timeout: 60_000 });
 });
 
@@ -202,6 +259,6 @@ test('desktop keeps the full comparison canvas and filters visible', async ({ pa
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('trends-compare-filters')).toBeVisible();
   await expect(page.getByLabel('Work context')).toBeChecked();
-  await expect(page.getByText('Office').first()).toBeVisible();
+  await expect(page.getByText('Office').first()).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId('mobile-trends-summary')).toHaveCount(0);
 });

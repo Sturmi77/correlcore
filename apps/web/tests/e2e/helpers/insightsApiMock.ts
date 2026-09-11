@@ -87,6 +87,9 @@ export async function installInsightsApiMock(
       });
     }
     if (path === '/user/preferences' && method === 'GET') return json(route, 200, preferences);
+    if (path === '/insights/dismissals' && method === 'GET') {
+      return json(route, 200, { dismissals: [] });
+    }
     if (path === '/entries' && method === 'GET') return json(route, 200, mockEntries);
     if ((path === '/tags' || path === '/tags/default') && method === 'GET') {
       return json(route, 200, []);

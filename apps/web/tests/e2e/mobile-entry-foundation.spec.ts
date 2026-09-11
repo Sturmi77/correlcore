@@ -235,7 +235,7 @@ for (const viewport of [
     });
 
     const tag = page.getByRole('button', { name: 'Focus' });
-    const symptom = page.getByRole('button', { name: 'Mild' });
+    const symptom = page.getByRole('button', { name: /Headache/ });
     await expect(page.locator('#entry-section-tags')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('#entry-section-symptoms')).toBeVisible();
     await expect(tag).toBeVisible();
