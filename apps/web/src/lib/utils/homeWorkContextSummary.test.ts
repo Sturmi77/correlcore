@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import type { MetricTrend, WorkContextSummaryItem } from '$lib/api/dashboard';
 import {
   buildWorkContextHeatmapRows,
   nextWorkContextSort,
   sortWorkContextHeatmapRows,
+  workContextHasTrendData,
+  workContextHasVisibleTrend,
   WORK_CONTEXT_METRICS,
   WORK_CONTEXT_RELATIVE_MIN_SPAN,
   workContextColumnRange,
@@ -10,6 +13,48 @@ import {
   workContextMetricAvg,
   workContextMetricGoodness,
 } from './homeWorkContextSummary';
+
+const trend = (direction: MetricTrend['direction']): MetricTrend => ({
+  // A live `unknown` still carries the current-window mean; only the comparison
+  // is withheld. current_avg is kept so the row is not dropped by the builder.
+  current_avg: 4,
+  previous_avg: direction === 'unknown' ? null : 3,
+  current_n: 8,
+  previous_n: direction === 'unknown' ? 1 : 8,
+  delta: direction === 'unknown' ? null : 1,
+  direction,
+});
+
+const item = (overrides: Partial<WorkContextSummaryItem> = {}): WorkContextSummaryItem => ({
+  work_context: 'office',
+  entry_count: 8,
+  mood_avg: 3.5,
+  energy_avg: 3.5,
+  stress_avg: 2.5,
+  ...overrides,
+});
+
+describe('homeWorkContextSummary trend detection', () => {
+  it('reports trend data present only when a MetricTrend object is attached', () => {
+    expect(workContextHasTrendData([item()])).toBe(false);
+    expect(workContextHasTrendData([item({ mood_trend: trend('unknown') })])).toBe(true);
+    expect(workContextHasTrendData([item({ stress_trend: trend('down') })])).toBe(true);
+  });
+
+  it('reports a visible trend only when a built cell resolves to a glyph', () => {
+    const allUnknown = buildWorkContextHeatmapRows([
+      item({
+        mood_trend: trend('unknown'),
+        energy_trend: trend('unknown'),
+        stress_trend: trend('unknown'),
+      }),
+    ]);
+    expect(workContextHasVisibleTrend(allUnknown)).toBe(false);
+
+    const oneVisible = buildWorkContextHeatmapRows([item({ mood_trend: trend('up') })]);
+    expect(workContextHasVisibleTrend(oneVisible)).toBe(true);
+  });
+});
 
 describe('homeWorkContextSummary', () => {
   const items = [
@@ -163,7 +208,7 @@ describe('homeWorkContextSummary', () => {
     expect(energy.trendDirection).toBeNull();
   });
 
-  it('does not show all-time as a 28-day average when the window is empty', () => {
+  it('falls back to the all-time average (no arrow) when the window is empty', () => {
     const rows = buildWorkContextHeatmapRows([
       {
         work_context: 'office',
@@ -182,8 +227,36 @@ describe('homeWorkContextSummary', () => {
       },
     ]);
     const mood = rows[0].cells.find((cell) => cell.metric === 'mood')!;
-    expect(mood.avg).toBeNull();
+    // The current window is empty, so the value falls back to the all-time
+    // average and no arrow is drawn (direction stays unknown).
+    expect(mood.avg).toBe(2.0);
     expect(mood.trendDirection).toBeNull();
+  });
+
+  it('keeps a situation with no recent entries instead of dropping its row', () => {
+    const emptyWindow = {
+      current_avg: null,
+      previous_avg: null,
+      current_n: 0,
+      previous_n: 0,
+      delta: null,
+      direction: 'unknown' as const,
+    };
+    const rows = buildWorkContextHeatmapRows([
+      {
+        work_context: 'vacation',
+        entry_count: 12,
+        mood_avg: 4.5,
+        energy_avg: 4.2,
+        stress_avg: 1.5,
+        mood_trend: emptyWindow,
+        energy_trend: emptyWindow,
+        stress_trend: emptyWindow,
+      },
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].cells.map((cell) => cell.avg)).toEqual([4.5, 4.2, 1.5]);
+    expect(rows[0].cells.every((cell) => cell.trendDirection === null)).toBe(true);
   });
 
   describe('nextWorkContextSort', () => {

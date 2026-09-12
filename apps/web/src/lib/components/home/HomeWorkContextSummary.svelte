@@ -5,6 +5,8 @@
     buildWorkContextHeatmapRows,
     nextWorkContextSort,
     sortWorkContextHeatmapRows,
+    workContextHasTrendData,
+    workContextHasVisibleTrend,
     WORK_CONTEXT_METRICS,
     type WorkContextMetricKey,
     type WorkContextSort,
@@ -92,6 +94,14 @@
     sort,
     (workContext) => $_(`entry.work_context.${workContext}`)
   );
+
+  // The backend computed trends but every window is still `unknown` (too little
+  // history in one of the two periods). Say so, so a missing arrow doesn't read
+  // as a broken feature. Silent on legacy payloads that omit trend fields.
+  $: trendPending =
+    rows.length > 0 &&
+    workContextHasTrendData(workContextSummary) &&
+    !workContextHasVisibleTrend(rows);
 </script>
 
 {#if rows.length || loading}
@@ -202,6 +212,11 @@
       <span>{$_('home.brief.work_context_legend_high')}</span>
     </div>
     <p class="work-context-summary__note">{$_('home.brief.work_context_stress_note')}</p>
+    {#if trendPending}
+      <p class="work-context-summary__note" data-testid="home-work-context-trend-pending">
+        {$_('home.brief.work_context_trend_pending', { values: { n: trendWindowDays } })}
+      </p>
+    {/if}
   </section>
 {/if}
 

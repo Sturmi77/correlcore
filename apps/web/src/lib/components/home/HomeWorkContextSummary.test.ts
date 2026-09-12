@@ -196,5 +196,43 @@ describe('HomeWorkContextSummary', () => {
     expect(moodCell?.textContent).toContain('4.0');
     expect(moodCell?.querySelector('.work-context-summary__trend')).toBeTruthy();
     expect((moodCell as HTMLElement).style.minHeight === '' || true).toBe(true);
+    expect(screen.queryByTestId('home-work-context-trend-pending')).toBeNull();
+  });
+
+  it('explains suppressed trends when every metric window is still unknown', () => {
+    // Realistic "not enough history" shape: the current window is populated
+    // (so the value still shows) but the previous window is too thin to compare.
+    const unknownTrend = {
+      current_avg: 3.75,
+      previous_avg: null,
+      current_n: 8,
+      previous_n: 1,
+      delta: null,
+      direction: 'unknown' as const,
+    };
+    render(HomeWorkContextSummary, {
+      props: {
+        workContextSummary: [
+          {
+            work_context: 'office',
+            entry_count: 8,
+            mood_avg: 3.75,
+            energy_avg: 3.4,
+            stress_avg: 2.8,
+            mood_trend: unknownTrend,
+            energy_trend: unknownTrend,
+            stress_trend: unknownTrend,
+          },
+        ],
+      },
+    });
+
+    expect(document.querySelector('.work-context-summary__trend')).toBeNull();
+    expect(screen.getByTestId('home-work-context-trend-pending')).toBeTruthy();
+  });
+
+  it('stays silent about pending trends on legacy payloads without trend objects', () => {
+    render(HomeWorkContextSummary, { props: { workContextSummary: summary } });
+    expect(screen.queryByTestId('home-work-context-trend-pending')).toBeNull();
   });
 });

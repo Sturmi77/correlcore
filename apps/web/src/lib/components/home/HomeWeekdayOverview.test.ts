@@ -243,4 +243,50 @@ describe('HomeWeekdayOverview', () => {
     expect(screen.getByText('home.weekday_pattern.early_signal')).toBeTruthy();
     expect(screen.queryByTestId('home-weekday-trend-badge')).toBeNull();
   });
+
+  const plainSummary = [
+    { weekday: 0, entry_count: 10, mood_avg: 3.1 },
+    { weekday: 1, entry_count: 9, mood_avg: 3.0 },
+    { weekday: 2, entry_count: 10, mood_avg: 3.2 },
+    { weekday: 3, entry_count: 9, mood_avg: 3.1 },
+    { weekday: 4, entry_count: 10, mood_avg: 3.0 },
+    { weekday: 5, entry_count: 9, mood_avg: 3.3 },
+    { weekday: 6, entry_count: 10, mood_avg: 3.0 },
+  ];
+
+  it('explains a suppressed trend when the aggregate is unknown and no caret shows', () => {
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight: null,
+        insights: [],
+        weekdaySummary: plainSummary,
+        weekdayMoodTrend: { ...moodTrend, direction: 'unknown', delta: null, current_avg: null },
+      },
+    });
+    expect(screen.getByTestId('home-weekday-trend-pending')).toBeTruthy();
+  });
+
+  it('hides the trend-pending hint once a trend is visible', () => {
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight: null,
+        insights: [],
+        weekdaySummary: summaryWithDayTrend,
+        weekdayMoodTrend: moodTrend,
+      },
+    });
+    expect(screen.queryByTestId('home-weekday-trend-pending')).toBeNull();
+  });
+
+  it('stays silent about pending trends on legacy payloads without a trend object', () => {
+    render(HomeWeekdayOverview, {
+      props: {
+        weekdayInsight: null,
+        insights: [],
+        weekdaySummary: plainSummary,
+        weekdayMoodTrend: null,
+      },
+    });
+    expect(screen.queryByTestId('home-weekday-trend-pending')).toBeNull();
+  });
 });

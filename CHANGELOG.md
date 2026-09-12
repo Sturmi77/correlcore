@@ -8,6 +8,30 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Home: Trendindikatoren wirkten „verschwunden", wenn noch kein Trend
+  berechenbar war** — Backend und Frontend berechnen und rendern die
+  28-Tage-Trendpfeile korrekt; sie erscheinen aber bewusst nur, wenn **beide**
+  Vergleichsfenster genug Einträge haben (`TREND_MIN_N`). Fehlt in der Vorperiode
+  noch Verlauf (typisch für neue Konten oder lückenhaftes Logging), blieb der
+  Pfeil kommentarlos aus und las sich wie ein Defekt. Wochentags- und
+  Arbeitskontext-Karte zeigen jetzt einen dezenten, barrierefreien Hinweis
+  („Trendpfeil erscheint, sobald genug Verlauf in beiden {n}-Tage-Zeiträumen
+  vorliegt"), sobald ein Trend berechnet wurde, aber alle Fenster noch `unknown`
+  sind. Die statistische Auslegung (Schwellen, `unknown`-Gating) bleibt
+  unverändert; Legacy-Antworten ohne Trend-Felder bleiben stumm. i18n (de/en)
+  und Komponenten-/Util-Tests ergänzt.
+- **Home: Arbeitssituations-Map verlor Zeilen ohne Aktivität der letzten 28
+  Tage** — Mit dem Trend-Feature (1.9.0) wurde der Anzeigewert auf den
+  28-Tage-Fenster-Mittelwert umgestellt; Situationen ohne Einträge in den
+  letzten 28 Tagen fielen dadurch komplett aus der Karte (z. B. 6 → 4 Zeilen).
+  Fehlt der Fensterwert, fällt die Karte jetzt auf den Gesamt-Durchschnitt
+  zurück (ohne Trendpfeil — bei leerem Fenster ist die Richtung immer `unknown`,
+  Zahl und Pfeil widersprechen sich also nie), sodass alle Arbeitssituationen
+  wieder sichtbar sind. Die Überschrift benennt die gemischte Herkunft nun
+  korrekt („letzte {n} Tage, sonst gesamt"). Wochentags-Verhalten unverändert.
+
 ## [1.9.1] — 2026-09-11
 
 Bugfix-Patch nach v1.9.0 (Home-Reihenfolge, Trendglyphen, Trends-Chips, E2E).

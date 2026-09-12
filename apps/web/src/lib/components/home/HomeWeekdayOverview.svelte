@@ -37,6 +37,14 @@
   $: minMood = knownMood.length ? Math.min(...knownMood) : null;
   $: showOverview = hasWeekdayOverviewContent(cells);
   $: headerTrendDirection = visibleTrendDirection(weekdayMoodTrend);
+  // Trend was computed but both windows are still `unknown` (too little history)
+  // and no per-day caret is showing either — explain the missing arrow so it
+  // doesn't read as broken. Silent on legacy payloads without a trend object.
+  $: showTrendPendingHint =
+    showOverview &&
+    weekdayMoodTrend != null &&
+    headerTrendDirection === null &&
+    !(showDayTrends && cells.some((cell) => cell.moodTrendDirection));
 
   function trendAriaKey(direction: 'up' | 'down' | 'flat'): string {
     return `home.weekday_overview.trend_aria_${direction}`;
@@ -166,6 +174,11 @@
       </p>
     {/if}
     <p class="weekday-overview__hint">{$_('home.weekday_overview.hint')}</p>
+    {#if showTrendPendingHint}
+      <p class="weekday-overview__hint" data-testid="home-weekday-trend-pending">
+        {$_('home.weekday_overview.trend_pending', { values: { n: trendWindowDays } })}
+      </p>
+    {/if}
   </section>
 {:else if !loading}
   <section

@@ -68,7 +68,7 @@
       "top_symptom": "Notable symptom",
       "work_context_heading": "Work context pattern",
       "work_context_hint": "Average per situation · colour relative to rows shown",
-      "work_context_hint_window": "Average last {n} days per situation · colour relative to rows shown",
+      "work_context_hint_window": "Avg per situation · last {n} days, else all-time · colour relative to rows shown",
       "metric_mood": "Mood",
       "metric_energy": "Energy",
       "metric_stress": "Stress",
@@ -77,6 +77,7 @@
       "work_context_trend_up": ", last {n} days higher than the {n} days before",
       "work_context_trend_down": ", last {n} days lower than the {n} days before",
       "work_context_trend_flat": ", last {n} days about the same as the {n} days before",
+      "work_context_trend_pending": "Trend arrows appear once there is enough history across both {n}-day windows.",
       "work_context_legend_low": "lower",
       "work_context_legend_high": "better",
       "work_context_stress_note": "Stronger shading = better within the situations shown (stress inverted; colour scaled per column).",
@@ -144,7 +145,8 @@
       "trend_short": "{n}d",
       "trend_aria_up": "Average mood over the last {n} days is higher than in the {n} days before",
       "trend_aria_down": "Average mood over the last {n} days is lower than in the {n} days before",
-      "trend_aria_flat": "Average mood over the last {n} days is about the same as in the {n} days before"
+      "trend_aria_flat": "Average mood over the last {n} days is about the same as in the {n} days before",
+      "trend_pending": "Trend arrow appears once there is enough history across both {n}-day windows."
     },
     "weekday": {
       "mon": "Mon",
