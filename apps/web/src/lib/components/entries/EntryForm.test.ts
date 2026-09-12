@@ -231,6 +231,39 @@ describe('EntryForm smart defaults', () => {
       })
     );
   });
+
+  it('persists sleep quality at its default without a manual change (no longer optional)', async () => {
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+
+    render(EntryForm, { props: { initialDate: '2026-06-02' } });
+    await flushAsync();
+
+    // Sleep quality renders as a regular scale slider carrying the neutral
+    // default, not behind an "add rating" affordance.
+    const sleepSlider = screen.getByLabelText('entry.sleep_quality.label');
+    expect(sleepSlider.getAttribute('aria-valuenow')).toBe('3');
+
+    // Editing an unrelated field (never the sleep slider) still persists the
+    // untouched sleep-quality value instead of leaving it null.
+    await fireEvent.click(screen.getByLabelText('entry.mood_increment'));
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(submitEntry).toHaveBeenCalledTimes(1);
+    expect(submitEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entry_date: '2026-06-02',
+        slot: 'day',
+        sleep_quality: 3,
+      })
+    );
+  });
 });
 
 describe.skip('EntryForm slot changes (#630: re-enable with SHOW_ENTRY_TIME_SLOTS)', () => {

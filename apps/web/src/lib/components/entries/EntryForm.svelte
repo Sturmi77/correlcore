@@ -23,7 +23,6 @@
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import ScaleSlider from '$lib/components/entries/ScaleSlider.svelte';
-  import OptionalScaleSlider from '$lib/components/entries/OptionalScaleSlider.svelte';
   import TagPicker from '$lib/components/entries/TagPicker.svelte';
   import OnboardingTagSuggestions from '$lib/components/entries/OnboardingTagSuggestions.svelte';
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
@@ -111,9 +110,12 @@
   let cycleDay: number | null = null;
   let cycleBleedingLevel: BleedingLevel | null = null;
   const bleedingLevelOptions: BleedingLevel[] = ['none', 'spotting', 'light', 'medium', 'heavy'];
-  // M8 Sprint 1 (#172): optional manual sleep. sleepMinutes 0..1440, sleepQuality 1..5.
+  // M8 Sprint 1 (#172): manual sleep. sleepMinutes 0..1440 stays optional.
+  // sleepQuality is a core 1..5 scale like mood/energy/stress: it always
+  // carries a value (neutral default) and is persisted even when the user
+  // never touches the slider, so an entry always records a sleep rating.
   let sleepMinutes: number | null = null;
-  let sleepQuality: number | null = null;
+  let sleepQuality: number = NEUTRAL_SCALE_DEFAULT;
   let sleepMinutesInvalid = false;
   let workContext: WorkContext = defaultWorkContextForDate(
     new Date(initialDate + 'T00:00:00'),
@@ -219,7 +221,7 @@
     cycleBleedingLevel = null;
     cycleDayInvalid = false;
     sleepMinutes = null;
-    sleepQuality = null;
+    sleepQuality = NEUTRAL_SCALE_DEFAULT;
     sleepMinutesInvalid = false;
     note = '';
     noteVisibility = 'full';
@@ -322,7 +324,7 @@
           cycleBleedingLevel = fields.cycleBleedingLevel;
           cycleDayInvalid = false;
           sleepMinutes = fields.sleepMinutes;
-          sleepQuality = fields.sleepQuality;
+          sleepQuality = fields.sleepQuality ?? NEUTRAL_SCALE_DEFAULT;
           sleepMinutesInvalid = false;
           workContext = fields.workContext;
           workContextTouched = true;
@@ -346,7 +348,7 @@
           cycleBleedingLevel = matchingEntry.cycle_bleeding_level ?? null;
           cycleDayInvalid = false;
           sleepMinutes = matchingEntry.sleep_minutes ?? null;
-          sleepQuality = matchingEntry.sleep_quality ?? null;
+          sleepQuality = matchingEntry.sleep_quality ?? NEUTRAL_SCALE_DEFAULT;
           sleepMinutesInvalid = false;
           workContext = matchingEntry.work_context;
           workContextTouched = true;
@@ -399,7 +401,7 @@
           cycleBleedingLevel = fields.cycleBleedingLevel;
           cycleDayInvalid = false;
           sleepMinutes = fields.sleepMinutes;
-          sleepQuality = fields.sleepQuality;
+          sleepQuality = fields.sleepQuality ?? NEUTRAL_SCALE_DEFAULT;
           sleepMinutesInvalid = false;
           workContext = fields.workContext;
           workContextTouched = true;
@@ -444,7 +446,7 @@
       cycleBleedingLevel = matchingEntry.cycle_bleeding_level ?? null;
       cycleDayInvalid = false;
       sleepMinutes = matchingEntry.sleep_minutes ?? null;
-      sleepQuality = matchingEntry.sleep_quality ?? null;
+      sleepQuality = matchingEntry.sleep_quality ?? NEUTRAL_SCALE_DEFAULT;
       sleepMinutesInvalid = false;
       workContext = matchingEntry.work_context;
       // Mark touched so the date-change reactive block doesn't reset it
@@ -503,7 +505,7 @@
           cycleBleedingLevel = fields.cycleBleedingLevel;
           cycleDayInvalid = false;
           sleepMinutes = fields.sleepMinutes;
-          sleepQuality = fields.sleepQuality;
+          sleepQuality = fields.sleepQuality ?? NEUTRAL_SCALE_DEFAULT;
           sleepMinutesInvalid = false;
           workContext = fields.workContext;
           workContextTouched = true;
@@ -744,7 +746,7 @@
       cycle_day: cycleDay ?? null,
       cycle_bleeding_level: cycleBleedingLevel,
       sleep_minutes: sleepMinutes ?? null,
-      sleep_quality: sleepQuality ?? null,
+      sleep_quality: sleepQuality,
       work_context: workContext,
       note: note.trim(),
       note_visibility: noteVisibility,
@@ -1443,22 +1445,17 @@
     </h2>
     <div class="entry-section__stack">
       <!--
-        Sleep quality (1–5, same mask as mood/energy/stress, #653 B6/#673:
-        expanded up front, clearable to null so "not recorded" stays distinct
-        from a low rating) now lives next to sleep *duration* so the whole
-        "sleep" topic sits in one section instead of being split across the form.
+        Sleep quality (1–5, same mask as mood/energy/stress) is a core rating:
+        it always carries a value and is persisted even without a manual change,
+        so it is no longer optional and no longer clearable to null. It lives
+        next to sleep *duration* so the whole "sleep" topic sits in one section.
       -->
-      <OptionalScaleSlider
+      <ScaleSlider
         id="entry-sleep-quality"
         label={$_('entry.sleep_quality.label')}
-        addLabel={$_('entry.sleep_quality.add')}
-        clearLabel={$_('entry.sleep_quality.clear')}
         decrementLabel={$_('entry.sleep_quality.decrement')}
         incrementLabel={$_('entry.sleep_quality.increment')}
-        unsetHint={$_('entry.sleep_quality.unset_hint')}
-        expandedByDefault
         scaleType="sleep"
-        testId="entry-sleep-quality"
         bind:value={sleepQuality}
       />
       <div class="entry-sleep-duration">
