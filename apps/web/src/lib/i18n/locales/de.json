@@ -68,7 +68,7 @@
       "top_symptom": "Auffaelliges Symptom",
       "work_context_heading": "Arbeitssituation-Muster",
       "work_context_hint": "Durchschnitt pro Situation · Farbe relativ zu den gezeigten Zeilen",
-      "work_context_hint_window": "Durchschnitt der letzten {n} Tage pro Situation · Farbe relativ zu den gezeigten Zeilen",
+      "work_context_hint_window": "Ø pro Situation · letzte {n} Tage, sonst gesamt · Farbe relativ zu den gezeigten Zeilen",
       "metric_mood": "Stimmung",
       "metric_energy": "Energie",
       "metric_stress": "Stress",

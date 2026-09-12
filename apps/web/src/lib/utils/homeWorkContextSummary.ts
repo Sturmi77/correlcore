@@ -1,10 +1,6 @@
 import type { MetricTrend, WorkContextSummaryItem } from '$lib/api/dashboard';
 import { heatmapLevel } from '$lib/utils/charts';
-import {
-  displayMetricAvg,
-  visibleTrendDirection,
-  type VisibleTrendDirection,
-} from '$lib/utils/metricTrend';
+import { visibleTrendDirection, type VisibleTrendDirection } from '$lib/utils/metricTrend';
 import { displayMetricValue } from '$lib/utils/metrics';
 
 /** Metrics shown per work context, in column order. */
@@ -37,17 +33,31 @@ export interface GoodnessRange {
   max: number;
 }
 
-/** Raw average for a metric, or null when unavailable. Prefers the window mean. */
+/**
+ * Raw average for a metric, or null when unavailable.
+ *
+ * Prefers the 28-day window mean, but falls back to the all-time average when
+ * the current window is empty, so a work situation with no recent entries still
+ * shows a row instead of vanishing from the card (issue: "only 4 rows"). No
+ * trend arrow is drawn in that fallback case — the backend reports `unknown`
+ * whenever `current_avg` is null — so the number and the arrow never disagree.
+ */
 export function workContextMetricAvg(
   item: WorkContextSummaryItem,
   metric: WorkContextMetricKey
 ): number | null {
-  const allTime = item[METRIC_FIELD[metric]];
+  const rawAllTime = item[METRIC_FIELD[metric]];
+  const allTime = typeof rawAllTime === 'number' && Number.isFinite(rawAllTime) ? rawAllTime : null;
   const trend = item[METRIC_TREND_FIELD[metric]];
-  return displayMetricAvg(
-    typeof allTime === 'number' ? allTime : null,
-    trend && typeof trend === 'object' && 'direction' in trend ? (trend as MetricTrend) : null
-  );
+  const windowMean =
+    trend &&
+    typeof trend === 'object' &&
+    'direction' in trend &&
+    typeof (trend as MetricTrend).current_avg === 'number' &&
+    Number.isFinite((trend as MetricTrend).current_avg)
+      ? ((trend as MetricTrend).current_avg as number)
+      : null;
+  return windowMean ?? allTime;
 }
 
 export function workContextMetricTrend(

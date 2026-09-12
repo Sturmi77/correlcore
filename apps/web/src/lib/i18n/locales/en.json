@@ -68,7 +68,7 @@
       "top_symptom": "Notable symptom",
       "work_context_heading": "Work context pattern",
       "work_context_hint": "Average per situation · colour relative to rows shown",
-      "work_context_hint_window": "Average last {n} days per situation · colour relative to rows shown",
+      "work_context_hint_window": "Avg per situation · last {n} days, else all-time · colour relative to rows shown",
       "metric_mood": "Mood",
       "metric_energy": "Energy",
       "metric_stress": "Stress",

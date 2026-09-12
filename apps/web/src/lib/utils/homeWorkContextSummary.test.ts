@@ -208,7 +208,7 @@ describe('homeWorkContextSummary', () => {
     expect(energy.trendDirection).toBeNull();
   });
 
-  it('does not show all-time as a 28-day average when the window is empty', () => {
+  it('falls back to the all-time average (no arrow) when the window is empty', () => {
     const rows = buildWorkContextHeatmapRows([
       {
         work_context: 'office',
@@ -227,8 +227,36 @@ describe('homeWorkContextSummary', () => {
       },
     ]);
     const mood = rows[0].cells.find((cell) => cell.metric === 'mood')!;
-    expect(mood.avg).toBeNull();
+    // The current window is empty, so the value falls back to the all-time
+    // average and no arrow is drawn (direction stays unknown).
+    expect(mood.avg).toBe(2.0);
     expect(mood.trendDirection).toBeNull();
+  });
+
+  it('keeps a situation with no recent entries instead of dropping its row', () => {
+    const emptyWindow = {
+      current_avg: null,
+      previous_avg: null,
+      current_n: 0,
+      previous_n: 0,
+      delta: null,
+      direction: 'unknown' as const,
+    };
+    const rows = buildWorkContextHeatmapRows([
+      {
+        work_context: 'vacation',
+        entry_count: 12,
+        mood_avg: 4.5,
+        energy_avg: 4.2,
+        stress_avg: 1.5,
+        mood_trend: emptyWindow,
+        energy_trend: emptyWindow,
+        stress_trend: emptyWindow,
+      },
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].cells.map((cell) => cell.avg)).toEqual([4.5, 4.2, 1.5]);
+    expect(rows[0].cells.every((cell) => cell.trendDirection === null)).toBe(true);
   });
 
   describe('nextWorkContextSort', () => {
