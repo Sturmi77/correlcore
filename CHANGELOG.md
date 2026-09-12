@@ -8,6 +8,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Home: Trendindikatoren wirkten „verschwunden", wenn noch kein Trend
+  berechenbar war** — Backend und Frontend berechnen und rendern die
+  28-Tage-Trendpfeile korrekt; sie erscheinen aber bewusst nur, wenn **beide**
+  Vergleichsfenster genug Einträge haben (`TREND_MIN_N`). Fehlt in der Vorperiode
+  noch Verlauf (typisch für neue Konten oder lückenhaftes Logging), blieb der
+  Pfeil kommentarlos aus und las sich wie ein Defekt. Wochentags- und
+  Arbeitskontext-Karte zeigen jetzt einen dezenten, barrierefreien Hinweis
+  („Trendpfeil erscheint, sobald genug Verlauf in beiden {n}-Tage-Zeiträumen
+  vorliegt"), sobald ein Trend berechnet wurde, aber alle Fenster noch `unknown`
+  sind. Die statistische Auslegung (Schwellen, `unknown`-Gating) bleibt
+  unverändert; Legacy-Antworten ohne Trend-Felder bleiben stumm. i18n (de/en)
+  und Komponenten-/Util-Tests ergänzt.
+
 ## [1.9.1] — 2026-09-11
 
 Bugfix-Patch nach v1.9.0 (Home-Reihenfolge, Trendglyphen, Trends-Chips, E2E).

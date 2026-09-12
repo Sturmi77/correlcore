@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import type { MetricTrend, WorkContextSummaryItem } from '$lib/api/dashboard';
 import {
   buildWorkContextHeatmapRows,
   nextWorkContextSort,
   sortWorkContextHeatmapRows,
+  workContextHasTrendData,
+  workContextHasVisibleTrend,
   WORK_CONTEXT_METRICS,
   WORK_CONTEXT_RELATIVE_MIN_SPAN,
   workContextColumnRange,
@@ -10,6 +13,48 @@ import {
   workContextMetricAvg,
   workContextMetricGoodness,
 } from './homeWorkContextSummary';
+
+const trend = (direction: MetricTrend['direction']): MetricTrend => ({
+  // A live `unknown` still carries the current-window mean; only the comparison
+  // is withheld. current_avg is kept so the row is not dropped by the builder.
+  current_avg: 4,
+  previous_avg: direction === 'unknown' ? null : 3,
+  current_n: 8,
+  previous_n: direction === 'unknown' ? 1 : 8,
+  delta: direction === 'unknown' ? null : 1,
+  direction,
+});
+
+const item = (overrides: Partial<WorkContextSummaryItem> = {}): WorkContextSummaryItem => ({
+  work_context: 'office',
+  entry_count: 8,
+  mood_avg: 3.5,
+  energy_avg: 3.5,
+  stress_avg: 2.5,
+  ...overrides,
+});
+
+describe('homeWorkContextSummary trend detection', () => {
+  it('reports trend data present only when a MetricTrend object is attached', () => {
+    expect(workContextHasTrendData([item()])).toBe(false);
+    expect(workContextHasTrendData([item({ mood_trend: trend('unknown') })])).toBe(true);
+    expect(workContextHasTrendData([item({ stress_trend: trend('down') })])).toBe(true);
+  });
+
+  it('reports a visible trend only when a built cell resolves to a glyph', () => {
+    const allUnknown = buildWorkContextHeatmapRows([
+      item({
+        mood_trend: trend('unknown'),
+        energy_trend: trend('unknown'),
+        stress_trend: trend('unknown'),
+      }),
+    ]);
+    expect(workContextHasVisibleTrend(allUnknown)).toBe(false);
+
+    const oneVisible = buildWorkContextHeatmapRows([item({ mood_trend: trend('up') })]);
+    expect(workContextHasVisibleTrend(oneVisible)).toBe(true);
+  });
+});
 
 describe('homeWorkContextSummary', () => {
   const items = [

@@ -61,6 +61,27 @@ export function workContextMetricTrend(
 }
 
 /**
+ * True when the payload carries at least one per-metric `MetricTrend` object.
+ *
+ * Lets the UI tell "the backend computed trends but every window is still
+ * `unknown`" (show a collecting-history hint) apart from a legacy payload that
+ * omits trend fields entirely (say nothing).
+ */
+export function workContextHasTrendData(items: readonly WorkContextSummaryItem[]): boolean {
+  return items.some((item) =>
+    WORK_CONTEXT_METRICS.some((metric) => {
+      const trend = item[METRIC_TREND_FIELD[metric]];
+      return trend != null && typeof trend === 'object' && 'direction' in trend;
+    })
+  );
+}
+
+/** True when at least one built heatmap cell resolves to a visible trend glyph. */
+export function workContextHasVisibleTrend(rows: readonly WorkContextHeatmapRow[]): boolean {
+  return rows.some((row) => row.cells.some((cell) => cell.trendDirection !== null));
+}
+
+/**
  * Normalised "goodness" on the 1–5 scale where higher is always better.
  * Stress is inverted (via `displayMetricValue`) so that stronger heatmap
  * shading consistently reads as "better" across all three columns.
