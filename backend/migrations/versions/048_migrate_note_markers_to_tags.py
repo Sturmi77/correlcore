@@ -13,6 +13,9 @@ from existing ``entry_note_markers`` so context lives in one place:
 - **Custom** markers (anything not in the predefined taxonomy) become per-user
   **custom tags** (category ``other``), then linked. Slugs are derived to the
   strict tag-slug format; un-sluggable markers (< 2 usable chars) are skipped.
+  A custom marker is only ever linked to the **user's own** tag or a newly
+  created one — never silently attached to a curated default; if its derived
+  slug would shadow a curated default it is skipped (mirrors ``create_custom_tag``).
 - **Generic / overlap** predefined markers are **intentionally skipped**
   (``work``, ``homeoffice``, ``social``, ``movement``, ``sleep_bad``,
   ``sleep_good``, ``stress``, ``symptom``) — they duplicate ``work_context``,
@@ -94,6 +97,22 @@ def derive_custom_tag_slug(marker: str) -> str | None:
 def upgrade() -> None:
     conn = op.get_bind()
 
+    # `tags` and `entry_tags` run under FORCE ROW LEVEL SECURITY (migration 012)
+    # with policies keyed on `app.current_user_id`, which no migration sets. A
+    # role that neither bypasses RLS nor is superuser would INSERT zero rows and
+    # report success — a silent no-op nobody would notice. Fail loudly instead
+    # (mirrors migration 031).
+    privileged = conn.execute(
+        sa.text("SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname = current_user")
+    ).scalar()
+    if not privileged:
+        raise RuntimeError(
+            "Migration 048 must run as a superuser or a BYPASSRLS role: tags and "
+            "entry_tags enforce FORCE ROW LEVEL SECURITY, so a restricted role would "
+            "silently write nothing. Run migrations as the database owner (the same "
+            "role used for every earlier migration)."
+        )
+
     # 1) Predefined 1:1 markers → link to the existing curated default tag.
     for marker, slug in _PREDEFINED_TAG_MAP.items():
         result = conn.execute(
@@ -134,20 +153,29 @@ def upgrade() -> None:
             logger.info("048: skipped un-sluggable custom marker '%s'", marker)
             continue
 
-        # Reuse a default tag or the user's own tag with this slug; else create.
+        # Reuse only the user's OWN tag with this slug — never attach to a
+        # curated default: silently merging custom context onto the global
+        # taxonomy is irreversible and surprising (#899 review). If the derived
+        # slug would shadow a curated default, skip (mirrors create_custom_tag,
+        # which forbids such customs) rather than create or global-merge.
         tag_id = conn.execute(
-            sa.text(
-                """
-                SELECT id FROM tags
-                WHERE slug = :slug AND (is_default = TRUE OR user_id = :uid)
-                ORDER BY is_default DESC
-                LIMIT 1
-                """
-            ),
+            sa.text("SELECT id FROM tags WHERE slug = :slug AND user_id = :uid LIMIT 1"),
             {"slug": slug, "uid": user_id},
         ).scalar()
 
         if tag_id is None:
+            clashes_default = conn.execute(
+                sa.text("SELECT 1 FROM tags WHERE slug = :slug AND is_default = TRUE LIMIT 1"),
+                {"slug": slug},
+            ).scalar()
+            if clashes_default:
+                skipped += 1
+                logger.info(
+                    "048: skipped custom marker '%s' (slug '%s' clashes with a default tag)",
+                    marker,
+                    slug,
+                )
+                continue
             tag_id = uuid.uuid4()
             conn.execute(
                 sa.text(
