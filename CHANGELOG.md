@@ -20,7 +20,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 - **Ein Label-System statt zweier (#890, Option 4)** — Die Note-Marker unter dem
   Notizfeld waren ein paralleles, schwächeres Label-System, das den Tag-Katalog
   bzw. bestehende Felder (`work_context`, Slider, SymptomChecker) duplizierte.
-  Kontext wird jetzt ausschließlich über die Tags-Sektion erfasst.
+  Freie Kontext-**Labels** werden jetzt ausschließlich über die Tags-Sektion
+  erfasst; die dedizierten Felder (`work_context`, Stimmung/Energie/Stress,
+  Schlaf, Symptome) bleiben unverändert.
 
 ### Removed
 

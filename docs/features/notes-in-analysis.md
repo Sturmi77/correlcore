@@ -168,7 +168,10 @@ GET    /analysis/notes/signal-correlation
 > below the text area was removed from the Entry Composer. Its taxonomy duplicated
 > the tag catalogue (`conflict`, `social`, `travel`) or existing fields
 > (`work_context`, sliders, SymptomChecker); the one non-duplicate, `achievement`,
-> became a curated default **tag** ("Erfolg", migration 047). Tagging now happens
+> is now a curated default **tag** ("Erfolg"), newly seeded by migration 047 —
+> which inserts the catalogue entry only and does **not** convert existing
+> `entry_note_markers` rows (that conversion is the data migration noted below).
+> Tagging now happens
 > in the Tags section above. The `entry_note_markers` table, its API endpoints,
 > `marker-summary`, and the `NOTE_MARKER_MOOD` insight family are **retained** so
 > read-only history surfaces and analytics keep working on existing/API-created
@@ -178,7 +181,9 @@ GET    /analysis/notes/signal-correlation
 ### Marker Taxonomy (v1) — no longer surfaced in the composer (see note above)
 
 > Retained for historical/API-created markers only; not offered as capture chips
-> since #890 / #893. `achievement` migrated to a default tag.
+> since #890 / #893. `achievement` is instead available as a newly seeded default
+> tag (migration 047 seeds the catalogue entry only; historical markers are not
+> converted until the data migration lands).
 
 | Key           | Display Label (DE / EN)        |
 | ------------- | ------------------------------ |
@@ -309,7 +314,7 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 ### M3 Retroactive
 
-- [x] ~~Entry Composer shows marker chip row with predefined markers.~~ Removed in #890 / #893 (Option 4); tagging moved to the Tags section, `achievement` became a default tag.
+- [x] ~~Entry Composer shows marker chip row with predefined markers.~~ Removed in #890 / #893 (Option 4); tagging moved to the Tags section, `achievement` newly seeded as a default tag.
 - [x] Selected markers saved as `entry_note_markers` with `source: 'user'` (retained for history/API; no longer written from the composer).
 - [x] `GET /analysis/notes/marker-summary` returns correct avg_mood per marker.
 - [ ] Suggestions endpoint returns last 20 user-defined markers.
@@ -318,7 +323,7 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 ### M4
 
 - [ ] Note section collapsed by default; expand tap < 200ms perceived latency.
-- [ ] On mobile (375px), chip row scrolls horizontally without wrapping.
+- [x] ~~On mobile (375px), chip row scrolls horizontally without wrapping.~~ Superseded by #890 / #893 — the composer marker chip row was removed.
 - [x] `note_summary_short` auto-generated on save, max 120 chars (ADR-N-01).
 
 ### M7
