@@ -374,6 +374,7 @@
       "other": "Other"
     },
     "default": {
+      "achievement": "Achievement",
       "sport": "Sport",
       "running": "Running",
       "cycling": "Cycling",
