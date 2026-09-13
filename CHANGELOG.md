@@ -8,6 +8,32 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Tag „Erfolg" (`achievement`)** — kuratierter Default-Tag (Kategorie „Sonstiges",
+  Icon `trophy`), per Migration 047 idempotent geseedet. Ersetzt den einzigen
+  Note-Marker ohne parallelen Tag und dient zugleich als positives Recovery-Signal
+  für die geplante Burnout-Analyse (#875). (#890, #893)
+
+### Changed
+
+- **Ein Label-System statt zweier (#890, Option 4)** — Die Note-Marker unter dem
+  Notizfeld waren ein paralleles, schwächeres Label-System, das den Tag-Katalog
+  bzw. bestehende Felder (`work_context`, Slider, SymptomChecker) duplizierte.
+  Freie Kontext-**Labels** werden jetzt ausschließlich über die Tags-Sektion
+  erfasst; die dedizierten Felder (`work_context`, Stimmung/Energie/Stress,
+  Schlaf, Symptome) bleiben unverändert.
+
+### Removed
+
+- **Marker-Chip-Zeile im Entry Sheet** — Die Chips unter dem Notizfeld wurden aus
+  dem Composer entfernt (#890, #893). `entry_note_markers`, die zugehörigen
+  API-Endpunkte, `marker-summary` und die `NOTE_MARKER_MOOD`-Insights **bleiben
+  erhalten**, damit die read-only-Historienansichten und Analytics auf
+  bestehenden/über die API angelegten Markern weiterlaufen, bis die
+  Datenmigration (Custom-Marker → Custom-Tag) folgt. Note-Signals (Regex auf dem
+  Notiztext) sind unberührt.
+
 ### Fixed
 
 - **Home: Trendindikatoren wirkten „verschwunden", wenn noch kein Trend
