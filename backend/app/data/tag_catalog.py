@@ -240,6 +240,9 @@ DEFAULT_TAGS: tuple[DefaultTagSpec, ...] = (
     DefaultTagSpec(
         "news", "Nachrichten", "News", TagCategory.OTHER, "newspaper", _OTHER, onboarding=True
     ),
+    # Replaces the deprecated `achievement` note-marker (#890): the one marker
+    # with no parallel tag/field. Also the positive recovery signal #875 wants.
+    DefaultTagSpec("achievement", "Erfolg", "Achievement", TagCategory.OTHER, "trophy", _OTHER),
 )
 
 # Onboarding historically used friendlier slugs than the seeded defaults.

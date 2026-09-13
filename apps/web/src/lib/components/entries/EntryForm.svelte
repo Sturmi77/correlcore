@@ -28,7 +28,6 @@
   import SymptomChecker from '$lib/components/entries/SymptomChecker.svelte';
   import SaveStatusBadge from '$lib/components/entries/SaveStatusBadge.svelte';
   import DayDeltaCard from '$lib/components/entries/DayDeltaCard.svelte';
-  import NoteMarkerChips from '$lib/components/entries/NoteMarkerChips.svelte';
   import Button from '$lib/components/common/Button.svelte';
   import ThemeToggle from '$lib/components/common/ThemeToggle.svelte';
   import {
@@ -57,13 +56,7 @@
   } from '$lib/api/symptoms';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
   import { computeNoteSummaryShort } from '$lib/utils/noteSummary';
-  import {
-    addNoteMarker,
-    deleteNoteMarker,
-    listNoteMarkerSuggestions,
-    type EntryNoteMarkerResponse,
-    type NoteVisibility,
-  } from '$lib/api/noteMarkers';
+  import { type NoteVisibility } from '$lib/api/noteMarkers';
   import { createAutoSave, type AutoSaveState } from '$lib/utils/autoSave';
   import { refreshTags } from '$lib/stores/tags';
   import { defaultWorkContextForDate } from '$lib/utils/workContext';
@@ -123,8 +116,6 @@
   );
   let note = '';
   let noteVisibility: NoteVisibility = 'full';
-  let noteMarkers: EntryNoteMarkerResponse[] = [];
-  let markerSuggestions: string[] = [];
   let selectedTagIds: string[] = [];
   let selectedSymptoms: SymptomEntry[] = [];
   // When the per-entry tag/symptom fetch fails during load, the on-screen
@@ -225,7 +216,6 @@
     sleepMinutesInvalid = false;
     note = '';
     noteVisibility = 'full';
-    noteMarkers = [];
     selectedTagIds = [];
     selectedSymptoms = [];
     tagsUnresolved = false;
@@ -354,7 +344,6 @@
           workContextTouched = true;
           note = matchingEntry.note ?? '';
           noteVisibility = matchingEntry.note_visibility ?? 'full';
-          noteMarkers = matchingEntry.note_markers ?? [];
           const [tagsRes, symRes] = await Promise.allSettled([
             listTagsForEntry(matchingEntry.id),
             listSymptomsForEntry(matchingEntry.id),
@@ -454,7 +443,6 @@
       workContextTouched = true;
       note = matchingEntry.note ?? '';
       noteVisibility = matchingEntry.note_visibility ?? 'full';
-      noteMarkers = matchingEntry.note_markers ?? [];
 
       // Tags + symptoms load in parallel; both wrapped so one slow
       // network blip doesn't keep the other from rendering.
@@ -755,65 +743,6 @@
     };
   }
 
-  function applyLocalMarkerToggle(marker: string, selected: boolean): void {
-    if (selected) {
-      if (noteMarkers.some((item) => item.marker === marker)) return;
-      noteMarkers = [
-        ...noteMarkers,
-        {
-          id: `pending:${marker}`,
-          entry_id: existingEntryId ?? '',
-          marker,
-          source: 'user',
-          created_at: new Date().toISOString(),
-        },
-      ];
-      return;
-    }
-    noteMarkers = noteMarkers.filter((item) => item.marker !== marker);
-  }
-
-  async function syncMarkerToggle(marker: string, selected: boolean): Promise<void> {
-    // Keep optimistic local state even before first save / while offline sync owns persistence.
-    const existingBefore = noteMarkers.find((item) => item.marker === marker);
-    applyLocalMarkerToggle(marker, selected);
-    markDirty();
-    if (!existingEntryId || canUseOfflineSync()) return;
-    if (selected) {
-      const created = await addNoteMarker(existingEntryId, { marker, source: 'user' });
-      noteMarkers = [...noteMarkers.filter((item) => item.marker !== created.marker), created];
-      return;
-    }
-    if (!existingBefore || existingBefore.id.startsWith('pending:')) return;
-    await deleteNoteMarker(existingEntryId, existingBefore.id);
-  }
-
-  async function flushPendingMarkers(entryId: string): Promise<void> {
-    if (canUseOfflineSync()) return;
-    const pending = noteMarkers.filter((item) => item.id.startsWith('pending:'));
-    for (const item of pending) {
-      const created = await addNoteMarker(entryId, { marker: item.marker, source: 'user' });
-      noteMarkers = [...noteMarkers.filter((m) => m.marker !== created.marker), created];
-    }
-  }
-
-  async function handleMarkerToggle(
-    event: CustomEvent<{ marker: string; selected: boolean }>
-  ): Promise<void> {
-    const { marker, selected } = event.detail;
-    try {
-      await syncMarkerToggle(marker, selected);
-    } catch (err) {
-      errorKey = mapApiError(err, ERROR_MAP);
-    }
-  }
-
-  async function handleCustomMarker(event: CustomEvent<{ marker: string }>): Promise<void> {
-    await handleMarkerToggle(
-      new CustomEvent('toggle', { detail: { marker: event.detail.marker, selected: true } })
-    );
-  }
-
   /**
    * Abort when the authenticated user changed mid-persist (login/logout/
    * setUser). autoSave.destroy() does not cancel an in-flight ``opts.save``;
@@ -890,7 +819,6 @@
           note_visibility: resolvedSnap.note_visibility ?? noteVisibility,
         });
         entryId = updated.id;
-        noteMarkers = updated.note_markers ?? noteMarkers;
       } else {
         const created = await submitEntry({
           entry_date: resolvedSnap.entry_date,
@@ -912,7 +840,6 @@
         // updateEntry. This is the same flow that defused the 409 race
         // we hit in PR #117.
         existingEntryId = entryId;
-        await flushPendingMarkers(entryId);
       }
 
       assertPersistActor(actorUserId);
@@ -1229,13 +1156,6 @@
     const el = document.getElementById('entry-mood');
     el?.focus();
     void loadOnboardingSuggestions();
-    void listNoteMarkerSuggestions()
-      .then((items) => {
-        markerSuggestions = items;
-      })
-      .catch(() => {
-        markerSuggestions = [];
-      });
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     window.addEventListener('beforeunload', onBeforeUnload);
@@ -1509,12 +1429,6 @@
         bind:value={note}
         placeholder={$_('entry.note_placeholder')}></textarea>
     </label>
-    <NoteMarkerChips
-      markers={noteMarkers}
-      suggestions={markerSuggestions}
-      on:toggle={handleMarkerToggle}
-      on:addCustom={handleCustomMarker}
-    />
     {#if note?.trim()}
       <label class="entry-field entry-field--inline">
         <span class="entry-label">{$_('entry.note_visibility.label')}</span>
