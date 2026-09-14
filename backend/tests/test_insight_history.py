@@ -214,8 +214,6 @@ async def test_generate_delete_targets_only_same_generated_for_date() -> None:
             _load_result(entries),
             _pair_result(tag_rows),
             _pair_result([]),
-            _pair_result([(entry, False) for entry in entries]),
-            _pair_result([]),
             MagicMock(),
         ]
     )
@@ -223,7 +221,7 @@ async def test_generate_delete_targets_only_same_generated_for_date() -> None:
 
     await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
 
-    delete_stmt = db.execute.await_args_list[6].args[0]
+    delete_stmt = db.execute.await_args_list[4].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert "generated_for_date" in str(delete_stmt)
 
