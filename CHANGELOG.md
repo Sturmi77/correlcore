@@ -27,12 +27,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 ### Removed
 
 - **Marker-Chip-Zeile im Entry Sheet** — Die Chips unter dem Notizfeld wurden aus
-  dem Composer entfernt (#890, #893). `entry_note_markers`, die zugehörigen
-  API-Endpunkte, `marker-summary` und die `NOTE_MARKER_MOOD`-Insights **bleiben
-  erhalten**, damit die read-only-Historienansichten und Analytics auf
-  bestehenden/über die API angelegten Markern weiterlaufen, bis die
-  Datenmigration (Custom-Marker → Custom-Tag) folgt. Note-Signals (Regex auf dem
-  Notiztext) sind unberührt.
+  dem Composer entfernt (#890, #893). `entry_note_markers` und die zugehörigen
+  CRUD-/Suggestions-Endpunkte **bleiben erhalten**, damit die
+  read-only-Historienansichten weiterlaufen, bis der UI-/Taxonomie-Rückbau
+  (#897) folgt. Note-Signals (Regex auf dem Notiztext) sind unberührt.
+- **Marker-Analytik archiviert (#890 Folge 2/4, #896)** — Nach der Datenmigration
+  (#895) sind die marker-spezifischen Auswertungen redundant zur Tag-Analytik und
+  wurden entfernt: der Endpoint `GET /analysis/notes/marker-summary` (samt
+  `/analysis`-Router und `aggregate_marker_summary`), die `MarkerSummary`-Schemas,
+  das frontend-seitige `fetchMarkerSummary` sowie der `NOTE_MARKER_MOOD`-
+  Insight-Pfad (`note_marker_insights.py`). Der `marker-summary`-Endpoint hatte
+  keinen Consumer; `achievement`/`conflict`/`social` sind als Tags über die
+  bestehende Tag-Korrelation/Co-occurrence abgedeckt. Der Enum-Wert
+  `InsightType.NOTE_MARKER_MOOD` bleibt nur zur Rücklese-Kompatibilität für evtl.
+  vorhandene historische `insights`-Zeilen erhalten.
 
 ### Fixed
 

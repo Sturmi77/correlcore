@@ -1485,9 +1485,11 @@ ERD und Felddefinitionen: [ADR-0036 §5](adr/0036-offline-sync-v1-scope.md).
 ## 10a. Notes analysis & signals
 
 ```
-GET    /api/v1/analysis/notes/marker-summary   Aggregierte Mood-Mittelwerte je Marker
 POST   /api/v1/admin/entries/{id}/note-signals/reprocess   Signal-Reprocess (Admin)
 ```
+
+> `GET /api/v1/analysis/notes/marker-summary` wurde in #890 Folge 2/4 (#896)
+> entfernt (ohne Consumer; Marker→Tag-Konsolidierung, Tag-Analytik deckt das ab).
 
 Marker-CRUD liegt unter `/entries/{id}/note-markers` (§3). Signal-Reads unter
 `/entries/{id}/note-signals`. Admin-Reprocess nutzt dieselbe Allowlist wie

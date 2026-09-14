@@ -47,17 +47,6 @@ def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
     return result
 
 
-def _marker_entry_result(
-    entries: list[object],
-    *,
-    has_note_enc: bool = False,
-) -> MagicMock:
-    """Rows for ``select(Entry, note_enc IS NOT NULL)`` in marker loading."""
-    result = MagicMock()
-    result.all.return_value = [(entry, has_note_enc) for entry in entries]
-    return result
-
-
 def _scalar_result_single(value: object) -> MagicMock:
     result = MagicMock()
     result.scalar.return_value = value
@@ -678,8 +667,6 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
             _scalar_result(entries),
             _row_result(tag_rows),
             _row_result([]),
-            _marker_entry_result(entries),
-            _row_result([]),
             MagicMock(),  # delete prior insights for the day
         ]
     )
@@ -688,13 +675,13 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     stored = await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
 
     assert stored
-    assert db.execute.await_count == 7
+    assert db.execute.await_count == 5
     lock_stmt = db.execute.await_args_list[0].args[0]
     assert "pg_try_advisory_xact_lock" in str(lock_stmt)
     load_stmt = db.execute.await_args_list[1].args[0]
     assert "entries.entry_date < :entry_date_1" in str(load_stmt.whereclause)
     assert "ORDER BY entries.entry_date ASC" in str(load_stmt)
-    delete_stmt = db.execute.await_args_list[6].args[0]
+    delete_stmt = db.execute.await_args_list[4].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert db.add.call_count == len(stored)
     assert db.flush.await_count == 1
@@ -923,59 +910,13 @@ class _PoisonNoteEntry:
 
 
 @pytest.mark.asyncio
-async def test_marker_load_defers_encrypted_note_column() -> None:
-    """#772 leftover: marker load must not SELECT note_enc ciphertext.
-
-    generate_and_store_insights always calls _load_entries_with_markers after
-    the analytics load. Deferring note_enc only in _load_analytics_inputs left
-    one undecryptable note able to abort the whole user job at marker load.
-    A SQL ``note_enc IS NOT NULL`` presence flag is allowed; the mapped
-    ciphertext column must stay deferred.
-    """
-    user = make_user()
-    sport = make_tag(user=None, is_default=True, slug="sport", name="Sport")
-    start = date(2026, 4, 1)
-    entries = [
-        make_entry(
-            user,
-            entry_date=start + timedelta(days=offset),
-            mood_score=5 if offset % 2 == 0 else 2,
-            energy=5 if offset % 2 == 0 else 2,
-            stress=1 if offset % 2 == 0 else 5,
-        )
-        for offset in range(30)
-    ]
-    tag_rows = [(entry.id, sport) for offset, entry in enumerate(entries) if offset % 2 == 0]
-    db = MagicMock()
-    db.execute = AsyncMock(
-        side_effect=[
-            MagicMock(),
-            _scalar_result(entries),
-            _row_result(tag_rows),
-            _row_result([]),
-            _marker_entry_result(entries),
-            _row_result([]),
-            MagicMock(),
-        ]
-    )
-    db.flush = AsyncMock()
-
-    await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
-
-    marker_stmt = db.execute.await_args_list[4].args[0]
-    compiled = " ".join(str(marker_stmt.compile()).split())
-    assert "note_enc IS NOT NULL" in compiled
-    # Ciphertext must not be a selected result column (only the NULL-check).
-    assert "entries.note_enc," not in compiled
-
-
-@pytest.mark.asyncio
 async def test_generate_and_store_insights_survives_undecryptable_note() -> None:
     """One corrupt note_enc must not abort the day's insight generation.
 
     Trigger: DEK works for the user, but a single row's BYTEA is not a valid
-    Fernet token. entry_has_note() would decrypt and raise DecryptionError;
-    the marker loader must use the SQL presence flag instead.
+    Fernet token. ``_load_analytics_inputs`` defers ``note_enc`` so analytics
+    never materialises the ciphertext, and the per-entry guard covers any
+    residual materialisation error — the day's insights are still produced.
     """
     user = make_user()
     sport = make_tag(user=None, is_default=True, slug="sport", name="Sport")
@@ -998,8 +939,6 @@ async def test_generate_and_store_insights_survives_undecryptable_note() -> None
             MagicMock(),
             _scalar_result(poison),
             _row_result(tag_rows),
-            _row_result([]),
-            _marker_entry_result(poison, has_note_enc=True),
             _row_result([]),
             MagicMock(),
         ]

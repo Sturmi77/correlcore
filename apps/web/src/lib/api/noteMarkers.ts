@@ -45,28 +45,3 @@ export async function deleteNoteMarker(entryId: string, markerId: string): Promi
 export async function listNoteMarkerSuggestions(): Promise<string[]> {
   return api.get<string[]>('/user/me/note-markers/suggestions');
 }
-
-export interface MarkerSummaryItem {
-  marker: string;
-  count: number;
-  avg_mood: number;
-  entries: string[];
-}
-
-export interface MarkerSummaryResponse {
-  from: string;
-  to: string;
-  items: MarkerSummaryItem[];
-}
-
-export async function fetchMarkerSummary(params: {
-  from: string;
-  to: string;
-  markers?: string[];
-}): Promise<MarkerSummaryResponse> {
-  const search = new URLSearchParams({ from: params.from, to: params.to });
-  for (const marker of params.markers ?? []) {
-    search.append('markers', marker);
-  }
-  return api.get<MarkerSummaryResponse>(`/analysis/notes/marker-summary?${search.toString()}`);
-}
