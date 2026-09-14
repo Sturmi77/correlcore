@@ -11,10 +11,9 @@ Why a service-layer backfill and not raw SQL
 An earlier raw-SQL Alembic draft (#899) reimplemented copy-on-write override
 resolution, the per-entry tag cap, slug collisions and — critically — sync
 revision logging by hand, and would have surfaced context from notes the user
-explicitly hid. All of that is already handled correctly by the tag service
-(:func:`assign_tags_to_entry`, :func:`create_custom_tag`), which also emits the
-``sync_revision_log`` rows offline clients need. This module reuses those
-tested paths instead of duplicating them in a migration.
+explicitly hid. This module reuses the tested tag service instead:
+``create_custom_tag`` for tag creation (and its ``sync_revision_log`` entry),
+and ``record_entry_upsert_revision`` for the entry revision offline clients need.
 
 What it does
 ------------
@@ -22,9 +21,7 @@ What it does
   to the user's *visible* tag for that slug — their copy-on-write **override**
   if they have one, else the curated default. A hidden target is left alone.
 - **Custom** markers (anything outside the predefined taxonomy) become per-user
-  **custom tags** (category ``other``) via the tag service, then link. Slugs
-  are derived to the strict tag-slug format; un-sluggable markers and any whose
-  slug would shadow a curated default are skipped.
+  **custom tags** (category ``other``), then link.
 - **Generic / overlap** predefined markers (``work``, ``homeoffice``,
   ``social``, ``movement``, ``sleep_bad``, ``sleep_good``, ``stress``,
   ``symptom``) are intentionally **skipped** — they duplicate ``work_context``,
@@ -38,30 +35,37 @@ Guarantees
   ``MAX_TAGS_PER_ENTRY``; excess markers are skipped and counted. A custom tag is
   created **only** when the entry has a free slot, so a marker seen only on
   already-full entries never leaves an orphan tag in the user's catalogue.
-- **Idempotent & additive.** Re-runs are a no-op: existing links/tags are reused
-  and :func:`assign_tags_to_entry` only writes (and only emits a revision) when
-  the set actually changes. Source ``entry_note_markers`` rows are untouched.
+- **Add-only, never destructive.** Links are inserted with ``ON CONFLICT DO
+  NOTHING``; the backfill never rewrites an entry's tag set, so it cannot
+  overwrite a tag a user removed concurrently (the replace-set race a
+  ``PUT /entries/{id}/tags`` style path would expose). It only ever *adds* the
+  marker-derived links that are missing.
+- **Idempotent.** Re-runs are a no-op: existing links are skipped, existing tags
+  reused, and per-marker slug assignment is deterministic across runs. Source
+  ``entry_note_markers`` rows are untouched.
 - **Privacy-preserving logs.** Only counts and ``user_id`` are logged — never a
   marker's text or a tag slug/name (matching the tag service's log policy).
 
 Slug collisions
 ---------------
-Distinct markers that normalise to the same slug for one user deterministically
-merge onto a single tag: markers are processed in sorted order and the first
-occurrence wins the tag. This is by design (one label system) and stable across
-runs.
+Distinct markers that normalise to the same base slug for one user get
+**distinct, deterministic** slugs rather than being merged: markers are
+resolved in sorted order, the first keeps the base slug and each later collider
+gets a ``-2``/``-3`` suffix (never shadowing a curated default). The order is
+stable and the source markers are frozen, so a re-run reproduces the same
+assignment and reuses the tags created before.
 
 Transactions
 -----------
 Enumeration covers **every** user that still has markers (regardless of active
 state — account disabling is reversible). With ``commit_per_user=True`` (the
-real run) each user is committed before the next is processed, so a
-production-sized backfill never holds one user's ``sync_user_revisions`` lock
-for the whole run, and a mid-user failure (e.g. a concurrent slug insert that
-makes ``create_custom_tag`` roll back) is isolated: that user is rolled back and
-skipped — re-running the idempotent backfill picks them up — while already
-committed users stay converted. ``commit_per_user=False`` keeps a single
-transaction the caller can roll back, for ``--dry-run``.
+real run) each user is committed before the next, so a production-sized backfill
+never holds one user's ``sync_user_revisions`` lock for the whole run, and a
+mid-user failure (e.g. a concurrent slug insert that makes ``create_custom_tag``
+roll back) is isolated: that user is rolled back and skipped — re-running the
+idempotent backfill picks them up — while already committed users stay
+converted. ``commit_per_user=False`` keeps a single transaction the caller can
+roll back, for ``--dry-run``.
 """
 
 from __future__ import annotations
@@ -70,24 +74,21 @@ import logging
 import re
 import uuid
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 from pydantic import ValidationError
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import bind_rls_current_user
 from app.models.entry import Entry, NoteVisibility
 from app.models.entry_note import EntryNoteMarker
-from app.models.tag import Tag, TagCategory
+from app.models.tag import EntryTag, Tag, TagCategory
 from app.schemas.note import PREDEFINED_NOTE_MARKERS
 from app.schemas.tag import MAX_TAGS_PER_ENTRY, TagCreate
-from app.services.tag_service import (
-    TagError,
-    assign_tags_to_entry,
-    create_custom_tag,
-    list_tags_for_entry,
-)
+from app.services.tag_service import TagError, create_custom_tag, list_tags_for_entry
 
 logger = logging.getLogger(__name__)
 
@@ -104,14 +105,15 @@ _SLUG_INVALID = re.compile(r"[^a-z0-9]+")
 
 
 def derive_custom_tag_slug(marker: str) -> str | None:
-    """Derive a valid tag slug from a note marker, or ``None`` if impossible.
+    """Derive a valid base tag slug from a note marker, or ``None`` if impossible.
 
     Tag slugs are lowercase letters/digits/dashes/underscores, 2..64 chars, with
     no leading/trailing or repeated separators (schemas/tag.py). Note markers are
     already lowercased/whitespace-collapsed but may hold spaces or punctuation and
     can be a single character. Non-``[a-z0-9]`` runs collapse to one dash;
     truncation to 64 never leaves a trailing dash; returns ``None`` when fewer
-    than 2 usable characters remain.
+    than 2 usable characters remain. Disambiguation suffixes are added later by
+    :func:`_disambiguated_slug`.
     """
     slug = _SLUG_INVALID.sub("-", marker.lower()).strip("-")
     if len(slug) > 64:
@@ -119,6 +121,34 @@ def derive_custom_tag_slug(marker: str) -> str | None:
     if len(slug) < 2:
         return None
     return slug
+
+
+def _disambiguated_slug(
+    base: str,
+    *,
+    marker: str,
+    default_slugs: set[str],
+    claimed_slugs: dict[str, str],
+) -> str:
+    """Return a unique slug for ``marker``, registering it in ``claimed_slugs``.
+
+    The first marker to reach a base slug keeps it; later distinct markers that
+    derive the same base get ``-2``, ``-3``, … A candidate that would shadow a
+    curated default is skipped too. Deterministic given the marker processing
+    order, so re-runs reproduce the assignment.
+    """
+    n = 1
+    while True:
+        if n == 1:
+            candidate = base
+        else:
+            candidate = f"{base[:61].rstrip('-')}-{n}"
+        owner = claimed_slugs.get(candidate)
+        if len(candidate) < 2 or candidate in default_slugs or (owner not in (None, marker)):
+            n += 1
+            continue
+        claimed_slugs[candidate] = marker
+        return candidate
 
 
 @dataclass
@@ -132,7 +162,6 @@ class MarkerTagBackfillSummary:
     custom_tags_created: int = 0
     custom_links_added: int = 0
     skipped_unsluggable: int = 0
-    skipped_default_clash: int = 0
     skipped_hidden_target: int = 0
     skipped_over_cap: int = 0
     user_ids: list[uuid.UUID] = field(default_factory=list)
@@ -145,7 +174,6 @@ class MarkerTagBackfillSummary:
         self.custom_tags_created += other.custom_tags_created
         self.custom_links_added += other.custom_links_added
         self.skipped_unsluggable += other.skipped_unsluggable
-        self.skipped_default_clash += other.skipped_default_clash
         self.skipped_hidden_target += other.skipped_hidden_target
         self.skipped_over_cap += other.skipped_over_cap
         self.user_ids.extend(other.user_ids)
@@ -169,6 +197,11 @@ async def _list_backfill_user_ids(
     return list(result.scalars().all())
 
 
+async def _default_slugs(db: AsyncSession) -> set[str]:
+    result = await db.execute(select(Tag.slug).where(Tag.is_default.is_(True)))
+    return set(result.scalars().all())
+
+
 async def _resolve_predefined_tag_id(
     db: AsyncSession,
     *,
@@ -180,7 +213,7 @@ async def _resolve_predefined_tag_id(
     Prefer the user's copy-on-write override over the curated default so
     historical markers land on the same row the user already sees and edits.
     A hidden target (default or override) returns ``None`` — the user opted out
-    of that tag, and :func:`assign_tags_to_entry` would reject a hidden id anyway.
+    of that tag.
     """
     override = (
         await db.execute(
@@ -201,34 +234,40 @@ async def _resolve_predefined_tag_id(
     return tag.id
 
 
-async def _resolve_existing_custom_tag(
+# Per-marker resolution decision, memoised for a user across all their entries.
+# ("skip", None) — un-sluggable or hidden own tag.
+# ("existing", tag_id) — reuse this tag id.
+# ("create", None) — no tag yet; create at ``slug`` when an entry has capacity.
+_Decision = tuple[str, uuid.UUID | None]
+
+
+async def _resolve_custom_marker(
     db: AsyncSession,
     *,
     user_id: uuid.UUID,
     marker: str,
-    slug_cache: dict[str, uuid.UUID],
-    skip_slugs: set[str],
+    default_slugs: set[str],
+    claimed_slugs: dict[str, str],
+    marker_slug: dict[str, str],
     summary: MarkerTagBackfillSummary,
-) -> tuple[str, uuid.UUID | None, str | None]:
-    """Classify a custom marker **without writing**.
+) -> tuple[_Decision, str | None]:
+    """Classify a custom marker **without writing**; returns (decision, slug).
 
-    Returns one of:
-    - ``("ok", tag_id, slug)`` — reuse the user's existing tag;
-    - ``("needs_create", None, slug)`` — no tag yet, creation would be required
-      (the caller decides based on remaining entry capacity so a full entry
-      never spawns an orphan tag);
-    - ``("skip", None, None)`` — un-sluggable, default-slug clash, or hidden own
-      tag (counted on ``summary``; the slug is remembered so re-lookups are cheap
-      and consistent).
+    Assigns the marker a stable, disambiguated slug and reports whether an
+    existing tag can be reused or a new one must be created (deferred to the
+    caller so a full entry never triggers creation).
     """
-    slug = derive_custom_tag_slug(marker)
-    if slug is None:
+    base = derive_custom_tag_slug(marker)
+    if base is None:
         summary.skipped_unsluggable += 1
-        return ("skip", None, None)
-    if slug in slug_cache:
-        return ("ok", slug_cache[slug], slug)
-    if slug in skip_slugs:
-        return ("skip", None, None)
+        return (("skip", None), None)
+
+    slug = marker_slug.get(marker)
+    if slug is None:
+        slug = _disambiguated_slug(
+            base, marker=marker, default_slugs=default_slugs, claimed_slugs=claimed_slugs
+        )
+        marker_slug[marker] = slug
 
     own = (
         await db.execute(
@@ -241,24 +280,10 @@ async def _resolve_existing_custom_tag(
     ).scalar_one_or_none()
     if own is not None:
         if own.is_hidden:
-            # The user hid this tag — leave it out of new assignments.
             summary.skipped_hidden_target += 1
-            skip_slugs.add(slug)
-            return ("skip", None, None)
-        slug_cache[slug] = own.id
-        return ("ok", own.id, slug)
-
-    # No own tag yet — a custom tag must not shadow a curated default slug
-    # (mirrors create_custom_tag, which forbids such customs).
-    clashes_default = (
-        await db.execute(select(Tag.id).where(Tag.is_default.is_(True), Tag.slug == slug))
-    ).scalar_one_or_none()
-    if clashes_default is not None:
-        summary.skipped_default_clash += 1
-        skip_slugs.add(slug)
-        return ("skip", None, None)
-
-    return ("needs_create", None, slug)
+            return (("skip", None), slug)
+        return (("existing", own.id), slug)
+    return (("create", None), slug)
 
 
 async def _create_custom_tag_id(
@@ -267,15 +292,16 @@ async def _create_custom_tag_id(
     user_id: uuid.UUID,
     marker: str,
     slug: str,
-    slug_cache: dict[str, uuid.UUID],
     summary: MarkerTagBackfillSummary,
 ) -> uuid.UUID | None:
-    """Create a custom tag for ``slug`` via the tag service; cache and count it.
+    """Create a custom tag at ``slug`` via the tag service; count it.
 
-    A :class:`TagConflictError` (concurrent same-slug insert) is **not** swallowed
-    — ``create_custom_tag`` rolls the transaction back on the unique violation, so
-    the current user is aborted and skipped by the caller rather than continuing
-    on a rolled-back session with counters that describe lost writes.
+    ``slug`` is already disambiguated away from curated defaults, so
+    ``create_custom_tag`` will not reject it as a default clash. A
+    :class:`TagError` (e.g. a concurrent same-slug insert, after which
+    ``create_custom_tag`` has rolled the session back) is **not** swallowed — it
+    propagates so the current user is rolled back and skipped rather than
+    continuing on a rolled-back session with counters describing lost writes.
     """
     try:
         payload = TagCreate(slug=slug, name=marker[:64], category=TagCategory.OTHER)
@@ -284,8 +310,29 @@ async def _create_custom_tag_id(
         return None
     created = await create_custom_tag(db, user_id=user_id, payload=payload)
     summary.custom_tags_created += 1
-    slug_cache[slug] = created.id
     return created.id
+
+
+async def _link_additively(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    entry_id: uuid.UUID,
+    tag_ids: list[uuid.UUID],
+) -> int:
+    """Insert missing ``entry_tags`` links only; returns the number inserted.
+
+    ``ON CONFLICT DO NOTHING`` makes this add-only and idempotent: it never
+    deletes or overwrites, so it cannot clobber a tag set a user edits
+    concurrently.
+    """
+    stmt = (
+        pg_insert(EntryTag)
+        .values([{"entry_id": entry_id, "tag_id": tid, "user_id": user_id} for tid in tag_ids])
+        .on_conflict_do_nothing(index_elements=["entry_id", "tag_id"])
+    )
+    result = await db.execute(stmt)
+    return int(getattr(result, "rowcount", 0) or 0)
 
 
 async def _backfill_marker_tags_for_user(
@@ -316,20 +363,22 @@ async def _backfill_marker_tags_for_user(
     for entry_id, marker in rows:
         markers_by_entry.setdefault(entry_id, set()).add(marker)
 
-    slug_cache: dict[str, uuid.UUID] = {}
-    skip_slugs: set[str] = set()
+    default_slugs = await _default_slugs(db)
+    claimed_slugs: dict[str, str] = {}  # slug -> owning marker (disambiguation)
+    marker_slug: dict[str, str] = {}  # marker -> its assigned slug
+    marker_decision: dict[str, _Decision] = {}  # memoised per-marker resolution
     touched = False
 
-    # Deterministic ordering keeps slug-collision merges and cap trimming stable.
+    # Deterministic ordering keeps slug disambiguation and cap trimming stable.
     for entry_id in sorted(markers_by_entry, key=str):
         current = await list_tags_for_entry(db, user_id=user_id, entry_id=entry_id)
-        current_ids = {tag.id for tag in current}
-        final_ids = set(current_ids)
+        planned: set[uuid.UUID] = {tag.id for tag in current}
+        to_add: list[uuid.UUID] = []
         added_predefined = 0
         added_custom = 0
 
         for marker in sorted(markers_by_entry[entry_id]):
-            at_cap = len(final_ids) >= MAX_TAGS_PER_ENTRY
+            at_cap = len(planned) >= MAX_TAGS_PER_ENTRY
 
             if marker in _PREDEFINED_TAG_MAP:
                 tag_id = await _resolve_predefined_tag_id(
@@ -338,12 +387,13 @@ async def _backfill_marker_tags_for_user(
                 if tag_id is None:
                     summary.skipped_hidden_target += 1
                     continue
-                if tag_id in final_ids:
+                if tag_id in planned:
                     continue
                 if at_cap:
                     summary.skipped_over_cap += 1
                     continue
-                final_ids.add(tag_id)
+                planned.add(tag_id)
+                to_add.append(tag_id)
                 added_predefined += 1
                 continue
 
@@ -351,59 +401,72 @@ async def _backfill_marker_tags_for_user(
                 # Generic/overlap predefined markers are intentionally skipped.
                 continue
 
-            status, tag_id, slug = await _resolve_existing_custom_tag(
-                db,
-                user_id=user_id,
-                marker=marker,
-                slug_cache=slug_cache,
-                skip_slugs=skip_slugs,
-                summary=summary,
-            )
-            if status == "skip":
+            decision = marker_decision.get(marker)
+            if decision is None:
+                decision, _slug = await _resolve_custom_marker(
+                    db,
+                    user_id=user_id,
+                    marker=marker,
+                    default_slugs=default_slugs,
+                    claimed_slugs=claimed_slugs,
+                    marker_slug=marker_slug,
+                    summary=summary,
+                )
+                # "create" is provisional — only memoise stable outcomes now.
+                if decision[0] != "create":
+                    marker_decision[marker] = decision
+
+            kind, tag_id = decision
+            if kind == "skip":
                 continue
-            if status == "ok":
+            if kind == "existing":
                 assert tag_id is not None
-                if tag_id in final_ids:
+                if tag_id in planned:
                     continue
                 if at_cap:
                     summary.skipped_over_cap += 1
                     continue
-                final_ids.add(tag_id)
+                planned.add(tag_id)
+                to_add.append(tag_id)
                 added_custom += 1
                 continue
 
-            # needs_create: only spend a slot — and create the tag — when the
-            # entry has room, so a marker seen only on full entries never leaves
-            # an orphan tag behind.
+            # kind == "create": only create when the entry has a free slot, so a
+            # marker seen only on full entries never leaves an orphan tag.
             if at_cap:
                 summary.skipped_over_cap += 1
                 continue
-            assert slug is not None
             created_id = await _create_custom_tag_id(
-                db,
-                user_id=user_id,
-                marker=marker,
-                slug=slug,
-                slug_cache=slug_cache,
-                summary=summary,
+                db, user_id=user_id, marker=marker, slug=marker_slug[marker], summary=summary
             )
             if created_id is None:
+                marker_decision[marker] = ("skip", None)
                 continue
-            final_ids.add(created_id)
+            # Reuse this tag for the marker's later entries.
+            marker_decision[marker] = ("existing", created_id)
+            planned.add(created_id)
+            to_add.append(created_id)
             added_custom += 1
 
-        if final_ids == current_ids:
+        if not to_add:
             continue
 
-        # Reuse the tested assignment path: it validates visibility, honours
-        # overrides and emits the entry sync revision offline clients need.
-        await assign_tags_to_entry(
-            db,
-            user_id=user_id,
-            entry_id=entry_id,
-            tag_ids=list(final_ids),
-            record_revision=True,
-        )
+        inserted = await _link_additively(db, user_id=user_id, entry_id=entry_id, tag_ids=to_add)
+        if inserted <= 0:
+            continue
+
+        # Bump updated_at + emit the entry revision so offline clients pull the
+        # new links (link inserts alone don't fire the entries updated_at trigger).
+        entry = (
+            await db.execute(select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id))
+        ).scalar_one()
+        entry.updated_at = datetime.now(UTC)
+        await db.flush()
+
+        from app.services.sync_service import record_entry_upsert_revision
+
+        await record_entry_upsert_revision(db, user_id=user_id, entry=entry)
+
         summary.entries_updated += 1
         summary.predefined_links_added += added_predefined
         summary.custom_links_added += added_custom

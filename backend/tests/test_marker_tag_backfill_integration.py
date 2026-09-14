@@ -444,3 +444,57 @@ async def test_backfill_isolates_a_failing_user(monkeypatch: pytest.MonkeyPatch)
     finally:
         await _cleanup_user(ok_uid)
         await _cleanup_user(bad_uid)
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_backfill_disambiguates_colliding_marker_slugs() -> None:
+    # Distinct markers that normalise to the same base slug get distinct,
+    # deterministic slugs instead of being merged onto one tag. #899 review.
+    if not _integration_enabled():
+        pytest.skip("requires real PostgreSQL (CORRELCORE_RUN_INTEGRATION=1)")
+
+    async with AsyncSessionLocal() as session:
+        uid = await _create_user(session)
+
+    try:
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, uid)
+            entry = _make_entry(uid, 0)
+            session.add(entry)
+            # Both normalise to base slug "dog-sitting"; "dog sitting" (space)
+            # sorts before "dog-sitting" (hyphen), so it keeps the base slug.
+            session.add(_make_marker(uid, entry.id, "dog sitting"))
+            session.add(_make_marker(uid, entry.id, "dog-sitting"))
+            await session.commit()
+            entry_id = entry.id
+
+        async with AsyncSessionLocal() as session:
+            summary = await backfill_marker_tags(session, user_id=uid)
+            await session.commit()
+
+        assert summary.custom_tags_created == 2  # not merged
+        assert summary.custom_links_added == 2
+
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, uid)
+            tags = (
+                await session.execute(
+                    select(Tag.slug, Tag.name).where(Tag.user_id == uid, Tag.is_default.is_(False))
+                )
+            ).all()
+            by_slug = dict(tags)
+            assert set(by_slug) == {"dog-sitting", "dog-sitting-2"}
+            assert by_slug["dog-sitting"] == "dog sitting"  # base slug: first in sort order
+            assert by_slug["dog-sitting-2"] == "dog-sitting"
+            assert len(await _entry_tag_ids(session, entry_id)) == 2
+
+        # Idempotent: a re-run adds nothing and creates no further tags.
+        async with AsyncSessionLocal() as session:
+            again = await backfill_marker_tags(session, user_id=uid)
+            await session.commit()
+        assert again.custom_tags_created == 0
+        assert again.custom_links_added == 0
+        assert again.entries_updated == 0
+    finally:
+        await _cleanup_user(uid)

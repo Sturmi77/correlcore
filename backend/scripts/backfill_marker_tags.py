@@ -9,10 +9,10 @@ command converts them into tag links via the service layer (see
 assignment/creation paths so copy-on-write overrides, the per-entry tag cap and
 ``sync_revision_log`` are all handled correctly, and hidden notes are excluded.
 
-Idempotent: re-runs are a no-op. Run once after deploying #890/#893/047,
-preferably during low write traffic: the backfill is additive (it never removes
-tags) but merges each entry's tag set, so running it while a user is editing the
-same entry could re-add a tag they just removed. A re-run afterwards is safe.
+Idempotent: re-runs are a no-op. Run once after deploying #890/#893/047. The
+backfill is add-only (links are inserted with ON CONFLICT DO NOTHING; it never
+removes or rewrites an entry's tag set), so it is safe to run alongside live
+edits — it cannot clobber a tag a user changes concurrently.
 
 Usage::
 
@@ -94,9 +94,8 @@ async def _main() -> int:
         summary.custom_links_added,
     )
     logger.info(
-        "Skipped: unsluggable=%s default_clash=%s hidden_target=%s over_cap=%s",
+        "Skipped: unsluggable=%s hidden_target=%s over_cap=%s",
         summary.skipped_unsluggable,
-        summary.skipped_default_clash,
         summary.skipped_hidden_target,
         summary.skipped_over_cap,
     )
