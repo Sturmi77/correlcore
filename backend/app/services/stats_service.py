@@ -160,9 +160,7 @@ async def get_tag_heatmap(
     # shortcut. ``active_tag_predicate`` keeps hidden/hidden-override shadowing
     # but drops the analytics filter.
     tag_predicate = (
-        active_tag_predicate(user_id)
-        if include_non_analytics
-        else analytics_tag_predicate(user_id)
+        active_tag_predicate(user_id) if include_non_analytics else analytics_tag_predicate(user_id)
     )
     stmt = (
         select(Tag, Entry.id, Entry.entry_date)

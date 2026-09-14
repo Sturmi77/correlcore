@@ -242,7 +242,9 @@ async def test_tag_heatmap_include_non_analytics_drops_analytics_filter() -> Non
     db = MagicMock()
     db.execute = AsyncMock(return_value=_row_result([]))
 
-    await get_tag_heatmap(db, user_id=user.id, start_date=date(2026, 5, 1), end_date=date(2026, 5, 9))
+    await get_tag_heatmap(
+        db, user_id=user.id, start_date=date(2026, 5, 1), end_date=date(2026, 5, 9)
+    )
     default_where = str(db.execute.await_args.args[0].whereclause)
     assert "include_in_analytics" in default_where
     assert "tags.is_hidden IS false" in default_where
