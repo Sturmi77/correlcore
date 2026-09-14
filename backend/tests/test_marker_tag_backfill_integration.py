@@ -30,6 +30,7 @@ from app.services.marker_tag_backfill_service import (
     _list_backfill_user_ids,
     backfill_marker_tags,
 )
+from app.services.tag_service import TagConflictError
 
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
@@ -380,3 +381,66 @@ async def test_backfill_includes_disabled_users_and_commits_per_user() -> None:
             assert await _entry_tag_ids(session, entry_id) == {conflict_id}
     finally:
         await _cleanup_user(uid)
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_backfill_isolates_a_failing_user(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A user whose custom-tag creation raises (e.g. a concurrent slug insert
+    # rolling the session back) is rolled back and counted, not silently
+    # committed with lying counters; other users are unaffected. #900 review.
+    if not _integration_enabled():
+        pytest.skip("requires real PostgreSQL (CORRELCORE_RUN_INTEGRATION=1)")
+
+    async with AsyncSessionLocal() as session:
+        ok_uid = await _create_user(session)
+        bad_uid = await _create_user(session)
+
+    try:
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, ok_uid)
+            ok_entry = _make_entry(ok_uid, 0)
+            session.add(ok_entry)
+            session.add(_make_marker(ok_uid, ok_entry.id, "conflict"))  # predefined, no create
+            await session.commit()
+            ok_entry_id = ok_entry.id
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, bad_uid)
+            bad_entry = _make_entry(bad_uid, 0)
+            session.add(bad_entry)
+            session.add(_make_marker(bad_uid, bad_entry.id, "proben"))  # custom, needs create
+            await session.commit()
+            bad_entry_id = bad_entry.id
+
+        async def _boom(db, *, user_id, payload):  # type: ignore[no-untyped-def]
+            raise TagConflictError("simulated concurrent slug insert")
+
+        monkeypatch.setattr("app.services.marker_tag_backfill_service.create_custom_tag", _boom)
+
+        # Good user (predefined only) commits; failing user is rolled back.
+        async with AsyncSessionLocal() as session:
+            ok_summary = await backfill_marker_tags(session, user_id=ok_uid, commit_per_user=True)
+        async with AsyncSessionLocal() as session:
+            bad_summary = await backfill_marker_tags(session, user_id=bad_uid, commit_per_user=True)
+
+        assert ok_summary.users_processed == 1
+        assert ok_summary.users_failed == 0
+        assert bad_summary.users_failed == 1
+        assert bad_summary.users_processed == 0
+
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, ok_uid)
+            conflict_id = await _default_tag_id(session, "conflict")
+            assert await _entry_tag_ids(session, ok_entry_id) == {conflict_id}
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, bad_uid)
+            assert await _entry_tag_ids(session, bad_entry_id) == set()  # rolled back
+            orphan = (
+                await session.execute(
+                    select(Tag.id).where(Tag.user_id == bad_uid, Tag.slug == "proben")
+                )
+            ).scalar_one_or_none()
+            assert orphan is None
+    finally:
+        await _cleanup_user(ok_uid)
+        await _cleanup_user(bad_uid)
