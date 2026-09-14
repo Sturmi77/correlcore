@@ -346,6 +346,8 @@
     "error_assign": "Entry was saved, but tags could not be attached.",
     "limit_reached": "Maximum reached. Remove a tag before selecting another.",
     "retry": "Retry",
+    "recent_heading": "Recently used",
+    "all_toggle": "All tags",
     "category": {
       "sport": "Sport",
       "social": "Social",

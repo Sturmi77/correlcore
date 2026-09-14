@@ -346,6 +346,8 @@
     "error_assign": "Eintrag wurde gespeichert, Tags konnten aber nicht zugewiesen werden.",
     "limit_reached": "Maximum erreicht. Entferne einen Tag, bevor du einen weiteren ausw\u00e4hlst.",
     "retry": "Erneut versuchen",
+    "recent_heading": "Zuletzt genutzt",
+    "all_toggle": "Alle Tags",
     "category": {
       "sport": "Sport",
       "social": "Sozial",

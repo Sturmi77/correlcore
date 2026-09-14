@@ -22,8 +22,15 @@
 
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
-  import { tags, tagsByCategory, refreshTags, submitTag } from '$lib/stores/tags';
-  import { TAG_CATEGORIES, MAX_TAGS_PER_ENTRY, type TagCategory } from '$lib/api/tags';
+  import { tags, tagsList, tagsByCategory, refreshTags, submitTag } from '$lib/stores/tags';
+  import {
+    TAG_CATEGORIES,
+    MAX_TAGS_PER_ENTRY,
+    type TagCategory,
+    type TagResponse,
+  } from '$lib/api/tags';
+  import { fetchTagHeatmap } from '$lib/api/stats';
+  import { rankRecentTagIds } from '$lib/utils/recentTags';
   import CategoryIcon from '$lib/components/common/CategoryIcon.svelte';
   import { categoryColorForCurrentTheme } from '$lib/constants/tagDefaults';
   import { localizedCatalogName } from '$lib/utils/localizedCatalogName';
@@ -32,6 +39,19 @@
   export let selected: string[] = [];
   /** Disable interaction (e.g. while the parent form submits). */
   export let disabled = false;
+
+  /**
+   * "Recently used" cloud (#890 Folge 4/4, #898). A short window keeps the row
+   * anchored to the person's current life phase (incl. weekly cadence) without
+   * over-weighting old habits; 7 days was too sparse for infrequent loggers,
+   * all-time over-weights the past — 14 days is the justified middle default.
+   * Source is the existing tag-frequency heatmap; no second tag UI, no markers.
+   */
+  const RECENCY_WINDOW_DAYS = 14;
+  const RECENCY_LIMIT = 8;
+
+  let recentTagIds: string[] = [];
+  let showAllTags = false;
 
   let loadError: string | null = null;
   let showCustomForm = false;
@@ -55,9 +75,36 @@
     }
   }
 
-  onMount(async () => {
-    if ($tags.status === 'ready' || $tags.status === 'loading') return;
-    await loadTags();
+  function toISODate(value: Date): string {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Non-blocking: the recency row is a shortcut on top of the full catalogue.
+  // A failure or empty window must never stop tagging or block save/autosave —
+  // we simply fall back to the categorised catalogue (60-second rule).
+  async function loadRecentTags() {
+    try {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - (RECENCY_WINDOW_DAYS - 1));
+      const heatmap = await fetchTagHeatmap({
+        start_date: toISODate(start),
+        end_date: toISODate(end),
+      });
+      recentTagIds = rankRecentTagIds(heatmap, RECENCY_LIMIT);
+    } catch {
+      recentTagIds = [];
+    }
+  }
+
+  onMount(() => {
+    if ($tags.status !== 'ready' && $tags.status !== 'loading') {
+      void loadTags();
+    }
+    void loadRecentTags();
   });
 
   function toggle(tagId: string) {
@@ -171,6 +218,24 @@
   );
 
   $: atLimit = selected.length >= MAX_TAGS_PER_ENTRY;
+
+  // "Recently used" quick row: recently-used tags first, then any currently
+  // selected tag not already shown, so a selection is never hidden behind the
+  // "All tags" disclosure. Maps IDs to the loaded tags; unknown IDs are dropped.
+  $: tagById = new Map($tagsList.map((tag) => [tag.id, tag]));
+  $: quickTags = (() => {
+    const result: TagResponse[] = [];
+    const seen = new Set<string>();
+    for (const id of [...recentTagIds, ...selected]) {
+      if (seen.has(id)) continue;
+      const tag = tagById.get(id);
+      if (!tag) continue;
+      seen.add(id);
+      result.push(tag);
+    }
+    return result;
+  })();
+  $: hasQuick = quickTags.length > 0;
 </script>
 
 <div class="tag-picker">
@@ -190,32 +255,60 @@
   {:else if $tags.status === 'ready' && visibleCategories.length === 0}
     <p class="tag-status">{$_('tag.empty')}</p>
   {:else if $tags.status === 'ready'}
-    {#each visibleCategories as cat (cat)}
-      <div class="tag-category">
+    {#snippet chip(tag: TagResponse)}
+      {@const active = isSelected(tag.id, selected)}
+      <button
+        type="button"
+        class="tag-chip"
+        class:tag-chip-active={active}
+        aria-pressed={active}
+        disabled={disabled || (!active && atLimit)}
+        on:click={() => toggle(tag.id)}
+        style={tag.color ? `--tag-color: ${tag.color}` : ''}
+      >
+        <span class="tag-name">{localizedCatalogName(tag.slug, tag.is_default, tag.name, $_)}</span>
+      </button>
+    {/snippet}
+
+    {#if hasQuick}
+      <div class="tag-category" data-testid="tag-recent">
         <h3 class="tag-category-label">
-          <CategoryIcon category={cat} />
-          <span>{$_(`tag.category.${cat}`)}</span>
+          <span>{$_('tag.recent_heading')}</span>
         </h3>
         <div class="tag-chips">
-          {#each $tagsByCategory[cat] as tag (tag.id)}
-            {@const active = isSelected(tag.id, selected)}
-            <button
-              type="button"
-              class="tag-chip"
-              class:tag-chip-active={active}
-              aria-pressed={active}
-              disabled={disabled || (!active && atLimit)}
-              on:click={() => toggle(tag.id)}
-              style={tag.color ? `--tag-color: ${tag.color}` : ''}
-            >
-              <span class="tag-name"
-                >{localizedCatalogName(tag.slug, tag.is_default, tag.name, $_)}</span
-              >
-            </button>
+          {#each quickTags as tag (tag.id)}
+            {@render chip(tag)}
           {/each}
         </div>
       </div>
-    {/each}
+      <button
+        type="button"
+        class="tag-all-toggle"
+        aria-expanded={showAllTags}
+        data-testid="tag-all-toggle"
+        on:click={() => (showAllTags = !showAllTags)}
+      >
+        {$_('tag.all_toggle')}
+      </button>
+    {/if}
+
+    {#if !hasQuick || showAllTags}
+      <div class="tag-all" data-testid="tag-all">
+        {#each visibleCategories as cat (cat)}
+          <div class="tag-category">
+            <h3 class="tag-category-label">
+              <CategoryIcon category={cat} />
+              <span>{$_(`tag.category.${cat}`)}</span>
+            </h3>
+            <div class="tag-chips">
+              {#each $tagsByCategory[cat] as tag (tag.id)}
+                {@render chip(tag)}
+              {/each}
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
   {/if}
 
   {#if atLimit}
@@ -371,6 +464,37 @@
     background: color-mix(in srgb, var(--color-warning) 10%, transparent);
     color: var(--color-text);
     font-size: var(--text-sm);
+  }
+
+  .tag-all-toggle {
+    align-self: flex-start;
+    background: transparent;
+    border: none;
+    padding: var(--space-1) 0;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-primary);
+    cursor: pointer;
+    min-height: 44px;
+  }
+
+  .tag-all-toggle::after {
+    content: ' ▾';
+  }
+
+  .tag-all-toggle[aria-expanded='true']::after {
+    content: ' ▴';
+  }
+
+  .tag-all-toggle:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .tag-all {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
   }
 
   .tag-category {

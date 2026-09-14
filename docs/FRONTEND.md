@@ -333,7 +333,13 @@ is not logged yet.
 **Rules:**
 
 - Mood slider is the only required field
-- Tag suggestions sorted by historical usage frequency
+- Tag suggestions sorted by historical usage frequency — implemented in the
+  `TagPicker` as a **"Recently used"** row (#890 Folge 4/4, #898): the tags used
+  in the last 14 days (source: `GET /entries/stats/tags`, ranked by count then
+  recency), capped at the top few, with the full categorised catalogue behind an
+  **"All tags"** disclosure. The recency fetch is non-blocking — a failure or an
+  empty window falls back to the full catalogue so save/offline-autosave is never
+  gated (60-second rule). One selection model, no second tag UI.
 - "+ More" opens time-slot chips, cycle day, full tag sheet, symptoms and notes; photo upload follows in M13
 - The full `TagPicker` supports inline custom tag creation in the entry/edit flow: name, category,
   unique slug, optional icon and colour. A newly-created tag is added to the in-memory catalogue and

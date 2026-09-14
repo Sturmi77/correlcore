@@ -10,6 +10,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **TagPicker „Zuletzt genutzt"-Cloud (#890 Folge 4/4, #898)** — Der TagPicker
+  zeigt jetzt zuerst eine Recency-Zeile der zuletzt genutzten Tags (Fenster: 14
+  Tage, Quelle: vorhandenes `GET /entries/stats/tags`, sortiert nach Häufigkeit
+  dann Aktualität); der vollständige, nach Kategorie gruppierte Katalog liegt
+  dahinter hinter „Alle Tags". Selektierte Tags erscheinen immer in der Zeile
+  (nie hinter der Disclosure versteckt). Das Recency-Laden ist nicht blockierend:
+  Fehler oder leeres Fenster fallen auf den vollen Katalog zurück, Save/Offline-
+  Autosave bleiben ungebremst (60-Sekunden-Regel). Ein Selektionsmodell, kein
+  zweites Tag-UI. `MAX_TAGS_PER_ENTRY` und die Inline-Custom-Tag-Erstellung
+  bleiben unverändert.
 - **Tag „Erfolg" (`achievement`)** — kuratierter Default-Tag (Kategorie „Sonstiges",
   Icon `trophy`), per Migration 047 idempotent geseedet. Ersetzt den einzigen
   Note-Marker ohne parallelen Tag und dient zugleich als positives Recovery-Signal

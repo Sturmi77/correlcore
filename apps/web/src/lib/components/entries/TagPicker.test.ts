@@ -30,12 +30,19 @@ const tagStoreMocks = vi.hoisted(() => {
   };
 });
 
+const statsMocks = vi.hoisted(() => ({ fetchTagHeatmap: vi.fn() }));
+
+vi.mock('$lib/api/stats', () => ({
+  fetchTagHeatmap: statsMocks.fetchTagHeatmap,
+}));
+
 vi.mock('$lib/stores/tags', async () => {
   const { derived, writable } = await import('svelte/store');
   tagStoreMocks.state = writable<{ status: 'ready'; tags: TagResponse[] }>({
     status: 'ready',
     tags: [],
   });
+  const tagsList = derived(tagStoreMocks.state, ($s) => ($s.status === 'ready' ? $s.tags : []));
   const tagsByCategory = derived(tagStoreMocks.state, ($s) => {
     const grouped = {
       sport: [],
@@ -55,6 +62,7 @@ vi.mock('$lib/stores/tags', async () => {
 
   return {
     tags: { subscribe: tagStoreMocks.state.subscribe },
+    tagsList,
     tagsByCategory,
     refreshTags: tagStoreMocks.refreshTags,
     submitTag: tagStoreMocks.submitTag,
@@ -86,6 +94,9 @@ describe('TagPicker', () => {
     tagStoreMocks.state.set({ status: 'ready', tags: [tag()] });
     tagStoreMocks.refreshTags.mockReset();
     tagStoreMocks.submitTag.mockReset();
+    statsMocks.fetchTagHeatmap.mockReset();
+    // Default: no recent usage, so the full catalogue renders directly.
+    statsMocks.fetchTagHeatmap.mockResolvedValue({ start_date: '', end_date: '', tags: [] });
   });
 
   it('renders a curated category icon in the visible category header (#672)', () => {
@@ -174,6 +185,58 @@ describe('TagPicker', () => {
         color: categoryColorForCurrentTheme('sport'),
       });
     });
+  });
+
+  it('shows a "recently used" row first and keeps the full catalogue behind a disclosure', async () => {
+    tagStoreMocks.state.set({
+      status: 'ready',
+      tags: [
+        tag({ id: 'focus-id', slug: 'focus', name: 'Focus', category: 'work' }),
+        tag({ id: 'sport-id', slug: 'sport', name: 'Sport', category: 'sport' }),
+      ],
+    });
+    statsMocks.fetchTagHeatmap.mockResolvedValue({
+      start_date: '2026-05-01',
+      end_date: '2026-05-14',
+      tags: [
+        {
+          tag_id: 'sport-id',
+          slug: 'sport',
+          name: 'Sport',
+          category: 'sport',
+          color: null,
+          days: [{ date: '2026-05-13', count: 3 }],
+        },
+      ],
+    });
+
+    render(TagPicker, { props: { selected: [] } });
+
+    // The recency row appears once the heatmap resolves; the catalogue is hidden.
+    await waitFor(() => {
+      expect(screen.getByTestId('tag-recent')).toBeTruthy();
+    });
+    expect(screen.getByTestId('tag-recent').querySelector('button')?.textContent).toContain(
+      'Sport'
+    );
+    expect(screen.queryByTestId('tag-all')).toBeNull();
+
+    // "All tags" disclosure reveals the categorised catalogue on demand.
+    await fireEvent.click(screen.getByTestId('tag-all-toggle'));
+    expect(screen.getByTestId('tag-all')).toBeTruthy();
+    expect(screen.getByText('tag.category.work')).toBeTruthy();
+  });
+
+  it('falls back to the full catalogue when the recency source fails', async () => {
+    statsMocks.fetchTagHeatmap.mockRejectedValue(new Error('offline'));
+    render(TagPicker, { props: { selected: [] } });
+
+    // No recency row, but tagging still works: the catalogue renders directly.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Focus' })).toBeTruthy();
+    });
+    expect(screen.queryByTestId('tag-recent')).toBeNull();
+    expect(screen.queryByTestId('tag-all-toggle')).toBeNull();
   });
 
   it('explains the selection limit and blocks new choices', () => {
