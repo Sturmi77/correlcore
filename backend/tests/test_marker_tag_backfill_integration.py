@@ -47,6 +47,9 @@ async def _create_user(session: AsyncSession) -> uuid.UUID:
         ),
         {"id": uid, "email": f"marker-895-{uid.hex[:8]}@localhost.dev"},
     )
+    # AsyncSessionLocal() does not auto-commit (only the get_session dependency
+    # does), so persist the user before later sessions reference it via FK.
+    await session.commit()
     return uid
 
 
@@ -239,7 +242,9 @@ async def test_backfill_preserves_assignment_cap() -> None:
             await bind_rls_current_user(session, uid)
             entry = _make_entry(uid, 0)
             session.add(entry)
-            # Fill the entry to exactly the cap with custom tags.
+            # Fill the entry to exactly the cap with custom tags. Flush the tags
+            # (and entry) before the link rows so the entry_tags FK is satisfied.
+            tags = []
             for i in range(MAX_TAGS_PER_ENTRY):
                 tag = Tag()
                 tag.id = uuid.uuid4()
@@ -249,6 +254,9 @@ async def test_backfill_preserves_assignment_cap() -> None:
                 tag.category = TagCategory.OTHER
                 tag.is_default = False
                 session.add(tag)
+                tags.append(tag)
+            await session.flush()
+            for tag in tags:
                 link = EntryTag()
                 link.entry_id = entry.id
                 link.tag_id = tag.id
