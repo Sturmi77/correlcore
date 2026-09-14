@@ -281,3 +281,60 @@ async def test_backfill_preserves_assignment_cap() -> None:
             assert conflict_id not in linked  # marker dropped rather than overflowing
     finally:
         await _cleanup_user(uid)
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_backfill_does_not_create_orphan_tag_on_full_entry() -> None:
+    # A custom marker seen only on an already-full entry must not create a tag
+    # (it would sit unlinked in the user's catalogue). #900 review.
+    if not _integration_enabled():
+        pytest.skip("requires real PostgreSQL (CORRELCORE_RUN_INTEGRATION=1)")
+
+    async with AsyncSessionLocal() as session:
+        uid = await _create_user(session)
+
+    try:
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, uid)
+            entry = _make_entry(uid, 0)
+            session.add(entry)
+            tags = []
+            for i in range(MAX_TAGS_PER_ENTRY):
+                tag = Tag()
+                tag.id = uuid.uuid4()
+                tag.user_id = uid
+                tag.slug = f"cap-{i:02d}"
+                tag.name = f"Cap {i}"
+                tag.category = TagCategory.OTHER
+                tag.is_default = False
+                session.add(tag)
+                tags.append(tag)
+            await session.flush()
+            for tag in tags:
+                link = EntryTag()
+                link.entry_id = entry.id
+                link.tag_id = tag.id
+                link.user_id = uid
+                session.add(link)
+            # A brand-new custom marker that has no existing tag.
+            session.add(_make_marker(uid, entry.id, "brandneu"))
+            await session.commit()
+
+        async with AsyncSessionLocal() as session:
+            summary = await backfill_marker_tags(session, user_id=uid)
+            await session.commit()
+
+        assert summary.custom_tags_created == 0  # no orphan tag created
+        assert summary.skipped_over_cap >= 1
+
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, uid)
+            orphan = (
+                await session.execute(
+                    select(Tag.id).where(Tag.user_id == uid, Tag.slug == "brandneu")
+                )
+            ).scalar_one_or_none()
+            assert orphan is None  # nothing left in the user's catalogue
+    finally:
+        await _cleanup_user(uid)

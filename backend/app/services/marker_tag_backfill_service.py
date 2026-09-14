@@ -35,8 +35,9 @@ Guarantees
 - **Hidden notes excluded.** Markers on ``note_visibility='hidden'`` entries are
   never converted (privacy: the user opted those notes out of display/analysis).
 - **Assignment cap preserved.** An entry is never pushed past
-  ``MAX_TAGS_PER_ENTRY``; excess markers are skipped and counted so the entry
-  form can still round-trip its tag set.
+  ``MAX_TAGS_PER_ENTRY``; excess markers are skipped and counted. A custom tag is
+  created **only** when the entry has a free slot, so a marker seen only on
+  already-full entries never leaves an orphan tag in the user's catalogue.
 - **Idempotent & additive.** Re-runs are a no-op: existing links/tags are reused
   and :func:`assign_tags_to_entry` only writes (and only emits a revision) when
   the set actually changes. Source ``entry_note_markers`` rows are untouched.
@@ -50,8 +51,17 @@ merge onto a single tag: markers are processed in sorted order and the first
 occurrence wins the tag. This is by design (one label system) and stable across
 runs.
 
-The backfill does not commit — the caller (``scripts/backfill_marker_tags.py``)
-owns the transaction so a dry-run can roll back.
+Transactions
+-----------
+Enumeration covers **every** user that still has markers (regardless of active
+state — account disabling is reversible). With ``commit_per_user=True`` (the
+real run) each user is committed before the next is processed, so a
+production-sized backfill never holds one user's ``sync_user_revisions`` lock
+for the whole run, and a mid-user failure (e.g. a concurrent slug insert that
+makes ``create_custom_tag`` roll back) is isolated: that user is rolled back and
+skipped — re-running the idempotent backfill picks them up — while already
+committed users stay converted. ``commit_per_user=False`` keeps a single
+transaction the caller can roll back, for ``--dry-run``.
 """
 
 from __future__ import annotations
@@ -63,17 +73,17 @@ from dataclasses import dataclass, field
 
 from pydantic import ValidationError
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import bind_rls_current_user
 from app.models.entry import Entry, NoteVisibility
 from app.models.entry_note import EntryNoteMarker
 from app.models.tag import Tag, TagCategory
-from app.models.user import User
 from app.schemas.note import PREDEFINED_NOTE_MARKERS
 from app.schemas.tag import MAX_TAGS_PER_ENTRY, TagCreate
 from app.services.tag_service import (
-    TagConflictError,
+    TagError,
     assign_tags_to_entry,
     create_custom_tag,
     list_tags_for_entry,
@@ -116,6 +126,7 @@ class MarkerTagBackfillSummary:
     """Counters describing one backfill run."""
 
     users_processed: int = 0
+    users_failed: int = 0
     entries_updated: int = 0
     predefined_links_added: int = 0
     custom_tags_created: int = 0
@@ -126,17 +137,35 @@ class MarkerTagBackfillSummary:
     skipped_over_cap: int = 0
     user_ids: list[uuid.UUID] = field(default_factory=list)
 
+    def merge(self, other: MarkerTagBackfillSummary) -> None:
+        """Fold a per-user summary into the run total (called after commit)."""
+        self.users_processed += other.users_processed
+        self.entries_updated += other.entries_updated
+        self.predefined_links_added += other.predefined_links_added
+        self.custom_tags_created += other.custom_tags_created
+        self.custom_links_added += other.custom_links_added
+        self.skipped_unsluggable += other.skipped_unsluggable
+        self.skipped_default_clash += other.skipped_default_clash
+        self.skipped_hidden_target += other.skipped_hidden_target
+        self.skipped_over_cap += other.skipped_over_cap
+        self.user_ids.extend(other.user_ids)
+
 
 async def _list_backfill_user_ids(
     db: AsyncSession,
     *,
     user_id: uuid.UUID | None,
 ) -> list[uuid.UUID]:
+    """Every user with retained markers (or just ``user_id`` when given).
+
+    Enumerated from ``entry_note_markers`` rather than the user table: it skips
+    users with nothing to convert, and includes reversibly disabled accounts
+    (``is_active=false``) whose markers must still be converted in case they are
+    re-enabled after this run-once operation.
+    """
     if user_id is not None:
         return [user_id]
-    result = await db.execute(
-        select(User.id).where(User.is_active.is_(True), User.is_verified.is_(True))
-    )
+    result = await db.execute(select(EntryNoteMarker.user_id).distinct())
     return list(result.scalars().all())
 
 
@@ -172,28 +201,34 @@ async def _resolve_predefined_tag_id(
     return tag.id
 
 
-async def _resolve_or_create_custom_tag_id(
+async def _resolve_existing_custom_tag(
     db: AsyncSession,
     *,
     user_id: uuid.UUID,
     marker: str,
-    slug_cache: dict[str, uuid.UUID | None],
+    slug_cache: dict[str, uuid.UUID],
+    skip_slugs: set[str],
     summary: MarkerTagBackfillSummary,
-) -> uuid.UUID | None:
-    """Return the tag id for a custom marker, creating a custom tag if needed.
+) -> tuple[str, uuid.UUID | None, str | None]:
+    """Classify a custom marker **without writing**.
 
-    Reuses the user's own tag with the derived slug; otherwise creates one via
-    the tag service (which records a tag revision). Returns ``None`` when the
-    marker is un-sluggable or its slug would shadow a curated default — both
-    tracked on ``summary``. Never logs the marker text or slug.
+    Returns one of:
+    - ``("ok", tag_id, slug)`` — reuse the user's existing tag;
+    - ``("needs_create", None, slug)`` — no tag yet, creation would be required
+      (the caller decides based on remaining entry capacity so a full entry
+      never spawns an orphan tag);
+    - ``("skip", None, None)`` — un-sluggable, default-slug clash, or hidden own
+      tag (counted on ``summary``; the slug is remembered so re-lookups are cheap
+      and consistent).
     """
     slug = derive_custom_tag_slug(marker)
     if slug is None:
         summary.skipped_unsluggable += 1
-        return None
-
+        return ("skip", None, None)
     if slug in slug_cache:
-        return slug_cache[slug]
+        return ("ok", slug_cache[slug], slug)
+    if slug in skip_slugs:
+        return ("skip", None, None)
 
     own = (
         await db.execute(
@@ -205,13 +240,13 @@ async def _resolve_or_create_custom_tag_id(
         )
     ).scalar_one_or_none()
     if own is not None:
-        # A tag the user later hid is left out of new assignments (respect the
-        # opt-out); it stays cached as None so we skip it consistently.
-        tag_id = None if own.is_hidden else own.id
         if own.is_hidden:
+            # The user hid this tag — leave it out of new assignments.
             summary.skipped_hidden_target += 1
-        slug_cache[slug] = tag_id
-        return tag_id
+            skip_slugs.add(slug)
+            return ("skip", None, None)
+        slug_cache[slug] = own.id
+        return ("ok", own.id, slug)
 
     # No own tag yet — a custom tag must not shadow a curated default slug
     # (mirrors create_custom_tag, which forbids such customs).
@@ -220,34 +255,34 @@ async def _resolve_or_create_custom_tag_id(
     ).scalar_one_or_none()
     if clashes_default is not None:
         summary.skipped_default_clash += 1
-        slug_cache[slug] = None
-        return None
+        skip_slugs.add(slug)
+        return ("skip", None, None)
 
+    return ("needs_create", None, slug)
+
+
+async def _create_custom_tag_id(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    marker: str,
+    slug: str,
+    slug_cache: dict[str, uuid.UUID],
+    summary: MarkerTagBackfillSummary,
+) -> uuid.UUID | None:
+    """Create a custom tag for ``slug`` via the tag service; cache and count it.
+
+    A :class:`TagConflictError` (concurrent same-slug insert) is **not** swallowed
+    — ``create_custom_tag`` rolls the transaction back on the unique violation, so
+    the current user is aborted and skipped by the caller rather than continuing
+    on a rolled-back session with counters that describe lost writes.
+    """
     try:
         payload = TagCreate(slug=slug, name=marker[:64], category=TagCategory.OTHER)
     except ValidationError:
         summary.skipped_unsluggable += 1
-        slug_cache[slug] = None
         return None
-
-    try:
-        created = await create_custom_tag(db, user_id=user_id, payload=payload)
-    except TagConflictError:
-        # Race or a slug we did not classify as a default clash — re-resolve the
-        # user's own tag rather than fabricating a duplicate.
-        existing = (
-            await db.execute(
-                select(Tag).where(
-                    Tag.user_id == user_id,
-                    Tag.slug == slug,
-                    Tag.is_default.is_(False),
-                )
-            )
-        ).scalar_one_or_none()
-        tag_id = existing.id if existing is not None and not existing.is_hidden else None
-        slug_cache[slug] = tag_id
-        return tag_id
-
+    created = await create_custom_tag(db, user_id=user_id, payload=payload)
     summary.custom_tags_created += 1
     slug_cache[slug] = created.id
     return created.id
@@ -257,8 +292,9 @@ async def _backfill_marker_tags_for_user(
     db: AsyncSession,
     *,
     user_id: uuid.UUID,
-    summary: MarkerTagBackfillSummary,
-) -> None:
+) -> MarkerTagBackfillSummary:
+    """Convert one user's markers; returns that user's counters."""
+    summary = MarkerTagBackfillSummary()
     await bind_rls_current_user(db, user_id=user_id)
 
     # Markers on hidden-note entries are excluded: the user opted those notes
@@ -274,21 +310,27 @@ async def _backfill_marker_tags_for_user(
         )
     ).all()
     if not rows:
-        return
+        return summary
 
-    # Group markers per entry; deterministic ordering keeps slug-collision
-    # merges and cap trimming stable across runs.
     markers_by_entry: dict[uuid.UUID, set[str]] = {}
     for entry_id, marker in rows:
         markers_by_entry.setdefault(entry_id, set()).add(marker)
 
-    slug_cache: dict[str, uuid.UUID | None] = {}
-    touched_user = False
+    slug_cache: dict[str, uuid.UUID] = {}
+    skip_slugs: set[str] = set()
+    touched = False
 
+    # Deterministic ordering keeps slug-collision merges and cap trimming stable.
     for entry_id in sorted(markers_by_entry, key=str):
-        # tag id -> "predefined" | "custom" (dedups markers that resolve alike).
-        desired: dict[uuid.UUID, str] = {}
+        current = await list_tags_for_entry(db, user_id=user_id, entry_id=entry_id)
+        current_ids = {tag.id for tag in current}
+        final_ids = set(current_ids)
+        added_predefined = 0
+        added_custom = 0
+
         for marker in sorted(markers_by_entry[entry_id]):
+            at_cap = len(final_ids) >= MAX_TAGS_PER_ENTRY
+
             if marker in _PREDEFINED_TAG_MAP:
                 tag_id = await _resolve_predefined_tag_id(
                     db, user_id=user_id, slug=_PREDEFINED_TAG_MAP[marker]
@@ -296,44 +338,59 @@ async def _backfill_marker_tags_for_user(
                 if tag_id is None:
                     summary.skipped_hidden_target += 1
                     continue
-                desired.setdefault(tag_id, "predefined")
-            elif marker in PREDEFINED_NOTE_MARKERS:
+                if tag_id in final_ids:
+                    continue
+                if at_cap:
+                    summary.skipped_over_cap += 1
+                    continue
+                final_ids.add(tag_id)
+                added_predefined += 1
+                continue
+
+            if marker in PREDEFINED_NOTE_MARKERS:
                 # Generic/overlap predefined markers are intentionally skipped.
                 continue
-            else:
-                tag_id = await _resolve_or_create_custom_tag_id(
-                    db,
-                    user_id=user_id,
-                    marker=marker,
-                    slug_cache=slug_cache,
-                    summary=summary,
-                )
-                if tag_id is None:
-                    continue
-                desired.setdefault(tag_id, "custom")
 
-        if not desired:
-            continue
-
-        current = await list_tags_for_entry(db, user_id=user_id, entry_id=entry_id)
-        current_ids = {tag.id for tag in current}
-
-        # Preserve the assignment cap: keep every current tag, then add new ones
-        # deterministically until the entry hits MAX_TAGS_PER_ENTRY.
-        final_ids = set(current_ids)
-        added_predefined = 0
-        added_custom = 0
-        for tag_id in sorted(desired, key=str):
-            if tag_id in final_ids:
+            status, tag_id, slug = await _resolve_existing_custom_tag(
+                db,
+                user_id=user_id,
+                marker=marker,
+                slug_cache=slug_cache,
+                skip_slugs=skip_slugs,
+                summary=summary,
+            )
+            if status == "skip":
                 continue
-            if len(final_ids) >= MAX_TAGS_PER_ENTRY:
+            if status == "ok":
+                assert tag_id is not None
+                if tag_id in final_ids:
+                    continue
+                if at_cap:
+                    summary.skipped_over_cap += 1
+                    continue
+                final_ids.add(tag_id)
+                added_custom += 1
+                continue
+
+            # needs_create: only spend a slot — and create the tag — when the
+            # entry has room, so a marker seen only on full entries never leaves
+            # an orphan tag behind.
+            if at_cap:
                 summary.skipped_over_cap += 1
                 continue
-            final_ids.add(tag_id)
-            if desired[tag_id] == "predefined":
-                added_predefined += 1
-            else:
-                added_custom += 1
+            assert slug is not None
+            created_id = await _create_custom_tag_id(
+                db,
+                user_id=user_id,
+                marker=marker,
+                slug=slug,
+                slug_cache=slug_cache,
+                summary=summary,
+            )
+            if created_id is None:
+                continue
+            final_ids.add(created_id)
+            added_custom += 1
 
         if final_ids == current_ids:
             continue
@@ -350,29 +407,43 @@ async def _backfill_marker_tags_for_user(
         summary.entries_updated += 1
         summary.predefined_links_added += added_predefined
         summary.custom_links_added += added_custom
-        touched_user = True
+        touched = True
 
-    if touched_user:
-        summary.users_processed += 1
+    if touched:
+        summary.users_processed = 1
         summary.user_ids.append(user_id)
-        logger.info(
-            "marker_tag_backfill.user_done",
-            extra={"user_id": str(user_id)},
-        )
+    return summary
 
 
 async def backfill_marker_tags(
     db: AsyncSession,
     *,
     user_id: uuid.UUID | None = None,
+    commit_per_user: bool = False,
 ) -> MarkerTagBackfillSummary:
     """Convert historical note markers into tag links via the service layer.
 
-    When ``user_id`` is omitted, iterates active verified users and binds RLS
+    Iterates every user with retained markers (or just ``user_id``), binding RLS
     per user so the production ``correlcore_app`` role sees rows under FORCE RLS.
-    Does not commit — the caller owns the transaction (enables ``--dry-run``).
+
+    With ``commit_per_user=True`` each user is committed before the next, bounding
+    lock hold time and the blast radius of a failed user (rolled back and skipped;
+    a re-run picks them up). With ``commit_per_user=False`` (``--dry-run``) nothing
+    is committed and the caller owns the single transaction.
     """
     summary = MarkerTagBackfillSummary()
     for current_user_id in await _list_backfill_user_ids(db, user_id=user_id):
-        await _backfill_marker_tags_for_user(db, user_id=current_user_id, summary=summary)
+        try:
+            user_summary = await _backfill_marker_tags_for_user(db, user_id=current_user_id)
+            if commit_per_user:
+                await db.commit()
+        except (SQLAlchemyError, TagError):
+            await db.rollback()
+            summary.users_failed += 1
+            logger.warning(
+                "marker_tag_backfill.user_failed",
+                extra={"user_id": str(current_user_id)},
+            )
+            continue
+        summary.merge(user_summary)
     return summary

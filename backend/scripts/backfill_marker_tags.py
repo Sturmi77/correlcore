@@ -9,7 +9,10 @@ command converts them into tag links via the service layer (see
 assignment/creation paths so copy-on-write overrides, the per-entry tag cap and
 ``sync_revision_log`` are all handled correctly, and hidden notes are excluded.
 
-Idempotent: re-runs are a no-op. Run once after deploying #890/#893/047.
+Idempotent: re-runs are a no-op. Run once after deploying #890/#893/047,
+preferably during low write traffic: the backfill is additive (it never removes
+tags) but merges each entry's tag set, so running it while a user is editing the
+same entry could re-add a tag they just removed. A re-run afterwards is safe.
 
 Usage::
 
@@ -65,7 +68,11 @@ async def _main() -> int:
 
     async with AsyncSessionLocal() as session:
         try:
-            summary = await backfill_marker_tags(session, user_id=args.user_id)
+            # Real run commits per user (bounds lock hold time and isolates a
+            # failed user); dry-run keeps one transaction we roll back below.
+            summary = await backfill_marker_tags(
+                session, user_id=args.user_id, commit_per_user=not args.dry_run
+            )
             if args.dry_run:
                 await session.rollback()
                 logger.info("Dry run — rolled back all changes")
@@ -78,8 +85,9 @@ async def _main() -> int:
             return 1
 
     logger.info(
-        "Done: users=%s entries=%s predefined_links=%s custom_tags=%s custom_links=%s",
+        "Done: users=%s failed=%s entries=%s predefined_links=%s custom_tags=%s custom_links=%s",
         summary.users_processed,
+        summary.users_failed,
         summary.entries_updated,
         summary.predefined_links_added,
         summary.custom_tags_created,
