@@ -53,7 +53,7 @@ def _parse_args() -> argparse.Namespace:
         "--user-id",
         type=uuid.UUID,
         default=None,
-        help="Limit backfill to a single user (default: all active verified users)",
+        help="Limit backfill to a single user (default: all users with retained markers)",
     )
     parser.add_argument(
         "--dry-run",

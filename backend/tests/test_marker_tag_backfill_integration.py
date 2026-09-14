@@ -26,7 +26,10 @@ from app.models.entry import Entry, EntrySlot, EntrySource, NoteVisibility, Work
 from app.models.entry_note import EntryNoteMarker
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.schemas.tag import MAX_TAGS_PER_ENTRY
-from app.services.marker_tag_backfill_service import backfill_marker_tags
+from app.services.marker_tag_backfill_service import (
+    _list_backfill_user_ids,
+    backfill_marker_tags,
+)
 
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
@@ -37,15 +40,15 @@ def _integration_enabled() -> bool:
     return os.getenv("CORRELCORE_RUN_INTEGRATION") == "1"
 
 
-async def _create_user(session: AsyncSession) -> uuid.UUID:
+async def _create_user(session: AsyncSession, *, active: bool = True) -> uuid.UUID:
     uid = uuid.uuid4()
     await bind_rls_current_user(session, uid)
     await session.execute(
         text(
             "INSERT INTO users (id, email, hashed_password, is_active, is_verified) "
-            "VALUES (:id, :email, 'x', true, true)"
+            "VALUES (:id, :email, 'x', :active, true)"
         ),
-        {"id": uid, "email": f"marker-895-{uid.hex[:8]}@localhost.dev"},
+        {"id": uid, "email": f"marker-895-{uid.hex[:8]}@localhost.dev", "active": active},
     )
     # AsyncSessionLocal() does not auto-commit (only the get_session dependency
     # does), so persist the user before later sessions reference it via FK.
@@ -336,5 +339,44 @@ async def test_backfill_does_not_create_orphan_tag_on_full_entry() -> None:
                 )
             ).scalar_one_or_none()
             assert orphan is None  # nothing left in the user's catalogue
+    finally:
+        await _cleanup_user(uid)
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_backfill_includes_disabled_users_and_commits_per_user() -> None:
+    # Enumeration must cover reversibly disabled accounts, and the real run's
+    # per-user commit path must persist a converted user. #900 review.
+    if not _integration_enabled():
+        pytest.skip("requires real PostgreSQL (CORRELCORE_RUN_INTEGRATION=1)")
+
+    async with AsyncSessionLocal() as session:
+        uid = await _create_user(session, active=False)
+
+    try:
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, uid)
+            entry = _make_entry(uid, 0)
+            session.add(entry)
+            session.add(_make_marker(uid, entry.id, "conflict"))
+            await session.commit()
+            entry_id = entry.id
+
+        # Enumeration (user_id=None) includes the disabled account.
+        async with AsyncSessionLocal() as session:
+            all_ids = await _list_backfill_user_ids(session, user_id=None)
+            assert uid in all_ids
+
+        # commit_per_user=True commits the user; a later session sees the link.
+        async with AsyncSessionLocal() as session:
+            summary = await backfill_marker_tags(session, user_id=uid, commit_per_user=True)
+        assert summary.users_processed == 1
+        assert summary.predefined_links_added == 1
+
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, uid)
+            conflict_id = await _default_tag_id(session, "conflict")
+            assert await _entry_tag_ids(session, entry_id) == {conflict_id}
     finally:
         await _cleanup_user(uid)
