@@ -93,6 +93,9 @@
       const heatmap = await fetchTagHeatmap({
         start_date: toISODate(start),
         end_date: toISODate(end),
+        // Rank by raw usage: a visible tag the user logs but excluded from
+        // analytics should still be a quick shortcut here (#898 review).
+        include_non_analytics: true,
       });
       recentTagIds = rankRecentTagIds(heatmap, RECENCY_LIMIT);
     } catch {

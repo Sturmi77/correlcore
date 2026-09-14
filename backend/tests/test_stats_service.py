@@ -231,6 +231,35 @@ async def test_tag_heatmap_filters_hidden_tags() -> None:
 
 
 @pytest.mark.asyncio
+async def test_tag_heatmap_include_non_analytics_drops_analytics_filter() -> None:
+    """The entry-form recency cloud (#898) ranks by raw usage.
+
+    Default (trends/analytics) keeps ``include_in_analytics``; the recency mode
+    drops it so a visible tag excluded from analytics still surfaces, while the
+    hidden-tag guard stays in both.
+    """
+    user = make_user()
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_row_result([]))
+
+    await get_tag_heatmap(db, user_id=user.id, start_date=date(2026, 5, 1), end_date=date(2026, 5, 9))
+    default_where = str(db.execute.await_args.args[0].whereclause)
+    assert "include_in_analytics" in default_where
+    assert "tags.is_hidden IS false" in default_where
+
+    await get_tag_heatmap(
+        db,
+        user_id=user.id,
+        start_date=date(2026, 5, 1),
+        end_date=date(2026, 5, 9),
+        include_non_analytics=True,
+    )
+    recency_where = str(db.execute.await_args.args[0].whereclause)
+    assert "include_in_analytics" not in recency_where
+    assert "tags.is_hidden IS false" in recency_where
+
+
+@pytest.mark.asyncio
 async def test_symptom_heatmap_groups_counts_and_max_intensity() -> None:
     user = make_user()
     headache = make_symptom(is_default=True, slug="headache", name="Headache")

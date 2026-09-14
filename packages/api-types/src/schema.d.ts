@@ -5536,6 +5536,7 @@ export interface operations {
                 start_date?: string | null;
                 end_date?: string | null;
                 category?: string | null;
+                include_non_analytics?: boolean;
             };
             header?: {
                 authorization?: string | null;

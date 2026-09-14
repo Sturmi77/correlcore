@@ -9186,6 +9186,16 @@
             }
           },
           {
+            "in": "query",
+            "name": "include_non_analytics",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Non Analytics",
+              "type": "boolean"
+            }
+          },
+          {
             "in": "header",
             "name": "authorization",
             "required": false,

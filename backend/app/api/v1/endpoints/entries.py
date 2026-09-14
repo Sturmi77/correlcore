@@ -205,6 +205,7 @@ async def get_tag_heatmap_endpoint(
     start_date: date_type | None = Query(default=None, alias="start_date"),
     end_date: date_type | None = Query(default=None, alias="end_date"),
     category: str | None = Query(default=None),
+    include_non_analytics: bool = Query(default=False),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> TagHeatmapResponse:
@@ -225,6 +226,7 @@ async def get_tag_heatmap_endpoint(
         start_date=start_date,
         end_date=end_date,
         category=parsed_category,
+        include_non_analytics=include_non_analytics,
     )
 
 

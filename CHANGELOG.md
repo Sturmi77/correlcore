@@ -12,8 +12,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 - **TagPicker „Zuletzt genutzt"-Cloud (#890 Folge 4/4, #898)** — Der TagPicker
   zeigt jetzt zuerst eine Recency-Zeile der zuletzt genutzten Tags (Fenster: 14
-  Tage, Quelle: vorhandenes `GET /entries/stats/tags`, sortiert nach Häufigkeit
-  dann Aktualität); der vollständige, nach Kategorie gruppierte Katalog liegt
+  Tage, Quelle: `GET /entries/stats/tags?include_non_analytics=true`, sortiert
+  nach Häufigkeit dann Aktualität — sichtbare Tags erscheinen unabhängig von der
+  Analytik-Einstellung, Trends/Analytik behalten den Analytics-Filter als
+  Default); der vollständige, nach Kategorie gruppierte Katalog liegt
   dahinter hinter „Alle Tags". Selektierte Tags erscheinen immer in der Zeile
   (nie hinter der Disclosure versteckt). Das Recency-Laden ist nicht blockierend:
   Fehler oder leeres Fenster fallen auf den vollen Katalog zurück, Save/Offline-
