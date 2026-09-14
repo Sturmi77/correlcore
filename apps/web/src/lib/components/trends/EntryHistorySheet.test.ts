@@ -36,7 +36,6 @@ describe('EntryHistorySheet', () => {
             entry,
             tags: ['Focus'],
             symptoms: [{ name: 'Headache', intensity: 2 }],
-            markers: [],
           },
         ],
       },
@@ -59,7 +58,6 @@ describe('EntryHistorySheet', () => {
             entry: { ...entry, sleep_minutes: 450, sleep_quality: 4 },
             tags: [],
             symptoms: [],
-            markers: [],
           },
         ],
       },
@@ -73,7 +71,7 @@ describe('EntryHistorySheet', () => {
       props: {
         open: true,
         date: '2026-05-16',
-        details: [{ entry, tags: [], symptoms: [], markers: [] }],
+        details: [{ entry, tags: [], symptoms: [] }],
       },
     });
 

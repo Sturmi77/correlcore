@@ -31,6 +31,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   CRUD-/Suggestions-Endpunkte **bleiben erhalten**, damit die
   read-only-Historienansichten weiterlaufen, bis der UI-/Taxonomie-Rückbau
   (#897) folgt. Note-Signals (Regex auf dem Notiztext) sind unberührt.
+- **Note-Marker-UI + Taxonomie zurückgebaut (#890 Folge 3/4, #897)** — Nach der
+  Migration (#895) und der Analytik-Archivierung (#896) wurde die Marker-Taxonomie
+  als eigenes Konzept aus dem Frontend entfernt: die Komponente
+  `NoteMarkerChips.svelte`, die Konstante `PREDEFINED_NOTE_MARKERS`, das
+  read-only-Rendering in den Historienansichten (`EntryHistorySheet`,
+  `entries/day/[date]`) und die zugehörigen `entry.note_markers.*`-i18n-Keys.
+  Migrierte Marker erscheinen als Tags. Der (nie feuernde) Marker-Zweig der
+  Insight-Evidenz (`NoteInsightEvidence`/`InsightCard`) entfällt; Note-Signal-
+  Evidenz bleibt. Die Tabelle `entry_note_markers` und ihre API bleiben nur, weil
+  das Backend historische `note_markers[]` bei Entry-Reads weiterliefert.
 - **Marker-Analytik archiviert (#890 Folge 2/4, #896)** — Nach der Datenmigration
   (#895) sind die marker-spezifischen Auswertungen redundant zur Tag-Analytik und
   wurden entfernt: der Endpoint `GET /analysis/notes/marker-summary` (samt

@@ -174,23 +174,6 @@
       "analysis_only": "Analysis only",
       "hidden": "Hidden"
     },
-    "note_markers": {
-      "aria": "Note markers",
-      "heading": "Markers",
-      "custom_placeholder": "Custom marker",
-      "add_custom": "Add",
-      "work": "Work",
-      "homeoffice": "Remote",
-      "social": "Social",
-      "movement": "Exercise",
-      "sleep_bad": "Poor sleep",
-      "sleep_good": "Good sleep",
-      "stress": "Stress",
-      "conflict": "Conflict",
-      "symptom": "Symptom",
-      "travel": "Travel",
-      "achievement": "Achievement"
-    },
     "note_signals": {
       "heading": "Derived signals",
       "konflikt": "Conflict",
@@ -1580,7 +1563,6 @@
     "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap.",
     "note_evidence": {
       "soft_prompt": "Add notes to better understand patterns in your data.",
-      "lead_marker": "On days marked \"{marker}\", your mood averaged {delta} points different from your note-day average.",
       "lead_signal": "On days with note signal \"{signal}\", your mood averaged {delta} points different from your note-day average.",
       "meta": "Basis: {days} days · Confidence: {confidence}",
       "examples_prefix": "Examples:",

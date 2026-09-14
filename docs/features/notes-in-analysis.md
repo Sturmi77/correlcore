@@ -216,21 +216,24 @@ UI/taxonomy teardown (#897). Note _signals_ (regex on note text) are unaffected.
 > Tagging now happens
 > in the Tags section above. After the service-layer backfill (#895) and the
 > marker-analytics archival (#896), `marker-summary` and the `NOTE_MARKER_MOOD`
-> insight family are **removed** (see "Deprecation / Archival" below). The
-> `entry_note_markers` table and its CRUD/suggestions API endpoints are still
-> **retained** for the read-only history surfaces until the UI/taxonomy teardown
-> (#897). Note _signals_ (regex on note text) are unaffected. See #890 for the
-> full follow-up plan.
+> insight family were **removed** (see "Deprecation / Archival" above). The
+> marker taxonomy UI was then fully torn down in **#897**: the
+> `NoteMarkerChips.svelte` component, the `PREDEFINED_NOTE_MARKERS` constant, the
+> read-only history rendering (`EntryHistorySheet`, `entries/day/[date]`) and the
+> `entry.note_markers.*` i18n keys are all gone; migrated markers surface as tags.
+> The `entry_note_markers` table and its CRUD/suggestions API endpoints remain
+> only so the backend keeps returning historical `note_markers[]` on entry reads
+> (no UI consumes them). Note _signals_ (regex on note text) are unaffected. See
+> #890 for the full follow-up plan.
 
-### Marker Taxonomy (v1) — no longer surfaced in the composer (see note above)
+### Marker Taxonomy (v1) — removed from the app (see note above)
 
-> Retained for historical/API-created markers only; not offered as capture chips
-> since #890 / #893. `achievement` is instead available as a newly seeded default
-> tag (migration 047 seeds the catalogue entry only; historical markers are not
-> converted until the one-off service-layer backfill runs —
-> `backend/scripts/backfill_marker_tags.py`, #895 — which reuses the tag
-> assignment/creation paths so overrides, the per-entry tag cap, sync revisions
-> and hidden-note exclusion are all handled correctly).
+> Removed as a UI concept in #897 (component, `PREDEFINED_NOTE_MARKERS`, i18n).
+> Not offered as capture chips since #890 / #893, and no longer rendered anywhere.
+> `achievement` is instead available as a curated default tag ("Erfolg", migration
+> 047); historical markers were consolidated onto tags by the one-off
+> service-layer backfill (`backend/scripts/backfill_marker_tags.py`, #895). The
+> table below documents the v1 keys for historical reference only.
 
 | Key           | Display Label (DE / EN)        |
 | ------------- | ------------------------------ |
