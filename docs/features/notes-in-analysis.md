@@ -170,12 +170,12 @@ GET    /analysis/notes/signal-correlation
 > (`work_context`, sliders, SymptomChecker); the one non-duplicate, `achievement`,
 > is now a curated default **tag** ("Erfolg"), newly seeded by migration 047 —
 > which inserts the catalogue entry only and does **not** convert existing
-> `entry_note_markers` rows (that conversion is the data migration noted below).
+> `entry_note_markers` rows (that conversion is the one-off backfill noted below).
 > Tagging now happens
 > in the Tags section above. The `entry_note_markers` table, its API endpoints,
 > `marker-summary`, and the `NOTE_MARKER_MOOD` insight family are **retained** so
 > read-only history surfaces and analytics keep working on existing/API-created
-> markers until the data migration (custom marker → custom tag) lands. Note
+> markers until the backfill (custom marker → custom tag) runs. Note
 > _signals_ (regex on note text) are unaffected. See #890 for the follow-up plan.
 
 ### Marker Taxonomy (v1) — no longer surfaced in the composer (see note above)
@@ -183,7 +183,10 @@ GET    /analysis/notes/signal-correlation
 > Retained for historical/API-created markers only; not offered as capture chips
 > since #890 / #893. `achievement` is instead available as a newly seeded default
 > tag (migration 047 seeds the catalogue entry only; historical markers are not
-> converted until the data migration lands).
+> converted until the one-off service-layer backfill runs —
+> `backend/scripts/backfill_marker_tags.py`, #895 — which reuses the tag
+> assignment/creation paths so overrides, the per-entry tag cap, sync revisions
+> and hidden-note exclusion are all handled correctly).
 
 | Key           | Display Label (DE / EN)        |
 | ------------- | ------------------------------ |
