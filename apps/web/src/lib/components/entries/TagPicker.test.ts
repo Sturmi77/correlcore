@@ -239,6 +239,22 @@ describe('TagPicker', () => {
     expect(screen.queryByTestId('tag-all-toggle')).toBeNull();
   });
 
+  it('keeps the catalogue visible with a selection when recency is empty (#902 review)', async () => {
+    // Empty recency + a pre-selected tag (edit flow / heatmap failure with a
+    // selection) must NOT collapse the catalogue: the disclosure is gated on
+    // real recency data, not on selected-tag padding.
+    statsMocks.fetchTagHeatmap.mockResolvedValue({ start_date: '', end_date: '', tags: [] });
+    render(TagPicker, { props: { selected: ['tag-1'] } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tag-all')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('tag-recent')).toBeNull();
+    expect(screen.queryByTestId('tag-all-toggle')).toBeNull();
+    // The selected tag stays visible (and pressed) in the catalogue.
+    expect(screen.getByRole('button', { name: 'Focus' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('explains the selection limit and blocks new choices', () => {
     const selected = Array.from({ length: MAX_TAGS_PER_ENTRY }, (_, index) => `selected-${index}`);
     render(TagPicker, { props: { selected } });

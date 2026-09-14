@@ -219,14 +219,30 @@
 
   $: atLimit = selected.length >= MAX_TAGS_PER_ENTRY;
 
-  // "Recently used" quick row: recently-used tags first, then any currently
-  // selected tag not already shown, so a selection is never hidden behind the
-  // "All tags" disclosure. Maps IDs to the loaded tags; unknown IDs are dropped.
   $: tagById = new Map($tagsList.map((tag) => [tag.id, tag]));
+
+  // Recency drives the disclosure — NOT the current selection. Only real recency
+  // data (mapped to still-existing tags) may collapse the catalogue behind
+  // "All tags"; otherwise the first chip click on a new/sparse account, or a
+  // heatmap failure with tags already selected, would hide the whole catalogue.
+  $: recentTags = recentTagIds
+    .map((id) => tagById.get(id))
+    .filter((tag): tag is TagResponse => Boolean(tag));
+  $: hasRecency = recentTags.length > 0;
+
+  // When a recency row is shown, also surface currently-selected tags in it so a
+  // selection is never hidden behind the collapsed catalogue. With no recency the
+  // full catalogue is shown directly (selected tags are visible there already).
   $: quickTags = (() => {
+    if (!hasRecency) return [];
     const result: TagResponse[] = [];
     const seen = new Set<string>();
-    for (const id of [...recentTagIds, ...selected]) {
+    for (const tag of recentTags) {
+      if (seen.has(tag.id)) continue;
+      seen.add(tag.id);
+      result.push(tag);
+    }
+    for (const id of selected) {
       if (seen.has(id)) continue;
       const tag = tagById.get(id);
       if (!tag) continue;
@@ -235,7 +251,6 @@
     }
     return result;
   })();
-  $: hasQuick = quickTags.length > 0;
 </script>
 
 <div class="tag-picker">
@@ -270,7 +285,7 @@
       </button>
     {/snippet}
 
-    {#if hasQuick}
+    {#if hasRecency}
       <div class="tag-category" data-testid="tag-recent">
         <h3 class="tag-category-label">
           <span>{$_('tag.recent_heading')}</span>
@@ -292,7 +307,7 @@
       </button>
     {/if}
 
-    {#if !hasQuick || showAllTags}
+    {#if !hasRecency || showAllTags}
       <div class="tag-all" data-testid="tag-all">
         {#each visibleCategories as cat (cat)}
           <div class="tag-category">
