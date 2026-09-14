@@ -69,10 +69,7 @@
   }
 
   $: noteEvidence = payloadRecord(insight?.payload?.evidence);
-  $: hasNoteEvidence = Boolean(
-    noteEvidence &&
-    (typeof noteEvidence.marker === 'string' || typeof noteEvidence.signal === 'string')
-  );
+  $: hasNoteEvidence = Boolean(noteEvidence && typeof noteEvidence.signal === 'string');
 
   let expanded = false;
 
@@ -387,7 +384,6 @@
 
     {#if hasNoteEvidence && noteEvidence}
       <NoteInsightEvidence
-        marker={typeof noteEvidence.marker === 'string' ? noteEvidence.marker : null}
         signal={typeof noteEvidence.signal === 'string' ? noteEvidence.signal : null}
         sampleSize={typeof noteEvidence.sample_size === 'number'
           ? noteEvidence.sample_size

@@ -4,7 +4,6 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     admin,
-    analysis,
     auth,
     dashboard,
     dev,
@@ -79,9 +78,6 @@ api_router.include_router(
     prefix="/admin",
     tags=["admin"],
 )
-
-# Notes in analysis (M3 retroactive)
-api_router.include_router(analysis.router, prefix="/analysis", tags=["analysis"])
 
 # Dashboard summary (M3 insight confidence scale)
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])

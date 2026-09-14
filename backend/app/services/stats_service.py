@@ -41,7 +41,11 @@ from app.services.symptom_analytics import (
     TagRef,
     heatmap_symptom_tag_associations,
 )
-from app.services.tag_service import analytics_tag_predicate, canonicalize_tags_by_slug
+from app.services.tag_service import (
+    active_tag_predicate,
+    analytics_tag_predicate,
+    canonicalize_tags_by_slug,
+)
 
 
 def _today() -> date_type:
@@ -144,10 +148,20 @@ async def get_tag_heatmap(
     start_date: date_type | None = None,
     end_date: date_type | None = None,
     category: TagCategory | None = None,
+    include_non_analytics: bool = False,
 ) -> TagHeatmapResponse:
     end_date = end_date or _today()
     start_date = start_date or (end_date - timedelta(days=364))
 
+    # Trends/analytics use ``analytics_tag_predicate`` (respects
+    # ``include_in_analytics``). The entry-form "recently used" cloud (#898)
+    # passes ``include_non_analytics`` to rank by raw usage instead: a visible
+    # tag the user logs but excluded from analytics should still be a quick
+    # shortcut. ``active_tag_predicate`` keeps hidden/hidden-override shadowing
+    # but drops the analytics filter.
+    tag_predicate = (
+        active_tag_predicate(user_id) if include_non_analytics else analytics_tag_predicate(user_id)
+    )
     stmt = (
         select(Tag, Entry.id, Entry.entry_date)
         .join(EntryTag, EntryTag.tag_id == Tag.id)
@@ -157,7 +171,7 @@ async def get_tag_heatmap(
             Entry.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
-            analytics_tag_predicate(user_id),
+            tag_predicate,
         )
         .order_by(Tag.category.asc(), Tag.slug.asc(), Entry.entry_date.asc())
     )

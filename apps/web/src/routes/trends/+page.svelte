@@ -319,7 +319,6 @@
                 name: symptom.name,
                 intensity: symptom.days.find((day) => day.date === date)?.max_intensity ?? 1,
               })),
-            markers: entry.note_markers ?? [],
           }));
         return;
       }
@@ -340,7 +339,6 @@
               name: symptomNames.get(symptom.symptom_id) ?? symptom.symptom_id,
               intensity: symptom.intensity,
             })),
-            markers: entry.note_markers ?? [],
           };
         })
       );

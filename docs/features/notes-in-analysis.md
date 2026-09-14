@@ -144,15 +144,57 @@ POST   /admin/entries/{entry_id}/note-signals/reprocess   // operator only
 
 ### Analysis Endpoints
 
-```
-GET    /analysis/notes/marker-summary
-       query: { from: date, to: date, markers?: string[] }
-       response: { marker: string, count: number, avg_mood: number, entries: uuid[] }[]
+> **Removed in #890 Folge 2/4 (#896):** `GET /analysis/notes/marker-summary`
+> (the whole `/analysis` router) was deleted. It had no frontend consumer and
+> its per-marker mood aggregate is now covered by tag analytics after the
+> marker → tag consolidation (Option 4). See "Deprecation / Archival" below.
 
+```
 GET    /analysis/notes/signal-correlation
        query: { signal: string, metric: "mood"|"energy"|"symptom", min_entries?: number }
        response: { signal, metric, correlation, sample_size, example_entry_ids[] }
 ```
+
+---
+
+## Deprecation / Archival — Marker Analytics (#890 Folge 2/4, #896)
+
+**Decision: (b) archive** the marker-specific analytics rather than (a) re-home it
+onto the tag pipeline.
+
+**Context.** #890 (Option 4) consolidated note markers into the tag system; the
+service-layer backfill (#895) moved the convertible markers/custom markers onto
+tags. That left two marker-only analytics paths with no remaining reason to
+exist:
+
+- `NOTE_MARKER_MOOD` insight family (`note_marker_insights.py`) — gated at
+  `MIN_MARKER_INSIGHT_SAMPLE = 20` per marker, so in practice it never fired, and
+  no chip path feeds it any more.
+- `GET /analysis/notes/marker-summary` (+ `aggregate_marker_summary`) — had **no**
+  frontend consumer; `fetchMarkerSummary` was only referenced by its own
+  definition.
+
+**Why (b), not (a).** Tag analytics (`subject_type="tag"` correlation and tag
+co-occurrence, incl. symptom↔tag) already covers `achievement`/`conflict`/`social`
+now that they are tags, and the Home work-context heatmap covers the overlap keys
+better (mood **+ energy + stress**, trend, low gate). Re-homing the marker path
+would rebuild a weaker copy of signals the tag pipeline already produces.
+
+**What changed.**
+
+- Removed the `NOTE_MARKER_MOOD` generation path from `insight_engine.py`
+  (`_load_entries_with_markers` + `build_marker_mood_insights`) and deleted
+  `note_marker_insights.py`.
+- Removed `GET /analysis/notes/marker-summary` (the whole `/analysis` router),
+  `aggregate_marker_summary`, and the `MarkerSummary*` schemas; cleaned
+  `noteMarkers.ts` of `fetchMarkerSummary`.
+- `InsightType.NOTE_MARKER_MOOD` is **kept** as a deprecated enum value only so
+  any historical `insights` rows written before archival still deserialise on
+  read. No new rows of this type are produced.
+
+**Out of scope (later follow-ups).** The `entry_note_markers` table and its
+CRUD/suggestions endpoints stay for the read-only history surfaces until the
+UI/taxonomy teardown (#897). Note _signals_ (regex on note text) are unaffected.
 
 ---
 
@@ -172,21 +214,26 @@ GET    /analysis/notes/signal-correlation
 > which inserts the catalogue entry only and does **not** convert existing
 > `entry_note_markers` rows (that conversion is the one-off backfill noted below).
 > Tagging now happens
-> in the Tags section above. The `entry_note_markers` table, its API endpoints,
-> `marker-summary`, and the `NOTE_MARKER_MOOD` insight family are **retained** so
-> read-only history surfaces and analytics keep working on existing/API-created
-> markers until the backfill (custom marker → custom tag) runs. Note
-> _signals_ (regex on note text) are unaffected. See #890 for the follow-up plan.
+> in the Tags section above. After the service-layer backfill (#895) and the
+> marker-analytics archival (#896), `marker-summary` and the `NOTE_MARKER_MOOD`
+> insight family were **removed** (see "Deprecation / Archival" above). The
+> marker taxonomy UI was then fully torn down in **#897**: the
+> `NoteMarkerChips.svelte` component, the `PREDEFINED_NOTE_MARKERS` constant, the
+> read-only history rendering (`EntryHistorySheet`, `entries/day/[date]`) and the
+> `entry.note_markers.*` i18n keys are all gone; migrated markers surface as tags.
+> The `entry_note_markers` table and its CRUD/suggestions API endpoints remain
+> only so the backend keeps returning historical `note_markers[]` on entry reads
+> (no UI consumes them). Note _signals_ (regex on note text) are unaffected. See
+> #890 for the full follow-up plan.
 
-### Marker Taxonomy (v1) — no longer surfaced in the composer (see note above)
+### Marker Taxonomy (v1) — removed from the app (see note above)
 
-> Retained for historical/API-created markers only; not offered as capture chips
-> since #890 / #893. `achievement` is instead available as a newly seeded default
-> tag (migration 047 seeds the catalogue entry only; historical markers are not
-> converted until the one-off service-layer backfill runs —
-> `backend/scripts/backfill_marker_tags.py`, #895 — which reuses the tag
-> assignment/creation paths so overrides, the per-entry tag cap, sync revisions
-> and hidden-note exclusion are all handled correctly).
+> Removed as a UI concept in #897 (component, `PREDEFINED_NOTE_MARKERS`, i18n).
+> Not offered as capture chips since #890 / #893, and no longer rendered anywhere.
+> `achievement` is instead available as a curated default tag ("Erfolg", migration
+> 047); historical markers were consolidated onto tags by the one-off
+> service-layer backfill (`backend/scripts/backfill_marker_tags.py`, #895). The
+> table below documents the v1 keys for historical reference only.
 
 | Key           | Display Label (DE / EN)        |
 | ------------- | ------------------------------ |
@@ -319,9 +366,9 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 
 - [x] ~~Entry Composer shows marker chip row with predefined markers.~~ Removed in #890 / #893 (Option 4); tagging moved to the Tags section, `achievement` newly seeded as a default tag.
 - [x] Selected markers saved as `entry_note_markers` with `source: 'user'` (retained for history/API; no longer written from the composer).
-- [x] `GET /analysis/notes/marker-summary` returns correct avg_mood per marker.
+- [x] ~~`GET /analysis/notes/marker-summary` returns correct avg_mood per marker.~~ Archived in #890 Folge 2/4 (#896); endpoint removed, tag analytics covers the signal.
 - [ ] Suggestions endpoint returns last 20 user-defined markers.
-- [x] Marker-based insights / summary path wired (sample thresholds per engine).
+- [x] ~~Marker-based insights / summary path wired (sample thresholds per engine).~~ Archived in #890 Folge 2/4 (#896); `NOTE_MARKER_MOOD` no longer generated.
 
 ### M4
 

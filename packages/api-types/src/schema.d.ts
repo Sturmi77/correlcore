@@ -93,23 +93,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/analysis/notes/marker-summary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Aggregate mood averages per note marker */
-        get: operations["marker_summary_endpoint_api_v1_analysis_notes_marker_summary_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/auth/forgot-password": {
         parameters: {
             query?: never;
@@ -3009,32 +2992,6 @@ export interface components {
              */
             remember_me: boolean;
         };
-        /** MarkerSummaryItem */
-        MarkerSummaryItem: {
-            /** Avg Mood */
-            avg_mood: number;
-            /** Count */
-            count: number;
-            /** Entries */
-            entries?: string[];
-            /** Marker */
-            marker: string;
-        };
-        /** MarkerSummaryResponse */
-        MarkerSummaryResponse: {
-            /**
-             * From
-             * Format: date
-             */
-            from: string;
-            /** Items */
-            items?: components["schemas"]["MarkerSummaryItem"][];
-            /**
-             * To
-             * Format: date
-             */
-            to: string;
-        };
         /** MessageResponse */
         MessageResponse: {
             /** Message */
@@ -4543,43 +4500,6 @@ export interface operations {
             };
         };
     };
-    marker_summary_endpoint_api_v1_analysis_notes_marker_summary_get: {
-        parameters: {
-            query: {
-                from: string;
-                to: string;
-                markers?: string[] | null;
-            };
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: {
-                access_token?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MarkerSummaryResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     forgot_password_api_v1_auth_forgot_password_post: {
         parameters: {
             query?: never;
@@ -5616,6 +5536,7 @@ export interface operations {
                 start_date?: string | null;
                 end_date?: string | null;
                 category?: string | null;
+                include_non_analytics?: boolean;
             };
             header?: {
                 authorization?: string | null;

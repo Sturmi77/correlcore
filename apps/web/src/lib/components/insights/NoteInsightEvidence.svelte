@@ -3,7 +3,6 @@
   import { _, locale } from 'svelte-i18n';
   import { signalConfidenceBand } from '$lib/api/noteSignals';
 
-  export let marker: string | null = null;
   export let signal: string | null = null;
   export let sampleSize = 0;
   export let confidence: number | null = null;
@@ -14,7 +13,7 @@
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string } }>();
 
-  $: hasEvidence = Boolean((marker || signal) && sampleSize > 0);
+  $: hasEvidence = Boolean(signal && sampleSize > 0);
   $: confidenceBand = confidence === null ? null : signalConfidenceBand(confidence);
   $: confidenceLabel =
     confidenceBand === null ? '' : $_(`insights.note_evidence.confidence_${confidenceBand}`);
@@ -30,9 +29,6 @@
   }
 
   function subjectLabel(): string {
-    if (marker) {
-      return $_(`entry.note_markers.${marker}`, { default: marker });
-    }
     if (signal) {
       return $_(`entry.note_signals.${signal}`, { default: signal });
     }
@@ -50,21 +46,12 @@
 {#if hasEvidence}
   <div class="note-evidence" data-testid="insight-note-evidence">
     <p class="note-evidence__lead">
-      {#if marker}
-        {$_('insights.note_evidence.lead_marker', {
-          values: {
-            marker: subjectLabel(),
-            delta: avgDelta ?? 0,
-          },
-        })}
-      {:else}
-        {$_('insights.note_evidence.lead_signal', {
-          values: {
-            signal: subjectLabel(),
-            delta: avgDelta ?? 0,
-          },
-        })}
-      {/if}
+      {$_('insights.note_evidence.lead_signal', {
+        values: {
+          signal: subjectLabel(),
+          delta: avgDelta ?? 0,
+        },
+      })}
     </p>
     <p class="note-evidence__meta">
       {$_('insights.note_evidence.meta', {

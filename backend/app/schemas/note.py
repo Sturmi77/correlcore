@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date as date_type
 from datetime import datetime
 from enum import StrEnum
 
@@ -62,21 +61,6 @@ class EntryNoteSignalResponse(BaseModel):
     source_span: str | None = None
     extractor_v: str
     created_at: datetime
-
-
-class MarkerSummaryItem(BaseModel):
-    marker: str
-    count: int = Field(ge=0)
-    avg_mood: float
-    entries: list[uuid.UUID] = Field(default_factory=list)
-
-
-class MarkerSummaryResponse(BaseModel):
-    items: list[MarkerSummaryItem] = Field(default_factory=list)
-    from_date: date_type = Field(alias="from")
-    to_date: date_type = Field(alias="to")
-
-    model_config = ConfigDict(populate_by_name=True)
 
 
 class InsightEvidenceMetadata(BaseModel):

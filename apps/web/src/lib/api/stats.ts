@@ -124,12 +124,15 @@ export async function fetchTagHeatmap(
     start_date?: string;
     end_date?: string;
     category?: TagCategory;
+    /** Include visible tags with `include_in_analytics=false` (entry-form recency cloud, #898). */
+    include_non_analytics?: boolean;
   } = {}
 ): Promise<TagHeatmapResponse> {
   const params = new URLSearchParams();
   if (query.start_date) params.set('start_date', query.start_date);
   if (query.end_date) params.set('end_date', query.end_date);
   if (query.category) params.set('category', query.category);
+  if (query.include_non_analytics) params.set('include_non_analytics', 'true');
   const qs = params.toString();
   return api.get<TagHeatmapResponse>(qs ? `/entries/stats/tags?${qs}` : '/entries/stats/tags');
 }

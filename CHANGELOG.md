@@ -10,6 +10,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **TagPicker „Zuletzt genutzt"-Cloud (#890 Folge 4/4, #898)** — Der TagPicker
+  zeigt jetzt zuerst eine Recency-Zeile der zuletzt genutzten Tags (Fenster: 14
+  Tage, Quelle: `GET /entries/stats/tags?include_non_analytics=true`, sortiert
+  nach Häufigkeit dann Aktualität — sichtbare Tags erscheinen unabhängig von der
+  Analytik-Einstellung, Trends/Analytik behalten den Analytics-Filter als
+  Default); der vollständige, nach Kategorie gruppierte Katalog liegt
+  dahinter hinter „Alle Tags". Selektierte Tags erscheinen immer in der Zeile
+  (nie hinter der Disclosure versteckt). Das Recency-Laden ist nicht blockierend:
+  Fehler oder leeres Fenster fallen auf den vollen Katalog zurück, Save/Offline-
+  Autosave bleiben ungebremst (60-Sekunden-Regel). Ein Selektionsmodell, kein
+  zweites Tag-UI. `MAX_TAGS_PER_ENTRY` und die Inline-Custom-Tag-Erstellung
+  bleiben unverändert.
 - **Tag „Erfolg" (`achievement`)** — kuratierter Default-Tag (Kategorie „Sonstiges",
   Icon `trophy`), per Migration 047 idempotent geseedet. Ersetzt den einzigen
   Note-Marker ohne parallelen Tag und dient zugleich als positives Recovery-Signal
@@ -27,12 +39,30 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 ### Removed
 
 - **Marker-Chip-Zeile im Entry Sheet** — Die Chips unter dem Notizfeld wurden aus
-  dem Composer entfernt (#890, #893). `entry_note_markers`, die zugehörigen
-  API-Endpunkte, `marker-summary` und die `NOTE_MARKER_MOOD`-Insights **bleiben
-  erhalten**, damit die read-only-Historienansichten und Analytics auf
-  bestehenden/über die API angelegten Markern weiterlaufen, bis die
-  Datenmigration (Custom-Marker → Custom-Tag) folgt. Note-Signals (Regex auf dem
-  Notiztext) sind unberührt.
+  dem Composer entfernt (#890, #893). `entry_note_markers` und die zugehörigen
+  CRUD-/Suggestions-Endpunkte **bleiben erhalten**, damit die
+  read-only-Historienansichten weiterlaufen, bis der UI-/Taxonomie-Rückbau
+  (#897) folgt. Note-Signals (Regex auf dem Notiztext) sind unberührt.
+- **Note-Marker-UI + Taxonomie zurückgebaut (#890 Folge 3/4, #897)** — Nach der
+  Migration (#895) und der Analytik-Archivierung (#896) wurde die Marker-Taxonomie
+  als eigenes Konzept aus dem Frontend entfernt: die Komponente
+  `NoteMarkerChips.svelte`, die Konstante `PREDEFINED_NOTE_MARKERS`, das
+  read-only-Rendering in den Historienansichten (`EntryHistorySheet`,
+  `entries/day/[date]`) und die zugehörigen `entry.note_markers.*`-i18n-Keys.
+  Migrierte Marker erscheinen als Tags. Der (nie feuernde) Marker-Zweig der
+  Insight-Evidenz (`NoteInsightEvidence`/`InsightCard`) entfällt; Note-Signal-
+  Evidenz bleibt. Die Tabelle `entry_note_markers` und ihre API bleiben nur, weil
+  das Backend historische `note_markers[]` bei Entry-Reads weiterliefert.
+- **Marker-Analytik archiviert (#890 Folge 2/4, #896)** — Nach der Datenmigration
+  (#895) sind die marker-spezifischen Auswertungen redundant zur Tag-Analytik und
+  wurden entfernt: der Endpoint `GET /analysis/notes/marker-summary` (samt
+  `/analysis`-Router und `aggregate_marker_summary`), die `MarkerSummary`-Schemas,
+  das frontend-seitige `fetchMarkerSummary` sowie der `NOTE_MARKER_MOOD`-
+  Insight-Pfad (`note_marker_insights.py`). Der `marker-summary`-Endpoint hatte
+  keinen Consumer; `achievement`/`conflict`/`social` sind als Tags über die
+  bestehende Tag-Korrelation/Co-occurrence abgedeckt. Der Enum-Wert
+  `InsightType.NOTE_MARKER_MOOD` bleibt nur zur Rücklese-Kompatibilität für evtl.
+  vorhandene historische `insights`-Zeilen erhalten.
 
 ### Fixed
 
