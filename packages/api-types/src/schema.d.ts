@@ -3734,6 +3734,11 @@ export interface components {
              * @default true
              */
             include_in_analytics: boolean;
+            /**
+             * Is Pinned
+             * @default false
+             */
+            is_pinned: boolean;
             /** Name */
             name: string;
             /** Slug */
@@ -3814,6 +3819,8 @@ export interface components {
             is_default: boolean;
             /** Is Hidden */
             is_hidden: boolean;
+            /** Is Pinned */
+            is_pinned: boolean;
             /** Name */
             name: string;
             /** Slug */
@@ -3872,6 +3879,8 @@ export interface components {
             include_in_analytics?: boolean | null;
             /** Is Hidden */
             is_hidden?: boolean | null;
+            /** Is Pinned */
+            is_pinned?: boolean | null;
             /** Name */
             name?: string | null;
             /** Target Frequency */

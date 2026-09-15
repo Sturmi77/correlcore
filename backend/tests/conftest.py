@@ -165,6 +165,7 @@ def make_tag(
     is_default: bool = False,
     is_hidden: bool = False,
     include_in_analytics: bool = True,
+    is_pinned: bool = False,
     habit_type: str = "none",
     target_frequency: int | None = None,
 ) -> Tag:
@@ -184,6 +185,7 @@ def make_tag(
     t.is_default = is_default
     t.is_hidden = is_hidden
     t.include_in_analytics = include_in_analytics
+    t.is_pinned = is_pinned
     t.habit_type = habit_type
     t.target_frequency = target_frequency
     t.created_at = datetime.now(UTC)
