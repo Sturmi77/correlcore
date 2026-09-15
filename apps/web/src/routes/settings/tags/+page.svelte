@@ -216,6 +216,20 @@
     }
   }
 
+  async function togglePinned(tag: TagResponse): Promise<void> {
+    savingId = tag.id;
+    error = '';
+    try {
+      await updateTag(tag.id, { is_pinned: !tag.is_pinned });
+      await load();
+      await refreshTags();
+    } catch (err) {
+      error = err instanceof Error ? err.message : $_('settings.tags.error_save');
+    } finally {
+      savingId = null;
+    }
+  }
+
   async function resetOverride(tag: TagResponse): Promise<void> {
     savingId = tag.id;
     error = '';
@@ -445,6 +459,7 @@
                       {!tag.include_in_analytics
                         ? ` · ${$_('settings.tags.analytics_excluded')}`
                         : ''}
+                      {tag.is_pinned ? ` · ${$_('settings.tags.pinned')}` : ''}
                     </span>
                   </div>
                 </div>
@@ -552,6 +567,16 @@
                     on:click={() => save(tag)}
                   >
                     {savingId === tag.id ? $_('settings.tags.saving') : $_('settings.tags.save')}
+                  </button>
+                  <button
+                    class="btn btn-sm btn--secondary"
+                    type="button"
+                    disabled={savingId !== null}
+                    aria-pressed={tag.is_pinned}
+                    data-testid="tag-settings-pin"
+                    on:click={() => togglePinned(tag)}
+                  >
+                    {tag.is_pinned ? $_('settings.tags.unpin') : $_('settings.tags.pin')}
                   </button>
                   <button
                     class="btn btn-sm btn--secondary"

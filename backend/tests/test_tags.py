@@ -273,6 +273,56 @@ async def test_update_custom_tag_can_exclude_from_analytics() -> None:
 
 
 @pytest.mark.asyncio
+async def test_update_custom_tag_can_pin() -> None:
+    user = make_user()
+    tag = make_tag(user, slug="travel", name="Travel", is_pinned=False)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result(tag))
+    db.flush = AsyncMock()
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=tag.id,
+        payload=TagUpdate(is_pinned=True),
+    )
+
+    assert out.is_pinned is True
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_default_tag_pins_via_override() -> None:
+    user = make_user()
+    default = make_tag(slug="sport", name="Sport", is_default=True, is_pinned=False)
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(default),
+            _scalar_result(None),
+            _all_result([]),  # no entry_tags linked to the default
+            _rowcount_result(0),
+            _rowcount_result(0),
+        ]
+    )
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=default.id,
+        payload=TagUpdate(is_pinned=True),
+    )
+
+    assert out.is_pinned is True
+    assert out.is_default is False
+    assert out.user_id == user.id
+    db.add.assert_called_once()
+    assert db.flush.await_count == 2
+
+
+@pytest.mark.asyncio
 async def test_update_default_tag_copies_include_in_analytics_into_override() -> None:
     user = make_user()
     default = make_tag(slug="sport", name="Sport", is_default=True, include_in_analytics=True)

@@ -339,7 +339,10 @@ is not logged yet.
   ranked by count then recency), capped at the top few, with the full categorised
   catalogue behind an **"All tags"** disclosure. The recency mode ranks by raw
   usage — a visible tag the user logs but excluded from analytics still surfaces
-  here (trends/analytics keep the analytics filter by default). The recency fetch is non-blocking — a failure or an
+  here (trends/analytics keep the analytics filter by default). **Pinned tags**
+  (`Tag.is_pinned`, set in Settings → Tags, #903 A) are surfaced first in that
+  row regardless of the recency window, so a rare-but-important tag never falls
+  off; a pin alone is enough to fold the catalogue behind "All tags". The recency fetch is non-blocking — a failure or an
   empty window falls back to the full catalogue so save/offline-autosave is never
   gated (60-second rule). One selection model, no second tag UI.
 - "+ More" opens time-slot chips, cycle day, full tag sheet, symptoms and notes; photo upload follows in M13

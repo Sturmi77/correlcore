@@ -150,6 +150,16 @@ class Tag(Base):
         server_default="true",
         default=True,
     )
+    # #903 A: user-pinned favourite. Pinned tags are surfaced first in the
+    # entry-form "recently used" cloud regardless of the recency window, so a
+    # rare-but-important tag (travel, sickness) never falls off. Follows the
+    # copy-on-write override model like ``is_hidden`` / ``include_in_analytics``.
+    is_pinned: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default="false",
+        default=False,
+    )
     habit_type: Mapped[str] = mapped_column(
         String(8),
         nullable=False,

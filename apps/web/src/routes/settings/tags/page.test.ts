@@ -51,6 +51,7 @@ function makeTag(overrides: Partial<TagResponse> = {}): TagResponse {
     is_default: false,
     is_hidden: false,
     include_in_analytics: true,
+    is_pinned: false,
     habit_type: 'none',
     target_frequency: null,
     created_at: '2026-05-16T10:00:00Z',

@@ -10,6 +10,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Angepinnte Favoriten im TagPicker (#903 A)** — Tags lassen sich in der
+  Tag-Verwaltung (Einstellungen → Tags) anpinnen (`Tag.is_pinned`, Copy-on-write-
+  Override wie `is_hidden`/`include_in_analytics`). Angepinnte Tags erscheinen in
+  der Quick-Zeile des Eintrags-Formulars **immer zuerst** — unabhängig vom
+  14-Tage-Recency-Fenster —, damit seltene, aber wichtige Tags (z. B. Reise,
+  Krankheit) nicht herausfallen. Pins allein blenden den vollen Katalog hinter
+  „Alle Tags" ein; eine reine Auswahl tut das weiterhin nicht.
 - **TagPicker „Zuletzt genutzt"-Cloud (#890 Folge 4/4, #898)** — Der TagPicker
   zeigt jetzt zuerst eine Recency-Zeile der zuletzt genutzten Tags (Fenster: 14
   Tage, Quelle: `GET /entries/stats/tags?include_non_analytics=true`, sortiert
