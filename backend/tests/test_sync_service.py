@@ -266,9 +266,11 @@ async def test_resolve_sync_tag_ids_drops_deleted_keeps_visible_and_linked() -> 
     current_result.all.return_value = [(kept_linked_hidden,)]
     visible_result = MagicMock()
     visible_result.all.return_value = [(kept_visible,)]
+    remap_result = MagicMock()
+    remap_result.all.return_value = []
 
     db = MagicMock()
-    db.execute = AsyncMock(side_effect=[current_result, visible_result])
+    db.execute = AsyncMock(side_effect=[current_result, visible_result, remap_result])
 
     resolved = await _resolve_sync_tag_ids(
         db,
@@ -278,7 +280,45 @@ async def test_resolve_sync_tag_ids_drops_deleted_keeps_visible_and_linked() -> 
     )
 
     assert resolved == [kept_visible, kept_linked_hidden]
-    assert db.execute.await_count == 2
+    assert db.execute.await_count == 3
+
+
+@pytest.mark.asyncio
+async def test_resolve_sync_tag_ids_remaps_shadowed_default_to_override() -> None:
+    """Offline payloads with a pre-override default ID must keep the tag.
+
+    Pinning/editing a curated default creates a COW override that shadows the
+    default ID in ``visible_tag_predicate``. Without remapping, sync would drop
+    the outbox tag and corrupt analytics for that entry.
+    """
+    from app.services.sync_service import _resolve_sync_tag_ids
+
+    user_id = uuid.uuid4()
+    entry_id = uuid.uuid4()
+    default_id = uuid.uuid4()
+    override_id = uuid.uuid4()
+    other_visible = uuid.uuid4()
+
+    current_result = MagicMock()
+    current_result.all.return_value = []
+    visible_result = MagicMock()
+    # Shadowed default is not visible; other tag still is.
+    visible_result.all.return_value = [(other_visible,)]
+    remap_result = MagicMock()
+    remap_result.all.return_value = [(default_id, override_id)]
+
+    db = MagicMock()
+    db.execute = AsyncMock(side_effect=[current_result, visible_result, remap_result])
+
+    resolved = await _resolve_sync_tag_ids(
+        db,
+        user_id=user_id,
+        entry_id=entry_id,
+        tag_ids=[default_id, other_visible, default_id],
+    )
+
+    assert resolved == [override_id, other_visible]
+    assert db.execute.await_count == 3
 
 
 @pytest.mark.asyncio

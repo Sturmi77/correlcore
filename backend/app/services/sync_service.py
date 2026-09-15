@@ -14,6 +14,7 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.config import settings
@@ -161,6 +162,10 @@ async def _resolve_sync_tag_ids(
     are still assignable (visible + not hidden) or already linked on this
     entry (hidden historical retention — same allowlist as
     ``assign_tags_to_entry``).
+
+    When a curated default was copy-on-write overridden (pin/hide/edit) on
+    another device, offline payloads may still carry the shadowed default ID.
+    Remap those to the user's override instead of silently dropping the tag.
     """
     if not tag_ids:
         return []
@@ -186,7 +191,41 @@ async def _resolve_sync_tag_ids(
     )
     visible_ids = {row[0] for row in visible.all()}
     allowed = visible_ids | (target_ids & current_ids)
-    dropped = target_ids - allowed
+
+    candidates = [tag_id for tag_id in ordered if tag_id not in allowed]
+    default_to_override: dict[uuid.UUID, uuid.UUID] = {}
+    if candidates:
+        default_tag = aliased(Tag)
+        override_tag = aliased(Tag)
+        remap = await db.execute(
+            select(default_tag.id, override_tag.id).where(
+                default_tag.id.in_(candidates),
+                default_tag.is_default.is_(True),
+                override_tag.user_id == user_id,
+                override_tag.is_default.is_(False),
+                override_tag.slug == default_tag.slug,
+                override_tag.is_hidden.is_(False),
+            )
+        )
+        default_to_override = {row[0]: row[1] for row in remap.all()}
+
+    resolved: list[uuid.UUID] = []
+    seen: set[uuid.UUID] = set()
+    dropped: set[uuid.UUID] = set()
+    for tag_id in ordered:
+        mapped = default_to_override.get(tag_id, tag_id)
+        if mapped != tag_id:
+            if mapped not in seen:
+                resolved.append(mapped)
+                seen.add(mapped)
+            continue
+        if tag_id in allowed:
+            if tag_id not in seen:
+                resolved.append(tag_id)
+                seen.add(tag_id)
+        else:
+            dropped.add(tag_id)
+
     if dropped:
         logger.warning(
             "sync.entry.drop_unknown_tags",
@@ -196,7 +235,7 @@ async def _resolve_sync_tag_ids(
                 "dropped_count": len(dropped),
             },
         )
-    return [tag_id for tag_id in ordered if tag_id in allowed]
+    return resolved
 
 
 async def _resolve_sync_symptoms(

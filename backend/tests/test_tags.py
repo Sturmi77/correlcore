@@ -174,6 +174,24 @@ def test_tag_update_allows_partial_habit_type_patch() -> None:
     assert payload.target_frequency is None
 
 
+def test_tag_update_rejects_null_bool_flags() -> None:
+    """Explicit null must 422; omission stays valid for PATCH partials."""
+    from pydantic import ValidationError
+
+    for field in ("is_pinned", "is_hidden", "include_in_analytics"):
+        with pytest.raises(ValidationError):
+            TagUpdate.model_validate({field: None})
+
+    omitted = TagUpdate(name="Kept")
+    assert "is_pinned" not in omitted.model_fields_set
+    assert "is_hidden" not in omitted.model_fields_set
+    assert "include_in_analytics" not in omitted.model_fields_set
+
+    pinned = TagUpdate(is_pinned=True)
+    assert pinned.is_pinned is True
+    assert pinned.model_dump(exclude_unset=True) == {"is_pinned": True}
+
+
 def test_entry_tag_assignment_rejects_duplicates() -> None:
     tid = uuid.uuid4()
     with pytest.raises(ValueError):

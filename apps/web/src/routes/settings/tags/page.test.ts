@@ -177,6 +177,47 @@ describe('/settings/tags Sprint 8', () => {
     expect(vi.mocked(tagsApi.createTag).mock.calls[0][0]).not.toHaveProperty('icon');
   });
 
+  it('preserves unsaved drafts when pinning a tag (including default→override id change)', async () => {
+    const curated = makeTag({
+      id: 'default-travel',
+      name: 'Travel',
+      slug: 'travel',
+      is_default: true,
+      user_id: null,
+    });
+    const override = makeTag({
+      id: 'override-travel',
+      name: 'Travel',
+      slug: 'travel',
+      is_default: false,
+      is_pinned: true,
+    });
+    vi.mocked(tagsApi.listDefaultTags).mockResolvedValue([curated]);
+    vi.mocked(tagsApi.listVisibleTags)
+      .mockResolvedValueOnce([curated])
+      .mockResolvedValueOnce([override]);
+    vi.mocked(tagsApi.updateTag).mockResolvedValue(override);
+
+    render(Page);
+
+    const row = (await screen.findByText('Travel')).closest('article');
+    const nameInput = row?.querySelectorAll('input.input')[0] as HTMLInputElement;
+    nameInput.value = 'Reise (edited)';
+    await fireEvent.input(nameInput);
+
+    await fireEvent.click(screen.getByTestId('tag-settings-pin-default-travel'));
+
+    await waitFor(() => {
+      expect(tagsApi.updateTag).toHaveBeenCalledWith('default-travel', { is_pinned: true });
+    });
+
+    const updatedRow = (await screen.findByTestId('tag-settings-pin-override-travel')).closest(
+      'article'
+    );
+    const preservedName = updatedRow?.querySelectorAll('input.input')[0] as HTMLInputElement;
+    expect(preservedName.value).toBe('Reise (edited)');
+  });
+
   it('offers no icon field and suggests the category colour on create', async () => {
     vi.mocked(tagsApi.listVisibleTags).mockResolvedValue([]);
     vi.mocked(tagsApi.createTag).mockResolvedValue(makeTag({ id: 'new-tag' }));
