@@ -66,10 +66,19 @@ roll back) is isolated: that user is rolled back and skipped — re-running the
 idempotent backfill picks them up — while already committed users stay
 converted. ``commit_per_user=False`` keeps a single transaction the caller can
 roll back, for ``--dry-run``.
+
+DEK
+---
+``list_tags_for_entry`` and ``record_entry_upsert_revision`` load the full
+``Entry`` ORM row, and ``EncryptedString`` decrypts ``note_enc`` on load. The
+CLI has no request-scoped DEK, so a real note (the expected case for markers)
+would raise ``DekUnavailableError`` and abort the run. Bind the user's wrapped
+DEK for the duration of their conversion, matching ``lag_profile_backfill``.
 """
 
 from __future__ import annotations
 
+import contextvars
 import logging
 import re
 import uuid
@@ -82,10 +91,17 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.crypto import (
+    CryptoError,
+    reset_current_user_dek,
+    set_current_user_dek,
+    unwrap_dek,
+)
 from app.db.session import bind_rls_current_user
 from app.models.entry import Entry, NoteVisibility
 from app.models.entry_note import EntryNoteMarker
 from app.models.tag import EntryTag, Tag, TagCategory
+from app.models.user_encryption_key import UserEncryptionKey
 from app.schemas.note import PREDEFINED_NOTE_MARKERS
 from app.schemas.tag import MAX_TAGS_PER_ENTRY, TagCreate
 from app.services.tag_service import TagError, create_custom_tag, list_tags_for_entry
@@ -335,6 +351,24 @@ async def _link_additively(
     return int(getattr(result, "rowcount", 0) or 0)
 
 
+async def _bind_user_dek(
+    db: AsyncSession, *, user_id: uuid.UUID
+) -> contextvars.Token[tuple[uuid.UUID, bytes] | None] | None:
+    """Unwrap and bind the user's DEK so ``Entry.note_enc`` can be loaded.
+
+    Returns the contextvar token for :func:`reset_current_user_dek`, or ``None``
+    when the user has no key row (legacy / test fixtures whose entries have
+    ``note_enc IS NULL`` and therefore never hit ``EncryptedString``).
+    """
+    key_result = await db.execute(
+        select(UserEncryptionKey.wrapped_dek).where(UserEncryptionKey.user_id == user_id)
+    )
+    wrapped_dek = key_result.scalar_one_or_none()
+    if wrapped_dek is None:
+        return None
+    return set_current_user_dek(user_id, unwrap_dek(wrapped_dek))
+
+
 async def _backfill_marker_tags_for_user(
     db: AsyncSession,
     *,
@@ -343,7 +377,21 @@ async def _backfill_marker_tags_for_user(
     """Convert one user's markers; returns that user's counters."""
     summary = MarkerTagBackfillSummary()
     await bind_rls_current_user(db, user_id=user_id)
+    dek_token = await _bind_user_dek(db, user_id=user_id)
+    try:
+        return await _convert_marker_tags_for_user(db, user_id=user_id, summary=summary)
+    finally:
+        if dek_token is not None:
+            reset_current_user_dek(dek_token)
 
+
+async def _convert_marker_tags_for_user(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    summary: MarkerTagBackfillSummary,
+) -> MarkerTagBackfillSummary:
+    """Convert one already-bound user's markers (RLS + DEK set by caller)."""
     # Markers on hidden-note entries are excluded: the user opted those notes
     # out of display/analysis, so their context must not become ordinary tags.
     rows = (
@@ -487,7 +535,8 @@ async def backfill_marker_tags(
     """Convert historical note markers into tag links via the service layer.
 
     Iterates every user with retained markers (or just ``user_id``), binding RLS
-    per user so the production ``correlcore_app`` role sees rows under FORCE RLS.
+    and the user's DEK so ``Entry.note_enc`` decrypts and the production
+    ``correlcore_app`` role sees rows under FORCE RLS.
 
     With ``commit_per_user=True`` each user is committed before the next, bounding
     lock hold time and the blast radius of a failed user (rolled back and skipped;
@@ -500,7 +549,7 @@ async def backfill_marker_tags(
             user_summary = await _backfill_marker_tags_for_user(db, user_id=current_user_id)
             if commit_per_user:
                 await db.commit()
-        except (SQLAlchemyError, TagError):
+        except (SQLAlchemyError, TagError, CryptoError):
             await db.rollback()
             summary.users_failed += 1
             logger.warning(
