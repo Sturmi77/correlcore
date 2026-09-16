@@ -139,6 +139,14 @@
     return signs.has(1) ? 'positive' : 'negative';
   }
 
+  /** Compact peek describes only the selected peak — use its sign, not the profile mix. */
+  function lagPeakBarDirection(
+    r: number | null | undefined
+  ): Exclude<LagProfileDirection, 'mixed'> {
+    if (r == null || r === 0) return 'none';
+    return r > 0 ? 'positive' : 'negative';
+  }
+
   $: lagProfile = insight ? lagProfileBars(insight) : null;
   $: activeLagBar = lagProfile?.find((bar) => bar.active) ?? null;
   $: lagProfileMaxAbs = lagProfile
@@ -147,6 +155,11 @@
   $: lagDirection = lagProfile ? lagProfileDirection(lagProfile) : 'none';
   $: lagDirectionLabel =
     lagDirection === 'none' ? '' : $_(`insights.card.lag_profile_direction_${lagDirection}`);
+  $: lagPeakDirection = lagPeakBarDirection(activeLagBar?.r);
+  $: lagPeakDirectionLabel =
+    lagPeakDirection === 'none'
+      ? ''
+      : $_(`insights.card.lag_profile_direction_${lagPeakDirection}`);
   $: lagPeakDays = activeLagBar?.lag ?? (insight ? payloadNumber(insight, 'lag_days') : null) ?? 0;
 
   function lagBarHeight(r: number): number {
@@ -422,7 +435,7 @@
             style={`--insight-accent: ${accentColor}`}
           >
             {$_('insights.card.lag_peak_marker', {
-              values: { days: lagPeakDays, direction: lagDirectionLabel },
+              values: { days: lagPeakDays, direction: lagPeakDirectionLabel },
             })}
           </span>
         {:else}

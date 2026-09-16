@@ -482,4 +482,26 @@ describe('InsightCard lag profile mini-bars (#488 Phase 1b)', () => {
       'insights.card.lag_profile_direction_negative'
     );
   });
+
+  it('uses the peak sign in compact mode even when the profile is mixed (#912)', () => {
+    const mixed: InsightResponse = {
+      ...LAG_INSIGHT,
+      id: 'test-lag-compact-mixed',
+      payload: {
+        ...LAG_INSIGHT.payload,
+        lag_days: 3,
+        lag_profile: [
+          { lag: 1, r: 0.3 },
+          { lag: 2, r: -0.2 },
+          { lag: 3, r: 0.45 },
+        ],
+      },
+    };
+    render(InsightCard, { props: { insight: mixed, compactLagProfile: true } });
+
+    const marker = screen.getByTestId('insight-card-lag-marker').textContent ?? '';
+    expect(marker).toContain('3');
+    expect(marker).toContain('insights.card.lag_profile_direction_positive');
+    expect(marker).not.toContain('insights.card.lag_profile_direction_mixed');
+  });
 });
