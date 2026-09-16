@@ -8,8 +8,12 @@ covered by ``test_marker_tag_backfill_integration.py`` against real PostgreSQL.
 
 from __future__ import annotations
 
+import uuid
+from unittest.mock import AsyncMock
+
 import pytest
 
+from app.core.crypto import DekUnavailableError
 from app.schemas.note import PREDEFINED_NOTE_MARKERS
 from app.schemas.tag import MAX_TAGS_PER_ENTRY
 from app.services import marker_tag_backfill_service as backfill
@@ -78,3 +82,25 @@ def test_mapping_only_covers_unambiguous_predefined() -> None:
 def test_cap_constant_reused_from_schema() -> None:
     # The backfill must honour the same per-entry cap the API enforces.
     assert MAX_TAGS_PER_ENTRY == 50
+
+
+async def test_backfill_isolates_dek_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Loading Entry.note_enc without a bound DEK raises DekUnavailableError
+    # (CryptoError). That must isolate the user, not abort the whole run —
+    # otherwise the first real note crashes the production CLI.
+    uid = uuid.uuid4()
+
+    async def _boom(_db: object, *, user_id: uuid.UUID) -> object:
+        raise DekUnavailableError("No DEK in request context.")
+
+    async def _one_user(_db: object, *, user_id: uuid.UUID | None) -> list[uuid.UUID]:
+        return [uid]
+
+    monkeypatch.setattr(backfill, "_backfill_marker_tags_for_user", _boom)
+    monkeypatch.setattr(backfill, "_list_backfill_user_ids", _one_user)
+
+    db = AsyncMock()
+    summary = await backfill.backfill_marker_tags(db, commit_per_user=True)
+    assert summary.users_failed == 1
+    assert summary.users_processed == 0
+    db.rollback.assert_awaited()

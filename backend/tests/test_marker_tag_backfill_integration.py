@@ -21,10 +21,12 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.crypto import generate_dek, reset_current_user_dek, set_current_user_dek, wrap_dek
 from app.db.session import AsyncSessionLocal, bind_rls_current_user
 from app.models.entry import Entry, EntrySlot, EntrySource, NoteVisibility, WorkContext
 from app.models.entry_note import EntryNoteMarker
 from app.models.tag import EntryTag, Tag, TagCategory
+from app.models.user_encryption_key import UserEncryptionKey
 from app.schemas.tag import MAX_TAGS_PER_ENTRY
 from app.services.marker_tag_backfill_service import (
     _list_backfill_user_ids,
@@ -496,5 +498,57 @@ async def test_backfill_disambiguates_colliding_marker_slugs() -> None:
         assert again.custom_tags_created == 0
         assert again.custom_links_added == 0
         assert again.entries_updated == 0
+    finally:
+        await _cleanup_user(uid)
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_backfill_converts_entry_with_encrypted_note() -> None:
+    # Production markers live on entries with note_enc set. list_tags_for_entry
+    # and record_entry_upsert_revision load the full Entry row, so EncryptedString
+    # decrypts note_enc. The CLI has no request DEK — without binding the user's
+    # wrapped key the first real note raises DekUnavailableError / DecryptionError
+    # and aborts the run. Encrypt with a per-user DEK (not the autouse test DEK)
+    # so a missing bind cannot accidentally succeed.
+    if not _integration_enabled():
+        pytest.skip("requires real PostgreSQL (CORRELCORE_RUN_INTEGRATION=1)")
+
+    async with AsyncSessionLocal() as session:
+        uid = await _create_user(session)
+
+    dek = generate_dek()
+    try:
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, uid)
+            session.add(
+                UserEncryptionKey(
+                    user_id=uid,
+                    wrapped_dek=wrap_dek(dek),
+                )
+            )
+            entry = _make_entry(uid, 0)
+            dek_token = set_current_user_dek(uid, dek)
+            try:
+                entry.note_enc = "had a fight after work"
+                session.add(entry)
+                session.add(_make_marker(uid, entry.id, "conflict"))
+                await session.commit()
+            finally:
+                reset_current_user_dek(dek_token)
+            entry_id = entry.id
+
+        async with AsyncSessionLocal() as session:
+            summary = await backfill_marker_tags(session, user_id=uid)
+            await session.commit()
+
+        assert summary.users_failed == 0
+        assert summary.entries_updated == 1
+        assert summary.predefined_links_added == 1
+
+        async with AsyncSessionLocal() as session:
+            await bind_rls_current_user(session, uid)
+            conflict_id = await _default_tag_id(session, "conflict")
+            assert await _entry_tag_ids(session, entry_id) == {conflict_id}
     finally:
         await _cleanup_user(uid)
