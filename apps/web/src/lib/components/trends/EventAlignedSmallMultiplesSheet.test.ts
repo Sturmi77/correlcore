@@ -294,6 +294,46 @@ describe('EventAlignedSmallMultiplesSheet partner glyph (#909)', () => {
     expect(container.querySelectorAll('.esm__cell--partner').length).toBe(2);
   });
 
+  it('includes partner-on-day text in cell aria-labels', () => {
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: { id: 't-coffee', label: 'Coffee', kind: 'tag' },
+        partnerCandidates: candidates,
+        partnerPresenceDates: ['2026-05-10'],
+      },
+    });
+
+    const partnerCell = container.querySelector('.esm__cell--partner') as SVGRectElement | null;
+    expect(partnerCell?.getAttribute('aria-label')).toContain('trends.esm.partner_on_day');
+    expect(partnerCell?.getAttribute('aria-label')).toContain('Coffee');
+  });
+
+  it('keeps T0 stroke on partner-hit cells at onset', () => {
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: { id: 't-coffee', label: 'Coffee', kind: 'tag' },
+        partnerCandidates: candidates,
+        partnerPresenceDates: ['2026-05-10'],
+      },
+    });
+
+    const t0PartnerCell = container.querySelector(
+      '.esm__cell--t0.esm__cell--partner'
+    ) as SVGRectElement | null;
+    expect(t0PartnerCell).toBeTruthy();
+    expect(t0PartnerCell?.classList.contains('esm__cell--t0')).toBe(true);
+  });
+
   it('keeps the hard max of one active partner in the select options', () => {
     render(EventAlignedSmallMultiplesSheet, {
       props: {

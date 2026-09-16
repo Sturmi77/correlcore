@@ -66,6 +66,40 @@ describe('resolveEsmAlignSubject', () => {
     });
   });
 
+  it('preserves payload slug for copy-on-write tag overrides', () => {
+    expect(
+      resolveEsmAlignSubject(
+        insight({
+          subject_id: 't-sport-copy',
+          payload: { tag_slug: 'sport' },
+        })
+      )
+    ).toEqual({
+      id: 't-sport-copy',
+      slug: 'sport',
+      label: 'Sport',
+      kind: 'tag',
+    });
+  });
+
+  it('preserves payload symptom_slug for symptom insights', () => {
+    expect(
+      resolveEsmAlignSubject(
+        insight({
+          subject_type: 'symptom',
+          subject_id: 's-head-copy',
+          subject_label: 'Headache',
+          payload: { symptom_slug: 'headache' },
+        })
+      )
+    ).toEqual({
+      id: 's-head-copy',
+      slug: 'headache',
+      label: 'Headache',
+      kind: 'symptom',
+    });
+  });
+
   it('uses the lag feature for lag insights', () => {
     const lag = insight({
       subject_type: 'metric',
@@ -124,6 +158,17 @@ describe('candidatesFromTagCooccurrence', () => {
 
   it('returns empty when the subject is a symptom', () => {
     expect(candidatesFromTagCooccurrence({ ...subject, kind: 'symptom' }, pairs)).toEqual([]);
+  });
+
+  it('matches partners by stable slug when subject id changed', () => {
+    const copiedSubject: EsmAlignSubject = {
+      id: 't-sport-copy',
+      slug: 'sport',
+      label: 'Sport',
+      kind: 'tag',
+    };
+    const candidates = candidatesFromTagCooccurrence(copiedSubject, pairs);
+    expect(candidates.map((row) => row.id)).toEqual(['t-coffee', 't-sleep']);
   });
 });
 

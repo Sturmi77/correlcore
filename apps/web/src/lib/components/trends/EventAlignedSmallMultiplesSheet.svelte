@@ -399,8 +399,16 @@
                 data-sign={cell.sign}
                 data-partner={partnerHit ? 'true' : 'false'}
                 aria-label={cell.displayValue === null
-                  ? `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: —`
-                  : `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${cell.displayValue.toFixed(1)}`}
+                  ? `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: —${
+                      partnerHit && partner
+                        ? ` · ${$_('trends.esm.partner_on_day', { values: { partner: partner.label } })}`
+                        : ''
+                    }`
+                  : `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${cell.displayValue.toFixed(1)}${
+                      partnerHit && partner
+                        ? ` · ${$_('trends.esm.partner_on_day', { values: { partner: partner.label } })}`
+                        : ''
+                    }`}
               >
                 <title>
                   {cell.date}{cell.displayValue !== null
@@ -627,13 +635,7 @@
     stroke-dasharray: 3 2;
   }
 
-  /* #909: partner presence glyph — soft marker token, no traffic-light hue. */
-  .esm__cell--partner {
-    stroke: var(--color-event-marker);
-    stroke-width: 1.25;
-    stroke-dasharray: 2 2;
-  }
-
+  /* #909: partner presence uses esm__partner-mark only — do not override T0/lag strokes. */
   .esm__partner-mark {
     fill: var(--color-event-marker-soft);
     stroke: var(--color-event-marker);

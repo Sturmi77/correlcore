@@ -91,6 +91,7 @@
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { timeseriesRangeToCooccurrence, analysisDateWindow } from '$lib/utils/analysisRange';
   import { rangeToDays } from '$lib/utils/trendsRange';
+  import { shiftIsoDate } from '$lib/utils/streak';
   import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
   import type { MetricKey } from '$lib/utils/charts';
   import {
@@ -108,7 +109,10 @@
     type EsmPartner,
     type EsmPartnerCandidate,
   } from '$lib/utils/esmPartner';
-  import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
+  import {
+    isSmallMultiplesUnlocked,
+    SMALL_MULTIPLES_RADIUS,
+  } from '$lib/components/trends/smallMultiplesGate';
 
   let insights: InsightResponse[] = [];
   let dismissedItems: DismissedInsightItem[] = [];
@@ -783,6 +787,7 @@
     if (!insight) return;
 
     const requestId = ++exploreEventsRequestId;
+    const capturedRange = insightsEffectiveRange;
 
     exploreEventsInsight = insight;
     exploreEventsMetric = insightMetricToChartKey(insight.metric);
@@ -797,7 +802,6 @@
     exploreEventsTagHeatmap = null;
 
     try {
-      const range = insightsEffectiveRange;
       if (get(devForceVisualizations)) {
         const fixture = getDevPhaseFixture(get(devPhase));
         if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
@@ -813,17 +817,19 @@
         exploreEventsTagHeatmap = fixture.tagHeatmap;
         applyExploreEventsPartner(
           insight,
-          fixture.tagCooccurrenceByRange[cooccurrenceRange] ?? null,
-          fixture.symptomTagCooccurrenceByRange[cooccurrenceRange] ?? null,
+          fixture.tagCooccurrenceByRange[timeseriesRangeToCooccurrence(capturedRange)] ?? null,
+          fixture.symptomTagCooccurrenceByRange[timeseriesRangeToCooccurrence(capturedRange)] ??
+            null,
           fixture.tagHeatmap,
-          fixture.symptomHeatmap
+          fixture.symptomHeatmap,
+          true
         );
         return;
       }
 
       const response = await fetchInsightEventWindows(
         insight.id,
-        timeseriesRangeToCooccurrence(range)
+        timeseriesRangeToCooccurrence(capturedRange)
       );
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
         return;
@@ -835,7 +841,8 @@
       exploreEventsPoints = response.points;
       exploreEventsLagOffset = response.lag_days ?? null;
 
-      await ensureExploreEventsPartnerData(insight, requestId, insightId);
+      exploreEventsLoading = false;
+      void ensureExploreEventsPartnerData(insight, requestId, insightId, capturedRange);
     } catch {
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
         return;
@@ -858,7 +865,8 @@
     tagPairs: TagCooccurrenceResponse | null,
     symptomCells: SymptomTagCooccurrenceResponse | null,
     tagHeatmap: TagHeatmapResponse | null,
-    symptomHeatmapData: SymptomHeatmapResponse | null
+    symptomHeatmapData: SymptomHeatmapResponse | null,
+    tagPresenceAvailable: boolean
   ): void {
     const subject = resolveEsmAlignSubject(insight);
     if (!subject) {
@@ -872,6 +880,11 @@
         ? candidatesFromTagCooccurrence(subject, tagPairs?.pairs ?? [])
         : candidatesFromSymptomTagCooccurrence(subject, symptomCells?.cells ?? []);
     exploreEventsPartnerCandidates = clampPartnerCandidates(ranked);
+    if (!tagPresenceAvailable) {
+      exploreEventsPartner = null;
+      exploreEventsPartnerPresence = [];
+      return;
+    }
     exploreEventsPartner = pickDefaultPartner(exploreEventsPartnerCandidates);
     exploreEventsPartnerPresence = presenceDatesForPartner(
       exploreEventsPartner,
@@ -883,17 +896,24 @@
   async function ensureExploreEventsPartnerData(
     insight: InsightResponse,
     requestId: number,
-    insightId: string
+    insightId: string,
+    range: TimeseriesRange
   ): Promise<void> {
     const subject = resolveEsmAlignSubject(insight);
     if (!subject) return;
 
     const needsTagPairs = subject.kind === 'tag';
     const needsSymptomCells = subject.kind === 'symptom';
-    const apiRange = timeseriesRangeToCooccurrence(insightsEffectiveRange);
-    const { start_date, end_date } = analysisDateWindow(insightsEffectiveRange);
+    const apiRange = timeseriesRangeToCooccurrence(range);
+    const { start_date, end_date } = analysisDateWindow(range);
+    const heatmapStart = shiftIsoDate(start_date, -SMALL_MULTIPLES_RADIUS);
+    const heatmapEnd = shiftIsoDate(end_date, SMALL_MULTIPLES_RADIUS);
 
-    const [tagPairs, symptomCells, tagHeatmap] = await Promise.all([
+    const tagHeatmapPromise = fetchTagHeatmap({ start_date: heatmapStart, end_date: heatmapEnd })
+      .then((data) => ({ ok: true as const, data }))
+      .catch(() => ({ ok: false as const, data: null }));
+
+    const [tagPairs, symptomCells, tagHeatmapResult] = await Promise.all([
       needsTagPairs
         ? cooccurrence && cooccurrence.range === apiRange
           ? Promise.resolve(cooccurrence)
@@ -904,20 +924,22 @@
           ? Promise.resolve(symptomCooccurrence)
           : fetchSymptomTagCooccurrence({ range: apiRange }).catch(() => null)
         : Promise.resolve(null),
-      fetchTagHeatmap({ start_date, end_date }).catch(() => null),
+      tagHeatmapPromise,
     ]);
 
     if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
       return;
     }
 
-    exploreEventsTagHeatmap = tagHeatmap;
+    const tagPresenceAvailable = tagHeatmapResult.ok && tagHeatmapResult.data !== null;
+    exploreEventsTagHeatmap = tagHeatmapResult.data;
     applyExploreEventsPartner(
       insight,
       tagPairs,
       symptomCells,
-      tagHeatmap,
-      visibleSymptomHeatmap ?? symptomHeatmap
+      tagHeatmapResult.data,
+      visibleSymptomHeatmap ?? symptomHeatmap,
+      tagPresenceAvailable
     );
   }
 
@@ -925,7 +947,12 @@
     const nextId = event.detail.partnerId;
     const next =
       exploreEventsPartnerCandidates.find((candidate) => candidate.id === nextId) ?? null;
-    exploreEventsPartner = next ? { id: next.id, label: next.label, kind: next.kind } : null;
+    if (!exploreEventsTagHeatmap || !next) {
+      exploreEventsPartner = null;
+      exploreEventsPartnerPresence = [];
+      return;
+    }
+    exploreEventsPartner = { id: next.id, label: next.label, kind: next.kind };
     exploreEventsPartnerPresence = presenceDatesForPartner(
       exploreEventsPartner,
       exploreEventsTagHeatmap,

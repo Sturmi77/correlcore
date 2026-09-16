@@ -51,9 +51,16 @@ export function resolveEsmAlignSubject(insight: InsightResponse): EsmAlignSubjec
     };
   }
   if (insight.subject_type === 'tag' || insight.subject_type === 'symptom') {
+    const payload = insight.payload ?? {};
+    const slug =
+      insight.subject_type === 'tag' && typeof payload.tag_slug === 'string'
+        ? payload.tag_slug
+        : insight.subject_type === 'symptom' && typeof payload.symptom_slug === 'string'
+          ? payload.symptom_slug
+          : null;
     return {
       id: insight.subject_id,
-      slug: null,
+      slug,
       label: insight.subject_label,
       kind: insight.subject_type,
     };
