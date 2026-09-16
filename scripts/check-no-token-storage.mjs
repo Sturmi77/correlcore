@@ -45,6 +45,7 @@ const ALLOWED_KEYS = new Set([
   'cc_trend_compare_mode',
   'cc_trend_compare_sort',
   'cc_trend_compare_zoom',
+  'cc_trend_compare_coincidence',
 ]);
 
 /**
