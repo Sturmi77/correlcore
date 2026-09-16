@@ -14,11 +14,11 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.core.crypto import DekUnavailableError
-from app.schemas.note import PREDEFINED_NOTE_MARKERS
 from app.schemas.tag import MAX_TAGS_PER_ENTRY
 from app.services import marker_tag_backfill_service as backfill
 
 derive = backfill.derive_custom_tag_slug
+PREDEFINED_NOTE_MARKERS = backfill.PREDEFINED_NOTE_MARKERS
 
 
 @pytest.mark.parametrize(
