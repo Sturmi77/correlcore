@@ -8,6 +8,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **TagPicker-Recency-Fenster 14 Tage als Default belegt (#903 B)** — Begründung
+  (7 zu spärlich, all-time übergewichtet die Vergangenheit; 14 = Wochenrhythmus × 2)
+  in `docs/FRONTEND.md` festgehalten. Fenster bleibt hart kodiert; Pins (#903 A)
+  decken seltene Tags ab. Nutzer-Einstellung (#903 B1) erst bei nachgewiesenem Bedarf.
+
 ### Added
 
 - **Angepinnte Favoriten im TagPicker (#903 A)** — Tags lassen sich in der
