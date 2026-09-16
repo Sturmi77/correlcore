@@ -92,7 +92,7 @@
 
 {#if resolved.length > 0}
   <g class="event-markers" role="group" aria-label={$_('trends.markers.aria')}>
-    {#each resolved as { marker, xStart, bandX, bandWidth, soft } (marker.date + ':' + (marker.endDate ?? ''))}
+    {#each resolved as { marker, xStart, bandX, bandWidth, soft } (marker.date + ':' + (marker.endDate ?? '') + ':' + (marker.kind ?? 'generic'))}
       {#if soft && bandX !== null && bandWidth !== null}
         <rect
           class="event-markers__band"
