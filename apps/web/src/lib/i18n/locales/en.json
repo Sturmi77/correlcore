@@ -673,7 +673,12 @@
       "median_aria": "Median trajectory across {count} occurrences",
       "locked": "Available once the insight reaches the provisional phase.",
       "open_action": "Explore aligned events",
-      "lag_hint": "T0 = trigger · outcome marked at +{days} days"
+      "lag_hint": "T0 = trigger · outcome marked at +{days} days",
+      "partner_label": "Partner overlay",
+      "partner_aria": "Choose which co-occurring subject to overlay",
+      "partner_legend": "Marks show when {partner} also appears in the window — an association in your entries, not a cause.",
+      "partner_empty": "No co-occurrence partner available to overlay yet.",
+      "partner_on_day": "{partner} also present"
     },
     "markers": {
       "aria": "Event markers on the shared timeline"

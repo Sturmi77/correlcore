@@ -19,7 +19,12 @@
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
-  import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
+  import {
+    fetchSymptomHeatmap,
+    fetchTagHeatmap,
+    type SymptomHeatmapResponse,
+    type TagHeatmapResponse,
+  } from '$lib/api/stats';
   import { ApiError } from '$lib/api/client';
   import {
     fetchInsightEventWindows,
@@ -93,6 +98,16 @@
     devLagEventWindowsFromHeatmaps,
     insightMetricToChartKey,
   } from '$lib/utils/exploreEventWindows';
+  import {
+    candidatesFromSymptomTagCooccurrence,
+    candidatesFromTagCooccurrence,
+    clampPartnerCandidates,
+    pickDefaultPartner,
+    presenceDatesForPartner,
+    resolveEsmAlignSubject,
+    type EsmPartner,
+    type EsmPartnerCandidate,
+  } from '$lib/utils/esmPartner';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
 
   let insights: InsightResponse[] = [];
@@ -147,6 +162,10 @@
   let exploreEventsLagOffset: number | null = null;
   let exploreEventsLoading = false;
   let exploreEventsRequestId = 0;
+  let exploreEventsPartner: EsmPartner | null = null;
+  let exploreEventsPartnerCandidates: EsmPartnerCandidate[] = [];
+  let exploreEventsPartnerPresence: string[] = [];
+  let exploreEventsTagHeatmap: TagHeatmapResponse | null = null;
 
   function readCompactInsights(): boolean {
     if (!browser) return false;
@@ -772,6 +791,10 @@
     exploreEventsWindows = [];
     exploreEventsPoints = [];
     exploreEventsLagOffset = null;
+    exploreEventsPartner = null;
+    exploreEventsPartnerCandidates = [];
+    exploreEventsPartnerPresence = [];
+    exploreEventsTagHeatmap = null;
 
     try {
       const range = insightsEffectiveRange;
@@ -787,6 +810,14 @@
         exploreEventsPoints = fixture.timeseries.points;
         const devLag = insight.payload?.lag_days;
         exploreEventsLagOffset = typeof devLag === 'number' ? devLag : null;
+        exploreEventsTagHeatmap = fixture.tagHeatmap;
+        applyExploreEventsPartner(
+          insight,
+          fixture.tagCooccurrenceByRange[cooccurrenceRange] ?? null,
+          fixture.symptomTagCooccurrenceByRange[cooccurrenceRange] ?? null,
+          fixture.tagHeatmap,
+          fixture.symptomHeatmap
+        );
         return;
       }
 
@@ -803,6 +834,8 @@
       }));
       exploreEventsPoints = response.points;
       exploreEventsLagOffset = response.lag_days ?? null;
+
+      await ensureExploreEventsPartnerData(insight, requestId, insightId);
     } catch {
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
         return;
@@ -810,11 +843,94 @@
       exploreEventsWindows = [];
       exploreEventsPoints = [];
       exploreEventsLagOffset = null;
+      exploreEventsPartner = null;
+      exploreEventsPartnerCandidates = [];
+      exploreEventsPartnerPresence = [];
     } finally {
       if (requestId === exploreEventsRequestId && exploreEventsInsight?.id === insightId) {
         exploreEventsLoading = false;
       }
     }
+  }
+
+  function applyExploreEventsPartner(
+    insight: InsightResponse,
+    tagPairs: TagCooccurrenceResponse | null,
+    symptomCells: SymptomTagCooccurrenceResponse | null,
+    tagHeatmap: TagHeatmapResponse | null,
+    symptomHeatmapData: SymptomHeatmapResponse | null
+  ): void {
+    const subject = resolveEsmAlignSubject(insight);
+    if (!subject) {
+      exploreEventsPartnerCandidates = [];
+      exploreEventsPartner = null;
+      exploreEventsPartnerPresence = [];
+      return;
+    }
+    const ranked =
+      subject.kind === 'tag'
+        ? candidatesFromTagCooccurrence(subject, tagPairs?.pairs ?? [])
+        : candidatesFromSymptomTagCooccurrence(subject, symptomCells?.cells ?? []);
+    exploreEventsPartnerCandidates = clampPartnerCandidates(ranked);
+    exploreEventsPartner = pickDefaultPartner(exploreEventsPartnerCandidates);
+    exploreEventsPartnerPresence = presenceDatesForPartner(
+      exploreEventsPartner,
+      tagHeatmap,
+      symptomHeatmapData
+    );
+  }
+
+  async function ensureExploreEventsPartnerData(
+    insight: InsightResponse,
+    requestId: number,
+    insightId: string
+  ): Promise<void> {
+    const subject = resolveEsmAlignSubject(insight);
+    if (!subject) return;
+
+    const needsTagPairs = subject.kind === 'tag';
+    const needsSymptomCells = subject.kind === 'symptom';
+    const apiRange = timeseriesRangeToCooccurrence(insightsEffectiveRange);
+    const { start_date, end_date } = analysisDateWindow(insightsEffectiveRange);
+
+    const [tagPairs, symptomCells, tagHeatmap] = await Promise.all([
+      needsTagPairs
+        ? cooccurrence && cooccurrence.range === apiRange
+          ? Promise.resolve(cooccurrence)
+          : fetchTagCooccurrence({ range: apiRange }).catch(() => null)
+        : Promise.resolve(null),
+      needsSymptomCells
+        ? symptomCooccurrence && symptomCooccurrence.range === apiRange
+          ? Promise.resolve(symptomCooccurrence)
+          : fetchSymptomTagCooccurrence({ range: apiRange }).catch(() => null)
+        : Promise.resolve(null),
+      fetchTagHeatmap({ start_date, end_date }).catch(() => null),
+    ]);
+
+    if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
+      return;
+    }
+
+    exploreEventsTagHeatmap = tagHeatmap;
+    applyExploreEventsPartner(
+      insight,
+      tagPairs,
+      symptomCells,
+      tagHeatmap,
+      visibleSymptomHeatmap ?? symptomHeatmap
+    );
+  }
+
+  function handleExplorePartnerChange(event: CustomEvent<{ partnerId: string | null }>): void {
+    const nextId = event.detail.partnerId;
+    const next =
+      exploreEventsPartnerCandidates.find((candidate) => candidate.id === nextId) ?? null;
+    exploreEventsPartner = next ? { id: next.id, label: next.label, kind: next.kind } : null;
+    exploreEventsPartnerPresence = presenceDatesForPartner(
+      exploreEventsPartner,
+      exploreEventsTagHeatmap,
+      visibleSymptomHeatmap ?? symptomHeatmap
+    );
   }
 
   async function dismissMaturityMilestone(key: string): Promise<void> {
@@ -1075,9 +1191,17 @@
       metric={exploreEventsMetric}
       lagOffset={exploreEventsLagOffset}
       phase={exploreEventsInsight ? (insightMaturity?.phase ?? null) : null}
+      partner={exploreEventsPartner}
+      partnerPresenceDates={exploreEventsPartnerPresence}
+      partnerCandidates={exploreEventsPartnerCandidates}
+      on:partnerChange={handleExplorePartnerChange}
       on:close={() => {
         exploreEventsOpen = false;
         exploreEventsInsight = null;
+        exploreEventsPartner = null;
+        exploreEventsPartnerCandidates = [];
+        exploreEventsPartnerPresence = [];
+        exploreEventsTagHeatmap = null;
       }}
     />
   {/if}

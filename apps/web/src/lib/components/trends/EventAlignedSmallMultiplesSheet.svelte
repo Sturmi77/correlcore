@@ -50,6 +50,11 @@
     SMALL_MULTIPLES_RADIUS,
   } from './smallMultiplesGate';
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
+  import {
+    isPartnerPresentOnDate,
+    type EsmPartner,
+    type EsmPartnerCandidate,
+  } from '$lib/utils/esmPartner';
 
   export let open = false;
   /** Event windows to align — onset becomes t = 0. */
@@ -65,8 +70,20 @@
    * expected at t = +lagOffset. Highlights that column. Null for co-occurrence.
    */
   export let lagOffset: number | null = null;
+  /**
+   * #909: at most one partner subject overlaid in ±7 cells. Null when no
+   * co-occurrence partner is available (honest empty — no glyph).
+   */
+  export let partner: EsmPartner | null = null;
+  /** Presence dates for the active partner (heatmap aggregates). */
+  export let partnerPresenceDates: readonly string[] = [];
+  /** Ranked override candidates (already clamped by the parent). */
+  export let partnerCandidates: readonly EsmPartnerCandidate[] = [];
 
-  const dispatch = createEventDispatcher<{ close: void }>();
+  const dispatch = createEventDispatcher<{
+    close: void;
+    partnerChange: { partnerId: string | null };
+  }>();
 
   const mapper = new StripCellMapper({ midpoint: 3, range: 4 });
   const radius = SMALL_MULTIPLES_RADIUS;
@@ -74,6 +91,7 @@
   const cellGap = 4;
   const labelWidth = 110;
   const dayCount = radius * 2 + 1; // -7..+7 inclusive
+  const partnerMark = 6;
 
   const metricI18nKey: Record<MetricKey, string> = {
     mood_avg: 'trends.metric.mood',
@@ -87,6 +105,9 @@
   $: legendGradient = `linear-gradient(to right, ${mapper.encode(1).color}, ${
     mapper.encode(3).color
   }, ${mapper.encode(5).color})`;
+  $: partnerPresenceSet = new Set(partnerPresenceDates);
+  $: showPartnerOverlay = partner !== null;
+  $: canChoosePartner = partnerCandidates.length > 0;
 
   function isoOffset(iso: string, deltaDays: number): string {
     const [y, m, d] = iso.split('-').map(Number);
@@ -180,6 +201,35 @@
           {$_('trends.esm.lag_hint', { values: { days: lagColumn } })}
         </p>
       {/if}
+      <div class="esm__partner" data-testid="esm-partner">
+        {#if canChoosePartner}
+          <label class="esm__partner-select">
+            <span>{$_('trends.esm.partner_label')}</span>
+            <select
+              data-testid="esm-partner-select"
+              aria-label={$_('trends.esm.partner_aria')}
+              value={partner?.id ?? ''}
+              on:change={(event) =>
+                dispatch('partnerChange', {
+                  partnerId: event.currentTarget.value || null,
+                })}
+            >
+              {#each partnerCandidates as candidate (candidate.id)}
+                <option value={candidate.id}>{candidate.label}</option>
+              {/each}
+            </select>
+          </label>
+          {#if showPartnerOverlay && partner}
+            <p class="esm__partner-legend" data-testid="esm-partner-legend">
+              {$_('trends.esm.partner_legend', { values: { partner: partner.label } })}
+            </p>
+          {/if}
+        {:else}
+          <p class="esm__partner-empty" data-testid="esm-partner-empty">
+            {$_('trends.esm.partner_empty')}
+          </p>
+        {/if}
+      </div>
     </div>
     <button
       type="button"
@@ -331,11 +381,15 @@
             </text>
 
             {#each row.cells as cell (cell.offset)}
+              {@const partnerHit =
+                showPartnerOverlay && isPartnerPresentOnDate(cell.date, partnerPresenceSet)}
+              {@const cellX = labelWidth + (cell.offset + radius) * (cellSize + cellGap)}
               <rect
                 class="esm__cell"
                 class:esm__cell--t0={cell.offset === 0}
                 class:esm__cell--lag={cell.offset === lagColumn}
-                x={labelWidth + (cell.offset + radius) * (cellSize + cellGap)}
+                class:esm__cell--partner={partnerHit}
+                x={cellX}
                 y={top}
                 width={cellSize}
                 height={cellSize}
@@ -343,6 +397,7 @@
                 opacity={cell.opacity}
                 rx="3"
                 data-sign={cell.sign}
+                data-partner={partnerHit ? 'true' : 'false'}
                 aria-label={cell.displayValue === null
                   ? `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: —`
                   : `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${cell.displayValue.toFixed(1)}`}
@@ -350,9 +405,28 @@
                 <title>
                   {cell.date}{cell.displayValue !== null
                     ? ` — ${cell.displayValue.toFixed(1)}`
+                    : ''}{partnerHit && partner
+                    ? ` · ${$_('trends.esm.partner_on_day', { values: { partner: partner.label } })}`
                     : ''}
                 </title>
               </rect>
+              {#if partnerHit}
+                <rect
+                  class="esm__partner-mark"
+                  data-testid="esm-partner-mark"
+                  x={cellX + cellSize - partnerMark - 1}
+                  y={top + 1}
+                  width={partnerMark}
+                  height={partnerMark}
+                  rx="1"
+                >
+                  <title
+                    >{partner
+                      ? $_('trends.esm.partner_on_day', { values: { partner: partner.label } })
+                      : ''}</title
+                  >
+                </rect>
+              {/if}
             {/each}
           </g>
         {/each}
@@ -398,6 +472,39 @@
     margin: var(--space-1) 0 0;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .esm__partner {
+    margin-top: var(--space-2);
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .esm__partner-select {
+    display: grid;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .esm__partner-select select {
+    min-height: var(--tap-target);
+    max-width: 100%;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--color-border, var(--color-border-chart));
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+  }
+
+  .esm__partner-legend,
+  .esm__partner-empty {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: 400;
   }
 
   .esm__metric {
@@ -518,5 +625,19 @@
     stroke: var(--color-cursor);
     stroke-width: 1.5;
     stroke-dasharray: 3 2;
+  }
+
+  /* #909: partner presence glyph — soft marker token, no traffic-light hue. */
+  .esm__cell--partner {
+    stroke: var(--color-event-marker);
+    stroke-width: 1.25;
+    stroke-dasharray: 2 2;
+  }
+
+  .esm__partner-mark {
+    fill: var(--color-event-marker-soft);
+    stroke: var(--color-event-marker);
+    stroke-width: 1;
+    pointer-events: none;
   }
 </style>

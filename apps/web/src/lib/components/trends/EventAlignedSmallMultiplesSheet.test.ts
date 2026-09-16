@@ -224,3 +224,92 @@ describe('EventAlignedSmallMultiplesSheet occurrence floor + median (#810/#811)'
     expect(screen.getByTestId('esm-median-hint').textContent).toBe('trends.esm.median_hint');
   });
 });
+
+describe('EventAlignedSmallMultiplesSheet partner glyph (#909)', () => {
+  const points = [
+    {
+      period_start: '2026-05-10',
+      period_end: '2026-05-10',
+      entry_count: 1,
+      mood_avg: 4,
+      energy_avg: 3,
+      stress_avg: 2,
+      sleep_quality_avg: null,
+    },
+    {
+      period_start: '2026-05-12',
+      period_end: '2026-05-12',
+      entry_count: 1,
+      mood_avg: 2,
+      energy_avg: 3,
+      stress_avg: 4,
+      sleep_quality_avg: null,
+    },
+  ];
+  const events = [{ onset: '2026-05-10', label: 'Sport' }];
+  const candidates = [
+    { id: 't-coffee', label: 'Coffee', kind: 'tag' as const, score: 5 },
+    { id: 't-sleep', label: 'Sleep', kind: 'tag' as const, score: 2 },
+  ];
+
+  it('shows an honest empty state when no partner is available', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: null,
+        partnerCandidates: [],
+        partnerPresenceDates: [],
+      },
+    });
+
+    expect(screen.getByTestId('esm-partner-empty')).toBeTruthy();
+    expect(screen.queryByTestId('esm-partner-select')).toBeNull();
+    expect(screen.queryByTestId('esm-partner-mark')).toBeNull();
+  });
+
+  it('overlays at most one partner and marks presence days', () => {
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: { id: 't-coffee', label: 'Coffee', kind: 'tag' },
+        partnerCandidates: candidates,
+        partnerPresenceDates: ['2026-05-10', '2026-05-12'],
+      },
+    });
+
+    expect(screen.getByTestId('esm-partner-select')).toBeTruthy();
+    expect(screen.getByTestId('esm-partner-legend').textContent).toContain(
+      'trends.esm.partner_legend'
+    );
+    const marks = container.querySelectorAll('[data-testid="esm-partner-mark"]');
+    expect(marks.length).toBe(2);
+    expect(container.querySelectorAll('.esm__cell--partner').length).toBe(2);
+  });
+
+  it('keeps the hard max of one active partner in the select options', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: { id: 't-coffee', label: 'Coffee', kind: 'tag' },
+        partnerCandidates: candidates,
+        partnerPresenceDates: ['2026-05-10'],
+      },
+    });
+
+    const select = screen.getByTestId('esm-partner-select') as HTMLSelectElement;
+    expect(select.options).toHaveLength(2);
+    expect(select.value).toBe('t-coffee');
+  });
+});
