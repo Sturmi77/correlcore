@@ -635,6 +635,15 @@
         "marker": "Coincidence: {subjects}",
         "and": "and"
       },
+      "lag1": {
+        "toggle": "Highlight next-day sequence",
+        "toggle_aria": "Highlight days where a pinned row is followed by the next pinned row on the following day",
+        "need_pins": "Pin at least two rows to highlight next-day sequences.",
+        "empty": "Need at least {min} next-day sequences across pinned rows to highlight Lag-1.",
+        "legend": "Lines mark when one pinned row is followed by the next on the following day — an association in your entries, not a cause.",
+        "cursor": "{from} then {to} (+1 day)",
+        "marker": "Sequence: {from} → {to} (+1d)"
+      },
       "zoom": {
         "label": "Timeline zoom",
         "decrease_aria": "Zoom out to coarser columns",

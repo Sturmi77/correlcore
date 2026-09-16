@@ -31,10 +31,12 @@
     readCompareSortMode,
     readCompareZoomStage,
     readCompareCoincidenceHighlight,
+    readCompareLag1Highlight,
     writeCompareMode,
     writeCompareSortMode,
     writeCompareZoomStage,
     writeCompareCoincidenceHighlight,
+    writeCompareLag1Highlight,
     type CompareMode,
     type CompareSortMode,
   } from '$lib/utils/comparePanelSettings';
@@ -47,6 +49,7 @@
     deriveCoincidence,
     type CoincidenceRow,
   } from '$lib/utils/coincidenceMarkers';
+  import { MIN_LAG1_DAYS, deriveLag1, lag1DaysToMarkers } from '$lib/utils/lag1Markers';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import MetricTimeseries from './MetricTimeseries.svelte';
@@ -142,6 +145,7 @@
   );
 
   let coincidenceHighlight = readCompareCoincidenceHighlight();
+  let lag1Highlight = readCompareLag1Highlight();
 
   let zoomStage: CompareZoomStageIndex = readCompareZoomStage();
   let axisScroller: HTMLDivElement;
@@ -240,6 +244,11 @@
   function setCoincidenceHighlight(next: boolean): void {
     coincidenceHighlight = next;
     writeCompareCoincidenceHighlight(next);
+  }
+
+  function setLag1Highlight(next: boolean): void {
+    lag1Highlight = next;
+    writeCompareLag1Highlight(next);
   }
 
   function joinSubjectLabels(labels: readonly string[]): string {
@@ -389,7 +398,19 @@
       )
     : [];
 
-  $: activeMarkers = dedupeEventMarkers([...markers, ...coincidenceMarkers]);
+  $: lag1 = deriveLag1(pinned, coincidenceRows);
+  $: lag1ByDate = new Map(lag1.days.map((day) => [day.date, day]));
+  $: lag1Active = lag1Highlight && lag1.canHighlight;
+
+  $: lag1Markers = lag1Active
+    ? lag1DaysToMarkers(
+        lag1.days,
+        (from, to) => $_('trends.compare.lag1.marker', { values: { from, to } }),
+        $_('trends.compare.lag1.legend')
+      )
+    : [];
+
+  $: activeMarkers = dedupeEventMarkers([...markers, ...coincidenceMarkers, ...lag1Markers]);
 
   $: cursorCoincidenceSubjects = (() => {
     if (!coincidenceActive || !$timelineCursorDate) return null;
@@ -411,11 +432,40 @@
       })
     : '';
 
+  $: cursorLag1Sequences = (() => {
+    if (!lag1Active || !$timelineCursorDate) return null;
+    const exact = lag1ByDate.get($timelineCursorDate);
+    if (exact) return exact.sequences;
+    if (!cursorBucket) return null;
+    for (const date of cursorBucket.dates) {
+      const hit = lag1ByDate.get(date);
+      if (hit) return hit.sequences;
+    }
+    return null;
+  })();
+
+  $: cursorLag1Label = cursorLag1Sequences?.length
+    ? cursorLag1Sequences
+        .map((seq) =>
+          $_('trends.compare.lag1.cursor', {
+            values: { from: seq.from.label, to: seq.to.label },
+          })
+        )
+        .join(' · ')
+    : '';
+
   $: coincidenceHint =
     pinned.length < 2
       ? $_('trends.compare.coincidence.need_pins')
       : !coincidence.canHighlight
         ? $_('trends.compare.coincidence.empty', { values: { min: MIN_COINCIDENCE_DAYS } })
+        : '';
+
+  $: lag1Hint =
+    pinned.length < 2
+      ? $_('trends.compare.lag1.need_pins')
+      : !lag1.canHighlight
+        ? $_('trends.compare.lag1.empty', { values: { min: MIN_LAG1_DAYS } })
         : '';
 </script>
 
@@ -597,6 +647,28 @@
           </p>
         {/if}
       </div>
+      <div class="compare__coincidence" data-testid="trends-compare-lag1">
+        <label class="compare__coincidence-toggle">
+          <input
+            type="checkbox"
+            data-testid="trends-compare-lag1-toggle"
+            checked={lag1Highlight && lag1.canHighlight}
+            disabled={!lag1.canHighlight}
+            aria-label={$_('trends.compare.lag1.toggle_aria')}
+            on:change={(event) => setLag1Highlight(event.currentTarget.checked)}
+          />
+          {$_('trends.compare.lag1.toggle')}
+        </label>
+        {#if lag1Hint}
+          <p class="compare__coincidence-hint" data-testid="trends-compare-lag1-empty">
+            {lag1Hint}
+          </p>
+        {:else if lag1Active}
+          <p class="compare__coincidence-legend" data-testid="trends-compare-lag1-legend">
+            {$_('trends.compare.lag1.legend')}
+          </p>
+        {/if}
+      </div>
       <p class="compare__zoom-hint" data-testid="trends-compare-zoom-encoding">
         {$_('trends.compare.zoom.encoding_hint')}
       </p>
@@ -613,6 +685,11 @@
       {#if cursorCoincidenceLabel}
         <p class="compare__zoom-detail" data-testid="trends-compare-coincidence-detail">
           {cursorCoincidenceLabel}
+        </p>
+      {/if}
+      {#if cursorLag1Label}
+        <p class="compare__zoom-detail" data-testid="trends-compare-lag1-detail">
+          {cursorLag1Label}
         </p>
       {/if}
     </div>
