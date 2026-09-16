@@ -335,7 +335,7 @@ is not logged yet.
 - Mood slider is the only required field
 - Tag suggestions sorted by historical usage frequency — implemented in the
   `TagPicker` as a **"Recently used"** row (#890 Folge 4/4, #898): the tags used
-  in the last 14 days (source: `GET /entries/stats/tags?include_non_analytics=true`,
+  in the last **14 days** (source: `GET /entries/stats/tags?include_non_analytics=true`,
   ranked by count then recency), capped at the top few, with the full categorised
   catalogue behind an **"All tags"** disclosure. The recency mode ranks by raw
   usage — a visible tag the user logs but excluded from analytics still surfaces
@@ -345,6 +345,15 @@ is not logged yet.
   off; a pin alone is enough to fold the catalogue behind "All tags". The recency fetch is non-blocking — a failure or an
   empty window falls back to the full catalogue so save/offline-autosave is never
   gated (60-second rule). One selection model, no second tag UI.
+- **Why 14 days (not 7 / not all-time) — #903 B:** Seven days is too sparse for
+  infrequent loggers (weekly habits drop out of the cloud). All-time Top-N over-
+  weights old life phases and fights the “current context” goal of the entry form.
+  Fourteen days is the justified middle default: it covers a full weekly cadence
+  twice, stays short enough to track the current phase, and pairs with **pins** for
+  rare-but-important tags that fall outside any fixed window. The window stays a
+  hard-coded constant (`RECENCY_WINDOW_DAYS` in `TagPicker.svelte`); a per-user
+  preference is deferred until product evidence shows users need to change it
+  (#903 B1).
 - "+ More" opens time-slot chips, cycle day, full tag sheet, symptoms and notes; photo upload follows in M13
 - The full `TagPicker` supports inline custom tag creation in the entry/edit flow: name, category,
   unique slug, optional icon and colour. A newly-created tag is added to the in-memory catalogue and
