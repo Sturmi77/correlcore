@@ -130,7 +130,9 @@ async def test_cli_exits_nonzero_when_users_failed(monkeypatch: pytest.MonkeyPat
             return None
 
     monkeypatch.setattr(cli, "AsyncSessionLocal", lambda: _SessionCtx())
-    monkeypatch.setattr(cli, "_parse_args", lambda: type("A", (), {"user_id": None, "dry_run": False})())
+    monkeypatch.setattr(
+        cli, "_parse_args", lambda: type("A", (), {"user_id": None, "dry_run": False})()
+    )
 
     async def _failed(*_a: object, **_k: object) -> MarkerTagBackfillSummary:
         return failed
