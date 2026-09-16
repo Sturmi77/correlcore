@@ -631,40 +631,6 @@ export interface paths {
         patch: operations["update_entry_endpoint_api_v1_entries__entry_id__patch"];
         trace?: never;
     };
-    "/api/v1/entries/{entry_id}/note-markers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Add a note marker to an entry */
-        post: operations["create_note_marker_endpoint_api_v1_entries__entry_id__note_markers_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/entries/{entry_id}/note-markers/{marker_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Remove a note marker from an entry */
-        delete: operations["delete_note_marker_endpoint_api_v1_entries__entry_id__note_markers__marker_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/entries/{entry_id}/note-signals": {
         parameters: {
             query?: never;
@@ -1412,23 +1378,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/user/me/note-markers/suggestions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Return recent custom note markers for chip suggestions */
-        get: operations["list_my_note_marker_suggestions_api_v1_user_me_note_markers_suggestions_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/user/preferences": {
         parameters: {
             query?: never;
@@ -2064,34 +2013,6 @@ export interface components {
             /** Stress */
             stress: number;
         };
-        /** EntryNoteMarkerCreate */
-        EntryNoteMarkerCreate: {
-            /** Marker */
-            marker: string;
-            /** @default user */
-            source: components["schemas"]["NoteMarkerSource"];
-        };
-        /** EntryNoteMarkerResponse */
-        EntryNoteMarkerResponse: {
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Entry Id
-             * Format: uuid
-             */
-            entry_id: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Marker */
-            marker: string;
-            source: components["schemas"]["NoteMarkerSource"];
-        };
         /** EntryNoteSignalResponse */
         EntryNoteSignalResponse: {
             /** Confidence */
@@ -2147,8 +2068,6 @@ export interface components {
             mood_score: number;
             /** Note */
             note?: string | null;
-            /** Note Markers */
-            note_markers?: components["schemas"]["EntryNoteMarkerResponse"][];
             /** Note Raw */
             note_raw?: string | null;
             /** Note Signals */
@@ -2925,7 +2844,7 @@ export interface components {
          *     concern and must stay neutral under the No-Gamification principle.
          * @enum {string}
          */
-        InsightType: "pointbiserial" | "spearman" | "weekday_pattern" | "work_context_pattern" | "weekday_context_pattern" | "symptom_cluster" | "symptom_mood_association" | "symptom_tag_cooccurrence" | "note_marker_mood" | "changepoint";
+        InsightType: "pointbiserial" | "spearman" | "weekday_pattern" | "work_context_pattern" | "weekday_context_pattern" | "symptom_cluster" | "symptom_mood_association" | "symptom_tag_cooccurrence" | "changepoint";
         /**
          * InsightWorkerRunSummary
          * @description Latest per-user insight generation attempt for Home / status UI.
@@ -3022,11 +2941,6 @@ export interface components {
             /** Previous N */
             previous_n: number;
         };
-        /**
-         * NoteMarkerSource
-         * @enum {string}
-         */
-        NoteMarkerSource: "user" | "suggestion";
         /**
          * NoteVisibility
          * @enum {string}
@@ -5686,79 +5600,6 @@ export interface operations {
             };
         };
     };
-    create_note_marker_endpoint_api_v1_entries__entry_id__note_markers_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                entry_id: string;
-            };
-            cookie?: {
-                access_token?: string | null;
-            };
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EntryNoteMarkerCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EntryNoteMarkerResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_note_marker_endpoint_api_v1_entries__entry_id__note_markers__marker_id__delete: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                entry_id: string;
-                marker_id: string;
-            };
-            cookie?: {
-                access_token?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     list_entry_note_signals_endpoint_api_v1_entries__entry_id__note_signals_get: {
         parameters: {
             query?: never;
@@ -7348,39 +7189,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConsentRecordResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_my_note_marker_suggestions_api_v1_user_me_note_markers_suggestions_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: {
-                access_token?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": string[];
                 };
             };
             /** @description Validation Error */

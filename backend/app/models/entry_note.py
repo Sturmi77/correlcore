@@ -1,4 +1,9 @@
-"""Entry note markers and signals (Notes in Analysis foundation)."""
+"""Entry note markers (legacy) and signals (Notes in Analysis foundation).
+
+``entry_note_markers`` is dropped by migration 049 (#903 C). The
+``EntryNoteMarker`` ORM model remains only so the one-off marker→tag
+backfill can run *during* that upgrade before the DROP. Note signals stay.
+"""
 
 from __future__ import annotations
 
@@ -27,6 +32,8 @@ class NoteMarkerSource(StrEnum):
 
 
 class EntryNoteMarker(Base):
+    """Legacy marker rows — readable until migration 049 drops the table."""
+
     __tablename__ = "entry_note_markers"
     __table_args__ = (
         UniqueConstraint("entry_id", "marker", name="uq_entry_note_markers_entry_marker"),

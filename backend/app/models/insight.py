@@ -47,11 +47,6 @@ class InsightType(StrEnum):
     SYMPTOM_CLUSTER = "symptom_cluster"
     SYMPTOM_MOOD_ASSOCIATION = "symptom_mood_association"
     SYMPTOM_TAG_COOCCURRENCE = "symptom_tag_cooccurrence"
-    # Deprecated (#890 Folge 2/4, #896): the note-marker mood insight family is no
-    # longer generated — note markers were consolidated into tags (Option 4), so
-    # tag correlation/co-occurrence already covers the signal. The value is kept
-    # so historical rows written before archival still deserialise on read.
-    NOTE_MARKER_MOOD = "note_marker_mood"
     CHANGEPOINT = "changepoint"
 
 

@@ -1,4 +1,4 @@
-import type { NoteVisibility } from '$lib/api/noteMarkers';
+import type { NoteVisibility } from '$lib/api/entries';
 import type { EntrySlot, WorkContext } from '$lib/contracts/apiContract';
 
 export type SyncState = 'local' | 'pending' | 'synced' | 'conflict';

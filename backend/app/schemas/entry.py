@@ -29,7 +29,7 @@ from datetime import date as date_type
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.entry import BleedingLevel, EntrySlot, EntrySource, WorkContext
-from app.schemas.note import EntryNoteMarkerResponse, EntryNoteSignalResponse
+from app.schemas.note import EntryNoteSignalResponse
 from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 from app.schemas.tag import TagResponse
 
@@ -158,7 +158,6 @@ class EntryResponse(BaseModel):
     note_summary_short: str | None = None
     note_visibility: NoteVisibilitySchema = NoteVisibilitySchema.FULL
     note_updated_at: datetime | None = None
-    note_markers: list[EntryNoteMarkerResponse] = Field(default_factory=list)
     note_signals: list[EntryNoteSignalResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

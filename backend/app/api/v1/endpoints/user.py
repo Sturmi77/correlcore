@@ -53,7 +53,6 @@ from app.services.consent_service import (
     summarize_current_consents,
 )
 from app.services.export_service import build_export_envelope, export_filename, render_export_zip
-from app.services.note_markers import list_user_marker_suggestions
 from app.services.sync_conflict_service import list_sync_conflicts, sanitize_conflict_value
 from app.services.user_preferences_service import (
     prune_orphaned_dismissed_insight_keys,
@@ -120,18 +119,6 @@ async def revoke_my_consent(
         consent_version=version,
     )
     return ConsentRecordResponse.model_validate(entry)
-
-
-@router.get(
-    "/me/note-markers/suggestions",
-    response_model=list[str],
-    summary="Return recent custom note markers for chip suggestions",
-)
-async def list_my_note_marker_suggestions(
-    current_user: User = Depends(get_current_verified_user),
-    db: AsyncSession = Depends(get_session),
-) -> list[str]:
-    return await list_user_marker_suggestions(db, user_id=current_user.id)
 
 
 @router.get(

@@ -208,7 +208,7 @@ jobs:
             tests/test_gdpr_delete_integration.py
             tests/test_rls_isolation_integration.py
             tests/test_m7_qa_seed_integration.py
-            tests/test_marker_tag_backfill_integration.py
+            tests/test_049_drop_entry_note_markers_integration.py
             tests/test_password_reset.py
             tests/test_sync_service.py
           )

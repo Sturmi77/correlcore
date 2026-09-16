@@ -9,7 +9,7 @@ from app.models.consent_log import ConsentLog  # noqa: F401
 from app.models.device_token import DeviceToken, PushPlatform, PushProvider  # noqa: F401
 from app.models.email_verification_token import EmailVerificationToken  # noqa: F401
 from app.models.entry import Entry, EntrySlot, NoteVisibility, WorkContext  # noqa: F401
-from app.models.entry_note import EntryNoteMarker, EntryNoteSignal, NoteMarkerSource  # noqa: F401
+from app.models.entry_note import EntryNoteMarker, EntryNoteSignal  # noqa: F401
 from app.models.insight import Insight, InsightTier, InsightType  # noqa: F401
 from app.models.insight_digest import InsightDigest  # noqa: F401
 from app.models.insight_dismissal import InsightDismissal  # noqa: F401
@@ -55,7 +55,6 @@ __all__ = [
     "EntryNoteMarker",
     "EntryNoteSignal",
     "EntrySlot",
-    "NoteMarkerSource",
     "NoteVisibility",
     "EntrySymptom",
     "EntryTag",

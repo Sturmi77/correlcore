@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+from app.models.entry import Entry
+
 NOTE_SUMMARY_MAX_LENGTH = 120
 
 _SENTENCE_END = re.compile(r"[.!?]\s")
@@ -29,3 +31,10 @@ def compute_note_summary_short(
     if len(candidate) <= max_length:
         return candidate
     return candidate[: max_length - 1].rstrip() + "…"
+
+
+def entry_has_note(entry: Entry) -> bool:
+    """True when the entry has ciphertext or a short summary preview."""
+    return bool(entry.note_enc and str(entry.note_enc).strip()) or bool(
+        entry.note_summary_short and entry.note_summary_short.strip()
+    )

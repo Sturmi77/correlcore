@@ -175,10 +175,11 @@ exist:
   definition.
 
 **Why (b), not (a).** Tag analytics (`subject_type="tag"` correlation and tag
-co-occurrence, incl. symptom↔tag) already covers `achievement`/`conflict`/`social`
-now that they are tags, and the Home work-context heatmap covers the overlap keys
-better (mood **+ energy + stress**, trend, low gate). Re-homing the marker path
-would rebuild a weaker copy of signals the tag pipeline already produces.
+co-occurrence, incl. symptom↔tag) already covers `achievement`/`conflict`/`travel`
+now that those 1:1 markers are tags. `social` was **not** converted (it is a
+tag *category*, not a slug). The Home work-context heatmap covers the overlap
+keys better (mood **+ energy + stress**, trend, low gate). Re-homing the marker
+path would rebuild a weaker copy of signals the tag pipeline already produces.
 
 **What changed.**
 
@@ -188,13 +189,26 @@ would rebuild a weaker copy of signals the tag pipeline already produces.
 - Removed `GET /analysis/notes/marker-summary` (the whole `/analysis` router),
   `aggregate_marker_summary`, and the `MarkerSummary*` schemas; cleaned
   `noteMarkers.ts` of `fetchMarkerSummary`.
-- `InsightType.NOTE_MARKER_MOOD` is **kept** as a deprecated enum value only so
-  any historical `insights` rows written before archival still deserialise on
+- `InsightType.NOTE_MARKER_MOOD` was kept as a deprecated enum value only so
+  any historical `insights` rows written before archival still deserialised on
   read. No new rows of this type are produced.
 
-**Out of scope (later follow-ups).** The `entry_note_markers` table and its
-CRUD/suggestions endpoints stay for the read-only history surfaces until the
-UI/taxonomy teardown (#897). Note _signals_ (regex on note text) are unaffected.
+**Completed in #903 C (marker endgame).** Migration `049` runs the marker→tag
+backfill first (add-only tag links for marker-derived tags only), then drops
+`entry_note_markers`, removes CRUD + suggestions endpoints, strips
+`note_markers[]` from entry reads, deletes any remaining `note_marker_mood`
+insight rows, and removes the Python `InsightType.NOTE_MARKER_MOOD` member.
+The PostgreSQL enum label is left in place. Note _signals_ remain. The DSGVO
+ZIP export never included markers (only tags/notes).
+
+**Tag blast radius (reconfirmed).** `049` does not `UPDATE`/`DELETE` `tags` or
+`entry_tags`. The prior backfill was add-only and only *linked* the 1:1
+catalogue slugs `conflict` / `travel` / `achievement` (plus new per-user
+custom tags from free-text markers). Overlap keys `work`, `homeoffice`,
+`social`, `movement`, `sleep_bad`, `sleep_good`, `stress`, and `symptom` were
+skipped so they could not land on unrelated catalogue tags (`work_intense`,
+`good_sleep`, sport, family/friends, …) or on `work_context` / sliders /
+SymptomChecker. Curated default tag *rows* were never rewritten.
 
 ---
 
@@ -221,10 +235,9 @@ UI/taxonomy teardown (#897). Note _signals_ (regex on note text) are unaffected.
 > `NoteMarkerChips.svelte` component, the `PREDEFINED_NOTE_MARKERS` constant, the
 > read-only history rendering (`EntryHistorySheet`, `entries/day/[date]`) and the
 > `entry.note_markers.*` i18n keys are all gone; migrated markers surface as tags.
-> The `entry_note_markers` table and its CRUD/suggestions API endpoints remain
-> only so the backend keeps returning historical `note_markers[]` on entry reads
-> (no UI consumes them). Note _signals_ (regex on note text) are unaffected. See
-> #890 for the full follow-up plan.
+> **#903 C** dropped the leftover table, CRUD/suggestions API, entry-read
+> `note_markers[]` field, and the Python `NOTE_MARKER_MOOD` enum member. Note
+> _signals_ (regex on note text) are unaffected. See #890 / #903 for the plan.
 
 ### Marker Taxonomy (v1) — removed from the app (see note above)
 
@@ -232,24 +245,28 @@ UI/taxonomy teardown (#897). Note _signals_ (regex on note text) are unaffected.
 > Not offered as capture chips since #890 / #893, and no longer rendered anywhere.
 > `achievement` is instead available as a curated default tag ("Erfolg", migration
 > 047); historical markers were consolidated onto tags by the one-off
-> service-layer backfill (`backend/scripts/backfill_marker_tags.py`, #895). The
-> table below documents the v1 keys for historical reference only.
+> service-layer backfill (#895 / #900 / #901), then the table was dropped in
+> **#903 C**. The table below documents the v1 keys for historical reference only.
 
-| Key           | Display Label (DE / EN)        |
-| ------------- | ------------------------------ |
-| `work`        | Arbeit / Work                  |
-| `homeoffice`  | Homeoffice / Remote            |
-| `social`      | Sozial / Social                |
-| `movement`    | Bewegung / Exercise            |
-| `sleep_bad`   | Schlechter Schlaf / Poor Sleep |
-| `sleep_good`  | Guter Schlaf / Good Sleep      |
-| `stress`      | Stress                         |
-| `conflict`    | Konflikt / Conflict            |
-| `symptom`     | Symptom                        |
-| `travel`      | Reise / Travel                 |
-| `achievement` | Erfolg / Achievement           |
+| Key           | Display Label (DE / EN)        | #895 backfill                                      |
+| ------------- | ------------------------------ | -------------------------------------------------- |
+| `work`        | Arbeit / Work                  | skipped (`work_context`)                           |
+| `homeoffice`  | Homeoffice / Remote            | skipped (`work_context`)                           |
+| `social`      | Sozial / Social                | skipped (tag *category*, not a slug)               |
+| `movement`    | Bewegung / Exercise            | skipped (sport / walk tags)                        |
+| `sleep_bad`   | Schlechter Schlaf / Poor Sleep | skipped (sleep field; not `good_sleep`)            |
+| `sleep_good`  | Guter Schlaf / Good Sleep      | skipped (sleep field; not `good_sleep`)            |
+| `stress`      | Stress                         | skipped (stress slider)                            |
+| `conflict`    | Konflikt / Conflict            | linked 1:1 → catalogue tag `conflict`              |
+| `symptom`     | Symptom                        | skipped (SymptomChecker)                           |
+| `travel`      | Reise / Travel                 | linked 1:1 → catalogue tag `travel`                |
+| `achievement` | Erfolg / Achievement           | linked 1:1 → catalogue tag `achievement`           |
 
 Custom markers are free-text, max 32 chars, stored alongside predefined ones.
+The backfill turned those into **new** per-user tags (category `other`), or
+reused an existing custom tag of the same slug; it never mutated curated
+defaults. Migration `049` does not rewrite any of this — it only drops the
+source marker table.
 
 ### Timeline / Calendar — Note Indicator
 
@@ -365,10 +382,10 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 ### M3 Retroactive
 
 - [x] ~~Entry Composer shows marker chip row with predefined markers.~~ Removed in #890 / #893 (Option 4); tagging moved to the Tags section, `achievement` newly seeded as a default tag.
-- [x] Selected markers saved as `entry_note_markers` with `source: 'user'` (retained for history/API; no longer written from the composer).
+- [x] ~~Selected markers saved as `entry_note_markers` with `source: 'user'`.~~ Table dropped in #903 C after backfill.
 - [x] ~~`GET /analysis/notes/marker-summary` returns correct avg_mood per marker.~~ Archived in #890 Folge 2/4 (#896); endpoint removed, tag analytics covers the signal.
-- [ ] Suggestions endpoint returns last 20 user-defined markers.
-- [x] ~~Marker-based insights / summary path wired (sample thresholds per engine).~~ Archived in #890 Folge 2/4 (#896); `NOTE_MARKER_MOOD` no longer generated.
+- [x] ~~Suggestions endpoint returns last 20 user-defined markers.~~ Removed in #903 C.
+- [x] ~~Marker-based insights / summary path wired (sample thresholds per engine).~~ Archived in #890 Folge 2/4 (#896); `NOTE_MARKER_MOOD` removed in #903 C.
 
 ### M4
 

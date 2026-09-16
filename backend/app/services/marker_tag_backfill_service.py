@@ -102,12 +102,28 @@ from app.models.entry import Entry, NoteVisibility
 from app.models.entry_note import EntryNoteMarker
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user_encryption_key import UserEncryptionKey
-from app.schemas.note import PREDEFINED_NOTE_MARKERS
 from app.schemas.tag import MAX_TAGS_PER_ENTRY, TagCreate
 from app.services.tag_service import TagError, create_custom_tag, list_tags_for_entry
 
 logger = logging.getLogger(__name__)
 
+# Former note-marker taxonomy (API removed in #903 C). Kept here so the
+# one-off backfill can classify predefined vs custom markers.
+PREDEFINED_NOTE_MARKERS: frozenset[str] = frozenset(
+    {
+        "work",
+        "homeoffice",
+        "social",
+        "movement",
+        "sleep_bad",
+        "sleep_good",
+        "stress",
+        "conflict",
+        "symptom",
+        "travel",
+        "achievement",
+    }
+)
 # Predefined markers with an unambiguous 1:1 curated default-tag target. Every
 # other predefined key is dominated by a dedicated field/category and skipped.
 _PREDEFINED_TAG_MAP: dict[str, str] = {

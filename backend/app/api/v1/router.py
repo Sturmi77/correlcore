@@ -16,7 +16,6 @@ from app.api.v1.endpoints import (
     insights,
     instance,
     media,
-    note_markers,
     note_signals,
     onboarding,
     security,
@@ -63,11 +62,6 @@ api_router.include_router(export.router, prefix="/export", tags=["export"])
 
 # Daily entries (M1, Issue #7)
 api_router.include_router(entries.router, prefix="/entries", tags=["entries"])
-api_router.include_router(
-    note_markers.entry_note_markers_router,
-    prefix="/entries",
-    tags=["entries"],
-)
 api_router.include_router(
     note_signals.entry_note_signals_router,
     prefix="/entries",

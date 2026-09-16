@@ -8,6 +8,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Removed
+
+- **Marker-Endgame (#903 C)** — Tabelle `entry_note_markers` (Migration 049),
+  CRUD-/Suggestions-Endpunkte, `note_markers[]` auf Entry-Reads und der
+  Python-Enum-Wert `InsightType.NOTE_MARKER_MOOD` sind entfernt (historische
+  Insight-Zeilen dieses Typs werden in der Migration gelöscht; PG-Enum-Label
+  bleibt). Migration 049 führt **vor** dem DROP den Marker→Tag-Backfill aus
+  (add-only: nur fehlende `entry_tags`-Links für `conflict`/`travel`/
+  `achievement` plus Custom-Marker; Overlap-Keys und unrelated Tags bleiben
+  unberührt). Backfill-Script bleibt für Dry-Runs. Note-Signals bleiben.
+  `entry_has_note` lebt in `note_summary.py`.
+
 ### Changed
 
 - **TagPicker-Recency-Fenster 14 Tage als Default belegt (#903 B)** — Begründung
