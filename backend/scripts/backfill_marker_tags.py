@@ -14,6 +14,11 @@ backfill is add-only (links are inserted with ON CONFLICT DO NOTHING; it never
 removes or rewrites an entry's tag set), so it is safe to run alongside live
 edits — it cannot clobber a tag a user changes concurrently.
 
+Exit status: ``0`` only when every targeted user succeeds. Per-user
+``CryptoError`` / ``TagError`` / DB errors are isolated (other users still
+commit), but the process exits ``1`` when ``users_failed > 0`` so migration
+049 aborts before ``DROP TABLE entry_note_markers``.
+
 Usage::
 
     cd backend
@@ -99,6 +104,14 @@ async def _main() -> int:
         summary.skipped_hidden_target,
         summary.skipped_over_cap,
     )
+    if summary.users_failed > 0:
+        logger.error(
+            "marker → tag backfill incomplete: %s user(s) failed; "
+            "fix DEK / TagError / DB issues and re-run before dropping "
+            "entry_note_markers",
+            summary.users_failed,
+        )
+        return 1
     return 0
 
 

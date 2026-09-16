@@ -86,8 +86,8 @@ def test_cap_constant_reused_from_schema() -> None:
 
 async def test_backfill_isolates_dek_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     # Loading Entry.note_enc without a bound DEK raises DekUnavailableError
-    # (CryptoError). That must isolate the user, not abort the whole run —
-    # otherwise the first real note crashes the production CLI.
+    # (CryptoError). That must isolate the user (rollback + continue), not
+    # abort siblings mid-loop — the CLI then exits non-zero so 049 does not DROP.
     uid = uuid.uuid4()
 
     async def _boom(_db: object, *, user_id: uuid.UUID) -> object:
@@ -104,3 +104,42 @@ async def test_backfill_isolates_dek_unavailable(monkeypatch: pytest.MonkeyPatch
     assert summary.users_failed == 1
     assert summary.users_processed == 0
     db.rollback.assert_awaited()
+
+
+async def test_cli_exits_nonzero_when_users_failed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """049 gates DROP on subprocess exit — users_failed must not return 0."""
+    import importlib.util
+    from pathlib import Path
+
+    from app.services.marker_tag_backfill_service import MarkerTagBackfillSummary
+
+    script = Path(__file__).resolve().parents[1] / "scripts" / "backfill_marker_tags.py"
+    spec = importlib.util.spec_from_file_location("backfill_marker_tags_cli", script)
+    assert spec is not None and spec.loader is not None
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+
+    failed = MarkerTagBackfillSummary(users_processed=1, users_failed=2)
+    ok = MarkerTagBackfillSummary(users_processed=3, users_failed=0)
+
+    class _SessionCtx:
+        async def __aenter__(self) -> AsyncMock:
+            return AsyncMock()
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    monkeypatch.setattr(cli, "AsyncSessionLocal", lambda: _SessionCtx())
+    monkeypatch.setattr(cli, "_parse_args", lambda: type("A", (), {"user_id": None, "dry_run": False})())
+
+    async def _failed(*_a: object, **_k: object) -> MarkerTagBackfillSummary:
+        return failed
+
+    async def _ok(*_a: object, **_k: object) -> MarkerTagBackfillSummary:
+        return ok
+
+    monkeypatch.setattr(cli, "backfill_marker_tags", _failed)
+    assert await cli._main() == 1
+
+    monkeypatch.setattr(cli, "backfill_marker_tags", _ok)
+    assert await cli._main() == 0

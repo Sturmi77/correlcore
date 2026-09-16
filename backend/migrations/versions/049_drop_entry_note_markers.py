@@ -6,10 +6,11 @@ Create Date: 2026-09-16
 
 Marker endgame after #890 Option 4. Before dropping ``entry_note_markers``,
 ``upgrade()`` runs the service-layer marker→tag backfill (#895/#900/#901) so
-self-hosted ``alembic upgrade head`` converts remaining rows. The backfill is
-add-only: it only inserts missing ``entry_tags`` links for marker-derived tags
-(predefined 1:1 map + custom markers) and never deletes, renames, or rewrites
-unrelated tags.
+self-hosted ``alembic upgrade head`` converts remaining rows. The CLI exits
+non-zero when any user fails, which aborts this migration before the DROP.
+The backfill is add-only: it only inserts missing ``entry_tags`` links for
+marker-derived tags (predefined 1:1 map + custom markers) and never deletes,
+renames, or rewrites unrelated tags.
 
 After a successful backfill, this migration deletes leftover
 ``note_marker_mood`` insight rows and drops the markers table. The PostgreSQL
@@ -91,9 +92,10 @@ def _run_marker_tag_backfill() -> None:
     if proc.returncode != 0:
         raise RuntimeError(
             f"marker→tag backfill failed (exit {proc.returncode}); "
-            "fix CryptoError / failed users, then re-run "
-            "`alembic upgrade head` — entry_note_markers will not be dropped "
-            "until the backfill succeeds"
+            "the CLI exits non-zero when any user fails (CryptoError / "
+            "TagError / DB) or the run crashes — fix those users, then "
+            "re-run `alembic upgrade head`. entry_note_markers is not "
+            "dropped until the backfill reports zero failures"
         )
 
 
