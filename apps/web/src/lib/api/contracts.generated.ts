@@ -64,7 +64,7 @@ type Register = Schemas['RegisterRequest'];
 type Insight = Schemas['InsightResponse'];
 
 // entries — EntryResponse (response). Every scalar/enum field; the nested
-// note_markers / note_signals arrays are covered by the openapi.json snapshot.
+// note_signals arrays are covered by the openapi.json snapshot.
 type _er_id = Assert<Handles<Entry['id'], EntryResponse['id']>>;
 type _er_user = Assert<Handles<Entry['user_id'], EntryResponse['user_id']>>;
 type _er_date = Assert<Handles<Entry['entry_date'], EntryResponse['entry_date']>>;

@@ -56,7 +56,7 @@
   } from '$lib/api/symptoms';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
   import { computeNoteSummaryShort } from '$lib/utils/noteSummary';
-  import { type NoteVisibility } from '$lib/api/noteMarkers';
+  import { type NoteVisibility } from '$lib/api/entries';
   import { createAutoSave, type AutoSaveState } from '$lib/utils/autoSave';
   import { refreshTags } from '$lib/stores/tags';
   import { defaultWorkContextForDate } from '$lib/utils/workContext';

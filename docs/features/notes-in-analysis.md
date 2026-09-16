@@ -188,13 +188,18 @@ would rebuild a weaker copy of signals the tag pipeline already produces.
 - Removed `GET /analysis/notes/marker-summary` (the whole `/analysis` router),
   `aggregate_marker_summary`, and the `MarkerSummary*` schemas; cleaned
   `noteMarkers.ts` of `fetchMarkerSummary`.
-- `InsightType.NOTE_MARKER_MOOD` is **kept** as a deprecated enum value only so
-  any historical `insights` rows written before archival still deserialise on
+- `InsightType.NOTE_MARKER_MOOD` was kept as a deprecated enum value only so
+  any historical `insights` rows written before archival still deserialised on
   read. No new rows of this type are produced.
 
-**Out of scope (later follow-ups).** The `entry_note_markers` table and its
-CRUD/suggestions endpoints stay for the read-only history surfaces until the
-UI/taxonomy teardown (#897). Note _signals_ (regex on note text) are unaffected.
+**Completed in #903 C (marker endgame).** Migration `049` drops
+`entry_note_markers` (after the #895/#900/#901 backfill), removes CRUD +
+suggestions endpoints, strips `note_markers[]` from entry reads, deletes any
+remaining `note_marker_mood` insight rows, and removes the Python
+`InsightType.NOTE_MARKER_MOOD` member. The PostgreSQL enum label is left in
+place (PG cannot `DROP VALUE` cleanly). Note _signals_ remain. The DSGVO ZIP
+export never included markers (only tags/notes); after backfill, marker context
+is represented as tags.
 
 ---
 
@@ -221,10 +226,9 @@ UI/taxonomy teardown (#897). Note _signals_ (regex on note text) are unaffected.
 > `NoteMarkerChips.svelte` component, the `PREDEFINED_NOTE_MARKERS` constant, the
 > read-only history rendering (`EntryHistorySheet`, `entries/day/[date]`) and the
 > `entry.note_markers.*` i18n keys are all gone; migrated markers surface as tags.
-> The `entry_note_markers` table and its CRUD/suggestions API endpoints remain
-> only so the backend keeps returning historical `note_markers[]` on entry reads
-> (no UI consumes them). Note _signals_ (regex on note text) are unaffected. See
-> #890 for the full follow-up plan.
+> **#903 C** dropped the leftover table, CRUD/suggestions API, entry-read
+> `note_markers[]` field, and the Python `NOTE_MARKER_MOOD` enum member. Note
+> _signals_ (regex on note text) are unaffected. See #890 / #903 for the plan.
 
 ### Marker Taxonomy (v1) — removed from the app (see note above)
 
@@ -232,8 +236,8 @@ UI/taxonomy teardown (#897). Note _signals_ (regex on note text) are unaffected.
 > Not offered as capture chips since #890 / #893, and no longer rendered anywhere.
 > `achievement` is instead available as a curated default tag ("Erfolg", migration
 > 047); historical markers were consolidated onto tags by the one-off
-> service-layer backfill (`backend/scripts/backfill_marker_tags.py`, #895). The
-> table below documents the v1 keys for historical reference only.
+> service-layer backfill (#895 / #900 / #901), then the table was dropped in
+> **#903 C**. The table below documents the v1 keys for historical reference only.
 
 | Key           | Display Label (DE / EN)        |
 | ------------- | ------------------------------ |
@@ -365,10 +369,10 @@ Signals are language-agnostic normalized keys; source text can be German or Engl
 ### M3 Retroactive
 
 - [x] ~~Entry Composer shows marker chip row with predefined markers.~~ Removed in #890 / #893 (Option 4); tagging moved to the Tags section, `achievement` newly seeded as a default tag.
-- [x] Selected markers saved as `entry_note_markers` with `source: 'user'` (retained for history/API; no longer written from the composer).
+- [x] ~~Selected markers saved as `entry_note_markers` with `source: 'user'`.~~ Table dropped in #903 C after backfill.
 - [x] ~~`GET /analysis/notes/marker-summary` returns correct avg_mood per marker.~~ Archived in #890 Folge 2/4 (#896); endpoint removed, tag analytics covers the signal.
-- [ ] Suggestions endpoint returns last 20 user-defined markers.
-- [x] ~~Marker-based insights / summary path wired (sample thresholds per engine).~~ Archived in #890 Folge 2/4 (#896); `NOTE_MARKER_MOOD` no longer generated.
+- [x] ~~Suggestions endpoint returns last 20 user-defined markers.~~ Removed in #903 C.
+- [x] ~~Marker-based insights / summary path wired (sample thresholds per engine).~~ Archived in #890 Folge 2/4 (#896); `NOTE_MARKER_MOOD` removed in #903 C.
 
 ### M4
 

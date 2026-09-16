@@ -1,4 +1,4 @@
-"""Pydantic schemas for note markers, visibility, and analysis summaries."""
+"""Pydantic schemas for note visibility, signals, and analysis summaries."""
 
 from __future__ import annotations
 
@@ -8,47 +8,11 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.entry_note import NoteMarkerSource
-
 
 class NoteVisibility(StrEnum):
     FULL = "full"
     ANALYSIS_ONLY = "analysis_only"
     HIDDEN = "hidden"
-
-
-PREDEFINED_NOTE_MARKERS: frozenset[str] = frozenset(
-    {
-        "work",
-        "homeoffice",
-        "social",
-        "movement",
-        "sleep_bad",
-        "sleep_good",
-        "stress",
-        "conflict",
-        "symptom",
-        "travel",
-        "achievement",
-    }
-)
-
-MAX_CUSTOM_MARKER_LENGTH = 32
-
-
-class EntryNoteMarkerCreate(BaseModel):
-    marker: str = Field(min_length=1, max_length=64)
-    source: NoteMarkerSource = NoteMarkerSource.USER
-
-
-class EntryNoteMarkerResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    entry_id: uuid.UUID
-    marker: str
-    source: NoteMarkerSource
-    created_at: datetime
 
 
 class EntryNoteSignalResponse(BaseModel):

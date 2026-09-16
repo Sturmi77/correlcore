@@ -4,7 +4,7 @@
 
 import type { EntryResponse } from '$lib/api/entries';
 import { listEntries } from '$lib/api/entries';
-import type { NoteVisibility } from '$lib/api/noteMarkers';
+import type { NoteVisibility } from '$lib/api/entries';
 import type { EntrySlot, WorkContext } from '$lib/contracts/apiContract';
 import type { SymptomEntry } from '$lib/api/symptoms';
 import {

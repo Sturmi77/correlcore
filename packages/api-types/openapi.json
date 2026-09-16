@@ -1243,60 +1243,6 @@
         "title": "EntryMetrics",
         "type": "object"
       },
-      "EntryNoteMarkerCreate": {
-        "properties": {
-          "marker": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Marker",
-            "type": "string"
-          },
-          "source": {
-            "$ref": "#/components/schemas/NoteMarkerSource",
-            "default": "user"
-          }
-        },
-        "required": [
-          "marker"
-        ],
-        "title": "EntryNoteMarkerCreate",
-        "type": "object"
-      },
-      "EntryNoteMarkerResponse": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "entry_id": {
-            "format": "uuid",
-            "title": "Entry Id",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "marker": {
-            "title": "Marker",
-            "type": "string"
-          },
-          "source": {
-            "$ref": "#/components/schemas/NoteMarkerSource"
-          }
-        },
-        "required": [
-          "id",
-          "entry_id",
-          "marker",
-          "source",
-          "created_at"
-        ],
-        "title": "EntryNoteMarkerResponse",
-        "type": "object"
-      },
       "EntryNoteSignalResponse": {
         "properties": {
           "confidence": {
@@ -1408,13 +1354,6 @@
               }
             ],
             "title": "Note"
-          },
-          "note_markers": {
-            "items": {
-              "$ref": "#/components/schemas/EntryNoteMarkerResponse"
-            },
-            "title": "Note Markers",
-            "type": "array"
           },
           "note_raw": {
             "anyOf": [
@@ -3239,7 +3178,6 @@
           "symptom_cluster",
           "symptom_mood_association",
           "symptom_tag_cooccurrence",
-          "note_marker_mood",
           "changepoint"
         ],
         "title": "InsightType",
@@ -3490,14 +3428,6 @@
         ],
         "title": "MetricTrend",
         "type": "object"
-      },
-      "NoteMarkerSource": {
-        "enum": [
-          "user",
-          "suggestion"
-        ],
-        "title": "NoteMarkerSource",
-        "type": "string"
       },
       "NoteVisibility": {
         "enum": [
@@ -9516,169 +9446,6 @@
         ]
       }
     },
-    "/api/v1/entries/{entry_id}/note-markers": {
-      "post": {
-        "operationId": "create_note_marker_endpoint_api_v1_entries__entry_id__note_markers_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "entry_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Entry Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "authorization",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          },
-          {
-            "in": "cookie",
-            "name": "access_token",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Access Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EntryNoteMarkerCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EntryNoteMarkerResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Add a note marker to an entry",
-        "tags": [
-          "entries"
-        ]
-      }
-    },
-    "/api/v1/entries/{entry_id}/note-markers/{marker_id}": {
-      "delete": {
-        "operationId": "delete_note_marker_endpoint_api_v1_entries__entry_id__note_markers__marker_id__delete",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "entry_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Entry Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "marker_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Marker Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "authorization",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          },
-          {
-            "in": "cookie",
-            "name": "access_token",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Access Token"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Remove a note marker from an entry",
-        "tags": [
-          "entries"
-        ]
-      }
-    },
     "/api/v1/entries/{entry_id}/note-signals": {
       "get": {
         "operationId": "list_entry_note_signals_endpoint_api_v1_entries__entry_id__note_signals_get",
@@ -12977,75 +12744,6 @@
           }
         },
         "summary": "Revoke a previously granted consent",
-        "tags": [
-          "user"
-        ]
-      }
-    },
-    "/api/v1/user/me/note-markers/suggestions": {
-      "get": {
-        "operationId": "list_my_note_marker_suggestions_api_v1_user_me_note_markers_suggestions_get",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "authorization",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          },
-          {
-            "in": "cookie",
-            "name": "access_token",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Access Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Response List My Note Marker Suggestions Api V1 User Me Note Markers Suggestions Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Return recent custom note markers for chip suggestions",
         "tags": [
           "user"
         ]

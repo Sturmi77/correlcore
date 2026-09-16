@@ -7,13 +7,12 @@
  */
 
 import { api } from './client';
-import type { EntryNoteMarkerResponse, NoteVisibility } from './noteMarkers';
 import type { EntryNoteSignalResponse } from './noteSignals';
 import type { EntrySlot, EntrySource, WorkContext } from '$lib/contracts/apiContract';
 import type { TagResponse } from './tags';
 
 export type { EntrySlot, EntrySource, WorkContext } from '$lib/contracts/apiContract';
-export type { NoteVisibility } from './noteMarkers';
+export type NoteVisibility = 'full' | 'analysis_only' | 'hidden';
 // Generated OpenAPI shapes (issue #778) — re-exported so the contract drift
 // guard in ./contracts.generated.ts is part of the real import graph.
 export type { ApiEntryResponse, ApiEntryCreate } from './contracts.generated';
@@ -43,7 +42,6 @@ export interface EntryResponse {
   note_summary_short?: string | null;
   note_visibility?: NoteVisibility;
   note_updated_at?: string | null;
-  note_markers?: EntryNoteMarkerResponse[];
   note_signals?: EntryNoteSignalResponse[];
   created_at: string;
   updated_at: string;

@@ -8,6 +8,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Removed
+
+- **Marker-Endgame (#903 C)** — Tabelle `entry_note_markers` (Migration 049),
+  CRUD-/Suggestions-Endpunkte, `note_markers[]` auf Entry-Reads und der
+  Python-Enum-Wert `InsightType.NOTE_MARKER_MOOD` sind entfernt (historische
+  Insight-Zeilen dieses Typs werden in der Migration gelöscht; PG-Enum-Label
+  bleibt). Backfill-Script/-Service und zugehörige Tests entfallen. Note-Signals
+  bleiben. DSGVO-Export enthielt Marker nie — nach Backfill sind sie als Tags
+  abgedeckt. `entry_has_note` lebt in `note_summary.py`.
+
 ### Changed
 
 - **TagPicker-Recency-Fenster 14 Tage als Default belegt (#903 B)** — Begründung
