@@ -624,6 +624,17 @@
       "focus_all": "Alle Gruppen",
       "pin_aria": "Zeile oben anpinnen",
       "unpin_aria": "Pin entfernen",
+      "pin_limit_aria": "Pin-Limit erreicht (max. {max})",
+      "coincidence": {
+        "toggle": "Koinzidenz hervorheben",
+        "toggle_aria": "Tage hervorheben, an denen angepinnte Zeilen gemeinsam aktiv sind",
+        "need_pins": "Pinnen Sie mindestens zwei Zeilen, um Koinzidenz hervorzuheben.",
+        "empty": "Mindestens {min} gemeinsame Tage bei angepinnten Zeilen noetig, um Koinzidenz hervorzuheben.",
+        "legend": "Hervorgehobene Tage zeigen, wann angepinnte Zeilen gemeinsam auftreten — ein Zusammenhang in deinen Eintraegen, keine Ursache.",
+        "cursor": "{subjects} an diesem Tag",
+        "marker": "Koinzidenz: {subjects}",
+        "and": "und"
+      },
       "zoom": {
         "label": "Zeitachsen-Zoom",
         "decrease_aria": "Herauszoomen (groebere Spalten)",

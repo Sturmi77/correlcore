@@ -59,6 +59,8 @@
    * of the sort mode. Persisted by the parent.
    */
   export let pinned: readonly string[] = [];
+  /** ADR-0035 / #908: hard pin budget (default 3). */
+  export let maxPins = 3;
   /**
    * Sprint 2 (ADR-0035): optional correlation strength per row id, used
    * when sortMode === 'correlation'. Values are |r| in [0, 1].
@@ -243,6 +245,7 @@
       : rawRows;
 
   $: pinnedOrder = new Map(pinned.map((id, idx) => [id, idx]));
+  $: pinsAtLimit = pinned.length >= maxPins;
   $: sortedRows = [...clusterFilteredRows].sort((a, b) => {
     const aPin = pinnedOrder.get(a.id);
     const bPin = pinnedOrder.get(b.id);
@@ -365,7 +368,10 @@
               aria-pressed={pinnedOrder.has(row.id)}
               aria-label={pinnedOrder.has(row.id)
                 ? $_('trends.compare.unpin_aria')
-                : $_('trends.compare.pin_aria')}
+                : pinsAtLimit
+                  ? $_('trends.compare.pin_limit_aria', { values: { max: maxPins } })
+                  : $_('trends.compare.pin_aria')}
+              disabled={!pinnedOrder.has(row.id) && pinsAtLimit}
               on:click={() =>
                 dispatch('pinToggle', { rowId: row.id, pinned: !pinnedOrder.has(row.id) })}
             >
@@ -522,6 +528,11 @@
     color: var(--color-fg);
     outline: 2px solid var(--color-cursor-halo);
     outline-offset: 1px;
+  }
+
+  .compare-heatmap__pin:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .compare-heatmap__pin--active {

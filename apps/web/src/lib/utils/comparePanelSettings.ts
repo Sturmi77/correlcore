@@ -8,6 +8,7 @@ export type { CompareZoomStageIndex };
 export const COMPARE_MODE_KEY = 'cc_trend_compare_mode';
 export const COMPARE_SORT_KEY = 'cc_trend_compare_sort';
 export const COMPARE_ZOOM_KEY = 'cc_trend_compare_zoom';
+export const COMPARE_COINCIDENCE_KEY = 'cc_trend_compare_coincidence';
 /** Default: stage 2 → 7 days/cell (CAZ-0). */
 export const COMPARE_ZOOM_DEFAULT_STAGE: CompareZoomStageIndex = 2;
 
@@ -86,6 +87,15 @@ export function readCompareZoomStage(): CompareZoomStageIndex {
 
 export function writeCompareZoomStage(stage: CompareZoomStageIndex): void {
   writeLocal(COMPARE_ZOOM_KEY, stage);
+}
+
+/** #908: user preference for highlighting A∩B soft bands on Compare. */
+export function readCompareCoincidenceHighlight(): boolean {
+  return readLocal<boolean>(COMPARE_COINCIDENCE_KEY, false, (value) => typeof value === 'boolean');
+}
+
+export function writeCompareCoincidenceHighlight(enabled: boolean): void {
+  writeLocal(COMPARE_COINCIDENCE_KEY, enabled);
 }
 
 export { isCompareZoomStage };
