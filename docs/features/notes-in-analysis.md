@@ -175,10 +175,11 @@ exist:
   definition.
 
 **Why (b), not (a).** Tag analytics (`subject_type="tag"` correlation and tag
-co-occurrence, incl. symptom↔tag) already covers `achievement`/`conflict`/`social`
-now that they are tags, and the Home work-context heatmap covers the overlap keys
-better (mood **+ energy + stress**, trend, low gate). Re-homing the marker path
-would rebuild a weaker copy of signals the tag pipeline already produces.
+co-occurrence, incl. symptom↔tag) already covers `achievement`/`conflict`/`travel`
+now that those 1:1 markers are tags. `social` was **not** converted (it is a
+tag *category*, not a slug). The Home work-context heatmap covers the overlap
+keys better (mood **+ energy + stress**, trend, low gate). Re-homing the marker
+path would rebuild a weaker copy of signals the tag pipeline already produces.
 
 **What changed.**
 
@@ -200,6 +201,15 @@ remaining `note_marker_mood` insight rows, and removes the Python
 place (PG cannot `DROP VALUE` cleanly). Note _signals_ remain. The DSGVO ZIP
 export never included markers (only tags/notes); after backfill, marker context
 is represented as tags.
+
+**Tag blast radius (reconfirmed).** `049` does not `UPDATE`/`DELETE` `tags` or
+`entry_tags`. The prior backfill was add-only and only *linked* the 1:1
+catalogue slugs `conflict` / `travel` / `achievement` (plus new per-user
+custom tags from free-text markers). Overlap keys `work`, `homeoffice`,
+`social`, `movement`, `sleep_bad`, `sleep_good`, `stress`, and `symptom` were
+skipped so they could not land on unrelated catalogue tags (`work_intense`,
+`good_sleep`, sport, family/friends, …) or on `work_context` / sliders /
+SymptomChecker. Curated default tag *rows* were never rewritten.
 
 ---
 
@@ -239,21 +249,25 @@ is represented as tags.
 > service-layer backfill (#895 / #900 / #901), then the table was dropped in
 > **#903 C**. The table below documents the v1 keys for historical reference only.
 
-| Key           | Display Label (DE / EN)        |
-| ------------- | ------------------------------ |
-| `work`        | Arbeit / Work                  |
-| `homeoffice`  | Homeoffice / Remote            |
-| `social`      | Sozial / Social                |
-| `movement`    | Bewegung / Exercise            |
-| `sleep_bad`   | Schlechter Schlaf / Poor Sleep |
-| `sleep_good`  | Guter Schlaf / Good Sleep      |
-| `stress`      | Stress                         |
-| `conflict`    | Konflikt / Conflict            |
-| `symptom`     | Symptom                        |
-| `travel`      | Reise / Travel                 |
-| `achievement` | Erfolg / Achievement           |
+| Key           | Display Label (DE / EN)        | #895 backfill                                      |
+| ------------- | ------------------------------ | -------------------------------------------------- |
+| `work`        | Arbeit / Work                  | skipped (`work_context`)                           |
+| `homeoffice`  | Homeoffice / Remote            | skipped (`work_context`)                           |
+| `social`      | Sozial / Social                | skipped (tag *category*, not a slug)               |
+| `movement`    | Bewegung / Exercise            | skipped (sport / walk tags)                        |
+| `sleep_bad`   | Schlechter Schlaf / Poor Sleep | skipped (sleep field; not `good_sleep`)            |
+| `sleep_good`  | Guter Schlaf / Good Sleep      | skipped (sleep field; not `good_sleep`)            |
+| `stress`      | Stress                         | skipped (stress slider)                            |
+| `conflict`    | Konflikt / Conflict            | linked 1:1 → catalogue tag `conflict`              |
+| `symptom`     | Symptom                        | skipped (SymptomChecker)                           |
+| `travel`      | Reise / Travel                 | linked 1:1 → catalogue tag `travel`                |
+| `achievement` | Erfolg / Achievement           | linked 1:1 → catalogue tag `achievement`           |
 
 Custom markers are free-text, max 32 chars, stored alongside predefined ones.
+The backfill turned those into **new** per-user tags (category `other`), or
+reused an existing custom tag of the same slug; it never mutated curated
+defaults. Migration `049` does not rewrite any of this — it only drops the
+source marker table.
 
 ### Timeline / Calendar — Note Indicator
 

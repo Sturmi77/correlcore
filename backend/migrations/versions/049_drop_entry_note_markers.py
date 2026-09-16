@@ -17,6 +17,27 @@ backfill before deploying this migration.
 ``InsightType.note_marker_mood`` rows are deleted here so the Python enum
 member can be removed; the PostgreSQL enum label is left in place (PG
 cannot DROP VALUE cleanly).
+
+Tag blast radius
+----------------
+This migration does **not** write ``tags`` or ``entry_tags``. It only:
+
+- deletes leftover ``insights`` rows with ``insight_type = 'note_marker_mood'``
+  (tag correlation, symptom↔tag co-occurrence, and every other insight
+  family stay);
+- drops ``entry_note_markers`` (FKs point *from* markers *to* entries/users,
+  so the drop cannot cascade into tags);
+- leaves ``entry_note_signals`` in place.
+
+The already-applied #895 backfill was add-only (``ON CONFLICT DO NOTHING``
+on ``entry_tags``). It never updated or deleted tag rows. Converted
+predefined markers were only the 1:1 catalogue slugs in
+``CONVERTED_PREDEFINED_MARKERS``. Overlap keys in
+``SKIPPED_OVERLAP_MARKERS`` were skipped so they could not land on
+unrelated tags or fields (``work_intense``, ``good_sleep``, sport tags,
+SymptomChecker, sliders, ``work_context``). Custom markers became new
+per-user tags (or reused an existing *custom* tag of the same slug);
+curated defaults were never mutated.
 """
 
 from __future__ import annotations
@@ -29,8 +50,26 @@ down_revision: str | None = "048"
 branch_labels: str | tuple[str, ...] | None = None
 depends_on: str | tuple[str, ...] | None = None
 
+# Review lock: historical #895 backfill mapping. 049 itself never writes
+# tags; these sets document which tags that conversion was allowed to
+# *link* so a later reader can reconfirm the blast radius.
+CONVERTED_PREDEFINED_MARKERS: frozenset[str] = frozenset({"conflict", "travel", "achievement"})
+SKIPPED_OVERLAP_MARKERS: frozenset[str] = frozenset(
+    {
+        "work",
+        "homeoffice",
+        "social",
+        "movement",
+        "sleep_bad",
+        "sleep_good",
+        "stress",
+        "symptom",
+    }
+)
+
 
 def upgrade() -> None:
+    # Intentionally no writes to tags / entry_tags / entry_note_signals.
     op.execute("DELETE FROM insights WHERE insight_type = 'note_marker_mood'")
 
     for pol in (
