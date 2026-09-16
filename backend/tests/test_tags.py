@@ -174,6 +174,24 @@ def test_tag_update_allows_partial_habit_type_patch() -> None:
     assert payload.target_frequency is None
 
 
+def test_tag_update_rejects_null_bool_flags() -> None:
+    """Explicit null must 422; omission stays valid for PATCH partials."""
+    from pydantic import ValidationError
+
+    for field in ("is_pinned", "is_hidden", "include_in_analytics"):
+        with pytest.raises(ValidationError):
+            TagUpdate.model_validate({field: None})
+
+    omitted = TagUpdate(name="Kept")
+    assert "is_pinned" not in omitted.model_fields_set
+    assert "is_hidden" not in omitted.model_fields_set
+    assert "include_in_analytics" not in omitted.model_fields_set
+
+    pinned = TagUpdate(is_pinned=True)
+    assert pinned.is_pinned is True
+    assert pinned.model_dump(exclude_unset=True) == {"is_pinned": True}
+
+
 def test_entry_tag_assignment_rejects_duplicates() -> None:
     tid = uuid.uuid4()
     with pytest.raises(ValueError):
@@ -270,6 +288,56 @@ async def test_update_custom_tag_can_exclude_from_analytics() -> None:
 
     assert out.include_in_analytics is False
     db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_custom_tag_can_pin() -> None:
+    user = make_user()
+    tag = make_tag(user, slug="travel", name="Travel", is_pinned=False)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result(tag))
+    db.flush = AsyncMock()
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=tag.id,
+        payload=TagUpdate(is_pinned=True),
+    )
+
+    assert out.is_pinned is True
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_default_tag_pins_via_override() -> None:
+    user = make_user()
+    default = make_tag(slug="sport", name="Sport", is_default=True, is_pinned=False)
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result(default),
+            _scalar_result(None),
+            _all_result([]),  # no entry_tags linked to the default
+            _rowcount_result(0),
+            _rowcount_result(0),
+        ]
+    )
+    db.add = MagicMock()
+    db.flush = AsyncMock()
+
+    out = await update_custom_tag(
+        db,
+        user_id=user.id,
+        tag_id=default.id,
+        payload=TagUpdate(is_pinned=True),
+    )
+
+    assert out.is_pinned is True
+    assert out.is_default is False
+    assert out.user_id == user.id
+    db.add.assert_called_once()
+    assert db.flush.await_count == 2
 
 
 @pytest.mark.asyncio

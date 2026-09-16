@@ -81,6 +81,7 @@ function tag(overrides: Partial<TagResponse> = {}): TagResponse {
     is_default: false,
     is_hidden: false,
     include_in_analytics: true,
+    is_pinned: false,
     habit_type: 'none',
     target_frequency: null,
     created_at: '2026-05-01T00:00:00Z',
@@ -237,6 +238,36 @@ describe('TagPicker', () => {
     });
     expect(screen.queryByTestId('tag-recent')).toBeNull();
     expect(screen.queryByTestId('tag-all-toggle')).toBeNull();
+  });
+
+  it('surfaces pinned tags first and behind the disclosure even with empty recency (#903 A)', async () => {
+    tagStoreMocks.state.set({
+      status: 'ready',
+      tags: [
+        tag({ id: 'focus-id', slug: 'focus', name: 'Focus', category: 'work' }),
+        tag({
+          id: 'travel-id',
+          slug: 'travel',
+          name: 'Travel',
+          category: 'other',
+          is_pinned: true,
+        }),
+      ],
+    });
+    // No recency at all — a pinned tag must still surface the quick row.
+    statsMocks.fetchTagHeatmap.mockResolvedValue({ start_date: '', end_date: '', tags: [] });
+
+    render(TagPicker, { props: { selected: [] } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tag-recent')).toBeTruthy();
+    });
+    expect(screen.getByTestId('tag-recent').querySelector('button')?.textContent).toContain(
+      'Travel'
+    );
+    // Pins alone collapse the catalogue behind the disclosure.
+    expect(screen.queryByTestId('tag-all')).toBeNull();
+    expect(screen.getByTestId('tag-all-toggle')).toBeTruthy();
   });
 
   it('keeps the catalogue visible with a selection when recency is empty (#902 review)', async () => {

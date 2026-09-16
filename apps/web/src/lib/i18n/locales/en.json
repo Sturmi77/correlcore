@@ -346,6 +346,7 @@
     "error_assign": "Entry was saved, but tags could not be attached.",
     "limit_reached": "Maximum reached. Remove a tag before selecting another.",
     "retry": "Retry",
+    "pinned_heading": "Pinned",
     "recent_heading": "Recently used",
     "all_toggle": "All tags",
     "category": {
@@ -954,6 +955,9 @@
       "custom": "Custom",
       "hidden": "Hidden",
       "analytics_excluded": "Excluded from analytics",
+      "pinned": "Pinned",
+      "pin": "Pin",
+      "unpin": "Unpin",
       "name": "Name",
       "category": "Category",
       "color": "Color",

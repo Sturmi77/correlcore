@@ -131,6 +131,32 @@
     }
   }
 
+  /**
+   * Refresh the tag list after a pin/hide toggle without wiping unsaved row drafts.
+   * Default→override copy-on-write can change the row id; drafts follow by slug.
+   */
+  async function reloadAfterFlagToggle(): Promise<void> {
+    const previousById = { ...drafts };
+    const previousBySlug = Object.fromEntries(
+      tags.flatMap((tag) => {
+        const draft = drafts[tag.id];
+        return draft ? [[tag.slug, draft] as const] : [];
+      })
+    );
+    const [defaults, visible] = await Promise.all([
+      listDefaultTags(),
+      listVisibleTags({ include_hidden: true }),
+    ]);
+    defaultBySlug = Object.fromEntries(defaults.map((tag) => [tag.slug, tag]));
+    tags = visible;
+    drafts = Object.fromEntries(
+      visible.map((tag) => [
+        tag.id,
+        previousBySlug[tag.slug] ?? previousById[tag.id] ?? draftFrom(tag),
+      ])
+    );
+  }
+
   function isOverride(tag: TagResponse): boolean {
     return !tag.is_default && Boolean(defaultBySlug[tag.slug]);
   }
@@ -207,7 +233,21 @@
     error = '';
     try {
       await updateTag(tag.id, { is_hidden: !tag.is_hidden });
-      await load();
+      await reloadAfterFlagToggle();
+      await refreshTags();
+    } catch (err) {
+      error = err instanceof Error ? err.message : $_('settings.tags.error_save');
+    } finally {
+      savingId = null;
+    }
+  }
+
+  async function togglePinned(tag: TagResponse): Promise<void> {
+    savingId = tag.id;
+    error = '';
+    try {
+      await updateTag(tag.id, { is_pinned: !tag.is_pinned });
+      await reloadAfterFlagToggle();
       await refreshTags();
     } catch (err) {
       error = err instanceof Error ? err.message : $_('settings.tags.error_save');
@@ -445,6 +485,7 @@
                       {!tag.include_in_analytics
                         ? ` · ${$_('settings.tags.analytics_excluded')}`
                         : ''}
+                      {tag.is_pinned ? ` · ${$_('settings.tags.pinned')}` : ''}
                     </span>
                   </div>
                 </div>
@@ -552,6 +593,16 @@
                     on:click={() => save(tag)}
                   >
                     {savingId === tag.id ? $_('settings.tags.saving') : $_('settings.tags.save')}
+                  </button>
+                  <button
+                    class="btn btn-sm btn--secondary"
+                    type="button"
+                    disabled={savingId !== null}
+                    aria-pressed={tag.is_pinned}
+                    data-testid={`tag-settings-pin-${tag.id}`}
+                    on:click={() => togglePinned(tag)}
+                  >
+                    {tag.is_pinned ? $_('settings.tags.unpin') : $_('settings.tags.pin')}
                   </button>
                   <button
                     class="btn btn-sm btn--secondary"

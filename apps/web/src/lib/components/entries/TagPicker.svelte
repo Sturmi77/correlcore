@@ -224,23 +224,35 @@
 
   $: tagById = new Map($tagsList.map((tag) => [tag.id, tag]));
 
-  // Recency drives the disclosure — NOT the current selection. Only real recency
-  // data (mapped to still-existing tags) may collapse the catalogue behind
-  // "All tags"; otherwise the first chip click on a new/sparse account, or a
-  // heatmap failure with tags already selected, would hide the whole catalogue.
+  // Pinned favourites (#903 A): surfaced first and always, independent of the
+  // recency window, so a rare-but-important tag never falls off. Hidden tags
+  // never appear even if pinned.
+  $: pinnedTags = $tagsList
+    .filter((tag) => tag.is_pinned && !tag.is_hidden)
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // Recency-ranked tags, mapped to still-existing tags.
   $: recentTags = recentTagIds
     .map((id) => tagById.get(id))
     .filter((tag): tag is TagResponse => Boolean(tag));
   $: hasRecency = recentTags.length > 0;
 
-  // When a recency row is shown, also surface currently-selected tags in it so a
-  // selection is never hidden behind the collapsed catalogue. With no recency the
-  // full catalogue is shown directly (selected tags are visible there already).
+  // Pins or recency drive the disclosure — NOT the current selection. Only real
+  // pinned/recency data may collapse the catalogue behind "All tags"; otherwise
+  // the first chip click on a new/sparse account (or a heatmap failure with tags
+  // already selected) would hide the whole catalogue.
+  $: hasQuick = pinnedTags.length > 0 || hasRecency;
+
+  // Quick row = pinned first, then recency, then any currently-selected tag not
+  // already shown (so a selection is never hidden behind the collapsed
+  // catalogue). Empty when there is neither a pin nor recency — the full
+  // catalogue then renders directly and selected tags are visible in it.
   $: quickTags = (() => {
-    if (!hasRecency) return [];
+    if (!hasQuick) return [];
     const result: TagResponse[] = [];
     const seen = new Set<string>();
-    for (const tag of recentTags) {
+    for (const tag of [...pinnedTags, ...recentTags]) {
       if (seen.has(tag.id)) continue;
       seen.add(tag.id);
       result.push(tag);
@@ -254,6 +266,9 @@
     }
     return result;
   })();
+
+  // Heading reflects the dominant content: recency when present, else pins.
+  $: quickHeadingKey = hasRecency ? 'tag.recent_heading' : 'tag.pinned_heading';
 </script>
 
 <div class="tag-picker">
@@ -288,10 +303,10 @@
       </button>
     {/snippet}
 
-    {#if hasRecency}
+    {#if hasQuick}
       <div class="tag-category" data-testid="tag-recent">
         <h3 class="tag-category-label">
-          <span>{$_('tag.recent_heading')}</span>
+          <span>{$_(quickHeadingKey)}</span>
         </h3>
         <div class="tag-chips">
           {#each quickTags as tag (tag.id)}
@@ -310,7 +325,7 @@
       </button>
     {/if}
 
-    {#if !hasRecency || showAllTags}
+    {#if !hasQuick || showAllTags}
       <div class="tag-all" data-testid="tag-all">
         {#each visibleCategories as cat (cat)}
           <div class="tag-category">

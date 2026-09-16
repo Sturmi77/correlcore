@@ -383,6 +383,7 @@ async def create_custom_tag(
         icon=payload.icon,
         color=payload.color,
         include_in_analytics=payload.include_in_analytics,
+        is_pinned=payload.is_pinned,
         habit_type=payload.habit_type,
         target_frequency=payload.target_frequency,
         is_default=False,
@@ -432,6 +433,7 @@ async def update_custom_tag(
                 is_default=False,
                 is_hidden=False,
                 include_in_analytics=source.include_in_analytics,
+                is_pinned=source.is_pinned,
                 habit_type=source.habit_type,
                 target_frequency=source.target_frequency,
             )

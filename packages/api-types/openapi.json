@@ -5064,6 +5064,11 @@
             "title": "Include In Analytics",
             "type": "boolean"
           },
+          "is_pinned": {
+            "default": false,
+            "title": "Is Pinned",
+            "type": "boolean"
+          },
           "name": {
             "maxLength": 64,
             "minLength": 1,
@@ -5249,6 +5254,10 @@
             "title": "Is Hidden",
             "type": "boolean"
           },
+          "is_pinned": {
+            "title": "Is Pinned",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -5297,6 +5306,7 @@
           "is_default",
           "is_hidden",
           "include_in_analytics",
+          "is_pinned",
           "habit_type",
           "target_frequency",
           "created_at",
@@ -5465,6 +5475,17 @@
               }
             ],
             "title": "Is Hidden"
+          },
+          "is_pinned": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Pinned"
           },
           "name": {
             "anyOf": [
