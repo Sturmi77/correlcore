@@ -4,24 +4,24 @@ Revision ID: 049
 Revises: 048
 Create Date: 2026-09-16
 
-Marker endgame after #890 Option 4: historical note markers were converted
-to tags via the service-layer backfill (#895 / #900 / #901). The capture UI
-and analytics were already removed (#896 / #897). This drops the leftover
-``entry_note_markers`` table (and its RLS policies/indexes).
+Marker endgame after #890 Option 4. Before dropping ``entry_note_markers``,
+``upgrade()`` runs the service-layer marker→tag backfill (#895/#900/#901) so
+self-hosted ``alembic upgrade head`` converts remaining rows. The backfill is
+add-only: it only inserts missing ``entry_tags`` links for marker-derived tags
+(predefined 1:1 map + custom markers) and never deletes, renames, or rewrites
+unrelated tags.
 
-DSGVO note: ``export_service`` never included markers — only tags/notes —
-so after a completed backfill the ZIP already reflects marker context as
-tags. Unconverted marker-only rows would be irreversibly lost; run the
-backfill before deploying this migration.
-
-``InsightType.note_marker_mood`` rows are deleted here so the Python enum
-member can be removed; the PostgreSQL enum label is left in place (PG
-cannot DROP VALUE cleanly).
+After a successful backfill, this migration deletes leftover
+``note_marker_mood`` insight rows and drops the markers table. The PostgreSQL
+``insight_type`` enum label is left in place (PG cannot DROP VALUE cleanly).
 
 Tag blast radius
 ----------------
-This migration does **not** write ``tags`` or ``entry_tags``. It only:
+The Alembic DDL in this file does not write ``tags`` / ``entry_tags`` /
+``entry_note_signals``. It only:
 
+- runs the add-only backfill (subprocess) — may insert missing ``entry_tags``
+  for marker-derived targets only;
 - deletes leftover ``insights`` rows with ``insight_type = 'note_marker_mood'``
   (tag correlation, symptom↔tag co-occurrence, and every other insight
   family stay);
@@ -29,18 +29,20 @@ This migration does **not** write ``tags`` or ``entry_tags``. It only:
   so the drop cannot cascade into tags);
 - leaves ``entry_note_signals`` in place.
 
-The already-applied #895 backfill was add-only (``ON CONFLICT DO NOTHING``
-on ``entry_tags``). It never updated or deleted tag rows. Converted
-predefined markers were only the 1:1 catalogue slugs in
-``CONVERTED_PREDEFINED_MARKERS``. Overlap keys in
-``SKIPPED_OVERLAP_MARKERS`` were skipped so they could not land on
-unrelated tags or fields (``work_intense``, ``good_sleep``, sport tags,
-SymptomChecker, sliders, ``work_context``). Custom markers became new
-per-user tags (or reused an existing *custom* tag of the same slug);
-curated defaults were never mutated.
+Converted predefined markers are only the 1:1 catalogue slugs in
+``CONVERTED_PREDEFINED_MARKERS``. Overlap keys in ``SKIPPED_OVERLAP_MARKERS``
+are skipped so they cannot land on unrelated tags or fields
+(``work_intense``, ``good_sleep``, sport tags, SymptomChecker, sliders,
+``work_context``). Custom markers become new per-user tags (or reuse an
+existing *custom* tag of the same slug); curated defaults are never mutated.
 """
 
 from __future__ import annotations
+
+import logging
+import subprocess
+import sys
+from pathlib import Path
 
 import sqlalchemy as sa
 from alembic import op
@@ -50,9 +52,10 @@ down_revision: str | None = "048"
 branch_labels: str | tuple[str, ...] | None = None
 depends_on: str | tuple[str, ...] | None = None
 
-# Review lock: historical #895 backfill mapping. 049 itself never writes
-# tags; these sets document which tags that conversion was allowed to
-# *link* so a later reader can reconfirm the blast radius.
+logger = logging.getLogger("alembic.runtime.migration")
+
+# Review lock: historical #895 backfill mapping — which tags conversion may
+# *link* (never rewrite). Overlap keys stay unmapped.
 CONVERTED_PREDEFINED_MARKERS: frozenset[str] = frozenset({"conflict", "travel", "achievement"})
 SKIPPED_OVERLAP_MARKERS: frozenset[str] = frozenset(
     {
@@ -68,8 +71,35 @@ SKIPPED_OVERLAP_MARKERS: frozenset[str] = frozenset(
 )
 
 
+def _run_marker_tag_backfill() -> None:
+    """Convert remaining markers → tags before the source table is dropped.
+
+    Runs the CLI in a subprocess so we do not nest ``asyncio.run`` inside
+    Alembic's already-running async event loop (``env.py`` → ``run_sync``).
+    """
+    backend_root = Path(__file__).resolve().parents[2]
+    script = backend_root / "scripts" / "backfill_marker_tags.py"
+    if not script.is_file():
+        raise RuntimeError(f"marker→tag backfill script missing: {script}")
+
+    logger.info("049: running marker→tag backfill before DROP TABLE")
+    proc = subprocess.run(
+        [sys.executable, str(script)],
+        cwd=str(backend_root),
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"marker→tag backfill failed (exit {proc.returncode}); "
+            "fix CryptoError / failed users, then re-run "
+            "`alembic upgrade head` — entry_note_markers will not be dropped "
+            "until the backfill succeeds"
+        )
+
+
 def upgrade() -> None:
-    # Intentionally no writes to tags / entry_tags / entry_note_signals.
+    _run_marker_tag_backfill()
+
     op.execute("DELETE FROM insights WHERE insight_type = 'note_marker_mood'")
 
     for pol in (

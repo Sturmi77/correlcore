@@ -193,14 +193,13 @@ path would rebuild a weaker copy of signals the tag pipeline already produces.
   any historical `insights` rows written before archival still deserialised on
   read. No new rows of this type are produced.
 
-**Completed in #903 C (marker endgame).** Migration `049` drops
-`entry_note_markers` (after the #895/#900/#901 backfill), removes CRUD +
-suggestions endpoints, strips `note_markers[]` from entry reads, deletes any
-remaining `note_marker_mood` insight rows, and removes the Python
-`InsightType.NOTE_MARKER_MOOD` member. The PostgreSQL enum label is left in
-place (PG cannot `DROP VALUE` cleanly). Note _signals_ remain. The DSGVO ZIP
-export never included markers (only tags/notes); after backfill, marker context
-is represented as tags.
+**Completed in #903 C (marker endgame).** Migration `049` runs the marker→tag
+backfill first (add-only tag links for marker-derived tags only), then drops
+`entry_note_markers`, removes CRUD + suggestions endpoints, strips
+`note_markers[]` from entry reads, deletes any remaining `note_marker_mood`
+insight rows, and removes the Python `InsightType.NOTE_MARKER_MOOD` member.
+The PostgreSQL enum label is left in place. Note _signals_ remain. The DSGVO
+ZIP export never included markers (only tags/notes).
 
 **Tag blast radius (reconfirmed).** `049` does not `UPDATE`/`DELETE` `tags` or
 `entry_tags`. The prior backfill was add-only and only *linked* the 1:1

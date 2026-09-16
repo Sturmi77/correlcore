@@ -14,13 +14,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   CRUD-/Suggestions-Endpunkte, `note_markers[]` auf Entry-Reads und der
   Python-Enum-Wert `InsightType.NOTE_MARKER_MOOD` sind entfernt (historische
   Insight-Zeilen dieses Typs werden in der Migration gelöscht; PG-Enum-Label
-  bleibt). 049 schreibt **nicht** auf `tags`/`entry_tags` — der frühere
-  Backfill war add-only und verknüpfte nur die 1:1-Marker `conflict` /
-  `travel` / `achievement` plus Custom-Marker als neue User-Tags; Overlap-
-  Keys (`work`, `social`, `sleep_*`, …) blieben unberührt. Backfill-Script/
-  -Service und zugehörige Tests entfallen. Note-Signals bleiben.
-  DSGVO-Export enthielt Marker nie — nach Backfill sind sie als Tags
-  abgedeckt. `entry_has_note` lebt in `note_summary.py`.
+  bleibt). Migration 049 führt **vor** dem DROP den Marker→Tag-Backfill aus
+  (add-only: nur fehlende `entry_tags`-Links für `conflict`/`travel`/
+  `achievement` plus Custom-Marker; Overlap-Keys und unrelated Tags bleiben
+  unberührt). Backfill-Script bleibt für Dry-Runs. Note-Signals bleiben.
+  `entry_has_note` lebt in `note_summary.py`.
 
 ### Changed
 

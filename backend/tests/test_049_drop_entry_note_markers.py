@@ -49,10 +49,12 @@ def _upgrade_source() -> str:
 
 def test_049_upgrade_does_not_touch_tags_or_signals() -> None:
     code = _upgrade_source()
+    assert "_run_marker_tag_backfill()" in code
     assert "DELETE FROM insights WHERE insight_type = 'note_marker_mood'" in code
     assert "drop_table" in code
     assert "entry_note_markers" in code
-    # Comments are stripped by unparse, so these names must not appear as SQL.
+    # Direct SQL in upgrade() must not rewrite tags/signals (backfill is a
+    # separate helper that only add-links marker-derived entry_tags).
     assert "entry_tags" not in code
     assert "entry_note_signals" not in code
     assert "UPDATE " not in code
