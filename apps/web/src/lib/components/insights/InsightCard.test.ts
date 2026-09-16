@@ -19,7 +19,9 @@ vi.mock('svelte-i18n', async () => {
       if (key === 'insights.card.sample_meta')
         return `Based on ${options?.values?.n} entries · ${options?.values?.days} days`;
       if (key === 'insights.card.lag_peak_marker')
-        return `Strongest at +${options?.values?.days} days`;
+        return `Strongest at +${options?.values?.days} days (${options?.values?.direction})`;
+      if (key === 'insights.card.lag_profile_aria')
+        return `Association strength by delay; strongest at +${options?.values?.days} days (${options?.values?.direction})`;
       if (key === 'trends.metric.mood') return 'Mood';
       if (key === 'trends.metric.energy') return 'Energy';
       if (key === 'trends.metric.stress') return 'Stress';
@@ -405,5 +407,79 @@ describe('InsightCard lag profile mini-bars (#488 Phase 1b)', () => {
 
     expect(screen.queryByTestId('insight-card-lag-marker')).toBeNull();
     expect(screen.getByTestId('insight-card-lag-profile')).toBeTruthy();
+  });
+
+  it('places negative r below the zero line (#912)', () => {
+    const negative: InsightResponse = {
+      ...LAG_INSIGHT,
+      id: 'test-lag-neg',
+      effect_size: -0.4,
+      payload: {
+        ...LAG_INSIGHT.payload,
+        lag_days: 2,
+        lag_profile: [
+          { lag: 1, r: -0.1 },
+          { lag: 2, r: -0.5 },
+          { lag: 3, r: -0.2 },
+        ],
+      },
+    };
+    const { container } = render(InsightCard, { props: { insight: negative } });
+
+    const tracks = [...container.querySelectorAll('.insight-card__lag-bar-track')];
+    expect(tracks.some((track) => track.getAttribute('data-sign') === 'neg')).toBe(true);
+    expect(tracks.every((track) => track.getAttribute('data-sign') !== 'pos')).toBe(true);
+    expect(container.querySelectorAll('.insight-card__lag-bar--neg').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('.insight-card__lag-bar--pos')).toHaveLength(0);
+
+    const aria = screen.getByTestId('insight-card-lag-bars').getAttribute('aria-label') ?? '';
+    expect(aria).toContain('insights.card.lag_profile_direction_negative');
+  });
+
+  it('keeps mixed-sign profiles honest without flipping the whole chart (#912)', () => {
+    const mixed: InsightResponse = {
+      ...LAG_INSIGHT,
+      id: 'test-lag-mixed',
+      payload: {
+        ...LAG_INSIGHT.payload,
+        lag_days: 3,
+        lag_profile: [
+          { lag: 1, r: 0.3 },
+          { lag: 2, r: -0.2 },
+          { lag: 3, r: 0.45 },
+        ],
+      },
+    };
+    const { container } = render(InsightCard, { props: { insight: mixed } });
+
+    const signs = [...container.querySelectorAll('.insight-card__lag-bar-track')].map((track) =>
+      track.getAttribute('data-sign')
+    );
+    expect(signs).toContain('pos');
+    expect(signs).toContain('neg');
+    expect(container.querySelectorAll('.insight-card__lag-bar--pos').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('.insight-card__lag-bar--neg').length).toBeGreaterThan(0);
+
+    const aria = screen.getByTestId('insight-card-lag-bars').getAttribute('aria-label') ?? '';
+    expect(aria).toContain('insights.card.lag_profile_direction_mixed');
+  });
+
+  it('includes direction in the compact peak marker (#912)', () => {
+    const negative: InsightResponse = {
+      ...LAG_INSIGHT,
+      id: 'test-lag-compact-neg',
+      payload: {
+        ...LAG_INSIGHT.payload,
+        lag_profile: [
+          { lag: 1, r: -0.2 },
+          { lag: 2, r: -0.5 },
+        ],
+      },
+    };
+    render(InsightCard, { props: { insight: negative, compactLagProfile: true } });
+
+    expect(screen.getByTestId('insight-card-lag-marker').textContent).toContain(
+      'insights.card.lag_profile_direction_negative'
+    );
   });
 });
