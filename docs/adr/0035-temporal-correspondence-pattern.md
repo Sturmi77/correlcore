@@ -342,6 +342,26 @@ Limits of Small Multiples: Frame Quantity Impacts Judgments With Line Graphs."
 IEEE TVCG 2024. DOI:
 [10.1109/TVCG.2024.3372620](https://doi.org/10.1109/TVCG.2024.3372620).
 
+### Addendum — Dual-event coincidence overlay (2026-09-16, #891)
+
+Product decision for aligned **A↔B** interactions (analysis [#891](https://github.com/Sturmi77/correlcore/issues/891),
+proposal [`FEATURE_EVENT_INTERACTION_TIMELINE.md`](../proposals/FEATURE_EVENT_INTERACTION_TIMELINE.md)):
+
+- **Single-event alignment remains the default** for ESM (Layer 3). Dual-event
+  _alignment_ (shifting two onsets into one frame) stays deferred — Zhang et al.
+  favour SingleAlign for precursor/aftereffect; DualAlign does not replace it.
+- **v1 coincidence marking** is allowed on the chronological Compare axis
+  (Layer 1): soft bands via `EventMarkerLayer` when ≥2 pinned rows are jointly
+  active on a day (A∩B). Caller-computed markers only; no new insight engine in
+  v1. Optional A→B (+1 day) markers are a follow-up (v1.1), not the first ship.
+- **ESM may show at most one partner glyph** (second subject) inside existing
+  ±7 windows; default partner from co-occurrence ranks. This is an _overlay_,
+  not a second alignment mode.
+- **Explore before Feed:** Event↔Event lag / interaction findings must not ship
+  as automatic feed cards until precision is proven; association copy and
+  no traffic-light colours remain mandatory.
+- Pin limit of 3 and mobile ~3-panel budget (Hosseinpour) are unchanged.
+
 ## Related ADRs
 
 - [ADR-0017](0017-frontend-screen-architecture.md) — Frontend screen architecture
@@ -360,3 +380,5 @@ IEEE TVCG 2024. DOI:
 - [`COLOR_SCHEME_CONCEPT.md`](../frontend/COLOR_SCHEME_CONCEPT.md)
 - [`SYMPTOM_VISUALIZATION.md`](../frontend/SYMPTOM_VISUALIZATION.md)
 - [`M3_8_SPRINT_PLAN.md`](../M3_8_SPRINT_PLAN.md) — execution plan
+- [`FEATURE_EVENT_INTERACTION_TIMELINE.md`](../proposals/FEATURE_EVENT_INTERACTION_TIMELINE.md)
+  — #891 product decision (coincidence overlay / ESM partner glyph)

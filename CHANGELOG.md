@@ -29,6 +29,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Produktentscheid Wechselwirkungen Zeitachse (#891)** —
+  Entscheidungsvorlage
+  [`docs/proposals/FEATURE_EVENT_INTERACTION_TIMELINE.md`](docs/proposals/FEATURE_EVENT_INTERACTION_TIMELINE.md)
+  und ADR-0035-Addendum (Compare-Koinzidenz A∩B + ESM-Partner-Glyph v1;
+  Event↔Event-Lag / Split-Mediane v2; Dual-Align zurückgestellt).
+
 - **Angepinnte Favoriten im TagPicker (#903 A)** — Tags lassen sich in der
   Tag-Verwaltung (Einstellungen → Tags) anpinnen (`Tag.is_pinned`, Copy-on-write-
   Override wie `is_hidden`/`include_in_analytics`). Angepinnte Tags erscheinen in
