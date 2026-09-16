@@ -3,12 +3,15 @@
 These exercise the real service-layer paths against PostgreSQL: predefined 1:1
 links, per-user custom-tag creation, hidden-note exclusion, copy-on-write
 override preference, the per-entry assignment cap, idempotency, and the
-``sync_revision_log`` rows offline clients depend on — the DB-fixture coverage
-the raw-SQL draft (#899) could not provide.
+``sync_revision_log`` rows offline clients depend on.
 
-Opt-in locally: set ``CORRELCORE_RUN_INTEGRATION=1`` after migrations and service
-containers are up. CI runs this in the ``migrations-smoke`` / integration job,
-where ``alembic upgrade head`` has seeded the curated default tags (043/047).
+**Schema gate:** migration 049 drops ``entry_note_markers``. CI at ``head``
+therefore runs the 049 integration suite instead. Keep this module for
+manual/pre-049 runs (``alembic upgrade 048``) or after temporarily recreating
+the table via ``049.downgrade``.
+
+Opt-in: ``CORRELCORE_RUN_INTEGRATION=1`` with Postgres up and the markers
+table present.
 """
 
 from __future__ import annotations
@@ -41,6 +44,24 @@ _BASE_DATE = date(2026, 1, 1)
 
 def _integration_enabled() -> bool:
     return os.getenv("CORRELCORE_RUN_INTEGRATION") == "1"
+
+
+async def _require_marker_table(session: AsyncSession) -> None:
+    """Skip when 049 has already dropped the source table (normal at head)."""
+    present = await session.scalar(text("SELECT to_regclass('public.entry_note_markers')"))
+    if present is None:
+        pytest.skip(
+            "entry_note_markers absent (migration 049); "
+            "run against revision 048 or recreate via 049.downgrade"
+        )
+
+
+@pytest.fixture(autouse=True)
+async def _skip_without_marker_table() -> None:
+    if not _integration_enabled():
+        return
+    async with AsyncSessionLocal() as session:
+        await _require_marker_table(session)
 
 
 async def _create_user(session: AsyncSession, *, active: bool = True) -> uuid.UUID:
