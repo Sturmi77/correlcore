@@ -53,30 +53,50 @@
   /** Optional Y offset where the marker line starts (default 0). */
   export let top = 0;
 
+  type ResolvedMarker = {
+    marker: EventMarker;
+    xStart: number;
+    bandX: number | null;
+    bandWidth: number | null;
+    soft: boolean;
+  };
+
   $: uniqueMarkers = dedupeEventMarkers(markers);
-  $: resolved = uniqueMarkers
-    .map((marker) => {
-      const xStart = dailyAxisXForDate(marker.date, axisDates, axisLayout);
-      const xEnd = marker.endDate ? dailyAxisXForDate(marker.endDate, axisDates, axisLayout) : null;
-      if (xStart === null) return null;
-      return { marker, xStart, xEnd };
-    })
-    .filter(
-      (item): item is { marker: EventMarker; xStart: number; xEnd: number | null } => item !== null
-    );
+  $: resolved = uniqueMarkers.flatMap((marker): ResolvedMarker[] => {
+    const xStart = dailyAxisXForDate(marker.date, axisDates, axisLayout);
+    if (xStart === null) return [];
+    // Soft band when endDate is set (inclusive). Single-day bands use dayWidth
+    // because center-to-center width would be 0 when date === endDate (#908).
+    if (marker.endDate) {
+      const xEnd = dailyAxisXForDate(marker.endDate, axisDates, axisLayout);
+      if (xEnd === null) return [];
+      const half = axisLayout.dayWidth / 2;
+      return [
+        {
+          marker,
+          xStart,
+          bandX: xStart - half,
+          bandWidth: Math.max(axisLayout.dayWidth, xEnd - xStart + axisLayout.dayWidth),
+          soft: true,
+        },
+      ];
+    }
+    return [{ marker, xStart, bandX: null, bandWidth: null, soft: false }];
+  });
 </script>
 
 {#if resolved.length > 0}
   <g class="event-markers" role="group" aria-label={$_('trends.markers.aria')}>
-    {#each resolved as { marker, xStart, xEnd } (marker.date + ':' + (marker.endDate ?? ''))}
-      {#if xEnd !== null && xEnd > xStart}
+    {#each resolved as { marker, xStart, bandX, bandWidth, soft } (marker.date + ':' + (marker.endDate ?? ''))}
+      {#if soft && bandX !== null && bandWidth !== null}
         <rect
           class="event-markers__band"
-          x={xStart}
+          x={bandX}
           y={top}
-          width={xEnd - xStart}
+          width={bandWidth}
           {height}
           data-kind={marker.kind ?? 'generic'}
+          data-testid="event-marker-band"
         >
           <title>{marker.label}{marker.description ? ` — ${marker.description}` : ''}</title>
         </rect>

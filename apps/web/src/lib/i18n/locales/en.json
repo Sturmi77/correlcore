@@ -624,6 +624,17 @@
       "focus_all": "All groups",
       "pin_aria": "Pin row to top",
       "unpin_aria": "Unpin row",
+      "pin_limit_aria": "Pin limit reached (max {max})",
+      "coincidence": {
+        "toggle": "Highlight coincidence",
+        "toggle_aria": "Highlight days where pinned rows appear together",
+        "need_pins": "Pin at least two rows to highlight coincidence.",
+        "empty": "Need at least {min} shared days across pinned rows to highlight coincidence.",
+        "legend": "Highlighted days show when pinned rows appear together — an association in your entries, not a cause.",
+        "cursor": "{subjects} on this day",
+        "marker": "Coincidence: {subjects}",
+        "and": "and"
+      },
       "zoom": {
         "label": "Timeline zoom",
         "decrease_aria": "Zoom out to coarser columns",

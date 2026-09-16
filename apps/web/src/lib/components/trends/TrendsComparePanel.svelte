@@ -30,18 +30,29 @@
     readCompareMode,
     readCompareSortMode,
     readCompareZoomStage,
+    readCompareCoincidenceHighlight,
     writeCompareMode,
     writeCompareSortMode,
     writeCompareZoomStage,
+    writeCompareCoincidenceHighlight,
     type CompareMode,
     type CompareSortMode,
   } from '$lib/utils/comparePanelSettings';
+  import {
+    MAX_COMPARE_PINS,
+    MIN_COINCIDENCE_DAYS,
+    canPinMore,
+    clampPinnedIds,
+    coincidenceDaysToMarkers,
+    deriveCoincidence,
+    type CoincidenceRow,
+  } from '$lib/utils/coincidenceMarkers';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
   import UnifiedStripChart from './UnifiedStripChart.svelte';
-  import type { EventMarker } from './EventMarkerLayer.svelte';
+  import { dedupeEventMarkers, type EventMarker } from './EventMarkerLayer.svelte';
 
   export let points: TimeseriesPoint[] = [];
   export let range: TimeseriesRange = 'week';
@@ -122,11 +133,15 @@
     }
   }
 
-  let pinned: string[] = readLocal<string[]>(
-    PINS_KEY,
-    [],
-    (value) => Array.isArray(value) && value.every((item) => typeof item === 'string')
+  let pinned: string[] = clampPinnedIds(
+    readLocal<string[]>(
+      PINS_KEY,
+      [],
+      (value) => Array.isArray(value) && value.every((item) => typeof item === 'string')
+    )
   );
+
+  let coincidenceHighlight = readCompareCoincidenceHighlight();
 
   let zoomStage: CompareZoomStageIndex = readCompareZoomStage();
   let axisScroller: HTMLDivElement;
@@ -213,8 +228,26 @@
 
   function handlePinToggle(event: CustomEvent<{ rowId: string; pinned: boolean }>): void {
     const { rowId, pinned: shouldPin } = event.detail;
-    pinned = shouldPin ? [...pinned, rowId] : pinned.filter((id) => id !== rowId);
+    if (shouldPin) {
+      if (!canPinMore(pinned.length) || pinned.includes(rowId)) return;
+      pinned = [...pinned, rowId];
+    } else {
+      pinned = pinned.filter((id) => id !== rowId);
+    }
     writeLocal(PINS_KEY, pinned);
+  }
+
+  function setCoincidenceHighlight(next: boolean): void {
+    coincidenceHighlight = next;
+    writeCompareCoincidenceHighlight(next);
+  }
+
+  function joinSubjectLabels(labels: readonly string[]): string {
+    if (labels.length === 0) return '';
+    if (labels.length === 1) return labels[0]!;
+    const andWord = $_('trends.compare.coincidence.and');
+    if (labels.length === 2) return `${labels[0]} ${andWord} ${labels[1]}`;
+    return `${labels.slice(0, -1).join(', ')} ${andWord} ${labels[labels.length - 1]}`;
   }
 
   async function scrollToLatest(): Promise<void> {
@@ -315,6 +348,75 @@
           },
         })
       : '';
+
+  /** #908: presence rows for coincidence — mirrors ComparisonHeatmap rawRows ids/labels. */
+  $: coincidenceRows = [
+    ...(showTags
+      ? (tagHeatmap?.tags ?? []).map((tag): CoincidenceRow => ({
+          id: tag.tag_id,
+          label: tag.name,
+          days: tag.days,
+        }))
+      : []),
+    ...(showSymptoms
+      ? (symptomHeatmap?.symptoms ?? []).map((symptom): CoincidenceRow => ({
+          id: symptom.symptom_id,
+          label: symptom.name,
+          days: symptom.days,
+        }))
+      : []),
+    ...(showWorkContexts
+      ? (workContextHeatmap?.contexts ?? []).map((context): CoincidenceRow => ({
+          id: `work_context:${context.context}`,
+          label: $_(`entry.work_context.${context.context}`),
+          days: context.days,
+        }))
+      : []),
+  ];
+
+  $: coincidence = deriveCoincidence(pinned, coincidenceRows);
+  $: coincidenceByDate = new Map(coincidence.days.map((day) => [day.date, day]));
+  $: coincidenceActive = coincidenceHighlight && coincidence.canHighlight;
+
+  $: coincidenceMarkers = coincidenceActive
+    ? coincidenceDaysToMarkers(
+        coincidence.days,
+        (labels) =>
+          $_('trends.compare.coincidence.marker', {
+            values: { subjects: joinSubjectLabels(labels) },
+          }),
+        $_('trends.compare.coincidence.legend')
+      )
+    : [];
+
+  $: activeMarkers = dedupeEventMarkers([...markers, ...coincidenceMarkers]);
+
+  $: cursorCoincidenceSubjects = (() => {
+    if (!coincidenceActive || !$timelineCursorDate) return null;
+    const exact = coincidenceByDate.get($timelineCursorDate);
+    if (exact) return exact.subjects;
+    if (!cursorBucket) return null;
+    for (const date of cursorBucket.dates) {
+      const hit = coincidenceByDate.get(date);
+      if (hit) return hit.subjects;
+    }
+    return null;
+  })();
+
+  $: cursorCoincidenceLabel = cursorCoincidenceSubjects
+    ? $_('trends.compare.coincidence.cursor', {
+        values: {
+          subjects: joinSubjectLabels(cursorCoincidenceSubjects.map((subject) => subject.label)),
+        },
+      })
+    : '';
+
+  $: coincidenceHint =
+    pinned.length < 2
+      ? $_('trends.compare.coincidence.need_pins')
+      : !coincidence.canHighlight
+        ? $_('trends.compare.coincidence.empty', { values: { min: MIN_COINCIDENCE_DAYS } })
+        : '';
 </script>
 
 <section class="compare" class:compare--compact={compactChrome} data-testid="trends-compare-panel">
@@ -473,6 +575,28 @@
           +
         </button>
       </div>
+      <div class="compare__coincidence" data-testid="trends-compare-coincidence">
+        <label class="compare__coincidence-toggle">
+          <input
+            type="checkbox"
+            data-testid="trends-compare-coincidence-toggle"
+            checked={coincidenceHighlight && coincidence.canHighlight}
+            disabled={!coincidence.canHighlight}
+            aria-label={$_('trends.compare.coincidence.toggle_aria')}
+            on:change={(event) => setCoincidenceHighlight(event.currentTarget.checked)}
+          />
+          {$_('trends.compare.coincidence.toggle')}
+        </label>
+        {#if coincidenceHint}
+          <p class="compare__coincidence-hint" data-testid="trends-compare-coincidence-empty">
+            {coincidenceHint}
+          </p>
+        {:else if coincidenceActive}
+          <p class="compare__coincidence-legend" data-testid="trends-compare-coincidence-legend">
+            {$_('trends.compare.coincidence.legend')}
+          </p>
+        {/if}
+      </div>
       <p class="compare__zoom-hint" data-testid="trends-compare-zoom-encoding">
         {$_('trends.compare.zoom.encoding_hint')}
       </p>
@@ -484,6 +608,11 @@
       {#if cursorDetailLabel}
         <p class="compare__zoom-detail" data-testid="trends-compare-zoom-detail">
           {cursorDetailLabel}
+        </p>
+      {/if}
+      {#if cursorCoincidenceLabel}
+        <p class="compare__zoom-detail" data-testid="trends-compare-coincidence-detail">
+          {cursorCoincidenceLabel}
         </p>
       {/if}
     </div>
@@ -502,7 +631,7 @@
         {axisDates}
         buckets={axisBuckets}
         axisLayout={bucketAxisLayout}
-        {markers}
+        markers={activeMarkers}
         enableCursor
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
         on:zoomInBucket={handleZoomInBucket}
@@ -516,7 +645,7 @@
         {axisDates}
         buckets={axisBuckets}
         axisLayout={bucketAxisLayout}
-        {markers}
+        markers={activeMarkers}
         {noteDates}
         enableCursor
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
@@ -536,10 +665,11 @@
         dates={axisDates}
         buckets={axisBuckets}
         axisLayout={bucketAxisLayout}
-        {markers}
+        markers={activeMarkers}
         enableCursor
         {sortMode}
         {pinned}
+        maxPins={MAX_COMPARE_PINS}
         {correlationScores}
         clusterMeta={tagClusterMeta}
         bind:focusedClusterId
@@ -711,6 +841,32 @@
 
   .compare__zoom-detail {
     font-weight: 600;
+  }
+
+  .compare__coincidence {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .compare__coincidence-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--tap-target);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .compare__coincidence-toggle input:disabled {
+    cursor: not-allowed;
+  }
+
+  .compare__coincidence-hint,
+  .compare__coincidence-legend {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
   }
 
   .compare__zoom-btn {

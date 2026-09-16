@@ -26,6 +26,16 @@ vi.mock('svelte-i18n', async () => {
       if (key === 'trends.compare.zoom.cell_tooltip_zoom' && opts?.values) {
         return `${opts.values.label}, ${opts.values.range}: ${opts.values.value} · ${opts.values.coverage} · Tap to zoom in`;
       }
+      if (key === 'trends.compare.coincidence.empty' && opts?.values?.min != null) {
+        return `Need at least ${opts.values.min} shared days`;
+      }
+      if (key === 'trends.compare.coincidence.cursor' && opts?.values?.subjects != null) {
+        return `${opts.values.subjects} on this day`;
+      }
+      if (key === 'trends.compare.coincidence.marker' && opts?.values?.subjects != null) {
+        return `Coincidence: ${opts.values.subjects}`;
+      }
+      if (key === 'trends.compare.coincidence.and') return 'and';
       return key;
     }),
   };
@@ -90,6 +100,72 @@ const weekPoints = Array.from({ length: 14 }, (_, index) => {
   const day = String(index + 1).padStart(2, '0');
   return dayPoint(`2026-05-${day}`);
 });
+
+const coincidenceHeatmap: TagHeatmapResponse = {
+  start_date: '2026-05-01',
+  end_date: '2026-05-14',
+  tags: [
+    {
+      tag_id: 't1',
+      name: 'Sport',
+      slug: 'sport',
+      category: 'sport',
+      color: null,
+      days: [
+        { date: '2026-05-01', count: 1 },
+        { date: '2026-05-03', count: 1 },
+        { date: '2026-05-08', count: 1 },
+      ],
+    },
+    {
+      tag_id: 't2',
+      name: 'Sleep',
+      slug: 'sleep',
+      category: 'health',
+      color: null,
+      days: [
+        { date: '2026-05-01', count: 1 },
+        { date: '2026-05-03', count: 1 },
+        { date: '2026-05-09', count: 1 },
+      ],
+    },
+  ],
+};
+
+const sparseCoincidenceHeatmap: TagHeatmapResponse = {
+  start_date: '2026-05-01',
+  end_date: '2026-05-14',
+  tags: [
+    {
+      tag_id: 't1',
+      name: 'Sport',
+      slug: 'sport',
+      category: 'sport',
+      color: null,
+      days: [
+        { date: '2026-05-01', count: 1 },
+        { date: '2026-05-08', count: 1 },
+      ],
+    },
+    {
+      tag_id: 't2',
+      name: 'Sleep',
+      slug: 'sleep',
+      category: 'health',
+      color: null,
+      days: [{ date: '2026-05-01', count: 1 }],
+    },
+  ],
+};
+
+async function pinAllRows(container: HTMLElement): Promise<void> {
+  const pins = [...container.querySelectorAll('.compare-heatmap__pin')] as HTMLButtonElement[];
+  for (const pin of pins) {
+    if (pin.getAttribute('aria-pressed') !== 'true') {
+      await fireEvent.click(pin);
+    }
+  }
+}
 
 describe('TrendsComparePanel', () => {
   it('hides Kontextzeilen when the selected range has no entries', () => {
@@ -252,5 +328,76 @@ describe('TrendsComparePanel', () => {
     // The legacy strip gate / disabled hints are gone.
     expect(screen.queryByTestId('trends-compare-zoom-strip-gate')).toBeNull();
     expect(screen.queryByTestId('trends-compare-zoom-strips-disabled')).toBeNull();
+  });
+
+  it('disables coincidence toggle until two pins share enough days (#908)', async () => {
+    const { container } = render(TrendsComparePanel, {
+      props: {
+        points: weekPoints,
+        range: 'year',
+        enabled,
+        tagHeatmap: sparseCoincidenceHeatmap,
+        showTags: true,
+        loading: false,
+        compactChrome: true,
+      },
+    });
+
+    const toggle = screen.getByTestId('trends-compare-coincidence-toggle') as HTMLInputElement;
+    expect(toggle.disabled).toBe(true);
+    expect(screen.getByTestId('trends-compare-coincidence-empty').textContent).toContain(
+      'trends.compare.coincidence.need_pins'
+    );
+
+    await pinAllRows(container);
+
+    expect(toggle.disabled).toBe(true);
+    expect(screen.getByTestId('trends-compare-coincidence-empty').textContent).toContain(
+      'Need at least 2 shared days'
+    );
+    expect(container.querySelectorAll('.compare-heatmap__cell--marker-band')).toHaveLength(0);
+  });
+
+  it('enables coincidence bands for pinned A∩B days and lists subjects on the cursor (#908)', async () => {
+    const { tick } = await import('svelte');
+    const { timelineCursor } = await import('$lib/stores/timelineCursor');
+    const { container } = render(TrendsComparePanel, {
+      props: {
+        points: weekPoints,
+        range: 'year',
+        enabled,
+        tagHeatmap: coincidenceHeatmap,
+        showTags: true,
+        loading: false,
+        compactChrome: true,
+      },
+    });
+
+    await pinAllRows(container);
+
+    const toggle = screen.getByTestId('trends-compare-coincidence-toggle') as HTMLInputElement;
+    expect(toggle.disabled).toBe(false);
+    expect(screen.queryByTestId('trends-compare-coincidence-empty')).toBeNull();
+
+    await fireEvent.click(toggle);
+    expect(toggle.checked).toBe(true);
+    expect(screen.getByTestId('trends-compare-coincidence-legend')).toBeTruthy();
+
+    // Zoom to day columns so marker bands map to individual dates.
+    await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));
+    await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));
+    await tick();
+
+    const bandDates = [...container.querySelectorAll('.compare-heatmap__cell--marker-band')].map(
+      (cell) => cell.getAttribute('data-date')
+    );
+    expect(new Set(bandDates)).toEqual(new Set(['2026-05-01', '2026-05-03']));
+
+    timelineCursor.setDate('2026-05-01', 'tap');
+    await tick();
+    // Subjects follow pin order (heatmap row order when pinning all).
+    expect(screen.getByTestId('trends-compare-coincidence-detail').textContent).toMatch(
+      /^(Sport and Sleep|Sleep and Sport) on this day$/
+    );
   });
 });
