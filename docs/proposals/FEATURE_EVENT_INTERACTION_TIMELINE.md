@@ -9,8 +9,10 @@
 > **Tracking:**
 >
 > - Analyse-Issue: #891
-> - v1a / v1b / v1.1: Issue-Bodies unten (§ Folge-Issue-Drafts) — beim Anlegen
->   `Part of #891` setzen und Nummern hier nachtragen
+> - Docs-PR: #907
+> - v1a Trends-Koinzidenz (Option 3): #908
+> - v1b ESM-Partner-Overlay (Option 1): #909
+> - v1.1 Lag-1-Markierung auf Compare: #910
 > - v2 Event↔Event-Lag / Split-Mediane: später
 
 ---
@@ -137,18 +139,23 @@ Mining / HMM / Transfer Entropy.
 
 ---
 
-## Folge-Issues (nicht dieses Dokument)
+## Folge-Issues
 
-Ready-to-paste Bodies unten. Labels je Issue: `enhancement`, `frontend`,
-`trends`, `insights` (+ `should` für v1a/v1b, `could` für v1.1). Milestone:
-Backlog.
+| Phase | Issue | Scope                                         |
+| ----- | ----- | --------------------------------------------- |
+| v1a   | #908  | Compare A∩B-Bänder                            |
+| v1b   | #909  | ESM Partner-Glyph (max. 1)                    |
+| v1.1  | #910  | Lag-1-Markierung auf Compare                  |
+| v2    | —     | Opt. 4 Event↔Event-Lag + Opt. 6 Split-Mediane |
+
+Ready-to-paste Bodies (Referenz, Issues bereits angelegt):
 
 #891 bleibt Analyse-/Entscheidungsartefakt; `Closes #891` **nicht** auf dem
 ersten Overlay-PR — nur `Relates to #891` / `Part of #891`. Schließen erst wenn
-die gewählte v1-Phase (3+1+Copy) gelandet ist oder Owner das Analyse-Issue
+die gewählte v1-Phase (#908+#909+Copy) gelandet ist oder Owner das Analyse-Issue
 bewusst schließt.
 
-### Draft A — v1a Trends Compare Koinzidenz (Option 3)
+### Draft A — v1a → #908
 
 **Title:** `[FE] Trends Compare: Koinzidenz-Bänder für gepinnte Zeilen (A∩B)`
 
@@ -192,7 +199,7 @@ listet die Koinzidenz — ohne Statistik-Versprechen.
 Nur Aggregate/Präsenz aus bestehenden Rows; keine Rohnotizen.
 ```
 
-### Draft B — v1b ESM Partner-Glyph (Option 1)
+### Draft B — v1b → #909
 
 **Title:** `[FE] ESM: ein Partner-Glyph (Zweit-Event) in Event-Fenstern`
 
@@ -233,7 +240,7 @@ Zweit-Subject B als Glyph/getönte Zelle in den ±7-Fenstern zeigen.
 Onsets/Aggregate wie bestehende event-windows; keine Rohnotizen.
 ```
 
-### Draft C — v1.1 Lag-1 auf Compare
+### Draft C — v1.1 → #910
 
 **Title:** `[FE] Trends Compare: optionale Lag-1-Markierung (A dann B +1d)`
 
