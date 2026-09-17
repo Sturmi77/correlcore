@@ -925,17 +925,21 @@
       .then((data) => ({ ok: true as const, data }))
       .catch(() => ({ ok: false as const, data: null }));
 
-    const [tagPairs, symptomCells, tagHeatmapResult] = await Promise.all([
+    const [tagPairsResult, symptomCellsResult, tagHeatmapResult] = await Promise.all([
       needsTagPairs
         ? cooccurrence && cooccurrence.range === apiRange
-          ? Promise.resolve(cooccurrence)
-          : fetchTagCooccurrence({ range: apiRange }).catch(() => null)
-        : Promise.resolve(null),
+          ? Promise.resolve({ ok: true as const, data: cooccurrence })
+          : fetchTagCooccurrence({ range: apiRange })
+              .then((data) => ({ ok: true as const, data }))
+              .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null }),
       needsSymptomCells
         ? symptomCooccurrence && symptomCooccurrence.range === apiRange
-          ? Promise.resolve(symptomCooccurrence)
-          : fetchSymptomTagCooccurrence({ range: apiRange }).catch(() => null)
-        : Promise.resolve(null),
+          ? Promise.resolve({ ok: true as const, data: symptomCooccurrence })
+          : fetchSymptomTagCooccurrence({ range: apiRange })
+              .then((data) => ({ ok: true as const, data }))
+              .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null }),
       tagHeatmapPromise,
     ]);
 
@@ -944,20 +948,22 @@
     }
 
     const tagPresenceAvailable = tagHeatmapResult.ok && tagHeatmapResult.data !== null;
+    const candidatesAvailable = tagPairsResult.ok && symptomCellsResult.ok;
     exploreEventsTagHeatmap = tagHeatmapResult.data;
     exploreEventsPartnerLoading = false;
     applyExploreEventsPartner(
       insight,
-      tagPairs,
-      symptomCells,
+      tagPairsResult.data,
+      symptomCellsResult.data,
       tagHeatmapResult.data,
       visibleSymptomHeatmap ?? symptomHeatmap,
       tagPresenceAvailable
     );
-    // A failed presence fetch only matters once a partner could have been shown;
-    // without candidates the honest message is still "no partner".
+    // A failed candidate lookup produces zero candidates, which would otherwise
+    // read as "no partner exists". A failed presence fetch only matters once a
+    // partner could have been shown.
     exploreEventsPartnerUnavailable =
-      !tagPresenceAvailable && exploreEventsPartnerCandidates.length > 0;
+      !candidatesAvailable || (!tagPresenceAvailable && exploreEventsPartnerCandidates.length > 0);
   }
 
   function handleExplorePartnerChange(event: CustomEvent<{ partnerId: string | null }>): void {
