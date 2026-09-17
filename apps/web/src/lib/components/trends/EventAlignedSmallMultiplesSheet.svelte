@@ -242,9 +242,7 @@
             </select>
           </label>
           {#if showPartnerOverlay && partner}
-            <p class="esm__partner-legend" data-testid="esm-partner-legend">
-              {$_('trends.esm.partner_legend', { values: { partner: partner.label } })}
-            </p>
+            <!-- Count first, disclaimer second: the number is what the user came for. -->
             {#if partnerCoverage}
               <p class="esm__partner-summary" data-testid="esm-partner-summary">
                 {$_('trends.esm.partner_summary', {
@@ -256,6 +254,9 @@
                 })}
               </p>
             {/if}
+            <p class="esm__partner-legend" data-testid="esm-partner-legend">
+              {$_('trends.esm.partner_legend', { values: { partner: partner.label } })}
+            </p>
           {/if}
         {:else}
           <p class="esm__partner-empty" data-testid="esm-partner-empty">
