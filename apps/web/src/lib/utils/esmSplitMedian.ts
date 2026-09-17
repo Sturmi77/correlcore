@@ -86,4 +86,20 @@ export function buildSplitMedianTrajectories<Row extends SplitSourceRow>(
   };
 }
 
+/**
+ * Row labels are end-anchored inside a fixed 110px gutter, so a long partner
+ * name pushes the "with" / "without" qualifier out of view first — and both
+ * rows end up showing the same tail. Shorten the name, never the qualifier;
+ * the full text stays in the row's accessible name and tooltip.
+ */
+export const SPLIT_LABEL_PARTNER_MAX_CHARS = 12;
+
+export function truncatePartnerForRowLabel(
+  label: string,
+  maxChars = SPLIT_LABEL_PARTNER_MAX_CHARS
+): string {
+  if (label.length <= maxChars) return label;
+  return `${label.slice(0, Math.max(1, maxChars - 1)).trimEnd()}…`;
+}
+
 export { MIN_SMALL_MULTIPLES_OCCURRENCES };

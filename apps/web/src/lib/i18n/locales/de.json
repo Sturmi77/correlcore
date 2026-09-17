@@ -691,7 +691,7 @@
       "median_aria": "Median-Trajektorie ueber {count} Occurrences",
       "split_with": "mit {partner}",
       "split_without": "ohne {partner}",
-      "split_counts": "{withCount} Fenster mit {partner} · {withoutCount} ohne",
+      "split_counts": "Im gewaehlten Zeitraum: {withCount} Fenster mit {partner} · {withoutCount} ohne",
       "split_insufficient": "Zu wenige Fenster (n={count})",
       "split_aria": "Median-Verlauf {branch}, {count} Fenster",
       "split_hint": "Waehle ein Partner-Overlay, um den Median in Fenster mit und ohne den Partner zu teilen.",

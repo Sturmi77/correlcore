@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  SPLIT_LABEL_PARTNER_MAX_CHARS,
   buildSplitMedianTrajectories,
   splitRowsByPartner,
+  truncatePartnerForRowLabel,
   type SplitSourceRow,
 } from './esmSplitMedian';
 
@@ -76,6 +78,15 @@ describe('buildSplitMedianTrajectories (#920)', () => {
     expect(split.withoutPartner.cells).toBeNull();
     expect(split.withPartner.windows).toBe(1);
     expect(split.withoutPartner.windows).toBe(1);
+  });
+
+  it('shortens a long partner name so the branch qualifier survives', () => {
+    const long = 'Cold brew coffee with oat milk';
+    const short = truncatePartnerForRowLabel(long);
+
+    expect(short.length).toBeLessThanOrEqual(SPLIT_LABEL_PARTNER_MAX_CHARS);
+    expect(short.endsWith('…')).toBe(true);
+    expect(truncatePartnerForRowLabel('Coffee')).toBe('Coffee');
   });
 
   it('keeps the branch medians apart instead of averaging them together', () => {

@@ -691,7 +691,7 @@
       "median_aria": "Median trajectory across {count} occurrences",
       "split_with": "with {partner}",
       "split_without": "without {partner}",
-      "split_counts": "{withCount} windows with {partner} · {withoutCount} without",
+      "split_counts": "In the selected period: {withCount} windows with {partner} · {withoutCount} without",
       "split_insufficient": "Too few windows (n={count})",
       "split_aria": "Median trajectory {branch}, {count} windows",
       "split_hint": "Choose a partner overlay to split the median into windows with and without it.",

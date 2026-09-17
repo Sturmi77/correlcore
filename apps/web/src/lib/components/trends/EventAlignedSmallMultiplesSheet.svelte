@@ -42,7 +42,10 @@
   import type { MetricKey } from '$lib/utils/charts';
   import { displayTimeseriesValue } from '$lib/utils/metrics';
   import { buildMedianTrajectory, type MedianTrajectoryCell } from '$lib/utils/medianTrajectory';
-  import { buildSplitMedianTrajectories } from '$lib/utils/esmSplitMedian';
+  import {
+    buildSplitMedianTrajectories,
+    truncatePartnerForRowLabel,
+  } from '$lib/utils/esmSplitMedian';
   import { StripCellMapper } from '$lib/charts/adapter';
   import {
     hasEnoughOccurrences,
@@ -197,10 +200,12 @@
 
   $: medianRows = (() => {
     if (splitMedians && partner) {
+      const shortPartner = truncatePartnerForRowLabel(partner.label);
       return [
         {
           key: 'with' as const,
-          label: $_('trends.esm.split_with', { values: { partner: partner.label } }),
+          label: $_('trends.esm.split_with', { values: { partner: shortPartner } }),
+          fullLabel: $_('trends.esm.split_with', { values: { partner: partner.label } }),
           windows: splitMedians.withPartner.windows,
           cells: splitMedians.withPartner.cells
             ? encodeMedianCells(splitMedians.withPartner.cells)
@@ -208,7 +213,8 @@
         },
         {
           key: 'without' as const,
-          label: $_('trends.esm.split_without', { values: { partner: partner.label } }),
+          label: $_('trends.esm.split_without', { values: { partner: shortPartner } }),
+          fullLabel: $_('trends.esm.split_without', { values: { partner: partner.label } }),
           windows: splitMedians.withoutPartner.windows,
           cells: splitMedians.withoutPartner.cells
             ? encodeMedianCells(splitMedians.withoutPartner.cells)
@@ -217,10 +223,12 @@
       ];
     }
     if (!showMedian) return [];
+    const medianLabel = $_('trends.esm.median_label');
     return [
       {
         key: 'all' as const,
-        label: $_('trends.esm.median_label'),
+        label: medianLabel,
+        fullLabel: medianLabel,
         windows: rows.length,
         cells: encodeMedianCells(buildMedianTrajectory(rows, radius)),
       },
@@ -238,8 +246,13 @@
         })
       : '';
 
-  /** Fallback copy when no partner is chosen — the split needs one. */
-  $: showSplitHint = !showPartnerOverlay && showMedian;
+  /**
+   * Fallback copy when no partner is chosen. Only worth showing when the user
+   * could actually pick one — during loading, after a failure, or without any
+   * candidate the picker is absent and the prompt would point at nothing.
+   */
+  $: showSplitHint =
+    showMedian && !showPartnerOverlay && canChoosePartner && !partnerLoading && !partnerUnavailable;
 
   $: rowCount = rows.length + medianRows.length;
   $: gridWidth = labelWidth + dayCount * (cellSize + cellGap);
@@ -396,7 +409,7 @@
             aria-label={medianRow.key === 'all'
               ? $_('trends.esm.median_aria', { values: { count: medianRow.windows } })
               : $_('trends.esm.split_aria', {
-                  values: { branch: medianLabel, count: medianRow.windows },
+                  values: { branch: medianRow.fullLabel, count: medianRow.windows },
                 })}
           >
             <text
@@ -407,6 +420,7 @@
               class="esm__row-label esm__row-label--median"
             >
               {medianLabel}
+              <title>{medianRow.fullLabel}</title>
             </text>
 
             {#if medianRow.cells === null}
@@ -759,7 +773,7 @@
 
   .esm__split-gap-label {
     fill: var(--color-text-muted);
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
 
   .esm__split-counts {

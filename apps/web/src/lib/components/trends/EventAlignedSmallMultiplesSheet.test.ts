@@ -434,7 +434,7 @@ describe('EventAlignedSmallMultiplesSheet split medians (#920)', () => {
         points,
         metric: 'mood_avg',
         partner: null,
-        partnerCandidates: [],
+        partnerCandidates: candidates,
         partnerPresenceDates: [],
       },
     });
@@ -444,6 +444,67 @@ describe('EventAlignedSmallMultiplesSheet split medians (#920)', () => {
     expect(medianRows[0]?.getAttribute('data-branch')).toBe('all');
     expect(screen.getByTestId('esm-split-hint')).toBeTruthy();
     expect(screen.queryByTestId('esm-split-counts')).toBeNull();
+  });
+
+  it('keeps the branch qualifier readable for a long partner name', () => {
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: { id: 't-coffee', label: 'Cold brew coffee with oat milk', kind: 'tag' as const },
+        partnerCandidates: candidates,
+        partnerPresenceDates: withOnsets,
+      },
+    });
+
+    const labels = [...container.querySelectorAll('.esm__row-label--median')];
+    const withLabel = labels[0]?.textContent ?? '';
+    const withoutLabel = labels[1]?.textContent ?? '';
+    expect(withLabel).toContain('trends.esm.split_with');
+    expect(withoutLabel).toContain('trends.esm.split_without');
+    // Shortened for the gutter, but the full name stays in the tooltip.
+    expect(withLabel).toContain('…');
+    expect(labels[0]?.querySelector('title')?.textContent).toContain(
+      'Cold brew coffee with oat milk'
+    );
+  });
+
+  it('withholds the split prompt while no partner can be chosen', () => {
+    const base = {
+      open: true,
+      phase: 'provisional' as const,
+      events,
+      points,
+      metric: 'mood_avg' as const,
+      partner: null,
+      partnerPresenceDates: [],
+    };
+
+    const loading = render(EventAlignedSmallMultiplesSheet, {
+      props: { ...base, partnerCandidates: [], partnerLoading: true },
+    });
+    expect(screen.queryByTestId('esm-split-hint')).toBeNull();
+    loading.unmount();
+
+    const failed = render(EventAlignedSmallMultiplesSheet, {
+      props: { ...base, partnerCandidates: candidates, partnerUnavailable: true },
+    });
+    expect(screen.queryByTestId('esm-split-hint')).toBeNull();
+    failed.unmount();
+
+    const empty = render(EventAlignedSmallMultiplesSheet, {
+      props: { ...base, partnerCandidates: [] },
+    });
+    expect(screen.queryByTestId('esm-split-hint')).toBeNull();
+    empty.unmount();
+
+    render(EventAlignedSmallMultiplesSheet, {
+      props: { ...base, partnerCandidates: candidates },
+    });
+    expect(screen.getByTestId('esm-split-hint')).toBeTruthy();
   });
 
   it('pushes the episode rows below however many median rows exist', () => {
