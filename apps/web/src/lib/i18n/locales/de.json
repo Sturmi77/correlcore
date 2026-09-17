@@ -704,7 +704,7 @@
       "partner_empty": "Noch kein Co-Occurrence-Partner zum Ueberlagern verfuegbar.",
       "partner_loading": "Suche nach einem gemeinsam auftretenden Merkmal…",
       "partner_error": "Die Tage fuer dieses Overlay konnten nicht geladen werden, daher fehlen die Markierungen.",
-      "partner_summary": "{partner} in {hits} von {windows} Ereignis-Fenstern",
+      "partner_summary": "Im gewaehlten Zeitraum: {partner} in {hits} von {windows} Ereignis-Fenstern",
       "partner_on_day": "{partner} ebenfalls vorhanden"
     },
     "markers": {

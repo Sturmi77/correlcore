@@ -551,10 +551,10 @@ describe('EventAlignedSmallMultiplesSheet partner coverage (#918)', () => {
       },
     });
 
-    const summary = screen.getByTestId('esm-partner-summary').textContent ?? '';
-    expect(summary).toContain('trends.esm.partner_summary');
-    expect(summary).toContain('"hits":1');
-    expect(summary).toContain('"windows":2');
+    // #920 states the same coverage per branch, so the split line carries it.
+    const summary = screen.getByTestId('esm-split-counts').textContent ?? '';
+    expect(summary).toContain('"withCount":1');
+    expect(summary).toContain('"withoutCount":1');
   });
 
   it('counts a window once even when the partner appears on several days', () => {
@@ -571,7 +571,45 @@ describe('EventAlignedSmallMultiplesSheet partner coverage (#918)', () => {
       },
     });
 
-    expect(screen.getByTestId('esm-partner-summary').textContent).toContain('"hits":2');
+    expect(screen.getByTestId('esm-split-counts').textContent).toContain('"withCount":2');
+  });
+
+  it('drops the header coverage line once the split states the same numbers', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner,
+        partnerCandidates: candidates,
+        partnerPresenceDates: ['2026-05-09'],
+      },
+    });
+
+    expect(screen.getByTestId('esm-split-counts')).toBeTruthy();
+    expect(screen.queryByTestId('esm-partner-summary')).toBeNull();
+  });
+
+  it('keeps the header coverage line when there is no split to state it', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events: [],
+        points,
+        metric: 'mood_avg',
+        partner,
+        partnerCandidates: candidates,
+        partnerPresenceDates: ['2026-05-09'],
+      },
+    });
+
+    expect(screen.queryByTestId('esm-split-counts')).toBeNull();
+    expect(screen.getByTestId('esm-partner-summary').textContent).toContain(
+      'trends.esm.partner_summary'
+    );
   });
 
   it('shows a loading state instead of the empty message while the lookup runs', () => {
