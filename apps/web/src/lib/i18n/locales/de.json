@@ -682,7 +682,12 @@
       "median_aria": "Median-Trajektorie ueber {count} Occurrences",
       "locked": "Verfuegbar sobald der Insight die provisorische Phase erreicht.",
       "open_action": "Ausgerichtete Ereignisse erkunden",
-      "lag_hint": "T0 = Ausloeser · Ergebnis markiert nach +{days} Tagen"
+      "lag_hint": "T0 = Ausloeser · Ergebnis markiert nach +{days} Tagen",
+      "partner_label": "Partner-Overlay",
+      "partner_aria": "Co-Occurrence-Partner zum Ueberlagern waehlen",
+      "partner_legend": "Markierungen zeigen, wann {partner} im Fenster ebenfalls vorkommt — ein Zusammenhang in deinen Eintraegen, keine Ursache.",
+      "partner_empty": "Noch kein Co-Occurrence-Partner zum Ueberlagern verfuegbar.",
+      "partner_on_day": "{partner} ebenfalls vorhanden"
     },
     "markers": {
       "aria": "Ereignis-Marker auf der gemeinsamen Zeitachse"
@@ -1555,8 +1560,11 @@
       "cluster_features": "Mehrere Faktoren",
       "lag_days_unit": "Tage",
       "lag_profile_label": "Zusammenhang je Verzoegerung (Tage)",
-      "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen",
-      "lag_peak_marker": "Am staerksten bei +{days} Tagen"
+      "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen ({direction})",
+      "lag_peak_marker": "Am staerksten bei +{days} Tagen ({direction})",
+      "lag_profile_direction_positive": "gleichlaeufig",
+      "lag_profile_direction_negative": "gegenlaeufig",
+      "lag_profile_direction_mixed": "gemischte Richtungen"
     },
     "lag_heatmap": {
       "title": "Zeitversatz-Muster",

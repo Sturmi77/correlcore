@@ -19,7 +19,12 @@
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { listEntries, type EntryResponse } from '$lib/api/entries';
-  import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
+  import {
+    fetchSymptomHeatmap,
+    fetchTagHeatmap,
+    type SymptomHeatmapResponse,
+    type TagHeatmapResponse,
+  } from '$lib/api/stats';
   import { ApiError } from '$lib/api/client';
   import {
     fetchInsightEventWindows,
@@ -86,6 +91,7 @@
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { timeseriesRangeToCooccurrence, analysisDateWindow } from '$lib/utils/analysisRange';
   import { rangeToDays } from '$lib/utils/trendsRange';
+  import { shiftIsoDate } from '$lib/utils/streak';
   import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
   import type { MetricKey } from '$lib/utils/charts';
   import {
@@ -93,7 +99,20 @@
     devLagEventWindowsFromHeatmaps,
     insightMetricToChartKey,
   } from '$lib/utils/exploreEventWindows';
-  import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
+  import {
+    candidatesFromSymptomTagCooccurrence,
+    candidatesFromTagCooccurrence,
+    clampPartnerCandidates,
+    pickDefaultPartner,
+    presenceDatesForPartner,
+    resolveEsmAlignSubject,
+    type EsmPartner,
+    type EsmPartnerCandidate,
+  } from '$lib/utils/esmPartner';
+  import {
+    isSmallMultiplesUnlocked,
+    SMALL_MULTIPLES_RADIUS,
+  } from '$lib/components/trends/smallMultiplesGate';
 
   let insights: InsightResponse[] = [];
   let dismissedItems: DismissedInsightItem[] = [];
@@ -147,6 +166,10 @@
   let exploreEventsLagOffset: number | null = null;
   let exploreEventsLoading = false;
   let exploreEventsRequestId = 0;
+  let exploreEventsPartner: EsmPartner | null = null;
+  let exploreEventsPartnerCandidates: EsmPartnerCandidate[] = [];
+  let exploreEventsPartnerPresence: string[] = [];
+  let exploreEventsTagHeatmap: TagHeatmapResponse | null = null;
 
   function readCompactInsights(): boolean {
     if (!browser) return false;
@@ -764,6 +787,7 @@
     if (!insight) return;
 
     const requestId = ++exploreEventsRequestId;
+    const capturedRange = insightsEffectiveRange;
 
     exploreEventsInsight = insight;
     exploreEventsMetric = insightMetricToChartKey(insight.metric);
@@ -772,9 +796,12 @@
     exploreEventsWindows = [];
     exploreEventsPoints = [];
     exploreEventsLagOffset = null;
+    exploreEventsPartner = null;
+    exploreEventsPartnerCandidates = [];
+    exploreEventsPartnerPresence = [];
+    exploreEventsTagHeatmap = null;
 
     try {
-      const range = insightsEffectiveRange;
       if (get(devForceVisualizations)) {
         const fixture = getDevPhaseFixture(get(devPhase));
         if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
@@ -787,12 +814,22 @@
         exploreEventsPoints = fixture.timeseries.points;
         const devLag = insight.payload?.lag_days;
         exploreEventsLagOffset = typeof devLag === 'number' ? devLag : null;
+        exploreEventsTagHeatmap = fixture.tagHeatmap;
+        applyExploreEventsPartner(
+          insight,
+          fixture.tagCooccurrenceByRange[timeseriesRangeToCooccurrence(capturedRange)] ?? null,
+          fixture.symptomTagCooccurrenceByRange[timeseriesRangeToCooccurrence(capturedRange)] ??
+            null,
+          fixture.tagHeatmap,
+          fixture.symptomHeatmap,
+          true
+        );
         return;
       }
 
       const response = await fetchInsightEventWindows(
         insight.id,
-        timeseriesRangeToCooccurrence(range)
+        timeseriesRangeToCooccurrence(capturedRange)
       );
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
         return;
@@ -803,6 +840,9 @@
       }));
       exploreEventsPoints = response.points;
       exploreEventsLagOffset = response.lag_days ?? null;
+
+      exploreEventsLoading = false;
+      void ensureExploreEventsPartnerData(insight, requestId, insightId, capturedRange);
     } catch {
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
         return;
@@ -810,11 +850,114 @@
       exploreEventsWindows = [];
       exploreEventsPoints = [];
       exploreEventsLagOffset = null;
+      exploreEventsPartner = null;
+      exploreEventsPartnerCandidates = [];
+      exploreEventsPartnerPresence = [];
     } finally {
       if (requestId === exploreEventsRequestId && exploreEventsInsight?.id === insightId) {
         exploreEventsLoading = false;
       }
     }
+  }
+
+  function applyExploreEventsPartner(
+    insight: InsightResponse,
+    tagPairs: TagCooccurrenceResponse | null,
+    symptomCells: SymptomTagCooccurrenceResponse | null,
+    tagHeatmap: TagHeatmapResponse | null,
+    symptomHeatmapData: SymptomHeatmapResponse | null,
+    tagPresenceAvailable: boolean
+  ): void {
+    const subject = resolveEsmAlignSubject(insight);
+    if (!subject) {
+      exploreEventsPartnerCandidates = [];
+      exploreEventsPartner = null;
+      exploreEventsPartnerPresence = [];
+      return;
+    }
+    const ranked =
+      subject.kind === 'tag'
+        ? candidatesFromTagCooccurrence(subject, tagPairs?.pairs ?? [])
+        : candidatesFromSymptomTagCooccurrence(subject, symptomCells?.cells ?? []);
+    exploreEventsPartnerCandidates = clampPartnerCandidates(ranked);
+    if (!tagPresenceAvailable) {
+      exploreEventsPartner = null;
+      exploreEventsPartnerPresence = [];
+      return;
+    }
+    exploreEventsPartner = pickDefaultPartner(exploreEventsPartnerCandidates);
+    exploreEventsPartnerPresence = presenceDatesForPartner(
+      exploreEventsPartner,
+      tagHeatmap,
+      symptomHeatmapData
+    );
+  }
+
+  async function ensureExploreEventsPartnerData(
+    insight: InsightResponse,
+    requestId: number,
+    insightId: string,
+    range: TimeseriesRange
+  ): Promise<void> {
+    const subject = resolveEsmAlignSubject(insight);
+    if (!subject) return;
+
+    const needsTagPairs = subject.kind === 'tag';
+    const needsSymptomCells = subject.kind === 'symptom';
+    const apiRange = timeseriesRangeToCooccurrence(range);
+    const { start_date, end_date } = analysisDateWindow(range);
+    const heatmapStart = shiftIsoDate(start_date, -SMALL_MULTIPLES_RADIUS);
+    const heatmapEnd = shiftIsoDate(end_date, SMALL_MULTIPLES_RADIUS);
+
+    const tagHeatmapPromise = fetchTagHeatmap({ start_date: heatmapStart, end_date: heatmapEnd })
+      .then((data) => ({ ok: true as const, data }))
+      .catch(() => ({ ok: false as const, data: null }));
+
+    const [tagPairs, symptomCells, tagHeatmapResult] = await Promise.all([
+      needsTagPairs
+        ? cooccurrence && cooccurrence.range === apiRange
+          ? Promise.resolve(cooccurrence)
+          : fetchTagCooccurrence({ range: apiRange }).catch(() => null)
+        : Promise.resolve(null),
+      needsSymptomCells
+        ? symptomCooccurrence && symptomCooccurrence.range === apiRange
+          ? Promise.resolve(symptomCooccurrence)
+          : fetchSymptomTagCooccurrence({ range: apiRange }).catch(() => null)
+        : Promise.resolve(null),
+      tagHeatmapPromise,
+    ]);
+
+    if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
+      return;
+    }
+
+    const tagPresenceAvailable = tagHeatmapResult.ok && tagHeatmapResult.data !== null;
+    exploreEventsTagHeatmap = tagHeatmapResult.data;
+    applyExploreEventsPartner(
+      insight,
+      tagPairs,
+      symptomCells,
+      tagHeatmapResult.data,
+      visibleSymptomHeatmap ?? symptomHeatmap,
+      tagPresenceAvailable
+    );
+  }
+
+  function handleExplorePartnerChange(event: CustomEvent<{ partnerId: string | null }>): void {
+    const nextId = event.detail.partnerId;
+    const next =
+      exploreEventsPartnerCandidates.find((candidate) => candidate.id === nextId) ?? null;
+    if (!exploreEventsTagHeatmap || !next) {
+      exploreEventsPartner = null;
+      exploreEventsPartnerPresence = [];
+      return;
+    }
+    exploreEventsPartner = { id: next.id, label: next.label, kind: next.kind };
+    exploreEventsPartnerPresence = presenceDatesForPartner(
+      exploreEventsPartner,
+      exploreEventsTagHeatmap,
+      visibleSymptomHeatmap ?? symptomHeatmap
+    );
   }
 
   async function dismissMaturityMilestone(key: string): Promise<void> {
@@ -1075,9 +1218,17 @@
       metric={exploreEventsMetric}
       lagOffset={exploreEventsLagOffset}
       phase={exploreEventsInsight ? (insightMaturity?.phase ?? null) : null}
+      partner={exploreEventsPartner}
+      partnerPresenceDates={exploreEventsPartnerPresence}
+      partnerCandidates={exploreEventsPartnerCandidates}
+      on:partnerChange={handleExplorePartnerChange}
       on:close={() => {
         exploreEventsOpen = false;
         exploreEventsInsight = null;
+        exploreEventsPartner = null;
+        exploreEventsPartnerCandidates = [];
+        exploreEventsPartnerPresence = [];
+        exploreEventsTagHeatmap = null;
       }}
     />
   {/if}

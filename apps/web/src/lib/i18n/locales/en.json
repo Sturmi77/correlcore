@@ -682,7 +682,12 @@
       "median_aria": "Median trajectory across {count} occurrences",
       "locked": "Available once the insight reaches the provisional phase.",
       "open_action": "Explore aligned events",
-      "lag_hint": "T0 = trigger · outcome marked at +{days} days"
+      "lag_hint": "T0 = trigger · outcome marked at +{days} days",
+      "partner_label": "Partner overlay",
+      "partner_aria": "Choose which co-occurring subject to overlay",
+      "partner_legend": "Marks show when {partner} also appears in the window — an association in your entries, not a cause.",
+      "partner_empty": "No co-occurrence partner available to overlay yet.",
+      "partner_on_day": "{partner} also present"
     },
     "markers": {
       "aria": "Event markers on the shared timeline"
@@ -1555,8 +1560,11 @@
       "cluster_features": "Multiple factors",
       "lag_days_unit": "days",
       "lag_profile_label": "Association by delay (days)",
-      "lag_profile_aria": "Association strength by delay; strongest at +{days} days",
-      "lag_peak_marker": "Strongest at +{days} days"
+      "lag_profile_aria": "Association strength by delay; strongest at +{days} days ({direction})",
+      "lag_peak_marker": "Strongest at +{days} days ({direction})",
+      "lag_profile_direction_positive": "same direction",
+      "lag_profile_direction_negative": "opposite direction",
+      "lag_profile_direction_mixed": "mixed directions"
     },
     "lag_heatmap": {
       "title": "Time-offset patterns",
