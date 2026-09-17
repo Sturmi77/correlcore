@@ -47,7 +47,7 @@ vi.mock('svelte-i18n', async () => {
         return `Both on ${opts.values.both} of ${opts.values.aTotal} days with ${opts.values.a} · ${opts.values.both} of ${opts.values.bTotal} days with ${opts.values.b}`;
       }
       if (key === k('trends', 'compare', 'lag1', 'summary') && opts?.values) {
-        return `${opts.values.from} then ${opts.values.to}: ${opts.values.forward} · ${opts.values.to} then ${opts.values.from}: ${opts.values.reverse}`;
+        return `${opts.values.from} then ${opts.values.to}: ${opts.values.forward} of ${opts.values.forwardTotal} · ${opts.values.to} then ${opts.values.from}: ${opts.values.reverse} of ${opts.values.reverseTotal}`;
       }
       if (key === k('trends', 'compare', 'coincidence', 'and')) return 'and';
       if (key === k('trends', 'compare', 'lag1', 'empty') && opts?.values?.min != null) {
@@ -474,6 +474,66 @@ describe('TrendsComparePanel', () => {
     expect(screen.getByTestId('trends-compare-lag1-empty').textContent).toContain(
       'Need at least 2 next-day sequences'
     );
+    // Nothing reaches the floor in either direction, so no numbers either.
+    expect(screen.queryByTestId('trends-compare-lag1-summary')).toBeNull();
+  });
+
+  it('states a reverse-heavy Lag-1 pair even though the markers stay off (#917)', async () => {
+    // Pinned Sport→Sleep, but Sleep is what precedes Sport on every occasion.
+    const reverseHeavyHeatmap: TagHeatmapResponse = {
+      start_date: '2026-05-01',
+      end_date: '2026-05-14',
+      tags: [
+        {
+          tag_id: 't1',
+          name: 'Sport',
+          slug: 'sport',
+          category: 'sport',
+          color: null,
+          days: [
+            { date: '2026-05-02', count: 1 },
+            { date: '2026-05-06', count: 1 },
+            { date: '2026-05-10', count: 1 },
+          ],
+        },
+        {
+          tag_id: 't2',
+          name: 'Sleep',
+          slug: 'sleep',
+          category: 'health',
+          color: null,
+          days: [
+            { date: '2026-05-01', count: 1 },
+            { date: '2026-05-05', count: 1 },
+            { date: '2026-05-09', count: 1 },
+          ],
+        },
+      ],
+    };
+
+    const { container } = render(TrendsComparePanel, {
+      props: {
+        points: weekPoints,
+        range: 'year',
+        enabled,
+        tagHeatmap: reverseHeavyHeatmap,
+        showTags: true,
+        loading: false,
+        compactChrome: true,
+      },
+    });
+
+    const pins = [...container.querySelectorAll('.compare-heatmap__pin')] as HTMLButtonElement[];
+    const sportPin = pins.find((button) => button.parentElement?.textContent?.includes('Sport'));
+    const sleepPin = pins.find((button) => button.parentElement?.textContent?.includes('Sleep'));
+    await fireEvent.click(sportPin!);
+    await fireEvent.click(sleepPin!);
+
+    const toggle = screen.getByTestId('trends-compare-lag1-toggle') as HTMLInputElement;
+    expect(toggle.disabled).toBe(true);
+    expect(screen.getByTestId('trends-compare-lag1-summary').textContent).toBe(
+      'Sport then Sleep: 0 of 3 · Sleep then Sport: 3 of 3'
+    );
   });
 
   it('enables Lag-1 line markers separately from coincidence bands (#910)', async () => {
@@ -536,9 +596,10 @@ describe('TrendsComparePanel', () => {
     expect(lagToggle.checked).toBe(true);
     expect(screen.getByTestId('trends-compare-lag1-legend')).toBeTruthy();
 
-    // #917: markers only draw Sport→Sleep, so the mirrored count must be stated.
+    // #917: markers only draw Sport→Sleep, so the mirrored count must be stated,
+    // and both numbers carry the days that could have produced them.
     expect(screen.getByTestId('trends-compare-lag1-summary').textContent).toBe(
-      'Sport then Sleep: 3 · Sleep then Sport: 1'
+      'Sport then Sleep: 3 of 3 · Sleep then Sport: 1 of 3'
     );
 
     await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));

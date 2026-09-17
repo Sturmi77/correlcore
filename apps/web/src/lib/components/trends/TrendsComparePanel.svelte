@@ -53,6 +53,7 @@
   import {
     MIN_LAG1_DAYS,
     deriveLag1,
+    hasReportableLag1,
     lag1DaysToMarkers,
     summarizeLag1,
   } from '$lib/utils/lag1Markers';
@@ -490,14 +491,19 @@
       )
     : [];
 
-  $: lag1SummaryLines = lag1Active
-    ? summarizeLag1(pinned, coincidenceRows).map((pair) =>
+  // The markers only draw the pin-order direction, so tying the numbers to
+  // lag1Active would hide exactly the pairs whose reverse order dominates.
+  $: lag1Summaries = summarizeLag1(pinned, coincidenceRows, { axisDates });
+  $: lag1SummaryLines = hasReportableLag1(lag1Summaries)
+    ? lag1Summaries.map((pair) =>
         $_('trends.compare.lag1.summary', {
           values: {
             from: pair.from.label,
             to: pair.to.label,
             forward: pair.forward,
+            forwardTotal: pair.forwardTotal,
             reverse: pair.reverse,
+            reverseTotal: pair.reverseTotal,
           },
         })
       )
@@ -709,7 +715,8 @@
           <p class="compare__coincidence-hint" data-testid="trends-compare-lag1-empty">
             {lag1Hint}
           </p>
-        {:else if lag1Active}
+        {/if}
+        {#if lag1SummaryLines.length > 0}
           {#each lag1SummaryLines as line, index (index)}
             <p class="compare__coincidence-summary" data-testid="trends-compare-lag1-summary">
               {line}

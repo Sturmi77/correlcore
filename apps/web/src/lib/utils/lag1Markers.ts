@@ -93,30 +93,52 @@ export type Lag1PairSummary = {
   to: CoincidenceSubject;
   /** Days where `from` is active and `to` follows on the next day. */
   forward: number;
+  /** `from` days that had a next day inside the range — the denominator. */
+  forwardTotal: number;
   /** The mirrored count — the asymmetry is the point. */
   reverse: number;
+  reverseTotal: number;
 };
 
-function countNextDayHits(fromDates: ReadonlySet<string>, toDates: ReadonlySet<string>): number {
-  let count = 0;
+/**
+ * Hits plus opportunities. Without the denominator "3 · 2" reads as an
+ * asymmetry even when the 3 comes from 100 antecedent days and the 2 from two,
+ * so both numbers are counted against the days that could have produced them.
+ * A day only counts as an opportunity when its successor is inside the range.
+ */
+function countNextDay(
+  fromDates: ReadonlySet<string>,
+  toDates: ReadonlySet<string>,
+  axisDates: ReadonlySet<string> | null
+): { hits: number; total: number } {
+  let hits = 0;
+  let total = 0;
   for (const date of fromDates) {
-    if (toDates.has(shiftIsoDate(date, 1))) count += 1;
+    const nextDate = shiftIsoDate(date, 1);
+    if (axisDates && !axisDates.has(nextDate)) continue;
+    total += 1;
+    if (toDates.has(nextDate)) hits += 1;
   }
-  return count;
+  return { hits, total };
 }
 
 /**
  * Counts for the same adjacent pairs `deriveLag1` marks, but in **both**
  * directions. Markers only ever show A→B; without the mirrored count a user
  * cannot tell whether B→A is the more frequent order.
+ *
+ * `axisDates` bounds the opportunity count to the rendered range; omit it and
+ * every active day counts as an opportunity.
  */
 export function summarizeLag1(
   pinnedIds: readonly string[],
-  rows: readonly CoincidenceRow[]
+  rows: readonly CoincidenceRow[],
+  options?: { axisDates?: readonly string[] }
 ): Lag1PairSummary[] {
   const pinnedRows = resolvePinnedRows(pinnedIds, rows);
   if (pinnedRows.length < 2) return [];
 
+  const axisDates = options?.axisDates ? new Set(options.axisDates) : null;
   const activeByRow = pinnedRows.map((row) => activeDatesOf(row));
   const summaries: Lag1PairSummary[] = [];
 
@@ -125,15 +147,31 @@ export function summarizeLag1(
     const toRow = pinnedRows[index + 1]!;
     const fromDates = activeByRow[index]!;
     const toDates = activeByRow[index + 1]!;
+    const forward = countNextDay(fromDates, toDates, axisDates);
+    const reverse = countNextDay(toDates, fromDates, axisDates);
     summaries.push({
       from: { id: fromRow.id, label: fromRow.label },
       to: { id: toRow.id, label: toRow.label },
-      forward: countNextDayHits(fromDates, toDates),
-      reverse: countNextDayHits(toDates, fromDates),
+      forward: forward.hits,
+      forwardTotal: forward.total,
+      reverse: reverse.hits,
+      reverseTotal: reverse.total,
     });
   }
 
   return summaries;
+}
+
+/**
+ * The markers only draw the pin-order direction, so its gate cannot decide
+ * whether the numbers are worth showing: a pair whose reverse order dominates
+ * would stay invisible. Either direction clearing the floor is enough.
+ */
+export function hasReportableLag1(
+  summaries: readonly Lag1PairSummary[],
+  minDays = MIN_LAG1_DAYS
+): boolean {
+  return summaries.some((pair) => pair.forward >= minDays || pair.reverse >= minDays);
 }
 
 /**
