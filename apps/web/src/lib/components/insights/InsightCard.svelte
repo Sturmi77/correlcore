@@ -99,12 +99,13 @@
     return typeof value === 'number' && Number.isFinite(value) ? value : null;
   }
 
-  // #488 Phase 1b: a small lag profile (r at each day 1..7) for lag insights,
-  // rendered only when the payload carries the series. Non-causal — magnitude
-  // bars with the chosen lag highlighted; missing lags render as a baseline.
+  // #488 Phase 1b / #912: lag profile (r at each day 1..7). Non-causal —
+  // signed bars around a zero line so direction stays visible (ADR-0035:
+  // geometry encodes sign, not traffic-light colour).
   const LAG_PROFILE_MAX_DAYS = 7;
 
   type LagProfileBar = { lag: number; r: number; active: boolean };
+  type LagProfileDirection = 'positive' | 'negative' | 'mixed' | 'none';
 
   function lagProfileBars(ins: InsightResponse): LagProfileBar[] | null {
     const payload = ins.payload as Record<string, unknown> | undefined;
@@ -131,14 +132,39 @@
     return bars;
   }
 
+  function lagProfileDirection(bars: readonly LagProfileBar[]): LagProfileDirection {
+    const signs = new Set(bars.filter((bar) => bar.r !== 0).map((bar) => (bar.r > 0 ? 1 : -1)));
+    if (signs.size === 0) return 'none';
+    if (signs.size > 1) return 'mixed';
+    return signs.has(1) ? 'positive' : 'negative';
+  }
+
+  /** Compact peek describes only the selected peak — use its sign, not the profile mix. */
+  function lagPeakBarDirection(
+    r: number | null | undefined
+  ): Exclude<LagProfileDirection, 'mixed'> {
+    if (r == null || r === 0) return 'none';
+    return r > 0 ? 'positive' : 'negative';
+  }
+
   $: lagProfile = insight ? lagProfileBars(insight) : null;
   $: activeLagBar = lagProfile?.find((bar) => bar.active) ?? null;
   $: lagProfileMaxAbs = lagProfile
     ? Math.max(...lagProfile.map((bar) => Math.abs(bar.r)), 0.0001)
     : 1;
+  $: lagDirection = lagProfile ? lagProfileDirection(lagProfile) : 'none';
+  $: lagDirectionLabel =
+    lagDirection === 'none' ? '' : $_(`insights.card.lag_profile_direction_${lagDirection}`);
+  $: lagPeakDirection = lagPeakBarDirection(activeLagBar?.r);
+  $: lagPeakDirectionLabel =
+    lagPeakDirection === 'none'
+      ? ''
+      : $_(`insights.card.lag_profile_direction_${lagPeakDirection}`);
+  $: lagPeakDays = activeLagBar?.lag ?? (insight ? payloadNumber(insight, 'lag_days') : null) ?? 0;
 
   function lagBarHeight(r: number): number {
     // Floor non-zero bars so a real-but-small correlation stays visible.
+    // Height is relative to one half of the bipolar track (above/below zero).
     const ratio = Math.abs(r) / lagProfileMaxAbs;
     return r === 0 ? 0 : Math.max(8, Math.round(ratio * 100));
   }
@@ -409,7 +435,7 @@
             style={`--insight-accent: ${accentColor}`}
           >
             {$_('insights.card.lag_peak_marker', {
-              values: { days: activeLagBar?.lag ?? payloadNumber(insight, 'lag_days') ?? 0 },
+              values: { days: lagPeakDays, direction: lagPeakDirectionLabel },
             })}
           </span>
         {:else}
@@ -419,18 +445,36 @@
           <div
             class="insight-card__lag-bars"
             role="img"
+            data-testid="insight-card-lag-bars"
             aria-label={$_('insights.card.lag_profile_aria', {
-              values: { days: payloadNumber(insight, 'lag_days') ?? 0 },
+              values: { days: lagPeakDays, direction: lagDirectionLabel },
             })}
           >
             {#each lagProfile as bar (bar.lag)}
+              {@const sign = bar.r > 0 ? 'pos' : bar.r < 0 ? 'neg' : 'zero'}
               <div class="insight-card__lag-col" class:insight-card__lag-col--active={bar.active}>
-                <div class="insight-card__lag-bar-track">
-                  <div
-                    class="insight-card__lag-bar"
-                    style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
-                    title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
-                  ></div>
+                <div class="insight-card__lag-bar-track" data-sign={sign}>
+                  <div class="insight-card__lag-half insight-card__lag-half--pos">
+                    {#if bar.r > 0}
+                      <div
+                        class="insight-card__lag-bar insight-card__lag-bar--pos"
+                        data-testid="insight-card-lag-bar"
+                        style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
+                        title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                      ></div>
+                    {/if}
+                  </div>
+                  <div class="insight-card__lag-zero" aria-hidden="true"></div>
+                  <div class="insight-card__lag-half insight-card__lag-half--neg">
+                    {#if bar.r < 0}
+                      <div
+                        class="insight-card__lag-bar insight-card__lag-bar--neg"
+                        data-testid="insight-card-lag-bar"
+                        style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
+                        title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                      ></div>
+                    {/if}
+                  </div>
                 </div>
                 <span class="insight-card__lag-tick">{bar.lag}</span>
               </div>
@@ -642,7 +686,8 @@
   .insight-card__inactive-hint::before {
     content: ' · ';
   }
-  /* #488 Phase 1b: lag profile mini-bars (days 1..7). Token-only colours. */
+  /* #488 Phase 1b / #912: bipolar lag profile (days 1..7). Token-only colours;
+     sign is encoded by geometry around the zero line (ADR-0035). */
   .insight-card__lag-profile {
     display: flex;
     flex-direction: column;
@@ -655,9 +700,9 @@
   }
   .insight-card__lag-bars {
     display: flex;
-    align-items: flex-end;
+    align-items: stretch;
     gap: var(--space-1, 0.25rem);
-    height: 40px;
+    min-height: 52px;
   }
   .insight-card__lag-col {
     display: flex;
@@ -668,10 +713,27 @@
   }
   .insight-card__lag-bar-track {
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
+    width: 100%;
+    height: 40px;
+  }
+  .insight-card__lag-half {
+    display: flex;
     justify-content: center;
     width: 100%;
-    height: 28px;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+  .insight-card__lag-half--pos {
+    align-items: flex-end;
+  }
+  .insight-card__lag-half--neg {
+    align-items: flex-start;
+  }
+  .insight-card__lag-zero {
+    flex: 0 0 1px;
+    width: 100%;
+    background: var(--color-border-chart, var(--color-border));
   }
   .insight-card__lag-bar {
     width: 60%;

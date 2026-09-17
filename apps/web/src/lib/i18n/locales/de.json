@@ -1551,8 +1551,11 @@
       "cluster_features": "Mehrere Faktoren",
       "lag_days_unit": "Tage",
       "lag_profile_label": "Zusammenhang je Verzoegerung (Tage)",
-      "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen",
-      "lag_peak_marker": "Am staerksten bei +{days} Tagen"
+      "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen ({direction})",
+      "lag_peak_marker": "Am staerksten bei +{days} Tagen ({direction})",
+      "lag_profile_direction_positive": "gleichlaeufig",
+      "lag_profile_direction_negative": "gegenlaeufig",
+      "lag_profile_direction_mixed": "gemischte Richtungen"
     },
     "lag_heatmap": {
       "title": "Zeitversatz-Muster",

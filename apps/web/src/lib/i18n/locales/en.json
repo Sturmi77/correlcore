@@ -1551,8 +1551,11 @@
       "cluster_features": "Multiple factors",
       "lag_days_unit": "days",
       "lag_profile_label": "Association by delay (days)",
-      "lag_profile_aria": "Association strength by delay; strongest at +{days} days",
-      "lag_peak_marker": "Strongest at +{days} days"
+      "lag_profile_aria": "Association strength by delay; strongest at +{days} days ({direction})",
+      "lag_peak_marker": "Strongest at +{days} days ({direction})",
+      "lag_profile_direction_positive": "same direction",
+      "lag_profile_direction_negative": "opposite direction",
+      "lag_profile_direction_mixed": "mixed directions"
     },
     "lag_heatmap": {
       "title": "Time-offset patterns",
