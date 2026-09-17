@@ -10,6 +10,7 @@ export const COMPARE_SORT_KEY = 'cc_trend_compare_sort';
 export const COMPARE_ZOOM_KEY = 'cc_trend_compare_zoom';
 export const COMPARE_COINCIDENCE_KEY = 'cc_trend_compare_coincidence';
 export const COMPARE_LAG1_KEY = 'cc_trend_compare_lag1';
+export const COMPARE_OVERLAY_HINT_KEY = 'cc_trend_compare_overlay_hint';
 /** Default: stage 2 → 7 days/cell (CAZ-0). */
 export const COMPARE_ZOOM_DEFAULT_STAGE: CompareZoomStageIndex = 2;
 
@@ -106,6 +107,15 @@ export function readCompareLag1Highlight(): boolean {
 
 export function writeCompareLag1Highlight(enabled: boolean): void {
   writeLocal(COMPARE_LAG1_KEY, enabled);
+}
+
+/** #919: the pin nudge fires once; dismissal is permanent. */
+export function readCompareOverlayHintDismissed(): boolean {
+  return readLocal<boolean>(COMPARE_OVERLAY_HINT_KEY, false, (value) => typeof value === 'boolean');
+}
+
+export function writeCompareOverlayHintDismissed(dismissed: boolean): void {
+  writeLocal(COMPARE_OVERLAY_HINT_KEY, dismissed);
 }
 
 export { isCompareZoomStage };

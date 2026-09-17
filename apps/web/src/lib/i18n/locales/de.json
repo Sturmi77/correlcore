@@ -634,6 +634,7 @@
         "cursor": "{subjects} an diesem Tag",
         "marker": "Koinzidenz: {subjects}",
         "summary": "Beide an {both} von {aTotal} Tagen mit {a} · {both} von {bTotal} Tagen mit {b}",
+        "swatch": "A∩B — Band",
         "and": "und"
       },
       "lag1": {
@@ -644,9 +645,14 @@
         "legend": "Linien markieren, wann eine angepinnte Zeile am Folgetag von der naechsten gefolgt wird — ein Zusammenhang in deinen Eintraegen, keine Ursache.",
         "cursor": "{from} dann {to} (+1 Tag)",
         "marker": "Sequenz: {from} → {to} (+1d)",
-        "summary": "{from} dann {to}: {forward} von {forwardTotal} · {to} dann {from}: {reverse} von {reverseTotal}"
+        "summary": "{from} dann {to}: {forward} von {forwardTotal} · {to} dann {from}: {reverse} von {reverseTotal}",
+        "swatch": "Lag-1 — gestrichelte Linie"
       },
       "frequency_note": "Zahlen gelten nur fuer den gewaehlten Zeitraum.",
+      "overlay_group_label": "Hervorheben",
+      "overlay_hint_lead": "Zwei Zeilen gepinnt.",
+      "overlay_hint_body": "Koinzidenz hervorheben?",
+      "overlay_hint_dismiss_aria": "Hinweis zur Hervorhebung schliessen",
       "zoom": {
         "label": "Zeitachsen-Zoom",
         "decrease_aria": "Herauszoomen (groebere Spalten)",

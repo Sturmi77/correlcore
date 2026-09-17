@@ -66,6 +66,12 @@
     soft: boolean;
   };
 
+  // #919: the same string drives aria-label and <title> — a hover-only tooltip
+  // left keyboard and screen-reader users without the marker at all.
+  function markerAccessibleName(marker: EventMarker): string {
+    return marker.description ? `${marker.label} — ${marker.description}` : marker.label;
+  }
+
   $: uniqueMarkers = dedupeEventMarkers(markers);
   $: resolved = uniqueMarkers.flatMap((marker): ResolvedMarker[] => {
     const xStart = dailyAxisXForDate(marker.date, axisDates, axisLayout);
@@ -102,8 +108,10 @@
           {height}
           data-kind={marker.kind ?? 'generic'}
           data-testid="event-marker-band"
+          role="img"
+          aria-label={markerAccessibleName(marker)}
         >
-          <title>{marker.label}{marker.description ? ` — ${marker.description}` : ''}</title>
+          <title>{markerAccessibleName(marker)}</title>
         </rect>
       {:else}
         <line
@@ -113,8 +121,10 @@
           y1={top}
           y2={top + height}
           data-kind={marker.kind ?? 'generic'}
+          role="img"
+          aria-label={markerAccessibleName(marker)}
         >
-          <title>{marker.label}{marker.description ? ` — ${marker.description}` : ''}</title>
+          <title>{markerAccessibleName(marker)}</title>
         </line>
       {/if}
     {/each}
