@@ -41,7 +41,8 @@
   import type { InsightMaturityPhase } from '$lib/api/insights';
   import type { MetricKey } from '$lib/utils/charts';
   import { displayTimeseriesValue } from '$lib/utils/metrics';
-  import { buildMedianTrajectory } from '$lib/utils/medianTrajectory';
+  import { buildMedianTrajectory, type MedianTrajectoryCell } from '$lib/utils/medianTrajectory';
+  import { buildSplitMedianTrajectories } from '$lib/utils/esmSplitMedian';
   import { StripCellMapper } from '$lib/charts/adapter';
   import {
     hasEnoughOccurrences,
@@ -130,6 +131,12 @@
     return date.toISOString().slice(0, 10);
   }
 
+  type EncodedMedianCell = MedianTrajectoryCell & {
+    fill: string;
+    opacity: number;
+    sign: 'neg' | 'mid' | 'pos';
+  };
+
   type WindowRow = {
     onset: string;
     label: string;
@@ -172,18 +179,69 @@
   $: rows = events.map(buildWindow);
   $: showMedian = hasEnoughOccurrences(rows.length);
   $: showNeedMore = rows.length > 0 && !showMedian;
-  $: medianCells = showMedian
-    ? buildMedianTrajectory(rows, radius).map((cell) => {
-        const encoded = mapper.encode(cell.median ?? Number.NaN);
-        return {
-          ...cell,
-          fill: encoded.color,
-          opacity: encoded.opacity,
-          sign: encoded.sign,
-        };
-      })
-    : [];
-  $: rowCount = rows.length + (showMedian ? 1 : 0);
+
+  function encodeMedianCells(cells: readonly MedianTrajectoryCell[]): EncodedMedianCell[] {
+    return cells.map((cell) => {
+      const encoded = mapper.encode(cell.median ?? Number.NaN);
+      return { ...cell, fill: encoded.color, opacity: encoded.opacity, sign: encoded.sign };
+    });
+  }
+
+  // #920: with a partner chosen, the single median splits into "with" and
+  // "without" so a mixed curve can no longer hide the interaction. Each branch
+  // carries its own occurrence floor — a median over two windows would read
+  // like a finding.
+  $: splitMedians = showPartnerOverlay
+    ? buildSplitMedianTrajectories(rows, partnerPresenceSet, radius)
+    : null;
+
+  $: medianRows = (() => {
+    if (splitMedians && partner) {
+      return [
+        {
+          key: 'with' as const,
+          label: $_('trends.esm.split_with', { values: { partner: partner.label } }),
+          windows: splitMedians.withPartner.windows,
+          cells: splitMedians.withPartner.cells
+            ? encodeMedianCells(splitMedians.withPartner.cells)
+            : null,
+        },
+        {
+          key: 'without' as const,
+          label: $_('trends.esm.split_without', { values: { partner: partner.label } }),
+          windows: splitMedians.withoutPartner.windows,
+          cells: splitMedians.withoutPartner.cells
+            ? encodeMedianCells(splitMedians.withoutPartner.cells)
+            : null,
+        },
+      ];
+    }
+    if (!showMedian) return [];
+    return [
+      {
+        key: 'all' as const,
+        label: $_('trends.esm.median_label'),
+        windows: rows.length,
+        cells: encodeMedianCells(buildMedianTrajectory(rows, radius)),
+      },
+    ];
+  })();
+
+  $: splitCountsLabel =
+    splitMedians && partner
+      ? $_('trends.esm.split_counts', {
+          values: {
+            partner: partner.label,
+            withCount: splitMedians.withPartner.windows,
+            withoutCount: splitMedians.withoutPartner.windows,
+          },
+        })
+      : '';
+
+  /** Fallback copy when no partner is chosen — the split needs one. */
+  $: showSplitHint = !showPartnerOverlay && showMedian;
+
+  $: rowCount = rows.length + medianRows.length;
   $: gridWidth = labelWidth + dayCount * (cellSize + cellGap);
   $: gridHeight = rowCount * (cellSize + cellGap) + 32; // + axis labels
   $: sheetOpen = open && gateOpen;
@@ -283,8 +341,13 @@
         {$_('trends.esm.need_more', { values: { min: MIN_SMALL_MULTIPLES_OCCURRENCES } })}
       </p>
     {/if}
-    {#if showMedian}
+    {#if splitCountsLabel}
+      <p class="esm__split-counts" data-testid="esm-split-counts">{splitCountsLabel}</p>
+    {:else if showMedian}
       <p class="esm__median-hint" data-testid="esm-median-hint">{$_('trends.esm.median_hint')}</p>
+    {/if}
+    {#if showSplitHint}
+      <p class="esm__median-hint" data-testid="esm-split-hint">{$_('trends.esm.split_hint')}</p>
     {/if}
     <p class="esm__axis-caption" data-testid="esm-axis-caption">{$_('trends.esm.axis_caption')}</p>
     <div class="esm__scroll">
@@ -322,14 +385,19 @@
           {/each}
         </g>
 
-        {#if showMedian}
-          {@const medianTop = 24}
-          {@const medianLabel = $_('trends.esm.median_label')}
+        {#each medianRows as medianRow, medianIndex (medianRow.key)}
+          {@const medianTop = 24 + medianIndex * (cellSize + cellGap)}
+          {@const medianLabel = medianRow.label}
           <g
             class="esm__row esm__row--median"
             data-testid="esm-median-row"
+            data-branch={medianRow.key}
             role="group"
-            aria-label={$_('trends.esm.median_aria', { values: { count: rows.length } })}
+            aria-label={medianRow.key === 'all'
+              ? $_('trends.esm.median_aria', { values: { count: medianRow.windows } })
+              : $_('trends.esm.split_aria', {
+                  values: { branch: medianLabel, count: medianRow.windows },
+                })}
           >
             <text
               x={labelWidth - 8}
@@ -341,7 +409,29 @@
               {medianLabel}
             </text>
 
-            {#each medianCells as cell (cell.offset)}
+            {#if medianRow.cells === null}
+              <!-- #920: below the per-branch floor. An honest gap, not a curve. -->
+              <rect
+                class="esm__split-gap"
+                data-testid="esm-split-insufficient"
+                x={labelWidth}
+                y={medianTop}
+                width={dayCount * (cellSize + cellGap) - cellGap}
+                height={cellSize}
+                rx="3"
+              />
+              <text
+                x={labelWidth + (dayCount * (cellSize + cellGap) - cellGap) / 2}
+                y={medianTop + cellSize / 2}
+                text-anchor="middle"
+                dominant-baseline="middle"
+                class="esm__split-gap-label"
+              >
+                {$_('trends.esm.split_insufficient', { values: { count: medianRow.windows } })}
+              </text>
+            {/if}
+
+            {#each medianRow.cells ?? [] as cell (cell.offset)}
               <!-- IQR band behind the median cell (token fill, low opacity). -->
               {#if cell.q1 != null && cell.q3 != null && cell.q1 !== cell.q3}
                 {@const q1Enc = mapper.encode(cell.q1)}
@@ -371,6 +461,7 @@
                 class="esm__cell esm__cell--median"
                 class:esm__cell--t0={cell.offset === 0}
                 class:esm__cell--lag={cell.offset === lagColumn}
+                class:esm__cell--median-without={medianRow.key === 'without'}
                 x={labelWidth + (cell.offset + radius) * (cellSize + cellGap)}
                 y={medianTop}
                 width={cellSize}
@@ -399,10 +490,10 @@
               </rect>
             {/each}
           </g>
-        {/if}
+        {/each}
 
         {#each rows as row, rowIndex (row.onset)}
-          {@const top = 24 + ((showMedian ? 1 : 0) + rowIndex) * (cellSize + cellGap)}
+          {@const top = 24 + (medianRows.length + rowIndex) * (cellSize + cellGap)}
           <g class="esm__row" data-onset={row.onset}>
             <text
               x={labelWidth - 8}
@@ -652,6 +743,30 @@
   .esm__cell--median {
     stroke: var(--color-cursor);
     stroke-width: 1.5;
+  }
+
+  /* #920: the two branches differ by stroke pattern, never by hue (ADR-0035). */
+  .esm__cell--median-without {
+    stroke-dasharray: 3 2;
+  }
+
+  .esm__split-gap {
+    fill: none;
+    stroke: var(--color-border-chart, var(--color-border));
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
+  }
+
+  .esm__split-gap-label {
+    fill: var(--color-text-muted);
+    font-size: 10px;
+  }
+
+  .esm__split-counts {
+    margin: 0 0 var(--space-2);
+    color: var(--color-fg);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
   }
 
   .esm__lag-note {

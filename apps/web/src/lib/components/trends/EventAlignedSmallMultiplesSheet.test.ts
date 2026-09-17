@@ -354,6 +354,108 @@ describe('EventAlignedSmallMultiplesSheet partner glyph (#909)', () => {
   });
 });
 
+describe('EventAlignedSmallMultiplesSheet split medians (#920)', () => {
+  // Three windows with the partner, three without, far enough apart that no
+  // ±7 window overlaps another onset.
+  const withOnsets = ['2026-05-01', '2026-05-20', '2026-06-08'];
+  const withoutOnsets = ['2026-07-01', '2026-07-20', '2026-08-08'];
+  const events = [...withOnsets, ...withoutOnsets].map((onset) => ({ onset, label: onset }));
+  const points = [...withOnsets, ...withoutOnsets].map((date, index) => ({
+    period_start: date,
+    period_end: date,
+    entry_count: 1,
+    mood_avg: index < 3 ? 5 : 1,
+    energy_avg: 3,
+    stress_avg: 3,
+    sleep_quality_avg: null,
+  }));
+  const partner = { id: 't-coffee', label: 'Coffee', kind: 'tag' as const };
+  const candidates = [{ id: 't-coffee', label: 'Coffee', kind: 'tag' as const, score: 5 }];
+
+  function renderSheet(partnerPresenceDates: string[]) {
+    return render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner,
+        partnerCandidates: candidates,
+        partnerPresenceDates,
+      },
+    });
+  }
+
+  it('replaces the single median with one row per branch', () => {
+    const { container } = renderSheet(withOnsets);
+
+    const medianRows = [...container.querySelectorAll('[data-testid="esm-median-row"]')];
+    expect(medianRows.map((row) => row.getAttribute('data-branch'))).toEqual(['with', 'without']);
+    expect(container.querySelectorAll('[data-testid="esm-split-insufficient"]')).toHaveLength(0);
+  });
+
+  it('states the window count of each branch', () => {
+    renderSheet(withOnsets);
+
+    const counts = screen.getByTestId('esm-split-counts').textContent ?? '';
+    expect(counts).toContain('trends.esm.split_counts');
+    expect(counts).toContain('"withCount":3');
+    expect(counts).toContain('"withoutCount":3');
+  });
+
+  it('withholds the curve of a branch below the occurrence floor', () => {
+    // Only two windows carry the partner, so that branch stays undrawn.
+    const { container } = renderSheet(withOnsets.slice(0, 2));
+
+    const gap = screen.getByTestId('esm-split-insufficient');
+    expect(gap).toBeTruthy();
+    expect(gap.parentElement?.getAttribute('data-branch')).toBe('with');
+    expect(gap.parentElement?.textContent).toContain('trends.esm.split_insufficient');
+    // The other branch still draws, so a gap alone is not a blank sheet.
+    expect(container.querySelectorAll('.esm__cell--median').length).toBeGreaterThan(0);
+  });
+
+  it('distinguishes the branches by stroke pattern, not by hue', () => {
+    const { container } = renderSheet(withOnsets);
+
+    const withoutCells = container.querySelectorAll('.esm__cell--median-without');
+    expect(withoutCells.length).toBeGreaterThan(0);
+    const withRow = container.querySelector('[data-branch="with"]');
+    expect(withRow?.querySelectorAll('.esm__cell--median-without')).toHaveLength(0);
+  });
+
+  it('keeps the combined median and points to the split when no partner is set', () => {
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: null,
+        partnerCandidates: [],
+        partnerPresenceDates: [],
+      },
+    });
+
+    const medianRows = [...container.querySelectorAll('[data-testid="esm-median-row"]')];
+    expect(medianRows).toHaveLength(1);
+    expect(medianRows[0]?.getAttribute('data-branch')).toBe('all');
+    expect(screen.getByTestId('esm-split-hint')).toBeTruthy();
+    expect(screen.queryByTestId('esm-split-counts')).toBeNull();
+  });
+
+  it('pushes the episode rows below however many median rows exist', () => {
+    const { container } = renderSheet(withOnsets);
+
+    const episodeRows = [...container.querySelectorAll('.esm__row[data-onset]')];
+    const firstCellY = episodeRows[0]?.querySelector('.esm__cell')?.getAttribute('y');
+    // 24 + 2 median rows * (cellSize 22 + gap 4)
+    expect(firstCellY).toBe('76');
+  });
+});
+
 describe('EventAlignedSmallMultiplesSheet partner coverage (#918)', () => {
   const points = [
     {
