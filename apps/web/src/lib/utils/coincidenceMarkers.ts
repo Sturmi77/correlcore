@@ -90,6 +90,70 @@ export function deriveCoincidence(
   };
 }
 
+/** Natural-frequency counts for one pinned pair (#917 / v1c). */
+export type CoincidencePairSummary = {
+  a: CoincidenceSubject;
+  b: CoincidenceSubject;
+  /** Days where both are active. */
+  both: number;
+  /** Active days of A in the loaded range — the denominator for A. */
+  aTotal: number;
+  bTotal: number;
+};
+
+/** Active dates of a row, as a set for cheap pair intersections. */
+export function activeDatesOf(row: CoincidenceRow): Set<string> {
+  const dates = new Set<string>();
+  for (const day of row.days) {
+    if (day.count > 0 || (day.max_intensity ?? 0) > 0) dates.add(day.date);
+  }
+  return dates;
+}
+
+export function resolvePinnedRows(
+  pinnedIds: readonly string[],
+  rows: readonly CoincidenceRow[]
+): CoincidenceRow[] {
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return pinnedIds.map((id) => byId.get(id)).filter((row): row is CoincidenceRow => row != null);
+}
+
+/**
+ * Counts per pinned pair so the overlay can state a natural frequency
+ * ("both on 6 of 22 days with A") instead of bare presence. Every unordered
+ * pair is reported, including pairs that never coincide — a zero is honest.
+ */
+export function summarizeCoincidence(
+  pinnedIds: readonly string[],
+  rows: readonly CoincidenceRow[]
+): CoincidencePairSummary[] {
+  const pinnedRows = resolvePinnedRows(pinnedIds, rows);
+  if (pinnedRows.length < 2) return [];
+
+  const activeByRow = pinnedRows.map((row) => activeDatesOf(row));
+  const summaries: CoincidencePairSummary[] = [];
+
+  for (let left = 0; left < pinnedRows.length - 1; left += 1) {
+    for (let right = left + 1; right < pinnedRows.length; right += 1) {
+      const leftDates = activeByRow[left]!;
+      const rightDates = activeByRow[right]!;
+      let both = 0;
+      for (const date of leftDates) {
+        if (rightDates.has(date)) both += 1;
+      }
+      summaries.push({
+        a: { id: pinnedRows[left]!.id, label: pinnedRows[left]!.label },
+        b: { id: pinnedRows[right]!.id, label: pinnedRows[right]!.label },
+        both,
+        aTotal: leftDates.size,
+        bTotal: rightDates.size,
+      });
+    }
+  }
+
+  return summaries;
+}
+
 /**
  * Build EventMarker soft bands (endDate set → band in EventMarkerLayer).
  * `labelFor` / `description` come from i18n in the caller.

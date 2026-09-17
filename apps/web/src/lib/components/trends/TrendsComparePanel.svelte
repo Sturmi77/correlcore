@@ -47,9 +47,15 @@
     clampPinnedIds,
     coincidenceDaysToMarkers,
     deriveCoincidence,
+    summarizeCoincidence,
     type CoincidenceRow,
   } from '$lib/utils/coincidenceMarkers';
-  import { MIN_LAG1_DAYS, deriveLag1, lag1DaysToMarkers } from '$lib/utils/lag1Markers';
+  import {
+    MIN_LAG1_DAYS,
+    deriveLag1,
+    lag1DaysToMarkers,
+    summarizeLag1,
+  } from '$lib/utils/lag1Markers';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import MetricTimeseries from './MetricTimeseries.svelte';
@@ -467,6 +473,37 @@
       : !lag1.canHighlight
         ? $_('trends.compare.lag1.empty', { values: { min: MIN_LAG1_DAYS } })
         : '';
+
+  // #917: natural frequencies beside each overlay — counts with a denominator,
+  // never rates or p-values (v1c decision in FEATURE_EVENT_INTERACTION_TIMELINE).
+  $: coincidenceSummaryLines = coincidenceActive
+    ? summarizeCoincidence(pinned, coincidenceRows).map((pair) =>
+        $_('trends.compare.coincidence.summary', {
+          values: {
+            a: pair.a.label,
+            b: pair.b.label,
+            both: pair.both,
+            aTotal: pair.aTotal,
+            bTotal: pair.bTotal,
+          },
+        })
+      )
+    : [];
+
+  $: lag1SummaryLines = lag1Active
+    ? summarizeLag1(pinned, coincidenceRows).map((pair) =>
+        $_('trends.compare.lag1.summary', {
+          values: {
+            from: pair.from.label,
+            to: pair.to.label,
+            forward: pair.forward,
+            reverse: pair.reverse,
+          },
+        })
+      )
+    : [];
+
+  $: showFrequencyNote = coincidenceSummaryLines.length > 0 || lag1SummaryLines.length > 0;
 </script>
 
 <section class="compare" class:compare--compact={compactChrome} data-testid="trends-compare-panel">
@@ -645,6 +682,14 @@
           <p class="compare__coincidence-legend" data-testid="trends-compare-coincidence-legend">
             {$_('trends.compare.coincidence.legend')}
           </p>
+          {#each coincidenceSummaryLines as line, index (index)}
+            <p
+              class="compare__coincidence-summary"
+              data-testid="trends-compare-coincidence-summary"
+            >
+              {line}
+            </p>
+          {/each}
         {/if}
       </div>
       <div class="compare__coincidence" data-testid="trends-compare-lag1">
@@ -667,8 +712,18 @@
           <p class="compare__coincidence-legend" data-testid="trends-compare-lag1-legend">
             {$_('trends.compare.lag1.legend')}
           </p>
+          {#each lag1SummaryLines as line, index (index)}
+            <p class="compare__coincidence-summary" data-testid="trends-compare-lag1-summary">
+              {line}
+            </p>
+          {/each}
         {/if}
       </div>
+      {#if showFrequencyNote}
+        <p class="compare__coincidence-hint" data-testid="trends-compare-frequency-note">
+          {$_('trends.compare.frequency_note')}
+        </p>
+      {/if}
       <p class="compare__zoom-hint" data-testid="trends-compare-zoom-encoding">
         {$_('trends.compare.zoom.encoding_hint')}
       </p>
@@ -944,6 +999,14 @@
     margin: 0;
     color: var(--color-text-muted);
     font-size: var(--text-xs);
+  }
+
+  /* #917: counts sit closer to the eye than the legend disclaimer. */
+  .compare__coincidence-summary {
+    margin: 0;
+    color: var(--color-fg);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
   }
 
   .compare__zoom-btn {

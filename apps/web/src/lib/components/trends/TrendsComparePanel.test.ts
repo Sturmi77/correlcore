@@ -43,6 +43,12 @@ vi.mock('svelte-i18n', async () => {
       ) {
         return `Coincidence: ${opts.values.subjects}`;
       }
+      if (key === k('trends', 'compare', 'coincidence', 'summary') && opts?.values) {
+        return `Both on ${opts.values.both} of ${opts.values.aTotal} days with ${opts.values.a} · ${opts.values.both} of ${opts.values.bTotal} days with ${opts.values.b}`;
+      }
+      if (key === k('trends', 'compare', 'lag1', 'summary') && opts?.values) {
+        return `${opts.values.from} then ${opts.values.to}: ${opts.values.forward} · ${opts.values.to} then ${opts.values.from}: ${opts.values.reverse}`;
+      }
       if (key === k('trends', 'compare', 'coincidence', 'and')) return 'and';
       if (key === k('trends', 'compare', 'lag1', 'empty') && opts?.values?.min != null) {
         return `Need at least ${opts.values.min} next-day sequences`;
@@ -400,6 +406,12 @@ describe('TrendsComparePanel', () => {
     expect(toggle.checked).toBe(true);
     expect(screen.getByTestId('trends-compare-coincidence-legend')).toBeTruthy();
 
+    // #917: the count carries a denominator per subject, not bare presence.
+    const summary = screen.getByTestId('trends-compare-coincidence-summary').textContent ?? '';
+    expect(summary).toContain('2 of 3 days with Sport');
+    expect(summary).toContain('2 of 3 days with Sleep');
+    expect(screen.getByTestId('trends-compare-frequency-note')).toBeTruthy();
+
     // Zoom to day columns so marker bands map to individual dates.
     await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));
     await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));
@@ -523,6 +535,11 @@ describe('TrendsComparePanel', () => {
     await fireEvent.click(lagToggle);
     expect(lagToggle.checked).toBe(true);
     expect(screen.getByTestId('trends-compare-lag1-legend')).toBeTruthy();
+
+    // #917: markers only draw Sport→Sleep, so the mirrored count must be stated.
+    expect(screen.getByTestId('trends-compare-lag1-summary').textContent).toBe(
+      'Sport then Sleep: 3 · Sleep then Sport: 1'
+    );
 
     await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));
     await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));

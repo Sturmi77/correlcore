@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CoincidenceRow } from './coincidenceMarkers';
-import { MIN_LAG1_DAYS, deriveLag1, lag1DaysToMarkers } from './lag1Markers';
+import { MIN_LAG1_DAYS, deriveLag1, lag1DaysToMarkers, summarizeLag1 } from './lag1Markers';
 
 function row(id: string, label: string, days: { date: string; count: number }[]): CoincidenceRow {
   return { id, label, days };
@@ -80,6 +80,55 @@ describe('deriveLag1', () => {
   it('respects a custom minDays override', () => {
     const sparseSleep = row('t2', 'Sleep', [{ date: '2026-05-02', count: 1 }]);
     expect(deriveLag1(['t1', 't2'], [sport, sparseSleep], { minDays: 1 }).canHighlight).toBe(true);
+  });
+});
+
+describe('summarizeLag1 (#917)', () => {
+  // Sport → Sleep on 3 days; Sleep → Sport on 2 days: the asymmetry markers hide.
+  const sport = row('t1', 'Sport', [
+    { date: '2026-05-01', count: 1 },
+    { date: '2026-05-03', count: 1 },
+    { date: '2026-05-05', count: 1 },
+  ]);
+  const sleep = row('t2', 'Sleep', [
+    { date: '2026-05-02', count: 1 },
+    { date: '2026-05-04', count: 1 },
+    { date: '2026-05-06', count: 1 },
+  ]);
+
+  it('returns nothing when fewer than two pins resolve', () => {
+    expect(summarizeLag1(['t1'], [sport, sleep])).toEqual([]);
+  });
+
+  it('reports both directions for the pinned pair', () => {
+    expect(summarizeLag1(['t1', 't2'], [sport, sleep])).toEqual([
+      {
+        from: { id: 't1', label: 'Sport' },
+        to: { id: 't2', label: 'Sleep' },
+        forward: 3,
+        reverse: 2,
+      },
+    ]);
+  });
+
+  it('keeps a zero direction visible instead of dropping it', () => {
+    // Coffee only ever follows Sport, never precedes it.
+    const coffee = row('t3', 'Coffee', [{ date: '2026-05-06', count: 1 }]);
+    const [pair] = summarizeLag1(['t1', 't3'], [sport, coffee]);
+    expect(pair?.forward).toBe(1);
+    expect(pair?.reverse).toBe(0);
+  });
+
+  it('summarizes the same adjacent pairs the markers use', () => {
+    const coffee = row('t3', 'Coffee', [
+      { date: '2026-05-03', count: 1 },
+      { date: '2026-05-05', count: 1 },
+    ]);
+    const summaries = summarizeLag1(['t1', 't2', 't3'], [sport, sleep, coffee]);
+    expect(summaries.map((pair) => [pair.from.id, pair.to.id])).toEqual([
+      ['t1', 't2'],
+      ['t2', 't3'],
+    ]);
   });
 });
 

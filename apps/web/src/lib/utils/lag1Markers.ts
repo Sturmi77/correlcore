@@ -8,7 +8,9 @@
 
 import type { EventMarker } from '$lib/components/trends/EventMarkerLayer.svelte';
 import {
+  activeDatesOf,
   isRowActiveOnDay,
+  resolvePinnedRows,
   type CoincidenceRow,
   type CoincidenceSubject,
 } from '$lib/utils/coincidenceMarkers';
@@ -83,6 +85,55 @@ export function deriveLag1(
     days,
     canHighlight: days.length >= minDays,
   };
+}
+
+/** Both directions for one adjacent pinned pair (#917 / v1c). */
+export type Lag1PairSummary = {
+  from: CoincidenceSubject;
+  to: CoincidenceSubject;
+  /** Days where `from` is active and `to` follows on the next day. */
+  forward: number;
+  /** The mirrored count — the asymmetry is the point. */
+  reverse: number;
+};
+
+function countNextDayHits(fromDates: ReadonlySet<string>, toDates: ReadonlySet<string>): number {
+  let count = 0;
+  for (const date of fromDates) {
+    if (toDates.has(shiftIsoDate(date, 1))) count += 1;
+  }
+  return count;
+}
+
+/**
+ * Counts for the same adjacent pairs `deriveLag1` marks, but in **both**
+ * directions. Markers only ever show A→B; without the mirrored count a user
+ * cannot tell whether B→A is the more frequent order.
+ */
+export function summarizeLag1(
+  pinnedIds: readonly string[],
+  rows: readonly CoincidenceRow[]
+): Lag1PairSummary[] {
+  const pinnedRows = resolvePinnedRows(pinnedIds, rows);
+  if (pinnedRows.length < 2) return [];
+
+  const activeByRow = pinnedRows.map((row) => activeDatesOf(row));
+  const summaries: Lag1PairSummary[] = [];
+
+  for (let index = 0; index < pinnedRows.length - 1; index += 1) {
+    const fromRow = pinnedRows[index]!;
+    const toRow = pinnedRows[index + 1]!;
+    const fromDates = activeByRow[index]!;
+    const toDates = activeByRow[index + 1]!;
+    summaries.push({
+      from: { id: fromRow.id, label: fromRow.label },
+      to: { id: toRow.id, label: toRow.label },
+      forward: countNextDayHits(fromDates, toDates),
+      reverse: countNextDayHits(toDates, fromDates),
+    });
+  }
+
+  return summaries;
 }
 
 /**

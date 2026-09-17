@@ -633,6 +633,7 @@
         "legend": "Highlighted days show when pinned rows appear together — an association in your entries, not a cause.",
         "cursor": "{subjects} on this day",
         "marker": "Coincidence: {subjects}",
+        "summary": "Both on {both} of {aTotal} days with {a} · {both} of {bTotal} days with {b}",
         "and": "and"
       },
       "lag1": {
@@ -642,8 +643,10 @@
         "empty": "Need at least {min} next-day sequences across pinned rows to highlight Lag-1.",
         "legend": "Lines mark when one pinned row is followed by the next on the following day — an association in your entries, not a cause.",
         "cursor": "{from} then {to} (+1 day)",
-        "marker": "Sequence: {from} → {to} (+1d)"
+        "marker": "Sequence: {from} → {to} (+1d)",
+        "summary": "{from} then {to}: {forward} · {to} then {from}: {reverse}"
       },
+      "frequency_note": "Counts cover the selected period only.",
       "zoom": {
         "label": "Timeline zoom",
         "decrease_aria": "Zoom out to coarser columns",
