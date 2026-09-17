@@ -635,6 +635,15 @@
         "marker": "Koinzidenz: {subjects}",
         "and": "und"
       },
+      "lag1": {
+        "toggle": "Naechster-Tag-Sequenz hervorheben",
+        "toggle_aria": "Tage hervorheben, an denen eine angepinnte Zeile am Folgetag von der naechsten gefolgt wird",
+        "need_pins": "Pinnen Sie mindestens zwei Zeilen, um Folgetag-Sequenzen hervorzuheben.",
+        "empty": "Mindestens {min} Folgetag-Sequenzen bei angepinnten Zeilen noetig, um Lag-1 hervorzuheben.",
+        "legend": "Linien markieren, wann eine angepinnte Zeile am Folgetag von der naechsten gefolgt wird — ein Zusammenhang in deinen Eintraegen, keine Ursache.",
+        "cursor": "{from} dann {to} (+1 Tag)",
+        "marker": "Sequenz: {from} → {to} (+1d)"
+      },
       "zoom": {
         "label": "Zeitachsen-Zoom",
         "decrease_aria": "Herauszoomen (groebere Spalten)",

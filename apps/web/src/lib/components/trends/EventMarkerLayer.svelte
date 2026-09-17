@@ -13,7 +13,12 @@
    * no business logic, no API calls.
    */
   export type EventMarkerKind =
-    'phase_transition' | 'symptom_onset' | 'habit_change' | 'cycle_phase' | 'generic';
+    | 'phase_transition'
+    | 'symptom_onset'
+    | 'habit_change'
+    | 'cycle_phase'
+    | 'compare_lag1'
+    | 'generic';
 
   export interface EventMarker {
     /** Inclusive start (ISO date YYYY-MM-DD). */
@@ -87,7 +92,7 @@
 
 {#if resolved.length > 0}
   <g class="event-markers" role="group" aria-label={$_('trends.markers.aria')}>
-    {#each resolved as { marker, xStart, bandX, bandWidth, soft } (marker.date + ':' + (marker.endDate ?? ''))}
+    {#each resolved as { marker, xStart, bandX, bandWidth, soft } (marker.date + ':' + (marker.endDate ?? '') + ':' + (marker.kind ?? 'generic'))}
       {#if soft && bandX !== null && bandWidth !== null}
         <rect
           class="event-markers__band"
@@ -141,5 +146,11 @@
 
   .event-markers__line[data-kind='cycle_phase'] {
     stroke-dasharray: 1 2;
+  }
+
+  /* #910: Lag-1 — narrower dashed line vs A∩B soft bands. */
+  .event-markers__line[data-kind='compare_lag1'] {
+    stroke-width: 1;
+    stroke-dasharray: 3 2;
   }
 </style>

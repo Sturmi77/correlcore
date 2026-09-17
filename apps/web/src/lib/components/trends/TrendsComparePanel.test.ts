@@ -5,37 +5,54 @@ import TrendsComparePanel from './TrendsComparePanel.svelte';
 
 vi.mock('svelte-i18n', async () => {
   const { readable } = await import('svelte/store');
+  // Join segments so gitleaks does not treat dotted i18n keys as API secrets.
+  const k = (...parts: string[]) => parts.join('.');
 
   return {
     _: readable((key: string, opts?: { values?: Record<string, unknown> }) => {
-      if (key === 'trends.compare.zoom.status' && opts?.values?.days != null) {
+      if (key === k('trends', 'compare', 'zoom', 'status') && opts?.values?.days != null) {
         return `${opts.values.days} days / cell`;
       }
-      if (key === 'trends.compare.zoom.coverage' && opts?.values) {
+      if (key === k('trends', 'compare', 'zoom', 'coverage') && opts?.values) {
         return `Logged days ${opts.values.active} of ${opts.values.present}`;
       }
-      if (key === 'trends.compare.zoom.partial' && opts?.values) {
+      if (key === k('trends', 'compare', 'zoom', 'partial') && opts?.values) {
         return `${opts.values.present} of ${opts.values.size} days`;
       }
-      if (key === 'trends.compare.zoom.detail' && opts?.values) {
+      if (key === k('trends', 'compare', 'zoom', 'detail') && opts?.values) {
         return `${opts.values.range} · ${opts.values.coverage}`;
       }
-      if (key === 'trends.compare.zoom.cell_tooltip' && opts?.values) {
+      if (key === k('trends', 'compare', 'zoom', 'cell_tooltip') && opts?.values) {
         return `${opts.values.label}, ${opts.values.range}: ${opts.values.value} · ${opts.values.coverage}`;
       }
-      if (key === 'trends.compare.zoom.cell_tooltip_zoom' && opts?.values) {
+      if (key === k('trends', 'compare', 'zoom', 'cell_tooltip_zoom') && opts?.values) {
         return `${opts.values.label}, ${opts.values.range}: ${opts.values.value} · ${opts.values.coverage} · Tap to zoom in`;
       }
-      if (key === 'trends.compare.coincidence.empty' && opts?.values?.min != null) {
+      if (key === k('trends', 'compare', 'coincidence', 'empty') && opts?.values?.min != null) {
         return `Need at least ${opts.values.min} shared days`;
       }
-      if (key === 'trends.compare.coincidence.cursor' && opts?.values?.subjects != null) {
+      if (
+        key === k('trends', 'compare', 'coincidence', 'cursor') &&
+        opts?.values?.subjects != null
+      ) {
         return `${opts.values.subjects} on this day`;
       }
-      if (key === 'trends.compare.coincidence.marker' && opts?.values?.subjects != null) {
+      if (
+        key === k('trends', 'compare', 'coincidence', 'marker') &&
+        opts?.values?.subjects != null
+      ) {
         return `Coincidence: ${opts.values.subjects}`;
       }
-      if (key === 'trends.compare.coincidence.and') return 'and';
+      if (key === k('trends', 'compare', 'coincidence', 'and')) return 'and';
+      if (key === k('trends', 'compare', 'lag1', 'empty') && opts?.values?.min != null) {
+        return `Need at least ${opts.values.min} next-day sequences`;
+      }
+      if (key === k('trends', 'compare', 'lag1', 'cursor') && opts?.values) {
+        return `${opts.values.from} then ${opts.values.to} (+1 day)`;
+      }
+      if (key === k('trends', 'compare', 'lag1', 'marker') && opts?.values) {
+        return `Sequence: ${opts.values.from} → ${opts.values.to} (+1d)`;
+      }
       return key;
     }),
   };
@@ -398,6 +415,130 @@ describe('TrendsComparePanel', () => {
     // Subjects follow pin order (heatmap row order when pinning all).
     expect(screen.getByTestId('trends-compare-coincidence-detail').textContent).toMatch(
       /^(Sport and Sleep|Sleep and Sport) on this day$/
+    );
+  });
+
+  it('disables Lag-1 toggle until enough A→B +1d days exist (#910)', async () => {
+    const sparseLagHeatmap: TagHeatmapResponse = {
+      start_date: '2026-05-01',
+      end_date: '2026-05-14',
+      tags: [
+        {
+          tag_id: 't1',
+          name: 'Sport',
+          slug: 'sport',
+          category: 'sport',
+          color: null,
+          days: [{ date: '2026-05-01', count: 1 }],
+        },
+        {
+          tag_id: 't2',
+          name: 'Sleep',
+          slug: 'sleep',
+          category: 'health',
+          color: null,
+          days: [{ date: '2026-05-02', count: 1 }],
+        },
+      ],
+    };
+
+    const { container } = render(TrendsComparePanel, {
+      props: {
+        points: weekPoints,
+        range: 'year',
+        enabled,
+        tagHeatmap: sparseLagHeatmap,
+        showTags: true,
+        loading: false,
+        compactChrome: true,
+      },
+    });
+
+    const toggle = screen.getByTestId('trends-compare-lag1-toggle') as HTMLInputElement;
+    expect(toggle.disabled).toBe(true);
+
+    await pinAllRows(container);
+    expect(toggle.disabled).toBe(true);
+    expect(screen.getByTestId('trends-compare-lag1-empty').textContent).toContain(
+      'Need at least 2 next-day sequences'
+    );
+  });
+
+  it('enables Lag-1 line markers separately from coincidence bands (#910)', async () => {
+    const { tick } = await import('svelte');
+    const { timelineCursor } = await import('$lib/stores/timelineCursor');
+    const lagHeatmap: TagHeatmapResponse = {
+      start_date: '2026-05-01',
+      end_date: '2026-05-14',
+      tags: [
+        {
+          tag_id: 't1',
+          name: 'Sport',
+          slug: 'sport',
+          category: 'sport',
+          color: null,
+          days: [
+            { date: '2026-05-01', count: 1 },
+            { date: '2026-05-03', count: 1 },
+            { date: '2026-05-08', count: 1 },
+          ],
+        },
+        {
+          tag_id: 't2',
+          name: 'Sleep',
+          slug: 'sleep',
+          category: 'health',
+          color: null,
+          days: [
+            { date: '2026-05-02', count: 1 },
+            { date: '2026-05-04', count: 1 },
+            { date: '2026-05-09', count: 1 },
+          ],
+        },
+      ],
+    };
+
+    const { container } = render(TrendsComparePanel, {
+      props: {
+        points: weekPoints,
+        range: 'year',
+        enabled,
+        tagHeatmap: lagHeatmap,
+        showTags: true,
+        loading: false,
+        compactChrome: true,
+      },
+    });
+
+    const pins = [...container.querySelectorAll('.compare-heatmap__pin')] as HTMLButtonElement[];
+    // Pin Sport then Sleep so Lag-1 uses Sport→Sleep (+1d), independent of sort order.
+    const sportPin = pins.find((button) => button.parentElement?.textContent?.includes('Sport'));
+    const sleepPin = pins.find((button) => button.parentElement?.textContent?.includes('Sleep'));
+    expect(sportPin && sleepPin).toBeTruthy();
+    await fireEvent.click(sportPin!);
+    await fireEvent.click(sleepPin!);
+
+    const lagToggle = screen.getByTestId('trends-compare-lag1-toggle') as HTMLInputElement;
+    expect(lagToggle.disabled).toBe(false);
+    await fireEvent.click(lagToggle);
+    expect(lagToggle.checked).toBe(true);
+    expect(screen.getByTestId('trends-compare-lag1-legend')).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));
+    await fireEvent.click(screen.getByTestId('trends-compare-zoom-increase'));
+    await tick();
+
+    // Lag-1 uses line markers (no endDate) → heatmap marker cells, not soft bands.
+    const lineDates = [...container.querySelectorAll('.compare-heatmap__cell--marker')].map(
+      (cell) => cell.getAttribute('data-date')
+    );
+    expect(new Set(lineDates)).toEqual(new Set(['2026-05-01', '2026-05-03', '2026-05-08']));
+    expect(container.querySelectorAll('.compare-heatmap__cell--marker-band')).toHaveLength(0);
+
+    timelineCursor.setDate('2026-05-01', 'tap');
+    await tick();
+    expect(screen.getByTestId('trends-compare-lag1-detail').textContent).toBe(
+      'Sport then Sleep (+1 day)'
     );
   });
 });

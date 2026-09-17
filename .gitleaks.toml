@@ -7,7 +7,10 @@ description = "CI-only test fixtures (not production secrets)"
 # a valid-but-throwaway Fernet ENCRYPTION_KEY and the placeholder SECRET_KEY.
 # Value-scoped on purpose — do NOT path-allowlist the whole workflow files,
 # that would hide future real leaks in them.
+# Also UX localStorage / i18n keys that trip generic-api-key (history scan).
 regexes = [
   '''SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4=''',
   '''test-secret-key-min-32-bytes-long-padding''',
+  '''cc_trend_compare_lag1''',
+  '''trends\.compare\.lag1\.[a-z_]+''',
 ]
