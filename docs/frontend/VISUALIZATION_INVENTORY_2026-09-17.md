@@ -1,7 +1,7 @@
 # Darstellungsformen — Inventar, Überschneidungen und Lücken (2026-09-17)
 
 > **Art dieses Dokuments:** ANALYSE aus der **User-Perspektive**. Kein Implementation-Scope,
-> keine Entscheidung. Grundlage für das zugehörige `[ANALYSIS]`-Issue.
+> keine Entscheidung. Grundlage für das zugehörige `[ANALYSIS]`-Issue #928.
 > Sprachwahl: Deutsch, analog zu den vorhandenen `[ANALYSIS]`-Issues (#875, #892).
 
 Nach M3.8 (ADR-0035), #488 (Lag), #489 (Tag-Cluster), #601 (History) und den Compare-Overlays
@@ -373,6 +373,7 @@ Was **nicht** empfohlen wird:
 - `docs/proposals/FEATURE_EVENT_INTERACTION_TIMELINE.md` (v1c: natürliche Häufigkeiten),
   `docs/proposals/FEATURE_LAG_CORRELATION_VISUALIZATION.md`,
   `docs/proposals/FEATURE_HEATMAP_TAG_GROUP_CLUSTERS.md`
+- Issue zu diesem Dokument: #928
 - Issues: #488 (Lag), #489 (Cluster), #601 (History), #725 (schwache Matrixzeilen),
   #867 (globales Trendfenster), #908/#910/#917/#919 (Compare-Overlays), #920 (ESM-Split)
 - Code: `apps/web/src/lib/components/{trends,insights,home}`, `apps/web/src/lib/utils/*`,
