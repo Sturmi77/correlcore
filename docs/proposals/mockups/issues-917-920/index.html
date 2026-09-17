@@ -1,7 +1,10 @@
 <title>Evidenz statt Präsenz</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+/>
 <style>
   :root {
     --ground: #f5f4f0;
@@ -16,7 +19,7 @@
     --accent-wash: #e5f1ef;
     --new: #7a5cc4;
     --new-wash: #efeaf9;
-    --shadow: 0 1px 2px rgba(20,24,32,.05), 0 8px 24px -18px rgba(20,24,32,.35);
+    --shadow: 0 1px 2px rgba(20, 24, 32, 0.05), 0 8px 24px -18px rgba(20, 24, 32, 0.35);
 
     /* App "screenshot" surface — constant across page theme (depicts the app) */
     --s-bg: #0d1219;
@@ -26,9 +29,9 @@
     --s-muted: #8a94a3;
     --s-faint: #5d6a7a;
     --s-border: #222c38;
-    --s-band: rgba(122, 140, 170, .22);     /* A∩B soft band — neutral, non-semantic */
-    --s-line: #9aa7b8;                       /* Lag-1 dashed line — neutral */
-    --s-accent: #34c9b6;                     /* app teal for active controls */
+    --s-band: rgba(122, 140, 170, 0.22); /* A∩B soft band — neutral, non-semantic */
+    --s-line: #9aa7b8; /* Lag-1 dashed line — neutral */
+    --s-accent: #34c9b6; /* app teal for active controls */
     --s-cell-0: #1a2430;
     --s-cell-1: #244a53;
     --s-cell-2: #2e7a75;
@@ -36,7 +39,7 @@
     --s-cell-4: #74e0cb;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
+    :root:not([data-theme='light']) {
       --ground: #12141a;
       --panel: #1a1e26;
       --ink: #e9ebef;
@@ -49,10 +52,10 @@
       --accent-wash: #14322e;
       --new: #b39bef;
       --new-wash: #241d38;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -20px rgba(0,0,0,.7);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -20px rgba(0, 0, 0, 0.7);
     }
   }
-  :root[data-theme="dark"] {
+  :root[data-theme='dark'] {
     --ground: #12141a;
     --panel: #1a1e26;
     --ink: #e9ebef;
@@ -65,197 +68,571 @@
     --accent-wash: #14322e;
     --new: #b39bef;
     --new-wash: #241d38;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -20px rgba(0,0,0,.7);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -20px rgba(0, 0, 0, 0.7);
   }
 
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
   body {
     margin: 0;
     background: var(--ground);
     color: var(--ink);
-    font-family: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+    font-family:
+      'Hanken Grotesk',
+      system-ui,
+      -apple-system,
+      sans-serif;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1000px; margin: 0 auto; padding-inline: 20px; padding-block: 0; }
-  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 0;
+  }
+  .mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
 
   /* ---------- Masthead ---------- */
-  header.top { padding-block: 56px 8px; }
+  header.top {
+    padding-block: 56px 8px;
+  }
   .eyebrow {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
-    color: var(--accent); margin: 0 0 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
   }
   h1 {
-    font-size: clamp(30px, 6vw, 52px); line-height: 1.03; font-weight: 800;
-    letter-spacing: -.02em; text-wrap: balance; margin: 0 0 18px; max-width: 16ch;
+    font-size: clamp(30px, 6vw, 52px);
+    line-height: 1.03;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0 0 18px;
+    max-width: 16ch;
   }
-  .lede { font-size: 18px; color: var(--muted); max-width: 60ch; margin: 0 0 28px; }
-  .lede strong { color: var(--ink); font-weight: 700; }
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 60ch;
+    margin: 0 0 28px;
+  }
+  .lede strong {
+    color: var(--ink);
+    font-weight: 700;
+  }
 
-  .issue-rail { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-  .issue-chip {
-    display: inline-flex; align-items: baseline; gap: 8px;
-    border: 1px solid var(--border-strong); border-radius: 999px;
-    padding: 6px 14px 6px 12px; background: var(--panel); box-shadow: var(--shadow);
-    text-decoration: none; color: var(--ink);
+  .issue-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
   }
-  .issue-chip b { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--accent); }
-  .issue-chip span { font-size: 13px; color: var(--muted); }
-  .issue-chip .prio { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+  .issue-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    padding: 6px 14px 6px 12px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .issue-chip b {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .issue-chip span {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .issue-chip .prio {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
 
   .theme-toggle {
-    position: fixed; top: calc(env(safe-area-inset-top, 0px) + 12px); right: 14px; z-index: 50;
-    border: 1px solid var(--border-strong); background: var(--panel); color: var(--muted);
-    border-radius: 999px; padding: 7px 13px; font: 600 12px "Hanken Grotesk", sans-serif;
-    cursor: pointer; box-shadow: var(--shadow);
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    right: 14px;
+    z-index: 50;
+    border: 1px solid var(--border-strong);
+    background: var(--panel);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 7px 13px;
+    font:
+      600 12px 'Hanken Grotesk',
+      sans-serif;
+    cursor: pointer;
+    box-shadow: var(--shadow);
   }
 
   /* ---------- Section ---------- */
-  section.issue { padding-block: 44px; border-top: 1px solid var(--border); }
-  .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 16px; margin-bottom: 6px; }
-  .sec-num {
-    font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 14px;
-    color: var(--panel); background: var(--accent); border-radius: 7px; padding: 3px 9px;
-    letter-spacing: .02em;
+  section.issue {
+    padding-block: 44px;
+    border-top: 1px solid var(--border);
   }
-  .sec-num.v2 { background: var(--new); }
-  h2 { font-size: clamp(21px, 3.4vw, 28px); font-weight: 800; letter-spacing: -.015em; margin: 0; text-wrap: balance; }
-  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
-  .tag { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--ground); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; }
-  :root[data-theme="dark"] .tag, :root:not([data-theme="light"]) .tag { background: rgba(255,255,255,.03); }
+  .sec-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px 16px;
+    margin-bottom: 6px;
+  }
+  .sec-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--panel);
+    background: var(--accent);
+    border-radius: 7px;
+    padding: 3px 9px;
+    letter-spacing: 0.02em;
+  }
+  .sec-num.v2 {
+    background: var(--new);
+  }
+  h2 {
+    font-size: clamp(21px, 3.4vw, 28px);
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--ground);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 8px;
+  }
+  :root[data-theme='dark'] .tag,
+  :root:not([data-theme='light']) .tag {
+    background: rgba(255, 255, 255, 0.03);
+  }
 
-  .problem { color: var(--muted); font-size: 15.5px; max-width: 68ch; margin: 10px 0 4px; }
-  .problem code, .fileref {
-    font-family: "JetBrains Mono", monospace; font-size: 12.5px;
-    background: var(--accent-wash); color: var(--accent); padding: 1px 6px; border-radius: 5px;
+  .problem {
+    color: var(--muted);
+    font-size: 15.5px;
+    max-width: 68ch;
+    margin: 10px 0 4px;
+  }
+  .problem code,
+  .fileref {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: var(--accent-wash);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 5px;
     word-break: break-word;
   }
 
   /* ---------- Before / After grid ---------- */
   .ba {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 24px;
     align-items: start;
   }
-  @media (max-width: 720px) { .ba { grid-template-columns: 1fr; } }
-  .col-label {
-    display: flex; align-items: center; gap: 9px; margin-bottom: 10px;
-    font-size: 12px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700;
+  @media (max-width: 720px) {
+    .ba {
+      grid-template-columns: 1fr;
+    }
   }
-  .col-label .dot { width: 9px; height: 9px; border-radius: 50%; }
-  .col-before .dot { background: var(--faint); }
-  .col-after .dot { background: var(--new); }
-  .col-before .col-label { color: var(--faint); }
-  .col-after .col-label { color: var(--new); }
+  .col-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .col-label .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .col-before .dot {
+    background: var(--faint);
+  }
+  .col-after .dot {
+    background: var(--new);
+  }
+  .col-before .col-label {
+    color: var(--faint);
+  }
+  .col-after .col-label {
+    color: var(--new);
+  }
 
   /* ---------- App screen (constant dark screenshot) ---------- */
   .screen {
-    background: var(--s-bg); border: 1px solid var(--s-border); border-radius: 14px;
-    padding: 14px; color: var(--s-ink); box-shadow: var(--shadow);
+    background: var(--s-bg);
+    border: 1px solid var(--s-border);
+    border-radius: 14px;
+    padding: 14px;
+    color: var(--s-ink);
+    box-shadow: var(--shadow);
     font-size: 13px;
   }
-  .screen.phone { max-width: 340px; margin-inline: auto; border-radius: 20px; padding: 12px; }
-  .screen .scr-eyebrow { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--s-faint); margin-bottom: 8px; }
-  .screen .scr-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
-  .screen .chart { display: block; }
-  .screen .chart svg { display: block; width: 100%; height: auto; }
-  .scr-panel { background: var(--s-panel); border: 1px solid var(--s-border); border-radius: 10px; padding: 10px 12px; }
-  .scr-panel + .scr-panel { margin-top: 10px; }
+  .screen.phone {
+    max-width: 340px;
+    margin-inline: auto;
+    border-radius: 20px;
+    padding: 12px;
+  }
+  .screen .scr-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--s-faint);
+    margin-bottom: 8px;
+  }
+  .screen .scr-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  .screen .chart {
+    display: block;
+  }
+  .screen .chart svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .scr-panel {
+    background: var(--s-panel);
+    border: 1px solid var(--s-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .scr-panel + .scr-panel {
+    margin-top: 10px;
+  }
 
   /* toggle rows inside screen */
-  .scr-toggle { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 12.5px; }
+  .scr-toggle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 600;
+    font-size: 12.5px;
+  }
   .scr-toggle .box {
-    width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--s-faint);
-    flex: none; position: relative;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid var(--s-faint);
+    flex: none;
+    position: relative;
   }
-  .scr-toggle.on .box { background: var(--s-accent); border-color: var(--s-accent); }
+  .scr-toggle.on .box {
+    background: var(--s-accent);
+    border-color: var(--s-accent);
+  }
   .scr-toggle.on .box::after {
-    content: ""; position: absolute; inset: 2px 3px; border-left: 2px solid var(--s-bg);
-    border-bottom: 2px solid var(--s-bg); transform: rotate(-45deg) translateY(-1px); border-radius: 1px;
+    content: '';
+    position: absolute;
+    inset: 2px 3px;
+    border-left: 2px solid var(--s-bg);
+    border-bottom: 2px solid var(--s-bg);
+    transform: rotate(-45deg) translateY(-1px);
+    border-radius: 1px;
   }
-  .scr-legend { font-size: 11.5px; color: var(--s-muted); margin: 7px 0 0; line-height: 1.45; }
+  .scr-legend {
+    font-size: 11.5px;
+    color: var(--s-muted);
+    margin: 7px 0 0;
+    line-height: 1.45;
+  }
 
   /* the natural-frequency line — the star of #917/#918/#920 */
   .freq {
-    margin: 8px 0 0; font-size: 12.5px; color: var(--s-ink); line-height: 1.5;
-    display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px;
+    margin: 8px 0 0;
+    font-size: 12.5px;
+    color: var(--s-ink);
+    line-height: 1.5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
   }
-  .freq .n { font-family: "JetBrains Mono", monospace; font-weight: 700; color: var(--s-accent); font-variant-numeric: tabular-nums; }
-  .freq .sep { color: var(--s-faint); }
+  .freq .n {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--s-accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .freq .sep {
+    color: var(--s-faint);
+  }
   .freq-tag {
-    display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700;
-    letter-spacing: .06em; text-transform: uppercase; color: var(--new);
-    background: var(--new-wash); border-radius: 5px; padding: 2px 7px; margin-left: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--new);
+    background: var(--new-wash);
+    border-radius: 5px;
+    padding: 2px 7px;
+    margin-left: 2px;
   }
-  :root:not([data-theme="light"]) .freq-tag, :root[data-theme="dark"] .freq-tag { color: var(--s-ink); }
+  :root:not([data-theme='light']) .freq-tag,
+  :root[data-theme='dark'] .freq-tag {
+    color: var(--s-ink);
+  }
 
   /* swatch legend (#919) */
-  .swatches { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-  .swatch { display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--s-muted); }
-  .swatch svg { width: 40px; height: 16px; flex: none; }
+  .swatches {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .swatch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11.5px;
+    color: var(--s-muted);
+  }
+  .swatch svg {
+    width: 40px;
+    height: 16px;
+    flex: none;
+  }
 
   /* inline hint bubble (#919) */
   .hint-bubble {
-    display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;
-    background: rgba(52,201,182,.09); border: 1px solid rgba(52,201,182,.4);
-    border-radius: 9px; padding: 9px 11px; font-size: 12px; color: var(--s-ink);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 10px;
+    background: rgba(52, 201, 182, 0.09);
+    border: 1px solid rgba(52, 201, 182, 0.4);
+    border-radius: 9px;
+    padding: 9px 11px;
+    font-size: 12px;
+    color: var(--s-ink);
   }
-  .hint-bubble .x { margin-left: auto; color: var(--s-faint); font-weight: 700; cursor: default; flex: none; }
-  .hint-bubble .lead { font-weight: 700; }
+  .hint-bubble .x {
+    margin-left: auto;
+    color: var(--s-faint);
+    font-weight: 700;
+    cursor: default;
+    flex: none;
+  }
+  .hint-bubble .lead {
+    font-weight: 700;
+  }
 
   /* state pills (#918) */
-  .state-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-top: 8px; color: var(--s-muted); }
-  .spinner {
-    width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--s-border);
-    border-top-color: var(--s-accent); animation: spin .8s linear infinite; flex: none;
+  .state-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    margin-top: 8px;
+    color: var(--s-muted);
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
-  .warn-ico { width: 15px; height: 15px; flex: none; color: var(--s-line); }
+  .spinner {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 2px solid var(--s-border);
+    border-top-color: var(--s-accent);
+    animation: spin 0.8s linear infinite;
+    flex: none;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .spinner {
+      animation: none;
+    }
+  }
+  .warn-ico {
+    width: 15px;
+    height: 15px;
+    flex: none;
+    color: var(--s-line);
+  }
 
   /* annotation callouts */
-  .notes { margin-top: 22px; display: grid; gap: 10px; }
+  .notes {
+    margin-top: 22px;
+    display: grid;
+    gap: 10px;
+  }
   .note {
-    display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;
-    background: var(--panel); border: 1px solid var(--border); border-radius: 11px;
-    padding: 13px 15px; box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: start;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 13px 15px;
+    box-shadow: var(--shadow);
   }
   .note .badge {
-    font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 700;
-    letter-spacing: .05em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px;
-    white-space: nowrap; align-self: start; margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    align-self: start;
+    margin-top: 2px;
   }
-  .badge.new { color: var(--new); background: var(--new-wash); }
-  .badge.chg { color: var(--accent); background: var(--accent-wash); }
-  .badge.a11y { color: #b26a1f; background: #f7ecdc; }
-  :root:not([data-theme="light"]) .badge.a11y, :root[data-theme="dark"] .badge.a11y { color: #e6b566; background: #33291a; }
-  .note p { margin: 0; font-size: 14px; color: var(--muted); }
-  .note p b { color: var(--ink); font-weight: 700; }
-  .note code { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--accent); }
+  .badge.new {
+    color: var(--new);
+    background: var(--new-wash);
+  }
+  .badge.chg {
+    color: var(--accent);
+    background: var(--accent-wash);
+  }
+  .badge.a11y {
+    color: #b26a1f;
+    background: #f7ecdc;
+  }
+  :root:not([data-theme='light']) .badge.a11y,
+  :root[data-theme='dark'] .badge.a11y {
+    color: #e6b566;
+    background: #33291a;
+  }
+  .note p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .note p b {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .note code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
 
   /* out-of-scope strip */
-  .oos { margin-top: 18px; font-size: 12.5px; color: var(--faint); display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
-  .oos b { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 10.5px; }
-  .oos .x { text-decoration: line-through; text-decoration-color: var(--border-strong); }
+  .oos {
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: var(--faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    align-items: center;
+  }
+  .oos b {
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 10.5px;
+  }
+  .oos .x {
+    text-decoration: line-through;
+    text-decoration-color: var(--border-strong);
+  }
 
   /* ---------- Coverage table ---------- */
-  .coverage { padding-block: 48px 64px; border-top: 1px solid var(--border); }
-  .cov-scroll { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 560px; }
-  th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
-  td.iss { font-family: "JetBrains Mono", monospace; color: var(--accent); font-weight: 700; white-space: nowrap; }
-  td .chk { color: var(--accent); font-weight: 700; }
-  tbody tr:last-child td { border-bottom: 0; }
+  .coverage {
+    padding-block: 48px 64px;
+    border-top: 1px solid var(--border);
+  }
+  .cov-scroll {
+    overflow-x: auto;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13.5px;
+    min-width: 560px;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 700;
+  }
+  td.iss {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  td .chk {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
 
-  footer.foot { padding-block: 8px 60px; color: var(--faint); font-size: 12.5px; }
-  footer.foot code { font-family: "JetBrains Mono", monospace; }
+  footer.foot {
+    padding-block: 8px 60px;
+    color: var(--faint);
+    font-size: 12.5px;
+  }
+  footer.foot code {
+    font-family: 'JetBrains Mono', monospace;
+  }
 
-  .callout-inline { color: var(--new); font-weight: 700; }
+  .callout-inline {
+    color: var(--new);
+    font-weight: 700;
+  }
 </style>
 
-<button class="theme-toggle" id="themeBtn" type="button" aria-label="Farbschema wechseln">◐ Theme</button>
+<button class="theme-toggle" id="themeBtn" type="button" aria-label="Farbschema wechseln">
+  ◐ Theme
+</button>
 
 <div class="wrap">
   <header class="top">
@@ -264,15 +641,24 @@
     <p class="lede">
       Die Compare- und Event-Aligned-Overlays zeigen heute nur <strong>ob</strong> zwei Dinge
       zusammen auftreten — nie <strong>wie oft</strong>. „An 8 von 10 Sport-Tagen“ und „an 2 von 30“
-      sehen in der UI identisch aus. Die Issues #917–#920 setzen dem <strong>natürliche Häufigkeiten</strong>
-      entgegen: ganze Zahlen mit Nenner, clientseitig aus bereits geladenen Rows — keine neue Engine,
-      keine Prozente, keine Ampelfarben, kein Kausalanspruch.
+      sehen in der UI identisch aus. Die Issues #917–#920 setzen dem
+      <strong>natürliche Häufigkeiten</strong>
+      entgegen: ganze Zahlen mit Nenner, clientseitig aus bereits geladenen Rows — keine neue
+      Engine, keine Prozente, keine Ampelfarben, kein Kausalanspruch.
     </p>
     <div class="issue-rail">
-      <a class="issue-chip" href="#i917"><b>#917</b><span>A∩B &amp; Lag-1 als Häufigkeit</span><span class="prio">should</span></a>
-      <a class="issue-chip" href="#i918"><b>#918</b><span>ESM Partner-Trefferquote</span><span class="prio">should</span></a>
-      <a class="issue-chip" href="#i919"><b>#919</b><span>Entdeckbarkeit &amp; A11y</span><span class="prio">could</span></a>
-      <a class="issue-chip" href="#i920"><b>#920</b><span>v2 Split-Mediane</span><span class="prio">could · v2</span></a>
+      <a class="issue-chip" href="#i917"
+        ><b>#917</b><span>A∩B &amp; Lag-1 als Häufigkeit</span><span class="prio">should</span></a
+      >
+      <a class="issue-chip" href="#i918"
+        ><b>#918</b><span>ESM Partner-Trefferquote</span><span class="prio">should</span></a
+      >
+      <a class="issue-chip" href="#i919"
+        ><b>#919</b><span>Entdeckbarkeit &amp; A11y</span><span class="prio">could</span></a
+      >
+      <a class="issue-chip" href="#i920"
+        ><b>#920</b><span>v2 Split-Mediane</span><span class="prio">could · v2</span></a
+      >
     </div>
   </header>
 
@@ -281,7 +667,10 @@
     <div class="sec-head">
       <span class="sec-num">#917</span>
       <h2>Compare: natürliche Häufigkeiten für A∩B &amp; Lag-1</h2>
-      <div class="tags"><span class="tag">frontend</span><span class="tag">insights</span><span class="tag">should</span></div>
+      <div class="tags">
+        <span class="tag">frontend</span><span class="tag">insights</span
+        ><span class="tag">should</span>
+      </div>
     </div>
     <p class="problem">
       Ein Soft-Band bei A∩B, eine gestrichelte Linie bei Lag-1 — beide sagen nur „Präsenz“.
@@ -295,13 +684,18 @@
         <div class="screen">
           <div class="scr-eyebrow">Trends · Vergleich · Zoom</div>
           <div id="cmp-before" class="chart"></div>
-          <div class="scr-panel" style="margin-top:10px">
+          <div class="scr-panel" style="margin-top: 10px">
             <div class="scr-toggle on"><span class="box"></span>Koinzidenz hervorheben</div>
-            <p class="scr-legend">Hervorgehobene Tage zeigen, wann gepinnte Zeilen gemeinsam auftreten — ein Zusammenhang in deinen Einträgen, keine Ursache.</p>
+            <p class="scr-legend">
+              Hervorgehobene Tage zeigen, wann gepinnte Zeilen gemeinsam auftreten — ein
+              Zusammenhang in deinen Einträgen, keine Ursache.
+            </p>
           </div>
           <div class="scr-panel">
             <div class="scr-toggle on"><span class="box"></span>Folgetag-Sequenz hervorheben</div>
-            <p class="scr-legend">Linien markieren, wann auf eine gepinnte Zeile am Folgetag die nächste folgt.</p>
+            <p class="scr-legend">
+              Linien markieren, wann auf eine gepinnte Zeile am Folgetag die nächste folgt.
+            </p>
           </div>
         </div>
       </div>
@@ -311,7 +705,7 @@
         <div class="screen">
           <div class="scr-eyebrow">Trends · Vergleich · Zoom</div>
           <div id="cmp-after" class="chart"></div>
-          <div class="scr-panel" style="margin-top:10px">
+          <div class="scr-panel" style="margin-top: 10px">
             <div class="scr-toggle on"><span class="box"></span>Koinzidenz hervorheben</div>
             <p class="freq">
               Beide an <span class="n">6&nbsp;von&nbsp;22</span> Tagen mit Sport
@@ -335,11 +729,34 @@
     </div>
 
     <div class="notes">
-      <div class="note"><span class="badge chg">geändert</span><p><b>Zähler + Nenner je Subject.</b> <code>summarizeCoincidence()</code> zählt gemeinsame Tage und den Nenner (aktive Tage im sichtbaren Zeitraum) je gepinntem Subject — clientseitig aus den Heatmap-Rows.</p></div>
-      <div class="note"><span class="badge chg">geändert</span><p><b>Lag-1 beidseitig.</b> <code>summarizeLag1()</code> nennt A→B <em>und</em> B→A, auch wenn eine Richtung 0 ist — die Information, für die die Markierung gebaut wurde.</p></div>
-      <div class="note"><span class="badge new">Datenschutz</span><p>Nur Aggregate aus bereits geladenen Rows. Keine neuen Requests, keine Rohnotizen, kein Tracking-Event.</p></div>
+      <div class="note">
+        <span class="badge chg">geändert</span>
+        <p>
+          <b>Zähler + Nenner je Subject.</b> <code>summarizeCoincidence()</code> zählt gemeinsame
+          Tage und den Nenner (aktive Tage im sichtbaren Zeitraum) je gepinntem Subject —
+          clientseitig aus den Heatmap-Rows.
+        </p>
+      </div>
+      <div class="note">
+        <span class="badge chg">geändert</span>
+        <p>
+          <b>Lag-1 beidseitig.</b> <code>summarizeLag1()</code> nennt A→B <em>und</em> B→A, auch
+          wenn eine Richtung 0 ist — die Information, für die die Markierung gebaut wurde.
+        </p>
+      </div>
+      <div class="note">
+        <span class="badge new">Datenschutz</span>
+        <p>
+          Nur Aggregate aus bereits geladenen Rows. Keine neuen Requests, keine Rohnotizen, kein
+          Tracking-Event.
+        </p>
+      </div>
     </div>
-    <div class="oos"><b>bleibt v2</b><span class="x">Prozente</span><span class="x">Raten</span><span class="x">p-Werte</span><span class="x">Lift / Phi</span><span class="x">Feed-Karte</span><span class="x">Lag 2–3</span></div>
+    <div class="oos">
+      <b>bleibt v2</b><span class="x">Prozente</span><span class="x">Raten</span
+      ><span class="x">p-Werte</span><span class="x">Lift / Phi</span
+      ><span class="x">Feed-Karte</span><span class="x">Lag 2–3</span>
+    </div>
   </section>
 
   <!-- ================= #918 ================= -->
@@ -347,13 +764,16 @@
     <div class="sec-head">
       <span class="sec-num">#918</span>
       <h2>ESM: Partner-Trefferquote über Ereignis-Fenster</h2>
-      <div class="tags"><span class="tag">frontend</span><span class="tag">insights</span><span class="tag">should</span></div>
+      <div class="tags">
+        <span class="tag">frontend</span><span class="tag">insights</span
+        ><span class="tag">should</span>
+      </div>
     </div>
     <p class="problem">
       Das Partner-Overlay setzt eine Eckmarke, nennt aber nie eine Trefferquote.
-      <span class="fileref">partnerDatesInWindow()</span> berechnet die Zahl bereits — sie ist nur in Tests verdrahtet.
-      Zwei Zustände sind heute stumm: der <em>partner_empty</em>-Flash während des Nachladens und der
-      stille Leerlauf bei fehlgeschlagenem Heatmap-Fetch.
+      <span class="fileref">partnerDatesInWindow()</span> berechnet die Zahl bereits — sie ist nur
+      in Tests verdrahtet. Zwei Zustände sind heute stumm: der <em>partner_empty</em>-Flash während
+      des Nachladens und der stille Leerlauf bei fehlgeschlagenem Heatmap-Fetch.
     </p>
 
     <div class="ba">
@@ -362,10 +782,17 @@
         <div class="screen">
           <div class="scr-eyebrow">Event-aligned · Kaffee-Overlay</div>
           <div id="esm-before" class="chart"></div>
-          <div class="scr-panel" style="margin-top:10px">
-            <p class="scr-legend" style="margin-top:0">Marken zeigen, wann <b style="color:var(--s-ink)">Kaffee</b> ebenfalls im Fenster auftaucht — ein Zusammenhang, keine Ursache.</p>
-            <div class="state-row" style="color:var(--s-faint)">⚠ Beim Laden blitzt kurz „kein Partner verfügbar“ auf.</div>
-            <div class="state-row" style="color:var(--s-faint)">⚠ Fehler beim Fetch → leeres Overlay, keine Meldung.</div>
+          <div class="scr-panel" style="margin-top: 10px">
+            <p class="scr-legend" style="margin-top: 0">
+              Marken zeigen, wann <b style="color: var(--s-ink)">Kaffee</b> ebenfalls im Fenster
+              auftaucht — ein Zusammenhang, keine Ursache.
+            </p>
+            <div class="state-row" style="color: var(--s-faint)">
+              ⚠ Beim Laden blitzt kurz „kein Partner verfügbar“ auf.
+            </div>
+            <div class="state-row" style="color: var(--s-faint)">
+              ⚠ Fehler beim Fetch → leeres Overlay, keine Meldung.
+            </div>
           </div>
         </div>
       </div>
@@ -375,28 +802,55 @@
         <div class="screen">
           <div class="scr-eyebrow">Event-aligned · Kaffee-Overlay</div>
           <div id="esm-after" class="chart"></div>
-          <div class="scr-panel" style="margin-top:10px">
-            <p class="freq" style="margin-top:2px">
-              <b style="font-weight:600">Kaffee</b> in <span class="n">4&nbsp;von&nbsp;9</span> Ereignis-Fenstern
+          <div class="scr-panel" style="margin-top: 10px">
+            <p class="freq" style="margin-top: 2px">
+              <b style="font-weight: 600">Kaffee</b> in
+              <span class="n">4&nbsp;von&nbsp;9</span> Ereignis-Fenstern
               <span class="freq-tag">neu</span>
             </p>
             <p class="scr-legend">…ein Zusammenhang in deinen Einträgen, keine Ursache.</p>
           </div>
           <div class="scr-panel">
-            <div class="scr-eyebrow" style="margin-bottom:8px">Drei klar getrennte Zustände</div>
-            <div class="state-row"><span class="spinner"></span><span>Partner-Daten laden …</span></div>
-            <div class="state-row">·  Kein Partner verfügbar zum Überlagern.</div>
-            <div class="state-row"><svg class="warn-ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1 1 14h14L8 1Zm0 4.5c.5 0 .8.4.8.9l-.2 3.3a.6.6 0 0 1-1.2 0l-.2-3.3c0-.5.3-.9.8-.9Zm0 6.2a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7Z"/></svg><span>Präsenzdaten konnten nicht geladen werden.</span></div>
+            <div class="scr-eyebrow" style="margin-bottom: 8px">Drei klar getrennte Zustände</div>
+            <div class="state-row">
+              <span class="spinner"></span><span>Partner-Daten laden …</span>
+            </div>
+            <div class="state-row">· Kein Partner verfügbar zum Überlagern.</div>
+            <div class="state-row">
+              <svg class="warn-ico" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M8 1 1 14h14L8 1Zm0 4.5c.5 0 .8.4.8.9l-.2 3.3a.6.6 0 0 1-1.2 0l-.2-3.3c0-.5.3-.9.8-.9Zm0 6.2a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7Z"
+                /></svg
+              ><span>Präsenzdaten konnten nicht geladen werden.</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="notes">
-      <div class="note"><span class="badge chg">verdrahtet</span><p><b>Quote sichtbar.</b> Satz unter <code>trends.esm.partner_legend</code> — „B in X von Y Fenstern“ aus <code>partnerDatesInWindow()</code>.</p></div>
-      <div class="note"><span class="badge new">neu</span><p><b>Eigener Ladezustand</b> statt <code>partner_empty</code>-Flash (Wiring in <code>ensureExploreEventsPartnerData</code>) und ein <b>sichtbarer Fehlerhinweis</b> statt leerem Overlay.</p></div>
+      <div class="note">
+        <span class="badge chg">verdrahtet</span>
+        <p>
+          <b>Quote sichtbar.</b> Satz unter <code>trends.esm.partner_legend</code> — „B in X von Y
+          Fenstern“ aus <code>partnerDatesInWindow()</code>.
+        </p>
+      </div>
+      <div class="note">
+        <span class="badge new">neu</span>
+        <p>
+          <b>Eigener Ladezustand</b> statt <code>partner_empty</code>-Flash (Wiring in
+          <code>ensureExploreEventsPartnerData</code>) und ein <b>sichtbarer Fehlerhinweis</b> statt
+          leerem Overlay.
+        </p>
+      </div>
     </div>
-    <div class="oos"><b>out of scope</b><span class="x">Split-Mediane (→ #920)</span><span class="x">Prozente / p-Werte</span><span class="x">zweiter Partner</span><span class="x">Dual-Event-Alignment</span></div>
+    <div class="oos">
+      <b>out of scope</b><span class="x">Split-Mediane (→ #920)</span
+      ><span class="x">Prozente / p-Werte</span><span class="x">zweiter Partner</span
+      ><span class="x">Dual-Event-Alignment</span>
+    </div>
   </section>
 
   <!-- ================= #919 ================= -->
@@ -404,12 +858,15 @@
     <div class="sec-head">
       <span class="sec-num">#919</span>
       <h2>Compare-Overlays: Entdeckbarkeit, Swatch-Legende, A11y</h2>
-      <div class="tags"><span class="tag">frontend</span><span class="tag">a11y</span><span class="tag">could</span></div>
+      <div class="tags">
+        <span class="tag">frontend</span><span class="tag">a11y</span><span class="tag">could</span>
+      </div>
     </div>
     <p class="problem">
-      Die Toggles sitzen nur im Zoom-Block am Desktop — im mobilen Settings-Sheet fehlen sie.
-      Nach dem zweiten Pin gibt es keinen Hinweis, die Legende ist reiner Text, und die Cursor-Detailzeile
-      ist ein stilles <span class="fileref">&lt;p&gt;</span> ohne <span class="fileref">aria-live</span>.
+      Die Toggles sitzen nur im Zoom-Block am Desktop — im mobilen Settings-Sheet fehlen sie. Nach
+      dem zweiten Pin gibt es keinen Hinweis, die Legende ist reiner Text, und die
+      Cursor-Detailzeile ist ein stilles <span class="fileref">&lt;p&gt;</span> ohne
+      <span class="fileref">aria-live</span>.
     </p>
 
     <div class="ba">
@@ -417,17 +874,31 @@
         <div class="col-label"><span class="dot"></span>Mit #919 — mobiles Settings-Sheet</div>
         <div class="screen phone">
           <div class="scr-eyebrow">Vergleich · Einstellungen</div>
-          <div class="scr-panel" style="margin-top:0">
-            <div class="scr-eyebrow" style="margin-bottom:8px">Hervorheben</div>
-            <div class="scr-toggle on" style="margin-bottom:9px"><span class="box"></span>Koinzidenz hervorheben</div>
+          <div class="scr-panel" style="margin-top: 0">
+            <div class="scr-eyebrow" style="margin-bottom: 8px">Hervorheben</div>
+            <div class="scr-toggle on" style="margin-bottom: 9px">
+              <span class="box"></span>Koinzidenz hervorheben
+            </div>
             <div class="scr-toggle"><span class="box"></span>Folgetag-Sequenz hervorheben</div>
             <div class="swatches">
               <div class="swatch">
-                <svg viewBox="0 0 40 16" aria-hidden="true"><rect x="0" y="0" width="40" height="16" rx="3" fill="var(--s-band)"/></svg>
+                <svg viewBox="0 0 40 16" aria-hidden="true">
+                  <rect x="0" y="0" width="40" height="16" rx="3" fill="var(--s-band)" />
+                </svg>
                 A∩B — Band
               </div>
               <div class="swatch">
-                <svg viewBox="0 0 40 16" aria-hidden="true"><line x1="20" y1="0" x2="20" y2="16" stroke="var(--s-line)" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+                <svg viewBox="0 0 40 16" aria-hidden="true">
+                  <line
+                    x1="20"
+                    y1="0"
+                    x2="20"
+                    y2="16"
+                    stroke="var(--s-line)"
+                    stroke-width="1.5"
+                    stroke-dasharray="3 2"
+                  />
+                </svg>
                 Lag-1 — gestrichelte Linie
               </div>
             </div>
@@ -443,29 +914,69 @@
         <div class="col-label"><span class="dot"></span>Screenreader &amp; Marker</div>
         <div class="screen">
           <div class="scr-eyebrow">Cursor-Detailzeile · Pfeiltasten-Navigation</div>
-          <div class="scr-panel" style="margin-top:0">
-            <div class="scr-eyebrow" style="margin-bottom:6px"><span class="mono">&lt;p aria-live="polite"&gt;</span></div>
-            <p style="margin:0; font-size:13px">14. Sept · <span style="color:var(--s-muted)">Sport und Schlaf schlecht an diesem Tag</span></p>
-            <div class="state-row" style="color:var(--s-accent); margin-top:9px">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h12m0 0-4-4m4 4-4 4M18 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span style="font-size:11.5px">wird jetzt beim Navigieren angesagt</span>
+          <div class="scr-panel" style="margin-top: 0">
+            <div class="scr-eyebrow" style="margin-bottom: 6px">
+              <span class="mono">&lt;p aria-live="polite"&gt;</span>
+            </div>
+            <p style="margin: 0; font-size: 13px">
+              14. Sept ·
+              <span style="color: var(--s-muted)">Sport und Schlaf schlecht an diesem Tag</span>
+            </p>
+            <div class="state-row" style="color: var(--s-accent); margin-top: 9px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M3 12h12m0 0-4-4m4 4-4 4M18 5v14"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span style="font-size: 11.5px">wird jetzt beim Navigieren angesagt</span>
             </div>
           </div>
           <div class="scr-panel">
-            <div class="scr-eyebrow" style="margin-bottom:8px">Marker mit eigenem aria-label</div>
+            <div class="scr-eyebrow" style="margin-bottom: 8px">Marker mit eigenem aria-label</div>
             <div id="marker-a11y" class="chart"></div>
-            <p class="scr-legend">Jeder Marker in <span class="mono" style="color:var(--s-accent)">EventMarkerLayer</span> bekommt ein <span class="mono" style="color:var(--s-accent)">aria-label</span> — nicht mehr nur ein Hover-<span class="mono" style="color:var(--s-accent)">&lt;title&gt;</span>.</p>
+            <p class="scr-legend">
+              Jeder Marker in
+              <span class="mono" style="color: var(--s-accent)">EventMarkerLayer</span> bekommt ein
+              <span class="mono" style="color: var(--s-accent)">aria-label</span> — nicht mehr nur
+              ein Hover-<span class="mono" style="color: var(--s-accent)">&lt;title&gt;</span>.
+            </p>
           </div>
         </div>
       </div>
     </div>
 
     <div class="notes">
-      <div class="note"><span class="badge new">neu</span><p><b>Toggles im mobilen Sheet</b> (gleicher State) — unter 768px ohne Scrollen erreichbar.</p></div>
-      <div class="note"><span class="badge new">neu</span><p><b>Einmaliger Inline-Hinweis</b> beim zweiten Pin, danach dauerhaft still (Status als bestehende UX-Preference).</p></div>
-      <div class="note"><span class="badge a11y">a11y</span><p><b>Mini-Legende mit Swatch</b> (Band vs. gestrichelte Linie, token-only), <code>aria-live="polite"</code> auf der Cursor-Zeile und <code>aria-label</code> je Marker.</p></div>
+      <div class="note">
+        <span class="badge new">neu</span>
+        <p>
+          <b>Toggles im mobilen Sheet</b> (gleicher State) — unter 768px ohne Scrollen erreichbar.
+        </p>
+      </div>
+      <div class="note">
+        <span class="badge new">neu</span>
+        <p>
+          <b>Einmaliger Inline-Hinweis</b> beim zweiten Pin, danach dauerhaft still (Status als
+          bestehende UX-Preference).
+        </p>
+      </div>
+      <div class="note">
+        <span class="badge a11y">a11y</span>
+        <p>
+          <b>Mini-Legende mit Swatch</b> (Band vs. gestrichelte Linie, token-only),
+          <code>aria-live="polite"</code> auf der Cursor-Zeile und <code>aria-label</code> je
+          Marker.
+        </p>
+      </div>
     </div>
-    <div class="oos"><b>bleibt</b><span class="x">Häufigkeitszahlen (→ #917)</span><span class="x">neue Overlay-Arten</span><span>Pin-Limit bleibt&nbsp;3</span><span>keine Ampelfarben</span></div>
+    <div class="oos">
+      <b>bleibt</b><span class="x">Häufigkeitszahlen (→ #917)</span
+      ><span class="x">neue Overlay-Arten</span><span>Pin-Limit bleibt&nbsp;3</span
+      ><span>keine Ampelfarben</span>
+    </div>
   </section>
 
   <!-- ================= #920 ================= -->
@@ -473,13 +984,17 @@
     <div class="sec-head">
       <span class="sec-num v2">#920</span>
       <h2>v2: Split-Mediane im ESM — A mit B vs. A ohne B</h2>
-      <div class="tags"><span class="tag">frontend</span><span class="tag">could</span><span class="tag">v2 · Option 6</span></div>
+      <div class="tags">
+        <span class="tag">frontend</span><span class="tag">could</span
+        ><span class="tag">v2 · Option 6</span>
+      </div>
     </div>
     <p class="problem">
       v1 zeigt, <em>dass</em> zwei Ereignisse zusammen auftreten. Die eigentliche Frage — die
-      <b style="color:var(--ink)">Wechselwirkung</b> — bleibt offen: Sieht der Mood-Verlauf um Sport-Tage
-      anders aus, wenn zusätzlich schlecht geschlafen wurde? Split der Occurrences entlang des Partners,
-      <b style="color:var(--ink)">zwei Median-Trajektorien in einem Panel</b> — kein zweites Chart.
+      <b style="color: var(--ink)">Wechselwirkung</b> — bleibt offen: Sieht der Mood-Verlauf um
+      Sport-Tage anders aus, wenn zusätzlich schlecht geschlafen wurde? Split der Occurrences
+      entlang des Partners,
+      <b style="color: var(--ink)">zwei Median-Trajektorien in einem Panel</b> — kein zweites Chart.
     </p>
 
     <div class="ba">
@@ -488,7 +1003,9 @@
         <div class="screen">
           <div class="scr-eyebrow">Event-aligned · Median über alle Fenster</div>
           <div id="split-before" class="chart"></div>
-          <p class="scr-legend" style="padding-inline:2px">Oberste Zeile: Median über alle Occurrences — mit oder ohne Partner vermischt.</p>
+          <p class="scr-legend" style="padding-inline: 2px">
+            Oberste Zeile: Median über alle Occurrences — mit oder ohne Partner vermischt.
+          </p>
         </div>
       </div>
 
@@ -497,25 +1014,48 @@
         <div class="screen">
           <div class="scr-eyebrow">Event-aligned · Median · Split nach Kaffee</div>
           <div id="split-after" class="chart"></div>
-          <p class="freq" style="padding-inline:2px">
+          <p class="freq" style="padding-inline: 2px">
             <span class="n">5</span> Fenster mit Kaffee
             <span class="sep">·</span>
             <span class="n">4</span> ohne
             <span class="freq-tag">neu</span>
           </p>
-          <div class="scr-panel" style="margin-top:10px">
-            <div class="scr-eyebrow" style="margin-bottom:6px">n-Gate pro Split · &lt; 3 Occurrences</div>
-            <p style="margin:0;font-size:12px;color:var(--s-muted)">„A ohne B“ hätte nur <span class="mono" style="color:var(--s-ink)">2</span> Fenster → keine gezeichnete Scheinkurve, sondern ein ehrlicher <span class="mono" style="color:var(--s-ink)">insufficient_data</span>-Zustand für diesen Zweig.</p>
+          <div class="scr-panel" style="margin-top: 10px">
+            <div class="scr-eyebrow" style="margin-bottom: 6px">
+              n-Gate pro Split · &lt; 3 Occurrences
+            </div>
+            <p style="margin: 0; font-size: 12px; color: var(--s-muted)">
+              „A ohne B“ hätte nur <span class="mono" style="color: var(--s-ink)">2</span> Fenster →
+              keine gezeichnete Scheinkurve, sondern ein ehrlicher
+              <span class="mono" style="color: var(--s-ink)">insufficient_data</span>-Zustand für
+              diesen Zweig.
+            </p>
           </div>
         </div>
       </div>
     </div>
 
     <div class="notes">
-      <div class="note"><span class="badge new">v2</span><p><b>Zwei Kurven, ein Panel.</b> Unterscheidung ohne Ampelfarben — Strichart &amp; Deckkraft (ADR-0035). Kein zweites Panel neben dem Align (≈3-Panel-Budget, Mobile-Regel).</p></div>
-      <div class="note"><span class="badge new">v2</span><p><b>n-Gate ≥ 3 je Zweig.</b> Ein Zweig unter der Schwelle wird nicht gezeichnet, sondern ehrlich als unzureichend ausgewiesen. Jeder Zweig nennt seine Fensteranzahl.</p></div>
+      <div class="note">
+        <span class="badge new">v2</span>
+        <p>
+          <b>Zwei Kurven, ein Panel.</b> Unterscheidung ohne Ampelfarben — Strichart &amp; Deckkraft
+          (ADR-0035). Kein zweites Panel neben dem Align (≈3-Panel-Budget, Mobile-Regel).
+        </p>
+      </div>
+      <div class="note">
+        <span class="badge new">v2</span>
+        <p>
+          <b>n-Gate ≥ 3 je Zweig.</b> Ein Zweig unter der Schwelle wird nicht gezeichnet, sondern
+          ehrlich als unzureichend ausgewiesen. Jeder Zweig nennt seine Fensteranzahl.
+        </p>
+      </div>
     </div>
-    <div class="oos"><b>out of scope</b><span class="x">Formaler Interaktionstest (Option 5)</span><span class="x">Event↔Event-Lag-Engine</span><span class="x">Dual-Event-Alignment</span><span class="x">Feed-Karten</span></div>
+    <div class="oos">
+      <b>out of scope</b><span class="x">Formaler Interaktionstest (Option 5)</span
+      ><span class="x">Event↔Event-Lag-Engine</span><span class="x">Dual-Event-Alignment</span
+      ><span class="x">Feed-Karten</span>
+    </div>
   </section>
 
   <!-- ================= Coverage ================= -->
@@ -524,27 +1064,49 @@
     <div class="cov-scroll">
       <table>
         <thead>
-          <tr><th>Issue</th><th>Sichtbare Wirkung im GUI</th><th>Mobile-Regel</th></tr>
+          <tr>
+            <th>Issue</th>
+            <th>Sichtbare Wirkung im GUI</th>
+            <th>Mobile-Regel</th>
+          </tr>
         </thead>
         <tbody>
           <tr>
             <td class="iss">#917</td>
-            <td><span class="chk">✓</span> Häufigkeitszeile mit Zähler <b>und</b> Nenner unter beiden Toggles · <span class="chk">✓</span> Lag-1 beidseitig · <span class="chk">✓</span> Bezug auf gewählten Zeitraum erkennbar · keine %/Raten/p-Werte</td>
+            <td>
+              <span class="chk">✓</span> Häufigkeitszeile mit Zähler <b>und</b> Nenner unter beiden
+              Toggles · <span class="chk">✓</span> Lag-1 beidseitig ·
+              <span class="chk">✓</span> Bezug auf gewählten Zeitraum erkennbar · keine
+              %/Raten/p-Werte
+            </td>
             <td>Keine zusätzliche Chart-Fläche, Zeile bricht sauber um</td>
           </tr>
           <tr>
             <td class="iss">#918</td>
-            <td><span class="chk">✓</span> „B in X von Y Fenstern“ unter der Legende · <span class="chk">✓</span> Ladezustand statt „kein Partner“ · <span class="chk">✓</span> sichtbarer Fehlerhinweis statt leerem Overlay</td>
+            <td>
+              <span class="chk">✓</span> „B in X von Y Fenstern“ unter der Legende ·
+              <span class="chk">✓</span> Ladezustand statt „kein Partner“ ·
+              <span class="chk">✓</span> sichtbarer Fehlerhinweis statt leerem Overlay
+            </td>
             <td>Kein zweites Chart, Satz bricht sauber um</td>
           </tr>
           <tr>
             <td class="iss">#919</td>
-            <td><span class="chk">✓</span> Toggles im Settings-Sheet · <span class="chk">✓</span> Hinweis höchstens einmal · <span class="chk">✓</span> Swatch-Legende · <span class="chk">✓</span> Screenreader hört Koinzidenz · token-only</td>
+            <td>
+              <span class="chk">✓</span> Toggles im Settings-Sheet ·
+              <span class="chk">✓</span> Hinweis höchstens einmal ·
+              <span class="chk">✓</span> Swatch-Legende · <span class="chk">✓</span> Screenreader
+              hört Koinzidenz · token-only
+            </td>
             <td>Toggles &lt; 768px ohne Scrollen erreichbar</td>
           </tr>
           <tr>
             <td class="iss">#920</td>
-            <td><span class="chk">✓</span> Zwei Median-Trajektorien in einem Panel · <span class="chk">✓</span> Fensteranzahl je Zweig · <span class="chk">✓</span> Zweig &lt; 3 ehrlich als unzureichend · keine Ampelfarben</td>
+            <td>
+              <span class="chk">✓</span> Zwei Median-Trajektorien in einem Panel ·
+              <span class="chk">✓</span> Fensteranzahl je Zweig · <span class="chk">✓</span> Zweig
+              &lt; 3 ehrlich als unzureichend · keine Ampelfarben
+            </td>
             <td>Unter 768px kein zweites Chart</td>
           </tr>
         </tbody>
@@ -552,8 +1114,9 @@
     </div>
     <footer class="foot">
       Mockup — schematische Darstellung der GUI-Wirkung, kein Pixel-Redlining. Kontext:
-      <code>docs/proposals/FEATURE_EVENT_INTERACTION_TIMELINE.md</code> §„v1c — Evidenz statt Präsenz“ · Teil von #891.
-      Copy folgt dem bestehenden i18n (en/de). Marker-Styling token-only (<code>--color-event-marker</code> / <code>-soft</code>), ADR-0035.
+      <code>docs/proposals/FEATURE_EVENT_INTERACTION_TIMELINE.md</code> §„v1c — Evidenz statt
+      Präsenz“ · Teil von #891. Copy folgt dem bestehenden i18n (en/de). Marker-Styling token-only
+      (<code>--color-event-marker</code> / <code>-soft</code>), ADR-0035.
     </footer>
   </section>
 </div>
@@ -563,16 +1126,25 @@
   (function () {
     var btn = document.getElementById('themeBtn');
     var root = document.documentElement;
-    function apply(t) { if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t); else root.removeAttribute('data-theme'); }
+    function apply(t) {
+      if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t);
+      else root.removeAttribute('data-theme');
+    }
     var saved = null;
-    try { saved = localStorage.getItem('mockup-theme'); } catch (e) {}
+    try {
+      saved = localStorage.getItem('mockup-theme');
+    } catch (e) {}
     if (saved) apply(saved);
     btn.addEventListener('click', function () {
-      var isDark = root.getAttribute('data-theme') === 'dark' ||
-        (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var isDark =
+        root.getAttribute('data-theme') === 'dark' ||
+        (!root.getAttribute('data-theme') &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
       var next = isDark ? 'light' : 'dark';
       apply(next);
-      try { localStorage.setItem('mockup-theme', next); } catch (e) {}
+      try {
+        localStorage.setItem('mockup-theme', next);
+      } catch (e) {}
     });
   })();
 
@@ -581,61 +1153,119 @@
   function el(name, attrs, kids) {
     var n = document.createElementNS(NS, name);
     for (var k in attrs) n.setAttribute(k, attrs[k]);
-    (kids || []).forEach(function (c) { n.appendChild(c); });
+    (kids || []).forEach(function (c) {
+      n.appendChild(c);
+    });
     return n;
   }
   function svg(w, h, kids) {
     var s = el('svg', { viewBox: '0 0 ' + w + ' ' + h, width: w, height: h, role: 'img' });
-    s.style.width = '100%'; s.style.height = 'auto'; s.style.display = 'block';
-    (kids || []).forEach(function (c) { s.appendChild(c); });
+    s.style.width = '100%';
+    s.style.height = 'auto';
+    s.style.display = 'block';
+    (kids || []).forEach(function (c) {
+      s.appendChild(c);
+    });
     return s;
   }
   function txt(x, y, s, opts) {
     opts = opts || {};
     var t = el('text', {
-      x: x, y: y, fill: opts.fill || 'var(--s-muted)',
-      'font-size': opts.size || 10, 'font-family': 'JetBrains Mono, monospace',
-      'text-anchor': opts.anchor || 'start', 'font-weight': opts.weight || 400
+      x: x,
+      y: y,
+      fill: opts.fill || 'var(--s-muted)',
+      'font-size': opts.size || 10,
+      'font-family': 'JetBrains Mono, monospace',
+      'text-anchor': opts.anchor || 'start',
+      'font-weight': opts.weight || 400,
     });
-    t.textContent = s; return t;
+    t.textContent = s;
+    return t;
   }
 
   // ---------- #917 Compare strip chart ----------
   // 3 pinned rows over ~22 days; coincidence band columns + lag-1 dashed lines
   function compareChart(showFreqMarks) {
-    var W = 460, H = 150, padL = 84, padR = 12, padT = 14, days = 22;
-    var plotW = W - padL - padR, colW = plotW / days;
+    var W = 460,
+      H = 150,
+      padL = 84,
+      padR = 12,
+      padT = 14,
+      days = 22;
+    var plotW = W - padL - padR,
+      colW = plotW / days;
     var rows = [
-      { label: 'Sport',        active: [1,4,5,8,11,12,15,18,19] },
-      { label: 'Schlaf', active: [1,2,5,9,11,15,16,19,20] },
-      { label: 'Müdigkeit',    active: [2,6,9,12,16,19,20] }
+      { label: 'Sport', active: [1, 4, 5, 8, 11, 12, 15, 18, 19] },
+      { label: 'Schlaf', active: [1, 2, 5, 9, 11, 15, 16, 19, 20] },
+      { label: 'Müdigkeit', active: [2, 6, 9, 12, 16, 19, 20] },
     ];
-    var rowH = 30, gap = 8, y0 = padT + 6;
+    var rowH = 30,
+      gap = 8,
+      y0 = padT + 6;
     var kids = [];
     // coincidence columns (Sport ∩ Schlaf schlecht) — soft neutral band spanning all rows
-    var coinc = [1,5,11,15,19];
+    var coinc = [1, 5, 11, 15, 19];
     coinc.forEach(function (d) {
-      kids.push(el('rect', { x: padL + d * colW - colW / 2, y: y0 - 4,
-        width: colW, height: rows.length * (rowH + gap) - gap + 8, fill: 'var(--s-band)', rx: 2 }));
+      kids.push(
+        el('rect', {
+          x: padL + d * colW - colW / 2,
+          y: y0 - 4,
+          width: colW,
+          height: rows.length * (rowH + gap) - gap + 8,
+          fill: 'var(--s-band)',
+          rx: 2,
+        })
+      );
     });
     // lag-1 dashed lines at day-of-A (Sport day D, Müdigkeit D+1): e.g. 5,11,15,18
-    [5,11,15,18].forEach(function (d) {
-      kids.push(el('line', { x1: padL + d * colW, y1: y0 - 4, x2: padL + d * colW, y2: y0 + rows.length * (rowH + gap) - gap + 4,
-        stroke: 'var(--s-line)', 'stroke-width': 1, 'stroke-dasharray': '3 2' }));
+    [5, 11, 15, 18].forEach(function (d) {
+      kids.push(
+        el('line', {
+          x1: padL + d * colW,
+          y1: y0 - 4,
+          x2: padL + d * colW,
+          y2: y0 + rows.length * (rowH + gap) - gap + 4,
+          stroke: 'var(--s-line)',
+          'stroke-width': 1,
+          'stroke-dasharray': '3 2',
+        })
+      );
     });
     rows.forEach(function (r, ri) {
       var ry = y0 + ri * (rowH + gap);
-      kids.push(txt(padL - 8, ry + rowH / 2 + 3, r.label, { anchor: 'end', fill: 'var(--s-ink)', size: 10, weight: 600 }));
+      kids.push(
+        txt(padL - 8, ry + rowH / 2 + 3, r.label, {
+          anchor: 'end',
+          fill: 'var(--s-ink)',
+          size: 10,
+          weight: 600,
+        })
+      );
       for (var d = 0; d < days; d++) {
         var on = r.active.indexOf(d) >= 0;
-        var lvl = on ? (2 + ((d + ri) % 3)) : 0;
-        kids.push(el('rect', { x: padL + d * colW + 1.5, y: ry + 5, width: colW - 3, height: rowH - 10, rx: 2,
-          fill: 'var(--s-cell-' + lvl + ')', opacity: on ? 1 : .5 }));
+        var lvl = on ? 2 + ((d + ri) % 3) : 0;
+        kids.push(
+          el('rect', {
+            x: padL + d * colW + 1.5,
+            y: ry + 5,
+            width: colW - 3,
+            height: rowH - 10,
+            rx: 2,
+            fill: 'var(--s-cell-' + lvl + ')',
+            opacity: on ? 1 : 0.5,
+          })
+        );
       }
     });
     // axis ticks
-    [0,7,14,21].forEach(function (d) {
-      kids.push(txt(padL + d * colW, H - 4, d === 0 ? '1' : (d + 1), { size: 9, fill: 'var(--s-faint)', anchor: 'middle' }));
+    [0, 7, 14, 21].forEach(function (d) {
+      kids.push(
+        txt(padL + d * colW, H - 4, d === 0 ? '1' : d + 1, {
+          size: 9,
+          fill: 'var(--s-faint)',
+          anchor: 'middle',
+        })
+      );
     });
     return svg(W, H, kids);
   }
@@ -643,20 +1273,24 @@
   // ---------- #918 / #920 ESM small multiples ----------
   function esmGrid(opts) {
     opts = opts || {};
-    var offs = [-5,-4,-3,-2,-1,0,1,2,3,4,5];
-    var W = 460, padL = 74, padR = 12, padT = opts.medianRows ? 16 : 16;
+    var offs = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5];
+    var W = 460,
+      padL = 74,
+      padR = 12,
+      padT = opts.medianRows ? 16 : 16;
     var colW = (W - padL - padR) / offs.length;
-    var cell = Math.min(colW - 3, 22), gap = 4;
+    var cell = Math.min(colW - 3, 22),
+      gap = 4;
     var eventRows = opts.rows || [
-      [1,2,3,2,2,3,4,3,2,2,1],
-      [2,2,1,2,3,4,3,2,2,1,1],
-      [1,1,2,2,2,3,2,2,1,1,2],
-      [2,3,2,2,3,3,3,2,3,2,2],
-      [1,2,2,3,3,4,4,3,2,2,1],
-      [2,1,2,2,2,3,2,3,2,1,1]
+      [1, 2, 3, 2, 2, 3, 4, 3, 2, 2, 1],
+      [2, 2, 1, 2, 3, 4, 3, 2, 2, 1, 1],
+      [1, 1, 2, 2, 2, 3, 2, 2, 1, 1, 2],
+      [2, 3, 2, 2, 3, 3, 3, 2, 3, 2, 2],
+      [1, 2, 2, 3, 3, 4, 4, 3, 2, 2, 1],
+      [2, 1, 2, 2, 2, 3, 2, 3, 2, 1, 1],
     ];
     // partner hits (corner ticks) on some cells — coffee present
-    var partner = opts.partner || { 0: [4,5], 1: [5], 3: [4,5,6], 4: [5] };
+    var partner = opts.partner || { 0: [4, 5], 1: [5], 3: [4, 5, 6], 4: [5] };
     var medianRows = opts.medianRows || [];
     var y = padT;
     var kids = [];
@@ -664,28 +1298,83 @@
     var t0x = padL + 5 * colW + colW / 2;
     var totalRows = medianRows.length + eventRows.length;
     var totalH = padT + totalRows * (cell + gap) + 22;
-    kids.push(el('line', { x1: t0x, y1: padT - 4, x2: t0x, y2: totalH - 20, stroke: 'var(--s-faint)', 'stroke-width': 1, 'stroke-dasharray': '2 3', opacity: .8 }));
+    kids.push(
+      el('line', {
+        x1: t0x,
+        y1: padT - 4,
+        x2: t0x,
+        y2: totalH - 20,
+        stroke: 'var(--s-faint)',
+        'stroke-width': 1,
+        'stroke-dasharray': '2 3',
+        opacity: 0.8,
+      })
+    );
 
     // median trajectory rows (lines over the grid band)
     medianRows.forEach(function (m) {
       var ry = y;
-      kids.push(txt(padL - 8, ry + cell / 2 + 3, m.label, { anchor: 'end', fill: 'var(--s-ink)', size: 9.5, weight: 700 }));
+      kids.push(
+        txt(padL - 8, ry + cell / 2 + 3, m.label, {
+          anchor: 'end',
+          fill: 'var(--s-ink)',
+          size: 9.5,
+          weight: 700,
+        })
+      );
       if (m.insufficient) {
-        kids.push(el('rect', { x: padL, y: ry + 2, width: W - padL - padR, height: cell - 4, rx: 4, fill: 'none', stroke: 'var(--s-border)', 'stroke-dasharray': '4 3' }));
-        kids.push(txt(padL + (W - padL - padR) / 2, ry + cell / 2 + 3, 'zu wenige Fenster (n=2)', { anchor: 'middle', fill: 'var(--s-faint)', size: 9.5 }));
+        kids.push(
+          el('rect', {
+            x: padL,
+            y: ry + 2,
+            width: W - padL - padR,
+            height: cell - 4,
+            rx: 4,
+            fill: 'none',
+            stroke: 'var(--s-border)',
+            'stroke-dasharray': '4 3',
+          })
+        );
+        kids.push(
+          txt(padL + (W - padL - padR) / 2, ry + cell / 2 + 3, 'zu wenige Fenster (n=2)', {
+            anchor: 'middle',
+            fill: 'var(--s-faint)',
+            size: 9.5,
+          })
+        );
       } else {
         // draw a polyline across the offsets
-        var pts = m.values.map(function (v, i) {
-          var cx = padL + i * colW + colW / 2;
-          var cy = ry + cell - (v / 4) * (cell - 4) - 2;
-          return cx + ',' + cy;
-        }).join(' ');
-        kids.push(el('polyline', { points: pts, fill: 'none', stroke: m.stroke || 'var(--s-cell-4)',
-          'stroke-width': m.width || 2.4, 'stroke-dasharray': m.dash || '', opacity: m.opacity || 1, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+        var pts = m.values
+          .map(function (v, i) {
+            var cx = padL + i * colW + colW / 2;
+            var cy = ry + cell - (v / 4) * (cell - 4) - 2;
+            return cx + ',' + cy;
+          })
+          .join(' ');
+        kids.push(
+          el('polyline', {
+            points: pts,
+            fill: 'none',
+            stroke: m.stroke || 'var(--s-cell-4)',
+            'stroke-width': m.width || 2.4,
+            'stroke-dasharray': m.dash || '',
+            opacity: m.opacity || 1,
+            'stroke-linejoin': 'round',
+            'stroke-linecap': 'round',
+          })
+        );
         m.values.forEach(function (v, i) {
           var cx = padL + i * colW + colW / 2;
           var cy = ry + cell - (v / 4) * (cell - 4) - 2;
-          kids.push(el('circle', { cx: cx, cy: cy, r: m.width ? 2.2 : 2, fill: m.stroke || 'var(--s-cell-4)', opacity: m.opacity || 1 }));
+          kids.push(
+            el('circle', {
+              cx: cx,
+              cy: cy,
+              r: m.width ? 2.2 : 2,
+              fill: m.stroke || 'var(--s-cell-4)',
+              opacity: m.opacity || 1,
+            })
+          );
         });
       }
       y += cell + gap + (m.insufficient ? 0 : 0);
@@ -694,22 +1383,60 @@
     // individual episode rows
     eventRows.forEach(function (vals, ri) {
       var ry = y + ri * (cell + gap);
-      kids.push(txt(padL - 8, ry + cell / 2 + 3, 'T' + (ri + 1), { anchor: 'end', fill: 'var(--s-muted)', size: 9 }));
+      kids.push(
+        txt(padL - 8, ry + cell / 2 + 3, 'T' + (ri + 1), {
+          anchor: 'end',
+          fill: 'var(--s-muted)',
+          size: 9,
+        })
+      );
       vals.forEach(function (v, ci) {
         var cx = padL + ci * colW + (colW - cell) / 2;
-        kids.push(el('rect', { x: cx, y: ry, width: cell, height: cell, rx: 3, fill: 'var(--s-cell-' + v + ')' }));
+        kids.push(
+          el('rect', {
+            x: cx,
+            y: ry,
+            width: cell,
+            height: cell,
+            rx: 3,
+            fill: 'var(--s-cell-' + v + ')',
+          })
+        );
         // partner corner tick
         if (partner[ri] && partner[ri].indexOf(ci) >= 0) {
-          kids.push(el('path', { d: 'M' + (cx + cell - 6) + ',' + ry + ' L' + (cx + cell) + ',' + ry + ' L' + (cx + cell) + ',' + (ry + 6) + ' Z',
-            fill: 'var(--s-line)' }));
+          kids.push(
+            el('path', {
+              d:
+                'M' +
+                (cx + cell - 6) +
+                ',' +
+                ry +
+                ' L' +
+                (cx + cell) +
+                ',' +
+                ry +
+                ' L' +
+                (cx + cell) +
+                ',' +
+                (ry + 6) +
+                ' Z',
+              fill: 'var(--s-line)',
+            })
+          );
         }
       });
     });
     // axis labels
     offs.forEach(function (o, i) {
       if (o % 5 === 0 || o === 0) {
-        kids.push(txt(padL + i * colW + colW / 2, totalH - 6, o === 0 ? 'T0' : (o > 0 ? '+' + o : '' + o),
-          { anchor: 'middle', size: 9, fill: o === 0 ? 'var(--s-ink)' : 'var(--s-faint)', weight: o === 0 ? 700 : 400 }));
+        kids.push(
+          txt(padL + i * colW + colW / 2, totalH - 6, o === 0 ? 'T0' : o > 0 ? '+' + o : '' + o, {
+            anchor: 'middle',
+            size: 9,
+            fill: o === 0 ? 'var(--s-ink)' : 'var(--s-faint)',
+            weight: o === 0 ? 700 : 400,
+          })
+        );
       }
     });
     return svg(W, totalH, kids);
@@ -717,28 +1444,70 @@
 
   // ---------- #919 markers with aria-label ----------
   function markerA11y() {
-    var W = 460, H = 70, padL = 10, padR = 10;
+    var W = 460,
+      H = 70,
+      padL = 10,
+      padR = 10;
     var kids = [];
     var band = [{ x: 120, w: 40, label: 'Koinzidenz: Sport, Schlaf schlecht' }];
-    var lines = [{ x: 230, label: 'Sequenz: Sport → Müdigkeit (+1d)' }, { x: 300, label: 'Sequenz: Müdigkeit → Sport (+1d)' }];
-    kids.push(el('rect', { x: padL, y: 12, width: W - padL - padR, height: 40, rx: 6, fill: 'var(--s-row)', stroke: 'var(--s-border)' }));
+    var lines = [
+      { x: 230, label: 'Sequenz: Sport → Müdigkeit (+1d)' },
+      { x: 300, label: 'Sequenz: Müdigkeit → Sport (+1d)' },
+    ];
+    kids.push(
+      el('rect', {
+        x: padL,
+        y: 12,
+        width: W - padL - padR,
+        height: 40,
+        rx: 6,
+        fill: 'var(--s-row)',
+        stroke: 'var(--s-border)',
+      })
+    );
     band.forEach(function (b) {
-      var r = el('rect', { x: b.x, y: 12, width: b.w, height: 40, fill: 'var(--s-band)', 'aria-label': b.label, role: 'img' });
+      var r = el('rect', {
+        x: b.x,
+        y: 12,
+        width: b.w,
+        height: 40,
+        fill: 'var(--s-band)',
+        'aria-label': b.label,
+        role: 'img',
+      });
       r.appendChild(el('title', {}, [document.createTextNode(b.label)]));
       kids.push(r);
     });
     lines.forEach(function (l) {
       var g = el('g', { role: 'img', 'aria-label': l.label });
-      g.appendChild(el('line', { x1: l.x, y1: 12, x2: l.x, y2: 52, stroke: 'var(--s-line)', 'stroke-width': 1.5, 'stroke-dasharray': '3 2' }));
+      g.appendChild(
+        el('line', {
+          x1: l.x,
+          y1: 12,
+          x2: l.x,
+          y2: 52,
+          stroke: 'var(--s-line)',
+          'stroke-width': 1.5,
+          'stroke-dasharray': '3 2',
+        })
+      );
       g.appendChild(el('title', {}, [document.createTextNode(l.label)]));
       kids.push(g);
     });
-    kids.push(txt(padL, 66, 'aria-label pro Marker · nicht nur Hover-<title>', { size: 9, fill: 'var(--s-faint)' }));
+    kids.push(
+      txt(padL, 66, 'aria-label pro Marker · nicht nur Hover-<title>', {
+        size: 9,
+        fill: 'var(--s-faint)',
+      })
+    );
     return svg(W, H, kids);
   }
 
   // ---------- mount ----------
-  function mount(id, node) { var e = document.getElementById(id); if (e) e.appendChild(node); }
+  function mount(id, node) {
+    var e = document.getElementById(id);
+    if (e) e.appendChild(node);
+  }
   mount('cmp-before', compareChart(false));
   mount('cmp-after', compareChart(true));
   mount('esm-before', esmGrid({}));
@@ -746,20 +1515,38 @@
   mount('marker-a11y', markerA11y());
 
   // #920 split
-  mount('split-before', esmGrid({
-    medianRows: [{ label: 'Median', values: [1.5,1.8,2,2.2,2.6,3.2,3,2.6,2.2,1.9,1.6], stroke: 'var(--s-cell-4)', width: 2.6 }]
-  }));
-  mount('split-after', esmGrid({
-    rows: [
-      [1,2,3,2,2,3,4,3,2,2,1],
-      [2,2,1,2,3,4,3,2,2,1,1],
-      [1,1,2,2,2,3,2,2,1,1,2],
-      [2,3,2,2,3,3,3,2,3,2,2]
-    ],
-    partner: { 0: [4,5], 1: [5], 3: [4,5,6] },
-    medianRows: [
-      { label: 'mit Kaffee', values: [1.4,1.7,1.9,2.1,2.4,2.8,2.6,2.3,2,1.7,1.5], stroke: 'var(--s-cell-4)', width: 2.6 },
-      { label: 'ohne Kaffee', insufficient: true }
-    ]
-  }));
+  mount(
+    'split-before',
+    esmGrid({
+      medianRows: [
+        {
+          label: 'Median',
+          values: [1.5, 1.8, 2, 2.2, 2.6, 3.2, 3, 2.6, 2.2, 1.9, 1.6],
+          stroke: 'var(--s-cell-4)',
+          width: 2.6,
+        },
+      ],
+    })
+  );
+  mount(
+    'split-after',
+    esmGrid({
+      rows: [
+        [1, 2, 3, 2, 2, 3, 4, 3, 2, 2, 1],
+        [2, 2, 1, 2, 3, 4, 3, 2, 2, 1, 1],
+        [1, 1, 2, 2, 2, 3, 2, 2, 1, 1, 2],
+        [2, 3, 2, 2, 3, 3, 3, 2, 3, 2, 2],
+      ],
+      partner: { 0: [4, 5], 1: [5], 3: [4, 5, 6] },
+      medianRows: [
+        {
+          label: 'mit Kaffee',
+          values: [1.4, 1.7, 1.9, 2.1, 2.4, 2.8, 2.6, 2.3, 2, 1.7, 1.5],
+          stroke: 'var(--s-cell-4)',
+          width: 2.6,
+        },
+        { label: 'ohne Kaffee', insufficient: true },
+      ],
+    })
+  );
 </script>
