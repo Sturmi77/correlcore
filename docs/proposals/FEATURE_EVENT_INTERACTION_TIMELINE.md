@@ -102,6 +102,54 @@ Mining / HMM / Transfer Entropy.
 
 5. Sprint-Reihenfolge: **Compare (3) zuerst**, dann ESM-Overlay (1).
 
+### v1c — Evidenz statt Präsenz (Nachtrag 2026-09-17)
+
+**Befund nach #908 / #909 / #910.** Die gelieferten Overlays zeigen
+ausschließlich **Präsenz**: ein Soft-Band (A∩B), eine gestrichelte Linie
+(Lag-1), eine Eckmarke (ESM-Partner). Nirgends steht, **wie oft**. „Sport ∩
+Müdigkeit an 8 von 10 Sport-Tagen“ und „2 von 30“ sehen in der UI identisch aus.
+Zusätzlich verschweigt `deriveLag1`
+([`lag1Markers.ts`](../../apps/web/src/lib/utils/lag1Markers.ts)) die
+Richtungsasymmetrie: markiert wird nur A→B in Pin-Reihenfolge, nie B→A — dabei
+ist genau diese Richtungsfrage der Grund für v1.1.
+
+Das ist die Konstellation, für die Xiong et al. erhöhte Kausal-Zuschreibung
+messen: starke Aggregation plus flächige Marks. Der vorhandene Disclaimer-Text
+(„Zusammenhang, keine Ursache“) wirkt nachweislich schwächer als konkrete
+Zahlen. Choe/Lee/schraefel ordnen _comparison_ und _data summary_ zu den
+häufigsten Insight-Typen — beide fehlen der Overlay-UX bislang vollständig.
+
+**Entscheid.** Jedes Overlay nennt seine Häufigkeit als **natürliche Frequenz**
+(Gigerenzer/Hoffrage): ganze Zahlen mit Nenner, clientseitig aus den bereits
+geladenen Heatmap-Rows bzw. Event-Windows. Keine neue Engine, kein Worker, kein
+Insight-Typ — dieselbe Datenbasis wie die Marker selbst.
+
+Copy-Muster (verbindlich, Beispiele EN/DE-neutral formuliert):
+
+| Fläche        | Muster                                                                  |
+| ------------- | ----------------------------------------------------------------------- |
+| Compare A∩B   | „Beide an 6 von 22 Tagen mit Sport · 6 von 9 Tagen mit Schlaf schlecht“ |
+| Compare Lag-1 | „Sport dann Müdigkeit: 5 · Müdigkeit dann Sport: 1“                     |
+| ESM-Partner   | „Kaffee in 4 von 9 Ereignis-Fenstern“                                   |
+
+Guardrails:
+
+- Nur **ganze Zahlen mit Nenner**. Keine Prozente, Raten, p-Werte, Lift, Phi —
+  das bleibt v2 vorbehalten.
+- Zeitraumbezug immer mitnennen („im gewählten Zeitraum“); die Zahlen gelten für
+  die sichtbare Analyse-Range, nicht für die Gesamthistorie.
+- Gates unverändert: ≥2 Pins, `MIN_COINCIDENCE_DAYS` / `MIN_LAG1_DAYS` = 2.
+- Lag-1 nennt **beide** Richtungen, auch wenn eine davon 0 ist — die Asymmetrie
+  ist die Information.
+- Keine Ampelfarben, keine Ranking- oder Stärke-Sprache („stärkster
+  Zusammenhang“); die Zahl steht bei der Legende, nicht als eigene Karte
+  (kein Feed-Spam, Lektion #853).
+
+**Warum keine Statistik in v1c.** „Explore first, Feed later“ bleibt gültig.
+Eine Häufigkeit mit Nenner ist eine Beschreibung der eigenen Einträge und
+braucht weder FDR noch Reifegrad-Gate; ein Lift-/Phi-Wert oder p-Wert wäre ein
+Befund und gehört damit in v2 (Option 4/6) mit den dortigen Guardrails.
+
 ### v2 — Finden mit Engine / Wechselwirkung
 
 1. **Option 4** eng gescopt: Kandidaten nur aus Co-occurrence-Top-Paaren +
@@ -126,27 +174,34 @@ Mining / HMM / Transfer Entropy.
 4. Mobile: kein Dual-Chart &lt;768px; max. ein Overlay-Subject
 5. Leere Ehrlichkeit bei insufficient_n
 6. Legende wie #631
+7. Jedes Overlay nennt seine Häufigkeit als natürliche Frequenz (v1c) —
+   ganze Zahlen mit Nenner, keine Prozente/Raten/p-Werte
 
 ---
 
 ## Beantwortete Entscheidungsfragen
 
-| #   | Frage          | Entscheidung                                                  |
-| --- | -------------- | ------------------------------------------------------------- |
-| 1   | v1-Fläche      | **Beides** (3 + 1); Compare zuerst                            |
-| 2   | Lag-1 in v1    | **Nein** — nur A∩B in v1a; Lag-1 in **v1.1**                  |
-| 3   | v2 InsightType | **Overlay zuerst**; InsightType später bei belegter Präzision |
+| #   | Frage          | Entscheidung                                                                 |
+| --- | -------------- | ---------------------------------------------------------------------------- |
+| 1   | v1-Fläche      | **Beides** (3 + 1); Compare zuerst                                           |
+| 2   | Lag-1 in v1    | **Nein** — nur A∩B in v1a; Lag-1 in **v1.1**                                 |
+| 3   | v2 InsightType | **Overlay zuerst**; InsightType später bei belegter Präzision                |
+| 4   | Zahlen in v1   | **Ja, als natürliche Frequenz** (v1c) — Zähler + Nenner, keine Raten/p-Werte |
 
 ---
 
 ## Folge-Issues
 
-| Phase | Issue | Scope                                         |
-| ----- | ----- | --------------------------------------------- |
-| v1a   | #908  | Compare A∩B-Bänder                            |
-| v1b   | #909  | ESM Partner-Glyph (max. 1)                    |
-| v1.1  | #910  | Lag-1-Markierung auf Compare                  |
-| v2    | —     | Opt. 4 Event↔Event-Lag + Opt. 6 Split-Mediane |
+| Phase | Issue | Scope                                                     |
+| ----- | ----- | --------------------------------------------------------- |
+| v1a   | #908  | Compare A∩B-Bänder                                        |
+| v1b   | #909  | ESM Partner-Glyph (max. 1)                                |
+| v1.1  | #910  | Lag-1-Markierung auf Compare                              |
+| v1c   | #917  | Compare: natürliche Häufigkeiten A∩B + Lag-1 (beidseitig) |
+| v1c   | #918  | ESM: Partner-Trefferquote, Lade- und Fehlerzustand        |
+| v1c   | #919  | Overlay-Härtung: Entdeckbarkeit, Legenden-Swatch, a11y    |
+| v2    | #920  | Opt. 6 Split-Mediane im ESM (A mit B vs. A ohne B)        |
+| v2    | —     | Opt. 4 Event↔Event-Lag (noch kein Issue)                  |
 
 Ready-to-paste Bodies (Referenz, Issues bereits angelegt):
 
@@ -296,3 +351,24 @@ unterliegen `analytics_enabled` und Reifegrad-Gates.
 - [`PHASE_INSIGHT_MATRIX.md`](../PHASE_INSIGHT_MATRIX.md)
 - [`FEATURE_LAG_CORRELATION_VISUALIZATION.md`](FEATURE_LAG_CORRELATION_VISUALIZATION.md) (Feature→Metrik, nicht Event↔Event)
 - `#809` Episoden, `#488` Lag-Marker, `#631` ESM-Erklärung, `#853` Lag-UX, `#632` Disclaimer
+
+### Forschung zu v1c (Evidenz statt Präsenz)
+
+- Cindy Xiong, Joel Shapiro, Jessica Hullman, Steven Franconeri. „Illusion of
+  Causality in Visualized Data.“ IEEE VIS 2019 —
+  [PDF](https://mucollective.northwestern.edu/files/2019-Correlation%20Causation-VIS.pdf).
+  Weniger Aggregation und punktförmige statt flächiger Marks senken die
+  Kausal-Zuschreibung; erklärender Text allein wirkt schwächer als Zahlen.
+- Eun Kyoung Choe, Bongshin Lee, m.c. schraefel. „Characterizing Visualization
+  Insights from Quantified Selfers' Personal Data Presentations.“ IEEE CG&A
+  35(4), 2015. DOI: [10.1109/MCG.2015.51](https://doi.org/10.1109/mcg.2015.51).
+  Acht Insight-Typen; _comparison_ und _data summary_ fehlen der reinen
+  Präsenz-Markierung.
+- Simon Jones, Ryan Kelly. „Finding ‚Interesting‘ Correlations in Multi-Faceted
+  Personal Informatics Systems.“ CHI EA 2016. DOI:
+  [10.1145/2851581.2892401](https://doi.org/10.1145/2851581.2892401).
+  Abgleich Erwartung ↔ Befund als Filter gegen Rausch-Insights.
+- Gerd Gigerenzer, Ulrich Hoffrage. „How to Improve Bayesian Reasoning Without
+  Instruction: Frequency Formats.“ _Psychological Review_ 102(4), 1995.
+  Natürliche Frequenzen („6 von 22“) werden zuverlässiger verstanden als
+  Prozente oder bedingte Wahrscheinlichkeiten.
