@@ -634,6 +634,7 @@
         "cursor": "{subjects} on this day",
         "marker": "Coincidence: {subjects}",
         "summary": "Both on {both} of {aTotal} days with {a} · {both} of {bTotal} days with {b}",
+        "swatch": "A∩B — band",
         "and": "and"
       },
       "lag1": {
@@ -644,9 +645,14 @@
         "legend": "Lines mark when one pinned row is followed by the next on the following day — an association in your entries, not a cause.",
         "cursor": "{from} then {to} (+1 day)",
         "marker": "Sequence: {from} → {to} (+1d)",
-        "summary": "{from} then {to}: {forward} of {forwardTotal} · {to} then {from}: {reverse} of {reverseTotal}"
+        "summary": "{from} then {to}: {forward} of {forwardTotal} · {to} then {from}: {reverse} of {reverseTotal}",
+        "swatch": "Lag-1 — dashed line"
       },
       "frequency_note": "Counts cover the selected period only.",
+      "overlay_group_label": "Highlight",
+      "overlay_hint_lead": "Two rows pinned.",
+      "overlay_hint_body": "Highlight coincidence?",
+      "overlay_hint_dismiss_aria": "Dismiss the highlight hint",
       "zoom": {
         "label": "Timeline zoom",
         "decrease_aria": "Zoom out to coarser columns",

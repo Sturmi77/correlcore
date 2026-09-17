@@ -32,17 +32,18 @@
     readCompareZoomStage,
     readCompareCoincidenceHighlight,
     readCompareLag1Highlight,
+    readCompareOverlayHintDismissed,
     writeCompareMode,
     writeCompareSortMode,
     writeCompareZoomStage,
     writeCompareCoincidenceHighlight,
     writeCompareLag1Highlight,
+    writeCompareOverlayHintDismissed,
     type CompareMode,
     type CompareSortMode,
   } from '$lib/utils/comparePanelSettings';
   import {
     MAX_COMPARE_PINS,
-    MIN_COINCIDENCE_DAYS,
     canPinMore,
     clampPinnedIds,
     coincidenceDaysToMarkers,
@@ -51,7 +52,6 @@
     type CoincidenceRow,
   } from '$lib/utils/coincidenceMarkers';
   import {
-    MIN_LAG1_DAYS,
     deriveLag1,
     hasReportableLag1,
     lag1DaysToMarkers,
@@ -62,6 +62,8 @@
   import MetricTimeseries from './MetricTimeseries.svelte';
   import ComparisonHeatmap from './ComparisonHeatmap.svelte';
   import UnifiedStripChart from './UnifiedStripChart.svelte';
+  import CompareOverlayControls from './CompareOverlayControls.svelte';
+  import type { CompareOverlayAvailability } from '$lib/utils/compareOverlayAvailability';
   import { dedupeEventMarkers, type EventMarker } from './EventMarkerLayer.svelte';
 
   export let points: TimeseriesPoint[] = [];
@@ -82,6 +84,16 @@
   export let clustersAvailableBinding = false;
   export let mode: CompareMode = readCompareMode();
   export let sortMode: CompareSortMode = readCompareSortMode();
+  /** #919: bindable so the mobile settings sheet can drive the same overlays. */
+  export let coincidenceHighlight = readCompareCoincidenceHighlight();
+  export let lag1Highlight = readCompareLag1Highlight();
+  export let overlayHintDismissed = readCompareOverlayHintDismissed();
+  /** Gate state published for surfaces that cannot derive it (settings sheet). */
+  export let overlayAvailabilityBinding: CompareOverlayAvailability = {
+    pinnedCount: 0,
+    coincidence: false,
+    lag1: false,
+  };
   /**
    * Sprint 1 (ADR-0035): event markers shared across metric chart and
    * heatmap rows. Computed by the parent page from insight maturity,
@@ -100,6 +112,9 @@
     layerChange: { showTags: boolean; showSymptoms: boolean; showWorkContexts: boolean };
     modeChange: { value: CompareMode };
     sortChange: { value: CompareSortMode };
+    coincidenceChange: { value: boolean };
+    lag1Change: { value: boolean };
+    overlayHintDismiss: void;
   }>();
 
   // Sprint 1 (ADR-0035): the Compare panel owns the cursor lifecycle.
@@ -150,9 +165,6 @@
       (value) => Array.isArray(value) && value.every((item) => typeof item === 'string')
     )
   );
-
-  let coincidenceHighlight = readCompareCoincidenceHighlight();
-  let lag1Highlight = readCompareLag1Highlight();
 
   let zoomStage: CompareZoomStageIndex = readCompareZoomStage();
   let axisScroller: HTMLDivElement;
@@ -251,11 +263,19 @@
   function setCoincidenceHighlight(next: boolean): void {
     coincidenceHighlight = next;
     writeCompareCoincidenceHighlight(next);
+    dispatch('coincidenceChange', { value: next });
   }
 
   function setLag1Highlight(next: boolean): void {
     lag1Highlight = next;
     writeCompareLag1Highlight(next);
+    dispatch('lag1Change', { value: next });
+  }
+
+  function dismissOverlayPinHint(): void {
+    overlayHintDismissed = true;
+    writeCompareOverlayHintDismissed(true);
+    dispatch('overlayHintDismiss');
   }
 
   function joinSubjectLabels(labels: readonly string[]): string {
@@ -461,20 +481,6 @@
         .join(' · ')
     : '';
 
-  $: coincidenceHint =
-    pinned.length < 2
-      ? $_('trends.compare.coincidence.need_pins')
-      : !coincidence.canHighlight
-        ? $_('trends.compare.coincidence.empty', { values: { min: MIN_COINCIDENCE_DAYS } })
-        : '';
-
-  $: lag1Hint =
-    pinned.length < 2
-      ? $_('trends.compare.lag1.need_pins')
-      : !lag1.canHighlight
-        ? $_('trends.compare.lag1.empty', { values: { min: MIN_LAG1_DAYS } })
-        : '';
-
   // #917: natural frequencies beside each overlay — counts with a denominator,
   // never rates or p-values (v1c decision in FEATURE_EVENT_INTERACTION_TIMELINE).
   $: coincidenceSummaryLines = coincidenceActive
@@ -510,6 +516,12 @@
     : [];
 
   $: showFrequencyNote = coincidenceSummaryLines.length > 0 || lag1SummaryLines.length > 0;
+
+  $: overlayAvailabilityBinding = {
+    pinnedCount: pinned.length,
+    coincidence: coincidence.canHighlight,
+    lag1: lag1.canHighlight,
+  };
 </script>
 
 <section class="compare" class:compare--compact={compactChrome} data-testid="trends-compare-panel">
@@ -668,65 +680,46 @@
           +
         </button>
       </div>
-      <div class="compare__coincidence" data-testid="trends-compare-coincidence">
-        <label class="compare__coincidence-toggle">
-          <input
-            type="checkbox"
-            data-testid="trends-compare-coincidence-toggle"
-            checked={coincidenceHighlight && coincidence.canHighlight}
-            disabled={!coincidence.canHighlight}
-            aria-label={$_('trends.compare.coincidence.toggle_aria')}
-            on:change={(event) => setCoincidenceHighlight(event.currentTarget.checked)}
-          />
-          {$_('trends.compare.coincidence.toggle')}
-        </label>
-        {#if coincidenceHint}
-          <p class="compare__coincidence-hint" data-testid="trends-compare-coincidence-empty">
-            {coincidenceHint}
-          </p>
-        {:else if coincidenceActive}
-          <!-- Count first, disclaimer second: the number is what the user came for. -->
-          {#each coincidenceSummaryLines as line, index (index)}
-            <p
-              class="compare__coincidence-summary"
-              data-testid="trends-compare-coincidence-summary"
-            >
-              {line}
+      <CompareOverlayControls
+        {coincidenceHighlight}
+        {lag1Highlight}
+        {overlayHintDismissed}
+        availability={overlayAvailabilityBinding}
+        on:coincidenceChange={(event) => setCoincidenceHighlight(event.detail.value)}
+        on:lag1Change={(event) => setLag1Highlight(event.detail.value)}
+        on:dismissPinHint={dismissOverlayPinHint}
+      >
+        <svelte:fragment slot="coincidence-detail">
+          {#if coincidenceActive}
+            <!-- Count first, disclaimer second: the number is what the user came for. -->
+            {#each coincidenceSummaryLines as line, index (index)}
+              <p
+                class="compare__coincidence-summary"
+                data-testid="trends-compare-coincidence-summary"
+              >
+                {line}
+              </p>
+            {/each}
+            <p class="compare__coincidence-legend" data-testid="trends-compare-coincidence-legend">
+              {$_('trends.compare.coincidence.legend')}
             </p>
-          {/each}
-          <p class="compare__coincidence-legend" data-testid="trends-compare-coincidence-legend">
-            {$_('trends.compare.coincidence.legend')}
-          </p>
-        {/if}
-      </div>
-      <div class="compare__coincidence" data-testid="trends-compare-lag1">
-        <label class="compare__coincidence-toggle">
-          <input
-            type="checkbox"
-            data-testid="trends-compare-lag1-toggle"
-            checked={lag1Highlight && lag1.canHighlight}
-            disabled={!lag1.canHighlight}
-            aria-label={$_('trends.compare.lag1.toggle_aria')}
-            on:change={(event) => setLag1Highlight(event.currentTarget.checked)}
-          />
-          {$_('trends.compare.lag1.toggle')}
-        </label>
-        {#if lag1Hint}
-          <p class="compare__coincidence-hint" data-testid="trends-compare-lag1-empty">
-            {lag1Hint}
-          </p>
-        {/if}
-        {#if lag1SummaryLines.length > 0}
-          {#each lag1SummaryLines as line, index (index)}
-            <p class="compare__coincidence-summary" data-testid="trends-compare-lag1-summary">
-              {line}
+          {/if}
+        </svelte:fragment>
+        <svelte:fragment slot="lag1-detail">
+          <!-- Not gated on lag1Active: the markers only draw the pin-order
+               direction, so that gate would hide reverse-heavy pairs. -->
+          {#if lag1SummaryLines.length > 0}
+            {#each lag1SummaryLines as line, index (index)}
+              <p class="compare__coincidence-summary" data-testid="trends-compare-lag1-summary">
+                {line}
+              </p>
+            {/each}
+            <p class="compare__coincidence-legend" data-testid="trends-compare-lag1-legend">
+              {$_('trends.compare.lag1.legend')}
             </p>
-          {/each}
-          <p class="compare__coincidence-legend" data-testid="trends-compare-lag1-legend">
-            {$_('trends.compare.lag1.legend')}
-          </p>
-        {/if}
-      </div>
+          {/if}
+        </svelte:fragment>
+      </CompareOverlayControls>
       {#if showFrequencyNote}
         <p class="compare__coincidence-hint" data-testid="trends-compare-frequency-note">
           {$_('trends.compare.frequency_note')}
@@ -745,16 +738,20 @@
           {cursorDetailLabel}
         </p>
       {/if}
-      {#if cursorCoincidenceLabel}
-        <p class="compare__zoom-detail" data-testid="trends-compare-coincidence-detail">
-          {cursorCoincidenceLabel}
-        </p>
-      {/if}
-      {#if cursorLag1Label}
-        <p class="compare__zoom-detail" data-testid="trends-compare-lag1-detail">
-          {cursorLag1Label}
-        </p>
-      {/if}
+      <!-- #919: keyboard users move the cursor without seeing the chart, so the
+           overlay read-out has to be announced rather than only drawn. -->
+      <div aria-live="polite" data-testid="trends-compare-overlay-live">
+        {#if cursorCoincidenceLabel}
+          <p class="compare__zoom-detail" data-testid="trends-compare-coincidence-detail">
+            {cursorCoincidenceLabel}
+          </p>
+        {/if}
+        {#if cursorLag1Label}
+          <p class="compare__zoom-detail" data-testid="trends-compare-lag1-detail">
+            {cursorLag1Label}
+          </p>
+        {/if}
+      </div>
     </div>
   {/if}
 
@@ -981,25 +978,6 @@
 
   .compare__zoom-detail {
     font-weight: 600;
-  }
-
-  .compare__coincidence {
-    display: grid;
-    gap: var(--space-1);
-  }
-
-  .compare__coincidence-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-height: var(--tap-target);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-text);
-  }
-
-  .compare__coincidence-toggle input:disabled {
-    cursor: not-allowed;
   }
 
   .compare__coincidence-hint,

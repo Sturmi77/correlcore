@@ -5,7 +5,12 @@
   import type { MetricKey } from '$lib/utils/charts';
   import type { CompareMode, CompareSortMode } from '$lib/utils/comparePanelSettings';
   import TrendsCompareFilters from './TrendsCompareFilters.svelte';
+  import CompareOverlayControls from './CompareOverlayControls.svelte';
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
+  import {
+    EMPTY_COMPARE_OVERLAY_AVAILABILITY,
+    type CompareOverlayAvailability,
+  } from '$lib/utils/compareOverlayAvailability';
 
   export let open = false;
   export let smoothing = true;
@@ -18,6 +23,11 @@
   export let mode: CompareMode = 'lines';
   export let sortMode: CompareSortMode = 'frequency';
   export let clustersAvailable = false;
+  /** #919: same overlays as the panel, reachable without leaving the sheet. */
+  export let coincidenceHighlight = false;
+  export let lag1Highlight = false;
+  export let overlayAvailability: CompareOverlayAvailability = EMPTY_COMPARE_OVERLAY_AVAILABILITY;
+  export let overlayHintDismissed = false;
 
   const dispatch = createEventDispatcher<{
     close: void;
@@ -27,6 +37,9 @@
     layerChange: { showTags: boolean; showSymptoms: boolean; showWorkContexts: boolean };
     modeChange: { value: CompareMode };
     sortChange: { value: CompareSortMode };
+    coincidenceChange: { value: boolean };
+    lag1Change: { value: boolean };
+    overlayHintDismiss: void;
   }>();
 </script>
 
@@ -105,6 +118,20 @@
         />
         {$_('trends.compare.work_contexts')}
       </label>
+    </fieldset>
+
+    <fieldset class="compare-settings__overlays">
+      <legend>{$_('trends.compare.overlay_group_label')}</legend>
+      <CompareOverlayControls
+        {coincidenceHighlight}
+        {lag1Highlight}
+        {overlayHintDismissed}
+        availability={overlayAvailability}
+        testIdPrefix="trends-compare-settings"
+        on:coincidenceChange={(event) => dispatch('coincidenceChange', event.detail)}
+        on:lag1Change={(event) => dispatch('lag1Change', event.detail)}
+        on:dismissPinHint={() => dispatch('overlayHintDismiss')}
+      />
     </fieldset>
 
     <div class="compare-settings__mode" role="group" aria-label={$_('trends.compare.mode_label')}>
@@ -205,6 +232,19 @@
     align-items: center;
     gap: var(--space-1);
     font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .compare-settings__overlays {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .compare-settings__overlays legend {
+    margin-bottom: var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
     font-weight: 700;
   }
 

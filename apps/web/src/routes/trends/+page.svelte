@@ -61,11 +61,21 @@
   import {
     readCompareMode,
     readCompareSortMode,
+    readCompareCoincidenceHighlight,
+    readCompareLag1Highlight,
+    readCompareOverlayHintDismissed,
     writeCompareMode,
     writeCompareSortMode,
+    writeCompareCoincidenceHighlight,
+    writeCompareLag1Highlight,
+    writeCompareOverlayHintDismissed,
     type CompareMode,
     type CompareSortMode,
   } from '$lib/utils/comparePanelSettings';
+  import {
+    EMPTY_COMPARE_OVERLAY_AVAILABILITY,
+    type CompareOverlayAvailability,
+  } from '$lib/utils/compareOverlayAvailability';
 
   type TrendTab = 'compare' | 'habits';
 
@@ -122,6 +132,12 @@
   let compareClustersAvailable = false;
   let compareMode: CompareMode = 'lines';
   let compareSortMode: CompareSortMode = 'frequency';
+  // #919: the overlays live in the panel but are also operable from the mobile
+  // settings sheet, so the page holds the shared state.
+  let compareCoincidenceHighlight = false;
+  let compareLag1Highlight = false;
+  let compareOverlayHintDismissed = false;
+  let compareOverlayAvailability: CompareOverlayAvailability = EMPTY_COMPARE_OVERLAY_AVAILABILITY;
   let mobileMedia: MediaQueryList | null = null;
   let activeDevFixtureKey = '';
 
@@ -400,6 +416,9 @@
     smoothing = readSmoothingPreference(typeof localStorage !== 'undefined' ? localStorage : null);
     compareMode = readCompareMode();
     compareSortMode = readCompareSortMode();
+    compareCoincidenceHighlight = readCompareCoincidenceHighlight();
+    compareLag1Highlight = readCompareLag1Highlight();
+    compareOverlayHintDismissed = readCompareOverlayHintDismissed();
     restoreCompareLayers();
     mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
     const updateCompactTrends = () => {
@@ -515,6 +534,10 @@
             bind:clustersAvailableBinding={compareClustersAvailable}
             bind:mode={compareMode}
             bind:sortMode={compareSortMode}
+            bind:coincidenceHighlight={compareCoincidenceHighlight}
+            bind:lag1Highlight={compareLag1Highlight}
+            bind:overlayHintDismissed={compareOverlayHintDismissed}
+            bind:overlayAvailabilityBinding={compareOverlayAvailability}
             noteDates={noteEntryDates}
             on:selectDate={(event) => void openHistory(event.detail.date)}
             on:layerChange={(event) => setCompareLayers(event.detail)}
@@ -535,7 +558,23 @@
         mode={compareMode}
         sortMode={compareSortMode}
         clustersAvailable={compareClustersAvailable}
+        coincidenceHighlight={compareCoincidenceHighlight}
+        lag1Highlight={compareLag1Highlight}
+        overlayAvailability={compareOverlayAvailability}
+        overlayHintDismissed={compareOverlayHintDismissed}
         on:close={() => (compareSettingsOpen = false)}
+        on:coincidenceChange={(event) => {
+          compareCoincidenceHighlight = event.detail.value;
+          writeCompareCoincidenceHighlight(event.detail.value);
+        }}
+        on:lag1Change={(event) => {
+          compareLag1Highlight = event.detail.value;
+          writeCompareLag1Highlight(event.detail.value);
+        }}
+        on:overlayHintDismiss={() => {
+          compareOverlayHintDismissed = true;
+          writeCompareOverlayHintDismissed(true);
+        }}
         on:smoothingChange={(event) => setSmoothing(event.detail.value)}
         on:metricToggle={(event) => toggleMetric(event.detail.metric)}
         on:categoryChange={(event) => {
