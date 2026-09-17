@@ -11,6 +11,7 @@ import {
   candidatesFromTagCooccurrence,
   clampActivePartners,
   clampPartnerCandidates,
+  countWindowsWithPartner,
   isPartnerPresentOnDate,
   partnerDatesInWindow,
   pickDefaultPartner,
@@ -277,5 +278,34 @@ describe('presence + window helpers', () => {
     expect(hits).toEqual(['2026-05-10', '2026-05-13']);
     expect(isPartnerPresentOnDate('2026-05-10', hits)).toBe(true);
     expect(isPartnerPresentOnDate('2026-05-11', hits)).toBe(false);
+  });
+});
+
+describe('countWindowsWithPartner (#918)', () => {
+  const onsets = ['2026-05-10', '2026-06-20'];
+
+  it('counts windows, not days', () => {
+    expect(countWindowsWithPartner(onsets, ['2026-05-09', '2026-05-12'], 7)).toEqual({
+      hits: 1,
+      windows: 2,
+    });
+  });
+
+  it('counts a window once per partner appearance run', () => {
+    expect(countWindowsWithPartner(onsets, ['2026-05-09', '2026-05-10', '2026-06-21'], 7)).toEqual({
+      hits: 2,
+      windows: 2,
+    });
+  });
+
+  it('reports zero hits without hiding the denominator', () => {
+    expect(countWindowsWithPartner(onsets, ['2026-08-01'], 7)).toEqual({ hits: 0, windows: 2 });
+  });
+
+  it('accepts a presence set as well as an array', () => {
+    expect(countWindowsWithPartner(onsets, new Set(['2026-06-20']), 7)).toEqual({
+      hits: 1,
+      windows: 2,
+    });
   });
 });

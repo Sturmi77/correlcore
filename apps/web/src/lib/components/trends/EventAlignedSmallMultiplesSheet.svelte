@@ -51,6 +51,7 @@
   } from './smallMultiplesGate';
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
   import {
+    countWindowsWithPartner,
     isPartnerPresentOnDate,
     type EsmPartner,
     type EsmPartnerCandidate,
@@ -79,6 +80,10 @@
   export let partnerPresenceDates: readonly string[] = [];
   /** Ranked override candidates (already clamped by the parent). */
   export let partnerCandidates: readonly EsmPartnerCandidate[] = [];
+  /** #918: partner lookup still running — distinct from "no partner exists". */
+  export let partnerLoading = false;
+  /** #918: presence data could not be loaded, so an empty overlay would lie. */
+  export let partnerUnavailable = false;
 
   const dispatch = createEventDispatcher<{
     close: void;
@@ -108,6 +113,15 @@
   $: partnerPresenceSet = new Set(partnerPresenceDates);
   $: showPartnerOverlay = partner !== null;
   $: canChoosePartner = partnerCandidates.length > 0;
+  // #918: how many windows the partner actually reaches — a count with a
+  // denominator, not a rate (v1c decision in FEATURE_EVENT_INTERACTION_TIMELINE).
+  $: partnerCoverage = showPartnerOverlay
+    ? countWindowsWithPartner(
+        events.map((event) => event.onset),
+        partnerPresenceSet,
+        radius
+      )
+    : null;
 
   function isoOffset(iso: string, deltaDays: number): string {
     const [y, m, d] = iso.split('-').map(Number);
@@ -202,7 +216,15 @@
         </p>
       {/if}
       <div class="esm__partner" data-testid="esm-partner">
-        {#if canChoosePartner}
+        {#if partnerLoading}
+          <p class="esm__partner-empty" data-testid="esm-partner-loading">
+            {$_('trends.esm.partner_loading')}
+          </p>
+        {:else if partnerUnavailable}
+          <p class="esm__partner-empty" data-testid="esm-partner-error">
+            {$_('trends.esm.partner_error')}
+          </p>
+        {:else if canChoosePartner}
           <label class="esm__partner-select">
             <span>{$_('trends.esm.partner_label')}</span>
             <select
@@ -223,6 +245,17 @@
             <p class="esm__partner-legend" data-testid="esm-partner-legend">
               {$_('trends.esm.partner_legend', { values: { partner: partner.label } })}
             </p>
+            {#if partnerCoverage}
+              <p class="esm__partner-summary" data-testid="esm-partner-summary">
+                {$_('trends.esm.partner_summary', {
+                  values: {
+                    partner: partner.label,
+                    hits: partnerCoverage.hits,
+                    windows: partnerCoverage.windows,
+                  },
+                })}
+              </p>
+            {/if}
           {/if}
         {:else}
           <p class="esm__partner-empty" data-testid="esm-partner-empty">
@@ -513,6 +546,15 @@
     color: var(--color-text-muted);
     font-size: var(--text-xs);
     font-weight: 400;
+  }
+
+  /* #918: the count reads before the disclaimer, so it stays at full contrast. */
+  .esm__partner-summary {
+    margin: 0;
+    color: var(--color-fg);
+    font-size: var(--text-xs);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
   }
 
   .esm__metric {

@@ -170,6 +170,10 @@
   let exploreEventsPartnerCandidates: EsmPartnerCandidate[] = [];
   let exploreEventsPartnerPresence: string[] = [];
   let exploreEventsTagHeatmap: TagHeatmapResponse | null = null;
+  // #918: the sheet opens before partner data arrives — keep "still loading"
+  // and "presence data failed" apart from "no partner exists".
+  let exploreEventsPartnerLoading = false;
+  let exploreEventsPartnerUnavailable = false;
 
   function readCompactInsights(): boolean {
     if (!browser) return false;
@@ -799,6 +803,8 @@
     exploreEventsPartner = null;
     exploreEventsPartnerCandidates = [];
     exploreEventsPartnerPresence = [];
+    exploreEventsPartnerLoading = false;
+    exploreEventsPartnerUnavailable = false;
     exploreEventsTagHeatmap = null;
 
     try {
@@ -842,6 +848,7 @@
       exploreEventsLagOffset = response.lag_days ?? null;
 
       exploreEventsLoading = false;
+      exploreEventsPartnerLoading = true;
       void ensureExploreEventsPartnerData(insight, requestId, insightId, capturedRange);
     } catch {
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
@@ -853,6 +860,8 @@
       exploreEventsPartner = null;
       exploreEventsPartnerCandidates = [];
       exploreEventsPartnerPresence = [];
+      exploreEventsPartnerLoading = false;
+      exploreEventsPartnerUnavailable = false;
     } finally {
       if (requestId === exploreEventsRequestId && exploreEventsInsight?.id === insightId) {
         exploreEventsLoading = false;
@@ -900,7 +909,10 @@
     range: TimeseriesRange
   ): Promise<void> {
     const subject = resolveEsmAlignSubject(insight);
-    if (!subject) return;
+    if (!subject) {
+      exploreEventsPartnerLoading = false;
+      return;
+    }
 
     const needsTagPairs = subject.kind === 'tag';
     const needsSymptomCells = subject.kind === 'symptom';
@@ -933,6 +945,7 @@
 
     const tagPresenceAvailable = tagHeatmapResult.ok && tagHeatmapResult.data !== null;
     exploreEventsTagHeatmap = tagHeatmapResult.data;
+    exploreEventsPartnerLoading = false;
     applyExploreEventsPartner(
       insight,
       tagPairs,
@@ -941,6 +954,10 @@
       visibleSymptomHeatmap ?? symptomHeatmap,
       tagPresenceAvailable
     );
+    // A failed presence fetch only matters once a partner could have been shown;
+    // without candidates the honest message is still "no partner".
+    exploreEventsPartnerUnavailable =
+      !tagPresenceAvailable && exploreEventsPartnerCandidates.length > 0;
   }
 
   function handleExplorePartnerChange(event: CustomEvent<{ partnerId: string | null }>): void {
@@ -1221,6 +1238,8 @@
       partner={exploreEventsPartner}
       partnerPresenceDates={exploreEventsPartnerPresence}
       partnerCandidates={exploreEventsPartnerCandidates}
+      partnerLoading={exploreEventsPartnerLoading}
+      partnerUnavailable={exploreEventsPartnerUnavailable}
       on:partnerChange={handleExplorePartnerChange}
       on:close={() => {
         exploreEventsOpen = false;
@@ -1228,6 +1247,8 @@
         exploreEventsPartner = null;
         exploreEventsPartnerCandidates = [];
         exploreEventsPartnerPresence = [];
+        exploreEventsPartnerLoading = false;
+        exploreEventsPartnerUnavailable = false;
         exploreEventsTagHeatmap = null;
       }}
     />
