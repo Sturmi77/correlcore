@@ -360,6 +360,12 @@ proposal [`FEATURE_EVENT_INTERACTION_TIMELINE.md`](../proposals/FEATURE_EVENT_IN
 - **Explore before Feed:** Event↔Event lag / interaction findings must not ship
   as automatic feed cards until precision is proven; association copy and
   no traffic-light colours remain mandatory.
+- **Overlays state frequency as natural frequencies** (v1c, 2026-09-17): whole
+  counts with an explicit denominator ("both on 6 of 22 days with A"), derived
+  client-side from the rows already loaded. Percentages, rates, p-values, lift
+  and phi stay out of v1 — a bare presence mark plus strong aggregation is the
+  configuration Xiong et al. (IEEE VIS 2019) associate with over-reading
+  causality, and disclaimer copy alone is the weaker remedy.
 - Pin limit of 3 and mobile ~3-panel budget (Hosseinpour) are unchanged.
 
 ## Related ADRs
