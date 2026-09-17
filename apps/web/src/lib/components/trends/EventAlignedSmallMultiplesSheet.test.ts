@@ -354,6 +354,169 @@ describe('EventAlignedSmallMultiplesSheet partner glyph (#909)', () => {
   });
 });
 
+describe('EventAlignedSmallMultiplesSheet split medians (#920)', () => {
+  // Three windows with the partner, three without, far enough apart that no
+  // ±7 window overlaps another onset.
+  const withOnsets = ['2026-05-01', '2026-05-20', '2026-06-08'];
+  const withoutOnsets = ['2026-07-01', '2026-07-20', '2026-08-08'];
+  const events = [...withOnsets, ...withoutOnsets].map((onset) => ({ onset, label: onset }));
+  const points = [...withOnsets, ...withoutOnsets].map((date, index) => ({
+    period_start: date,
+    period_end: date,
+    entry_count: 1,
+    mood_avg: index < 3 ? 5 : 1,
+    energy_avg: 3,
+    stress_avg: 3,
+    sleep_quality_avg: null,
+  }));
+  const partner = { id: 't-coffee', label: 'Coffee', kind: 'tag' as const };
+  const candidates = [{ id: 't-coffee', label: 'Coffee', kind: 'tag' as const, score: 5 }];
+
+  function renderSheet(partnerPresenceDates: string[]) {
+    return render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner,
+        partnerCandidates: candidates,
+        partnerPresenceDates,
+      },
+    });
+  }
+
+  it('replaces the single median with one row per branch', () => {
+    const { container } = renderSheet(withOnsets);
+
+    const medianRows = [...container.querySelectorAll('[data-testid="esm-median-row"]')];
+    expect(medianRows.map((row) => row.getAttribute('data-branch'))).toEqual(['with', 'without']);
+    expect(container.querySelectorAll('[data-testid="esm-split-insufficient"]')).toHaveLength(0);
+  });
+
+  it('states the window count of each branch', () => {
+    renderSheet(withOnsets);
+
+    const counts = screen.getByTestId('esm-split-counts').textContent ?? '';
+    expect(counts).toContain('trends.esm.split_counts');
+    expect(counts).toContain('"withCount":3');
+    expect(counts).toContain('"withoutCount":3');
+  });
+
+  it('withholds the curve of a branch below the occurrence floor', () => {
+    // Only two windows carry the partner, so that branch stays undrawn.
+    const { container } = renderSheet(withOnsets.slice(0, 2));
+
+    const gap = screen.getByTestId('esm-split-insufficient');
+    expect(gap).toBeTruthy();
+    expect(gap.parentElement?.getAttribute('data-branch')).toBe('with');
+    expect(gap.parentElement?.textContent).toContain('trends.esm.split_insufficient');
+    // The other branch still draws, so a gap alone is not a blank sheet.
+    expect(container.querySelectorAll('.esm__cell--median').length).toBeGreaterThan(0);
+  });
+
+  it('distinguishes the branches by stroke pattern, not by hue', () => {
+    const { container } = renderSheet(withOnsets);
+
+    const withoutCells = container.querySelectorAll('.esm__cell--median-without');
+    expect(withoutCells.length).toBeGreaterThan(0);
+    const withRow = container.querySelector('[data-branch="with"]');
+    expect(withRow?.querySelectorAll('.esm__cell--median-without')).toHaveLength(0);
+  });
+
+  it('keeps the combined median and points to the split when no partner is set', () => {
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: null,
+        partnerCandidates: candidates,
+        partnerPresenceDates: [],
+      },
+    });
+
+    const medianRows = [...container.querySelectorAll('[data-testid="esm-median-row"]')];
+    expect(medianRows).toHaveLength(1);
+    expect(medianRows[0]?.getAttribute('data-branch')).toBe('all');
+    expect(screen.getByTestId('esm-split-hint')).toBeTruthy();
+    expect(screen.queryByTestId('esm-split-counts')).toBeNull();
+  });
+
+  it('keeps the branch qualifier readable for a long partner name', () => {
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: { id: 't-coffee', label: 'Cold brew coffee with oat milk', kind: 'tag' as const },
+        partnerCandidates: candidates,
+        partnerPresenceDates: withOnsets,
+      },
+    });
+
+    const labels = [...container.querySelectorAll('.esm__row-label--median')];
+    const withLabel = labels[0]?.textContent ?? '';
+    const withoutLabel = labels[1]?.textContent ?? '';
+    expect(withLabel).toContain('trends.esm.split_with');
+    expect(withoutLabel).toContain('trends.esm.split_without');
+    // Shortened for the gutter, but the full name stays in the tooltip.
+    expect(withLabel).toContain('…');
+    expect(labels[0]?.querySelector('title')?.textContent).toContain(
+      'Cold brew coffee with oat milk'
+    );
+  });
+
+  it('withholds the split prompt while no partner can be chosen', () => {
+    const base = {
+      open: true,
+      phase: 'provisional' as const,
+      events,
+      points,
+      metric: 'mood_avg' as const,
+      partner: null,
+      partnerPresenceDates: [],
+    };
+
+    const loading = render(EventAlignedSmallMultiplesSheet, {
+      props: { ...base, partnerCandidates: [], partnerLoading: true },
+    });
+    expect(screen.queryByTestId('esm-split-hint')).toBeNull();
+    loading.unmount();
+
+    const failed = render(EventAlignedSmallMultiplesSheet, {
+      props: { ...base, partnerCandidates: candidates, partnerUnavailable: true },
+    });
+    expect(screen.queryByTestId('esm-split-hint')).toBeNull();
+    failed.unmount();
+
+    const empty = render(EventAlignedSmallMultiplesSheet, {
+      props: { ...base, partnerCandidates: [] },
+    });
+    expect(screen.queryByTestId('esm-split-hint')).toBeNull();
+    empty.unmount();
+
+    render(EventAlignedSmallMultiplesSheet, {
+      props: { ...base, partnerCandidates: candidates },
+    });
+    expect(screen.getByTestId('esm-split-hint')).toBeTruthy();
+  });
+
+  it('pushes the episode rows below however many median rows exist', () => {
+    const { container } = renderSheet(withOnsets);
+
+    const episodeRows = [...container.querySelectorAll('.esm__row[data-onset]')];
+    const firstCellY = episodeRows[0]?.querySelector('.esm__cell')?.getAttribute('y');
+    // 24 + 2 median rows * (cellSize 22 + gap 4)
+    expect(firstCellY).toBe('76');
+  });
+});
+
 describe('EventAlignedSmallMultiplesSheet partner coverage (#918)', () => {
   const points = [
     {
