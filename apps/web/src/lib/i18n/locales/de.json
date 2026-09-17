@@ -673,7 +673,12 @@
       "median_aria": "Median-Trajektorie ueber {count} Occurrences",
       "locked": "Verfuegbar sobald der Insight die provisorische Phase erreicht.",
       "open_action": "Ausgerichtete Ereignisse erkunden",
-      "lag_hint": "T0 = Ausloeser · Ergebnis markiert nach +{days} Tagen"
+      "lag_hint": "T0 = Ausloeser · Ergebnis markiert nach +{days} Tagen",
+      "partner_label": "Partner-Overlay",
+      "partner_aria": "Co-Occurrence-Partner zum Ueberlagern waehlen",
+      "partner_legend": "Markierungen zeigen, wann {partner} im Fenster ebenfalls vorkommt — ein Zusammenhang in deinen Eintraegen, keine Ursache.",
+      "partner_empty": "Noch kein Co-Occurrence-Partner zum Ueberlagern verfuegbar.",
+      "partner_on_day": "{partner} ebenfalls vorhanden"
     },
     "markers": {
       "aria": "Ereignis-Marker auf der gemeinsamen Zeitachse"
