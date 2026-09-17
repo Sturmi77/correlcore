@@ -170,6 +170,10 @@
   let exploreEventsPartnerCandidates: EsmPartnerCandidate[] = [];
   let exploreEventsPartnerPresence: string[] = [];
   let exploreEventsTagHeatmap: TagHeatmapResponse | null = null;
+  // #918: the sheet opens before partner data arrives — keep "still loading"
+  // and "presence data failed" apart from "no partner exists".
+  let exploreEventsPartnerLoading = false;
+  let exploreEventsPartnerUnavailable = false;
 
   function readCompactInsights(): boolean {
     if (!browser) return false;
@@ -799,6 +803,8 @@
     exploreEventsPartner = null;
     exploreEventsPartnerCandidates = [];
     exploreEventsPartnerPresence = [];
+    exploreEventsPartnerLoading = false;
+    exploreEventsPartnerUnavailable = false;
     exploreEventsTagHeatmap = null;
 
     try {
@@ -842,6 +848,7 @@
       exploreEventsLagOffset = response.lag_days ?? null;
 
       exploreEventsLoading = false;
+      exploreEventsPartnerLoading = true;
       void ensureExploreEventsPartnerData(insight, requestId, insightId, capturedRange);
     } catch {
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
@@ -853,6 +860,8 @@
       exploreEventsPartner = null;
       exploreEventsPartnerCandidates = [];
       exploreEventsPartnerPresence = [];
+      exploreEventsPartnerLoading = false;
+      exploreEventsPartnerUnavailable = false;
     } finally {
       if (requestId === exploreEventsRequestId && exploreEventsInsight?.id === insightId) {
         exploreEventsLoading = false;
@@ -900,7 +909,10 @@
     range: TimeseriesRange
   ): Promise<void> {
     const subject = resolveEsmAlignSubject(insight);
-    if (!subject) return;
+    if (!subject) {
+      exploreEventsPartnerLoading = false;
+      return;
+    }
 
     const needsTagPairs = subject.kind === 'tag';
     const needsSymptomCells = subject.kind === 'symptom';
@@ -913,17 +925,21 @@
       .then((data) => ({ ok: true as const, data }))
       .catch(() => ({ ok: false as const, data: null }));
 
-    const [tagPairs, symptomCells, tagHeatmapResult] = await Promise.all([
+    const [tagPairsResult, symptomCellsResult, tagHeatmapResult] = await Promise.all([
       needsTagPairs
         ? cooccurrence && cooccurrence.range === apiRange
-          ? Promise.resolve(cooccurrence)
-          : fetchTagCooccurrence({ range: apiRange }).catch(() => null)
-        : Promise.resolve(null),
+          ? Promise.resolve({ ok: true as const, data: cooccurrence })
+          : fetchTagCooccurrence({ range: apiRange })
+              .then((data) => ({ ok: true as const, data }))
+              .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null }),
       needsSymptomCells
         ? symptomCooccurrence && symptomCooccurrence.range === apiRange
-          ? Promise.resolve(symptomCooccurrence)
-          : fetchSymptomTagCooccurrence({ range: apiRange }).catch(() => null)
-        : Promise.resolve(null),
+          ? Promise.resolve({ ok: true as const, data: symptomCooccurrence })
+          : fetchSymptomTagCooccurrence({ range: apiRange })
+              .then((data) => ({ ok: true as const, data }))
+              .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null }),
       tagHeatmapPromise,
     ]);
 
@@ -932,15 +948,22 @@
     }
 
     const tagPresenceAvailable = tagHeatmapResult.ok && tagHeatmapResult.data !== null;
+    const candidatesAvailable = tagPairsResult.ok && symptomCellsResult.ok;
     exploreEventsTagHeatmap = tagHeatmapResult.data;
+    exploreEventsPartnerLoading = false;
     applyExploreEventsPartner(
       insight,
-      tagPairs,
-      symptomCells,
+      tagPairsResult.data,
+      symptomCellsResult.data,
       tagHeatmapResult.data,
       visibleSymptomHeatmap ?? symptomHeatmap,
       tagPresenceAvailable
     );
+    // A failed candidate lookup produces zero candidates, which would otherwise
+    // read as "no partner exists". A failed presence fetch only matters once a
+    // partner could have been shown.
+    exploreEventsPartnerUnavailable =
+      !candidatesAvailable || (!tagPresenceAvailable && exploreEventsPartnerCandidates.length > 0);
   }
 
   function handleExplorePartnerChange(event: CustomEvent<{ partnerId: string | null }>): void {
@@ -1221,6 +1244,8 @@
       partner={exploreEventsPartner}
       partnerPresenceDates={exploreEventsPartnerPresence}
       partnerCandidates={exploreEventsPartnerCandidates}
+      partnerLoading={exploreEventsPartnerLoading}
+      partnerUnavailable={exploreEventsPartnerUnavailable}
       on:partnerChange={handleExplorePartnerChange}
       on:close={() => {
         exploreEventsOpen = false;
@@ -1228,6 +1253,8 @@
         exploreEventsPartner = null;
         exploreEventsPartnerCandidates = [];
         exploreEventsPartnerPresence = [];
+        exploreEventsPartnerLoading = false;
+        exploreEventsPartnerUnavailable = false;
         exploreEventsTagHeatmap = null;
       }}
     />

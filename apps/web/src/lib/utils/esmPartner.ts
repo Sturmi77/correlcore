@@ -213,6 +213,27 @@ export function partnerDatesInWindow(
   return hits;
 }
 
+/** Natural-frequency coverage of the partner across the rendered windows (#918). */
+export type PartnerWindowCoverage = {
+  /** Windows where the partner appears at least once. */
+  hits: number;
+  /** Rendered windows — the denominator. */
+  windows: number;
+};
+
+export function countWindowsWithPartner(
+  onsets: readonly string[],
+  presenceDates: ReadonlySet<string> | readonly string[],
+  radius = SMALL_MULTIPLES_RADIUS
+): PartnerWindowCoverage {
+  const present = presenceDates instanceof Set ? presenceDates : new Set(presenceDates);
+  let hits = 0;
+  for (const onset of onsets) {
+    if (partnerDatesInWindow(onset, present, radius).length > 0) hits += 1;
+  }
+  return { hits, windows: onsets.length };
+}
+
 export function isPartnerPresentOnDate(
   date: string,
   presenceDates: ReadonlySet<string> | readonly string[]

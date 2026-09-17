@@ -353,3 +353,100 @@ describe('EventAlignedSmallMultiplesSheet partner glyph (#909)', () => {
     expect(select.value).toBe('t-coffee');
   });
 });
+
+describe('EventAlignedSmallMultiplesSheet partner coverage (#918)', () => {
+  const points = [
+    {
+      period_start: '2026-05-10',
+      period_end: '2026-05-10',
+      entry_count: 1,
+      mood_avg: 4,
+      energy_avg: 3,
+      stress_avg: 2,
+      sleep_quality_avg: null,
+    },
+  ];
+  // Two windows far enough apart that a ±7 overlap is impossible.
+  const events = [
+    { onset: '2026-05-10', label: 'Sport' },
+    { onset: '2026-06-20', label: 'Sport' },
+  ];
+  const candidates = [{ id: 't-coffee', label: 'Coffee', kind: 'tag' as const, score: 5 }];
+  const partner = { id: 't-coffee', label: 'Coffee', kind: 'tag' as const };
+
+  it('states how many windows the partner reaches', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner,
+        partnerCandidates: candidates,
+        partnerPresenceDates: ['2026-05-09', '2026-05-12'],
+      },
+    });
+
+    const summary = screen.getByTestId('esm-partner-summary').textContent ?? '';
+    expect(summary).toContain('trends.esm.partner_summary');
+    expect(summary).toContain('"hits":1');
+    expect(summary).toContain('"windows":2');
+  });
+
+  it('counts a window once even when the partner appears on several days', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner,
+        partnerCandidates: candidates,
+        partnerPresenceDates: ['2026-05-09', '2026-05-10', '2026-06-21'],
+      },
+    });
+
+    expect(screen.getByTestId('esm-partner-summary').textContent).toContain('"hits":2');
+  });
+
+  it('shows a loading state instead of the empty message while the lookup runs', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: null,
+        partnerCandidates: [],
+        partnerPresenceDates: [],
+        partnerLoading: true,
+      },
+    });
+
+    expect(screen.getByTestId('esm-partner-loading')).toBeTruthy();
+    expect(screen.queryByTestId('esm-partner-empty')).toBeNull();
+  });
+
+  it('explains a failed presence fetch instead of rendering a silent overlay', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points,
+        metric: 'mood_avg',
+        partner: null,
+        partnerCandidates: candidates,
+        partnerPresenceDates: [],
+        partnerUnavailable: true,
+      },
+    });
+
+    expect(screen.getByTestId('esm-partner-error')).toBeTruthy();
+    expect(screen.queryByTestId('esm-partner-select')).toBeNull();
+    expect(screen.queryByTestId('esm-partner-summary')).toBeNull();
+  });
+});
