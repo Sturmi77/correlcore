@@ -119,6 +119,8 @@
   $: canChoosePartner = partnerCandidates.length > 0;
   // #918: how many windows the partner actually reaches — a count with a
   // denominator, not a rate (v1c decision in FEATURE_EVENT_INTERACTION_TIMELINE).
+  // Suppressed once the #920 split counts render: "4 of 9" and "4 with · 5
+  // without" are the same fact, and the split line says strictly more.
   $: partnerCoverage = showPartnerOverlay
     ? countWindowsWithPartner(
         events.map((event) => event.onset),
@@ -235,8 +237,10 @@
     ];
   })();
 
+  // Empty only when the line is genuinely off screen: the header coverage
+  // sentence keys off this to avoid stating the same numbers twice.
   $: splitCountsLabel =
-    splitMedians && partner
+    splitMedians && partner && rows.length > 0
       ? $_('trends.esm.split_counts', {
           values: {
             partner: partner.label,
@@ -314,7 +318,7 @@
           </label>
           {#if showPartnerOverlay && partner}
             <!-- Count first, disclaimer second: the number is what the user came for. -->
-            {#if partnerCoverage}
+            {#if partnerCoverage && !splitCountsLabel}
               <p class="esm__partner-summary" data-testid="esm-partner-summary">
                 {$_('trends.esm.partner_summary', {
                   values: {
