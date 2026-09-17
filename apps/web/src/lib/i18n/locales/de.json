@@ -633,17 +633,20 @@
         "legend": "Hervorgehobene Tage zeigen, wann angepinnte Zeilen gemeinsam auftreten — ein Zusammenhang in deinen Eintraegen, keine Ursache.",
         "cursor": "{subjects} an diesem Tag",
         "marker": "Koinzidenz: {subjects}",
+        "summary": "Beide an {both} von {aTotal} Tagen mit {a} · {both} von {bTotal} Tagen mit {b}",
         "and": "und"
       },
       "lag1": {
         "toggle": "Naechster-Tag-Sequenz hervorheben",
         "toggle_aria": "Tage hervorheben, an denen eine angepinnte Zeile am Folgetag von der naechsten gefolgt wird",
         "need_pins": "Pinnen Sie mindestens zwei Zeilen, um Folgetag-Sequenzen hervorzuheben.",
-        "empty": "Mindestens {min} Folgetag-Sequenzen bei angepinnten Zeilen noetig, um Lag-1 hervorzuheben.",
+        "empty": "Mindestens {min} Folgetag-Sequenzen in der Pin-Reihenfolge noetig, um Lag-1 hervorzuheben.",
         "legend": "Linien markieren, wann eine angepinnte Zeile am Folgetag von der naechsten gefolgt wird — ein Zusammenhang in deinen Eintraegen, keine Ursache.",
         "cursor": "{from} dann {to} (+1 Tag)",
-        "marker": "Sequenz: {from} → {to} (+1d)"
+        "marker": "Sequenz: {from} → {to} (+1d)",
+        "summary": "{from} dann {to}: {forward} von {forwardTotal} · {to} dann {from}: {reverse} von {reverseTotal}"
       },
+      "frequency_note": "Zahlen gelten nur fuer den gewaehlten Zeitraum.",
       "zoom": {
         "label": "Zeitachsen-Zoom",
         "decrease_aria": "Herauszoomen (groebere Spalten)",

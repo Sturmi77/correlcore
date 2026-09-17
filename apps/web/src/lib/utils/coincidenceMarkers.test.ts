@@ -7,6 +7,7 @@ import {
   coincidenceDaysToMarkers,
   deriveCoincidence,
   isRowActiveOnDay,
+  summarizeCoincidence,
   type CoincidenceRow,
 } from './coincidenceMarkers';
 
@@ -94,6 +95,58 @@ describe('deriveCoincidence', () => {
     const sparseSleep = row('t2', 'Sleep', [{ date: '2026-05-01', count: 1 }]);
     const result = deriveCoincidence(['t1', 't2'], [sport, sparseSleep], { minDays: 1 });
     expect(result.canHighlight).toBe(true);
+  });
+});
+
+describe('summarizeCoincidence (#917)', () => {
+  const sport = row('t1', 'Sport', [
+    { date: '2026-05-01', count: 1 },
+    { date: '2026-05-03', count: 1 },
+    { date: '2026-05-05', count: 1 },
+  ]);
+  const sleep = row('t2', 'Sleep', [
+    { date: '2026-05-01', count: 1 },
+    { date: '2026-05-05', count: 1 },
+  ]);
+
+  it('returns nothing when fewer than two pins resolve', () => {
+    expect(summarizeCoincidence(['t1'], [sport, sleep])).toEqual([]);
+  });
+
+  it('counts shared days plus a denominator per subject', () => {
+    expect(summarizeCoincidence(['t1', 't2'], [sport, sleep])).toEqual([
+      {
+        a: { id: 't1', label: 'Sport' },
+        b: { id: 't2', label: 'Sleep' },
+        both: 2,
+        aTotal: 3,
+        bTotal: 2,
+      },
+    ]);
+  });
+
+  it('counts symptom intensity days towards the denominator', () => {
+    const headache = row('s1', 'Headache', [
+      { date: '2026-05-01', count: 0, max_intensity: 2 },
+      { date: '2026-05-09', count: 0, max_intensity: 1 },
+      { date: '2026-05-10', count: 0, max_intensity: 0 },
+    ]);
+    const [pair] = summarizeCoincidence(['t1', 's1'], [sport, headache]);
+    expect(pair?.both).toBe(1);
+    expect(pair?.bTotal).toBe(2);
+  });
+
+  it('reports every pair, including one that never coincides', () => {
+    const coffee = row('t3', 'Coffee', [{ date: '2026-05-09', count: 1 }]);
+    const summaries = summarizeCoincidence(['t1', 't2', 't3'], [sport, sleep, coffee]);
+    expect(summaries).toHaveLength(3);
+    expect(summaries[2]).toEqual({
+      a: { id: 't2', label: 'Sleep' },
+      b: { id: 't3', label: 'Coffee' },
+      both: 0,
+      aTotal: 2,
+      bTotal: 1,
+    });
   });
 });
 
