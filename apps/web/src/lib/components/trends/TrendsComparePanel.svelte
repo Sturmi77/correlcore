@@ -679,9 +679,7 @@
             {coincidenceHint}
           </p>
         {:else if coincidenceActive}
-          <p class="compare__coincidence-legend" data-testid="trends-compare-coincidence-legend">
-            {$_('trends.compare.coincidence.legend')}
-          </p>
+          <!-- Count first, disclaimer second: the number is what the user came for. -->
           {#each coincidenceSummaryLines as line, index (index)}
             <p
               class="compare__coincidence-summary"
@@ -690,6 +688,9 @@
               {line}
             </p>
           {/each}
+          <p class="compare__coincidence-legend" data-testid="trends-compare-coincidence-legend">
+            {$_('trends.compare.coincidence.legend')}
+          </p>
         {/if}
       </div>
       <div class="compare__coincidence" data-testid="trends-compare-lag1">
@@ -709,14 +710,14 @@
             {lag1Hint}
           </p>
         {:else if lag1Active}
-          <p class="compare__coincidence-legend" data-testid="trends-compare-lag1-legend">
-            {$_('trends.compare.lag1.legend')}
-          </p>
           {#each lag1SummaryLines as line, index (index)}
             <p class="compare__coincidence-summary" data-testid="trends-compare-lag1-summary">
               {line}
             </p>
           {/each}
+          <p class="compare__coincidence-legend" data-testid="trends-compare-lag1-legend">
+            {$_('trends.compare.lag1.legend')}
+          </p>
         {/if}
       </div>
       {#if showFrequencyNote}
