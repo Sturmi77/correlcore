@@ -152,3 +152,21 @@ Consistent with the Mobile/Web Composition amendment: one responsive component
 (mobile-lean/collapsing, desktop-richer inline), not a separate desktop header.
 Enforced by `src/routes/screen-chrome.test.ts` and
 `src/routes/control-primitives.test.ts`.
+
+## 2026-09-18 Surface Layers Amendment (ADR-0043)
+
+The five-primary-screen contract remains canonical.
+[ADR-0043](0043-insight-surface-layers.md) adds a rule for **where** analytical density is
+allowed (four layers: answer / verification / laboratory / report) and introduces layers 2
+and 4 as **secondary surfaces inside the insights route**, not as new primary screens.
+
+Two items in this ADR are affected:
+
+- The Consequences item "the `InsightMatrix.svelte` component … should be evaluated
+  against the new `InsightFeed` + `InsightCard` pattern … and removed or repurposed if
+  redundant" is **retired**. The component is not redundant, it is misplaced: it moves to
+  layer 4 as a report table. Note that `exportPng()` lives inside it, so it must not be
+  dropped from the `/insights` default before the report surface exists.
+- The M5 amendment "the matrix remains a secondary drilldown inside `/insights`" is
+  confirmed in intent and made implementable — the section model has no
+  "present but not in the entry surface" state, so a drilldown needs a surface.
