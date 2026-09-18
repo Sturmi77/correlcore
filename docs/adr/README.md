@@ -52,6 +52,8 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-N-03](ADR-N-03-custom-marker-normalisation.md)                     | Custom marker normalisation on write                         | Accepted   | 2026-07-15 |
 | [ADR-0040](0040-selfhost-auth-edge-passthrough.md)                      | Self-Host-Auth-Edge: Ein-Regel-Passthrough + Bearer-Fallback | Accepted   | 2026-07-25 |
 | [ADR-0041](0041-tag-habit-relabeling-and-onboarding-habit-selection.md) | Tag/Habit-Relabeling + Habit-Auswahl im Onboarding           | Proposed   | 2026-07-27 |
+| [ADR-0042](0042-health-connect-bridge-strategy.md)                      | Health Connect via a thin custom Capacitor plugin            | Accepted   | 2026-08-02 |
+| [ADR-0043](0043-insight-surface-layers.md)                              | Insight Surface Layers (depth on demand)                     | Proposed   | 2026-09-18 |
 
 ## Kurzübersicht der Entscheidungen
 
@@ -162,6 +164,10 @@ Behebt einen wiederkehrenden Bug, bei dem der Landing-Login „E-Mail oder Passw
 ### ADR-0041 – Tag/Habit-Relabeling + Habit-Auswahl im Onboarding
 
 Hält das Zielbild für die Reduktion der Tag/Habit/Symptom-Begriffsüberlappung fest (#552, Option 3), nachdem die reine Erklärung (#541) und die Copy-Klarstellung (#552, Option 2) bereits umgesetzt sind. Befund: Habit ist **kein eigener Typ**, sondern ein **Tag mit `habit_type`/`target_frequency`** (ADR-0012); Symptom ist ein eigenes Objekt (ADR-0008). Entscheidung (Proposed): (1) Habit im UI explizit als **Tag-Eigenschaft** führen (Hierarchie Tag ⊃ Habit sichtbar), Terminologie über Onboarding/Settings/Trends/Insights vereinheitlichen; (2) der Onboarding-Flow muss dann **auch Habits auswählbar** machen — optionale „als Gewohnheit verfolgen / Ziel setzen"-Aktion, die das bestehende `habit_type`/`target_frequency`-Modell nutzt; (3) **kein neues Datenmodell**. Constraints: non-gamification, non-medical, Sequenz bleibt lean (Habit-Affordance optional). Umsetzung in eigenem Follow-up-Issue.
+
+### ADR-0043 – Insight Surface Layers (depth on demand)
+
+Records the structural answer to the visualization inventory (#928): the seven overlaps and nine gaps across 19 visualization forms share one cause — analytical seriousness is currently signalled through **density in the entry surface** (eight default sections in `/insights`, `correlation_matrix` ordered before `insight_feed`). Decision: four surface layers with density bound to intent — **1 Answer** (one sentence, one window, one confidence vocabulary), **2 Verification** (a single hypothesis made checkable: with/without, course, raw data — does not exist yet), **3 Laboratory** (`/trends`, density is correct because the user chose it), **4 Report** (export for a doctor's appointment — currently two fragments and no surface; `pdf` exists in no layer). Layers 2 and 4 are **secondary surfaces inside the insights route**, so ADR-0017's five-primary-screen contract stays intact. Layers form one n:n stack per account, never one home per segment (#930 G6). Evidence language is **natural frequencies with two denominators**; Lift/p/FDR remain internal gates. A **non-result is a result** with equal visual weight — which requires redefining DESIGN_DOCUMENT §1.6 from Time-to-First-Insight to **Time-to-First-Answer**. Reducing layer 1 is gated on a landing place (removing `correlation_matrix` from the default would delete the product's only PNG export, `exportPng()`) and is a **versioned preference migration**, not a default flip, because `merge()` treats stored preferences as authoritative. Retires the ADR-0017 instruction to evaluate or remove `InsightMatrix.svelte`: the component is not redundant, it is misplaced, and moves to layer 4 as a report table. The category-anchor question (#930 G3) is explicitly not decided here.
 
 ---
 
