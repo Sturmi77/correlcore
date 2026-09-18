@@ -30,8 +30,8 @@ Evidence in the code at the time of writing:
 - A non-result ("X changed nothing") cannot be expressed at all, so the product can only
   ever show findings — which structurally biases it towards the accidental finding.
 - `pdf` appears in neither `apps/web/src` nor `backend/app`. CSV/JSON/ZIP export lives in
-  `/settings/data` (a GDPR surface); PNG export lives *inside* `InsightMatrix.svelte`
-  (`exportPng()`). The "export for a doctor's appointment" job named as *critical* in
+  `/settings/data` (a GDPR surface); PNG export lives _inside_ `InsightMatrix.svelte`
+  (`exportPng()`). The "export for a doctor's appointment" job named as _critical_ in
   DESIGN_DOCUMENT §2.10 has no home.
 
 Adding or removing individual components cannot resolve this, because each of the 19 forms
@@ -47,12 +47,12 @@ drilldown stayed unimplemented for two sprints because no surface existed to rec
 CorrelCore organises analytical surfaces into four layers. The guiding principle is
 **depth on demand instead of density at the entrance**.
 
-| Layer | Name | Job | Density | Today |
-| --- | --- | --- | --- | --- |
-| 1 | **Answer** | State what was found, in one sentence, in natural language | Minimal — one statement, one window, one confidence vocabulary | `/` and `/insights` exist |
-| 2 | **Verification** | Make a single hypothesis checkable: with/without, course, raw data | Medium, progressive disclosure | **Does not exist** |
-| 3 | **Laboratory** | Let the user dig: compare metrics, tags, windows | High — density is correct here, because the user chose it | `/trends` exists |
-| 4 | **Report** | Produce something to take away (doctor, therapist, own records) | High — a printout is supposed to be a table | **Two fragments, no surface** |
+| Layer | Name             | Job                                                                | Density                                                        | Today                         |
+| ----- | ---------------- | ------------------------------------------------------------------ | -------------------------------------------------------------- | ----------------------------- |
+| 1     | **Answer**       | State what was found, in one sentence, in natural language         | Minimal — one statement, one window, one confidence vocabulary | `/` and `/insights` exist     |
+| 2     | **Verification** | Make a single hypothesis checkable: with/without, course, raw data | Medium, progressive disclosure                                 | **Does not exist**            |
+| 3     | **Laboratory**   | Let the user dig: compare metrics, tags, windows                   | High — density is correct here, because the user chose it      | `/trends` exists              |
+| 4     | **Report**       | Produce something to take away (doctor, therapist, own records)    | High — a printout is supposed to be a table                    | **Two fragments, no surface** |
 
 Rules:
 
@@ -101,7 +101,7 @@ that can only show findings has to manufacture them.
 **Consequence for the success metrics:** DESIGN_DOCUMENT §1.6
 "Time-to-First-Insight < 14 days" becomes counter-productive under this rule, because it
 rewards producing a finding. It is redefined as **Time-to-First-Answer** — the first
-defensible statement, finding *or* non-finding.
+defensible statement, finding _or_ non-finding.
 
 ### 6. Reducing layer 1 requires a landing place and a migration
 
@@ -113,20 +113,20 @@ and would otherwise disappear with it.
 Furthermore, changing `DEFAULT_INSIGHT_SECTIONS` does **not** reach existing users:
 `merge()` in `apps/web/src/lib/utils/sectionPreferences.ts` treats stored preferences as
 authoritative and only appends missing keys. The only effective lever — removing the key
-from `validKeys` so `coerce()` drops it — discards the key for *everyone*, including users
+from `validKeys` so `coerce()` drops it — discards the key for _everyone_, including users
 who deliberately enabled and reordered the section. Any reduction of layer 1 is therefore a
 **versioned preference migration** with an explicit acceptance criterion, not a default
 flip.
 
 ## Alternatives considered
 
-| Option | Pros | Cons |
-| --- | --- | --- |
-| **Keep the status quo** (add charts per feature) | No architectural work | Entry surface keeps growing; density signals seriousness; overlaps recur with every feature |
-| **Delete redundant components** | Immediately less clutter | Destroys real analytical capability; each of the 19 forms has a defensible strength; does not answer "where is density allowed" |
-| **Configurable dashboard** (user assembles their own hub) | Maximum flexibility | Shifts the editorial decision onto the user; contradicts the 60-second principle; ADR-0017 already rejected the mini-dashboard direction |
-| **Dual strength × confidence metric** (Exist.io model) | State of the art, compact | Too abstract for the target audience — already rejected in ADR-0017; natural frequencies communicate the same thing concretely |
-| **Four layers, density bound to intent** ✅ | Retains capability, gives every component a correct home, makes claims checkable, gives export a surface | Requires two new secondary surfaces (layers 2 and 4) before layer 1 can be reduced |
+| Option                                                    | Pros                                                                                                     | Cons                                                                                                                                     |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Keep the status quo** (add charts per feature)          | No architectural work                                                                                    | Entry surface keeps growing; density signals seriousness; overlaps recur with every feature                                              |
+| **Delete redundant components**                           | Immediately less clutter                                                                                 | Destroys real analytical capability; each of the 19 forms has a defensible strength; does not answer "where is density allowed"          |
+| **Configurable dashboard** (user assembles their own hub) | Maximum flexibility                                                                                      | Shifts the editorial decision onto the user; contradicts the 60-second principle; ADR-0017 already rejected the mini-dashboard direction |
+| **Dual strength × confidence metric** (Exist.io model)    | State of the art, compact                                                                                | Too abstract for the target audience — already rejected in ADR-0017; natural frequencies communicate the same thing concretely           |
+| **Four layers, density bound to intent** ✅               | Retains capability, gives every component a correct home, makes claims checkable, gives export a surface | Requires two new secondary surfaces (layers 2 and 4) before layer 1 can be reduced                                                       |
 
 ## Consequences
 
