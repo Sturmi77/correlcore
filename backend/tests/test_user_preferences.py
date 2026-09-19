@@ -53,6 +53,7 @@ def _make_preferences(user: User) -> UserPreference:
     preferences.onboarding_maturity_intro_seen = False
     preferences.cycle_tracking_enabled = True
     preferences.home_weekday_day_trend_enabled = True
+    preferences.trend_window_days = 28
     preferences.health_connect_sync_sleep_enabled = True
     preferences.dismissed_insight_keys = []
     preferences.reached_milestone_keys = []
@@ -74,6 +75,26 @@ def _make_profile(user: User) -> UserProfile:
     profile.created_at = now
     profile.updated_at = now
     return profile
+
+
+@pytest.mark.asyncio
+async def test_update_user_preferences_sets_trend_window_days() -> None:
+    user = make_user()
+    preferences = _make_preferences(user)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_optional_result(preferences))
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    out = await update_user_preferences(
+        db,
+        user_id=user.id,
+        payload=UserPreferencesUpdate(trend_window_days=14),
+    )
+
+    assert out.trend_window_days == 14
+    response = to_preferences_response(out)
+    assert response.trend_window_days == 14
 
 
 @pytest.mark.asyncio

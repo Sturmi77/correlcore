@@ -16,7 +16,8 @@
     type TimeseriesResponse,
   } from '$lib/api/stats';
   import type { InsightMaturity } from '$lib/api/insights';
-  import { listHabits, type HabitStatsResponse } from '$lib/api/habits';
+  import { listHabits, type HabitStatsResponse, type HabitWindow } from '$lib/api/habits';
+  import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
   import { listSymptomsForEntry, listVisibleSymptoms } from '$lib/api/symptoms';
   import { listTagsForEntry, listVisibleTags, type TagResponse } from '$lib/api/tags';
   import type { MetricKey } from '$lib/utils/charts';
@@ -31,11 +32,15 @@
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import {
     rangeToDays,
-    rangeToHabitWindow,
     readSmoothingPreference,
     smoothingWindowDays,
     TREND_SMOOTHING_STORAGE_KEY,
   } from '$lib/utils/trendsRange';
+  import {
+    coerceTrendWindowDays,
+    trendWindowDaysToTimeseriesRange,
+    type TrendWindowDays,
+  } from '$lib/utils/trendWindowDays';
   import {
     buildWorkContextHeatmap,
     type WorkContextHeatmapResponse,
@@ -61,17 +66,23 @@
   import {
     readCompareMode,
     readCompareSortMode,
+    readCompareZoomStage,
     readCompareCoincidenceHighlight,
     readCompareLag1Highlight,
     readCompareOverlayHintDismissed,
     writeCompareMode,
     writeCompareSortMode,
+    writeCompareZoomStage,
     writeCompareCoincidenceHighlight,
     writeCompareLag1Highlight,
     writeCompareOverlayHintDismissed,
     type CompareMode,
     type CompareSortMode,
   } from '$lib/utils/comparePanelSettings';
+  import { clampZoomStageForWindow, type CompareZoomStageIndex } from '$lib/utils/compareAxisZoom';
+  import EventAlignedSmallMultiplesSheet from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
+  import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
+  import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import {
     EMPTY_COMPARE_OVERLAY_AVAILABILITY,
     type CompareOverlayAvailability,
@@ -79,11 +90,10 @@
 
   type TrendTab = 'compare' | 'habits';
 
-  const rangeOptions: { id: TimeseriesRange; label: string }[] = [
-    { id: 'week', label: 'trends.range.week' },
-    { id: 'month', label: 'trends.range.month' },
-    { id: 'quarter', label: 'trends.range.quarter' },
-    { id: 'year', label: 'trends.range.year' },
+  const rangeOptions: { id: string; label: string }[] = [
+    { id: '14', label: 'trends.range.d14' },
+    { id: '28', label: 'trends.range.d28' },
+    { id: '90', label: 'trends.range.d90' },
   ];
 
   const tabs: { id: TrendTab; label: string }[] = [
@@ -138,12 +148,17 @@
   let compareLag1Highlight = false;
   let compareOverlayHintDismissed = false;
   let compareOverlayAvailability: CompareOverlayAvailability = EMPTY_COMPARE_OVERLAY_AVAILABILITY;
+  let compareFocusedClusterId: number | null = null;
+  let compareZoomStage: CompareZoomStageIndex = readCompareZoomStage();
+  let compareTagClusterLabels: { cluster_id: number; label: string }[] = [];
+  let compareEsmOpen = false;
+  let compareEsmWindows: EventWindow[] = [];
   let mobileMedia: MediaQueryList | null = null;
   let activeDevFixtureKey = '';
 
   const COMPARE_LAYERS_STORAGE_KEY = 'cc_trend_compare_layers';
 
-  $: range = $analysisRange;
+  $: windowDays = $analysisRange;
   $: panelMaturity = $devForceVisualizations ? devMaturity : $insightStore.insightMaturity;
   $: noteEntryDates = trendEntries
     .filter((entry) => hasNote(entry))
@@ -162,13 +177,11 @@
     return `${$devPhase.presetId}:${$devPhase.entryCount}:${$devPhase.onboardingCompleted}`;
   }
 
-  async function loadTrends(rangeOverride?: TimeseriesRange): Promise<void> {
+  async function loadTrends(rangeOverride?: TrendWindowDays): Promise<void> {
     if ($auth.status !== 'authenticated') return;
-    // Compare axis zoom (CAZ-0): always load a 365d / year window; range chips are hidden.
-    const uiRange = rangeOverride ?? range;
-    const activeRange: TimeseriesRange = activeTab === 'compare' ? 'year' : uiRange;
-    const habitWindow = rangeToHabitWindow(uiRange);
-    const compareWindowDays = activeTab === 'compare' ? 365 : undefined;
+    const activeWindowDays: TrendWindowDays = rangeOverride ?? windowDays;
+    const activeRange = trendWindowDaysToTimeseriesRange(activeWindowDays);
+    const habitWindow = activeWindowDays as HabitWindow;
     loading = true;
     error = '';
     // Drop previous context rows and entry markers immediately so an empty
@@ -195,15 +208,12 @@
         trendEntries = fixture.entries;
         workContextHeatmap = buildWorkContextHeatmap(
           fixture.entries,
-          dateWindow(activeRange, compareWindowDays)
+          dateWindow(activeRange, activeWindowDays)
         );
         return;
       }
 
-      const { start_date, end_date } = dateWindow(
-        activeRange,
-        activeTab === 'habits' ? habitWindow : compareWindowDays
-      );
+      const { start_date, end_date } = dateWindow(activeRange, activeWindowDays);
       // Soft-fail the symptom heatmap: a single 401/5xx must not blank the
       // whole Compare tab (Promise.all would reject on the first failure).
       const symptomPromise =
@@ -369,17 +379,15 @@
   $: if ($auth.status === 'authenticated' && !trendsLoaded && !loading) {
     void loadTrends();
   }
-  // Compare ignores analysisRange chips (fixed year window). Habits still sync to the control.
   $: if (
     $auth.status === 'authenticated' &&
     timeseries &&
-    activeTab !== 'compare' &&
-    timeseries.range !== $analysisRange &&
+    timeseries.range !== trendWindowDaysToTimeseriesRange($analysisRange) &&
     !loading
   ) {
     void loadTrends($analysisRange);
   }
-  $: habitWindow = rangeToHabitWindow(range);
+  $: habitWindow = $analysisRange as HabitWindow;
   $: if (
     $auth.status === 'authenticated' &&
     $devForceVisualizations &&
@@ -402,7 +410,7 @@
   // Smoothing is available for every range; week uses a 3-day window so the
   // daily shape stays readable (see smoothingWindowDays).
   $: smoothingAvailable = true;
-  $: displayRange = (activeTab === 'compare' ? 'year' : range) as TimeseriesRange;
+  $: displayRange = trendWindowDaysToTimeseriesRange(windowDays);
   $: displayTimeseries =
     timeseries && smoothing && smoothingAvailable
       ? {
@@ -411,6 +419,20 @@
         }
       : timeseries;
   $: topInsight = $insightStore.latest;
+  $: compareEsmUnlocked = isSmallMultiplesUnlocked(panelMaturity?.phase ?? null);
+
+  function setCompareZoomStage(next: CompareZoomStageIndex): void {
+    compareZoomStage = next;
+    writeCompareZoomStage(next);
+  }
+
+  function compareZoomOut(): void {
+    setCompareZoomStage(clampZoomStageForWindow(compareZoomStage + 1, $analysisRange));
+  }
+
+  function compareZoomIn(): void {
+    setCompareZoomStage(clampZoomStageForWindow(compareZoomStage - 1, $analysisRange));
+  }
 
   onMount(() => {
     smoothing = readSmoothingPreference(typeof localStorage !== 'undefined' ? localStorage : null);
@@ -427,6 +449,11 @@
     updateCompactTrends();
     mobileMedia?.addEventListener('change', updateCompactTrends);
     // loadTrends runs via the auth-reactive block above (avoids racing hydrate).
+    void fetchUserPreferences()
+      .then((prefs) => analysisRange.hydrateFromServer(prefs.trend_window_days))
+      .catch(() => {
+        // Keep local cache when preferences are unavailable.
+      });
     void loadInsights();
     const unregisterRefresh = registerPageRefresh(async () => {
       await Promise.all([loadTrends(), loadInsights()]);
@@ -455,11 +482,14 @@
           tabOptions={trendTabOptions}
           showCompareFilters={activeTab === 'compare'}
           embedCompareFilters={true}
-          showRangeControl={activeTab !== 'compare'}
+          showRangeControl={true}
           on:rangeChange={(event) => {
-            const nextRange = event.detail.value as TimeseriesRange;
-            setAnalysisRange(nextRange);
-            void loadTrends(nextRange);
+            const nextDays = coerceTrendWindowDays(event.detail.value);
+            setAnalysisRange(nextDays);
+            void loadTrends(nextDays);
+            void updateUserPreferences({ trend_window_days: nextDays }).catch(() => {
+              // Optimistic local window; server sync can retry on next visit.
+            });
           }}
           on:tabChange={(event) => {
             activeTab = event.detail.value as TrendTab;
@@ -519,7 +549,8 @@
         >
           <TrendsComparePanel
             points={displayTimeseries?.points ?? []}
-            range="year"
+            range={displayRange}
+            windowDays={$analysisRange}
             enabled={metrics}
             tagHeatmap={heatmap}
             {symptomHeatmap}
@@ -532,6 +563,10 @@
             compactChrome={compactTrends}
             clusterRefreshToken={compareClusterRefreshToken}
             bind:clustersAvailableBinding={compareClustersAvailable}
+            bind:focusedClusterId={compareFocusedClusterId}
+            bind:zoomStage={compareZoomStage}
+            bind:tagClusterLabelsBinding={compareTagClusterLabels}
+            esmUnlocked={compareEsmUnlocked}
             bind:mode={compareMode}
             bind:sortMode={compareSortMode}
             bind:coincidenceHighlight={compareCoincidenceHighlight}
@@ -541,6 +576,10 @@
             noteDates={noteEntryDates}
             on:selectDate={(event) => void openHistory(event.detail.date)}
             on:layerChange={(event) => setCompareLayers(event.detail)}
+            on:checkQuestion={(event) => {
+              compareEsmWindows = event.detail.windows;
+              compareEsmOpen = true;
+            }}
           />
         </div>
         <TrendsHealthContext {healthContext} maturity={panelMaturity} {cycleEntries} />
@@ -558,11 +597,29 @@
         mode={compareMode}
         sortMode={compareSortMode}
         clustersAvailable={compareClustersAvailable}
+        focusedClusterId={compareFocusedClusterId}
+        tagClusterLabels={compareTagClusterLabels}
+        zoomStage={compareZoomStage}
+        windowDays={$analysisRange}
+        rangeOptions={rangeControlOptions}
         coincidenceHighlight={compareCoincidenceHighlight}
         lag1Highlight={compareLag1Highlight}
         overlayAvailability={compareOverlayAvailability}
         overlayHintDismissed={compareOverlayHintDismissed}
         on:close={() => (compareSettingsOpen = false)}
+        on:focusClusterChange={(event) => {
+          compareFocusedClusterId = event.detail.clusterId;
+        }}
+        on:zoomIn={compareZoomIn}
+        on:zoomOut={compareZoomOut}
+        on:rangeChange={(event) => {
+          const nextDays = coerceTrendWindowDays(event.detail.value);
+          setAnalysisRange(nextDays);
+          void loadTrends(nextDays);
+          void updateUserPreferences({ trend_window_days: nextDays }).catch(() => {
+            // Optimistic local window; server sync can retry on next visit.
+          });
+        }}
         on:coincidenceChange={(event) => {
           compareCoincidenceHighlight = event.detail.value;
           writeCompareCoincidenceHighlight(event.detail.value);
@@ -613,6 +670,18 @@
       error={historyError}
       details={historyDetails}
       on:close={() => (historyOpen = false)}
+    />
+
+    <EventAlignedSmallMultiplesSheet
+      open={compareEsmOpen}
+      events={compareEsmWindows}
+      points={displayTimeseries?.points ?? []}
+      metric="mood_avg"
+      phase={panelMaturity?.phase ?? null}
+      on:close={() => {
+        compareEsmOpen = false;
+        compareEsmWindows = [];
+      }}
     />
   {/if}
 </main>

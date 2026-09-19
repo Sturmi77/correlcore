@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAxisBuckets,
   clampZoomStage,
+  clampZoomStageForWindow,
   countBucketActiveDays,
   findBucketForDate,
   formatBucketRangeLabel,
+  maxZoomStageForWindow,
   meanBucketMetric,
   stageDays,
   sumBucketCounts,
@@ -35,6 +37,18 @@ describe('compareAxisZoom', () => {
     expect(clampZoomStage(-1)).toBe(0);
     expect(clampZoomStage(9)).toBe(4);
     expect(clampZoomStage(2.9)).toBe(2);
+  });
+
+  it('limits max zoom stage to bucket sizes that fit the window', () => {
+    expect(maxZoomStageForWindow(14)).toBe(3);
+    expect(maxZoomStageForWindow(28)).toBe(4);
+    expect(maxZoomStageForWindow(90)).toBe(4);
+  });
+
+  it('clamps zoom stage for the active analysis window', () => {
+    expect(clampZoomStageForWindow(4, 14)).toBe(3);
+    expect(clampZoomStageForWindow(9, 28)).toBe(4);
+    expect(clampZoomStageForWindow(-1, 90)).toBe(0);
   });
 
   it('builds one bucket per day at stage 0', () => {

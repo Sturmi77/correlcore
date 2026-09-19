@@ -5659,6 +5659,16 @@
             "title": "Reached Milestone Keys",
             "type": "array"
           },
+          "trend_window_days": {
+            "default": 28,
+            "enum": [
+              14,
+              28,
+              90
+            ],
+            "title": "Trend Window Days",
+            "type": "integer"
+          },
           "updated_at": {
             "format": "date-time",
             "title": "Updated At",
@@ -5855,6 +5865,22 @@
               }
             ],
             "title": "Reached Milestone Keys"
+          },
+          "trend_window_days": {
+            "anyOf": [
+              {
+                "enum": [
+                  14,
+                  28,
+                  90
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend Window Days"
           }
         },
         "title": "UserPreferencesUpdate",

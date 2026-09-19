@@ -11,7 +11,12 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.insight import Insight
 from app.models.user_preference import UserPreference
-from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
+from app.schemas.user_preferences import (
+    TREND_WINDOW_DAYS_DEFAULT,
+    TREND_WINDOW_DAYS_VALUES,
+    UserPreferencesResponse,
+    UserPreferencesUpdate,
+)
 from app.services.home_sections import merge_home_sections, normalize_home_sections
 from app.services.insight_sections import (
     merge_insight_sections,
@@ -200,6 +205,9 @@ async def update_user_preferences(
             current = preferences.last_seen_insight_at
             if current is not None and value < current:
                 continue
+        if key == "trend_window_days":
+            if value not in TREND_WINDOW_DAYS_VALUES:
+                continue
         setattr(preferences, key, value)
 
     await db.flush()
@@ -234,6 +242,11 @@ def to_preferences_response(preferences: UserPreference) -> UserPreferencesRespo
         "onboarding_maturity_intro_seen": preferences.onboarding_maturity_intro_seen,
         "cycle_tracking_enabled": preferences.cycle_tracking_enabled,
         "home_weekday_day_trend_enabled": preferences.home_weekday_day_trend_enabled,
+        "trend_window_days": (
+            preferences.trend_window_days
+            if preferences.trend_window_days in TREND_WINDOW_DAYS_VALUES
+            else TREND_WINDOW_DAYS_DEFAULT
+        ),
         "health_connect_sync_sleep_enabled": preferences.health_connect_sync_sleep_enabled,
         "dismissed_insight_keys": preferences.dismissed_insight_keys,
         "reached_milestone_keys": preferences.reached_milestone_keys,

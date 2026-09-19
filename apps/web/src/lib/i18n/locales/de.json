@@ -485,6 +485,9 @@
     "empty": "Noch keine Eintr\u00e4ge im gew\u00e4hlten Zeitraum.",
     "empty_cta": "Eintrag erfassen",
     "range": {
+      "d14": "14T",
+      "d28": "28T",
+      "d90": "90T",
       "week": "7T",
       "month": "30T",
       "quarter": "90T",
@@ -637,6 +640,7 @@
       "overlay_hint_lead": "Zwei Zeilen gepinnt.",
       "overlay_hint_body": "Koinzidenz hervorheben?",
       "overlay_hint_dismiss_aria": "Hinweis zur Hervorhebung schliessen",
+      "check_question": "diese Frage prüfen",
       "zoom": {
         "label": "Zeitachsen-Zoom",
         "decrease_aria": "Herauszoomen (groebere Spalten)",
@@ -916,7 +920,12 @@
       "digest_enabled": "Woechentliche Erkenntnis-Zusammenfassung",
       "digest_hint": "Opt-in fuer eine In-App-Zusammenfassung deiner staerksten Erkenntnisse der letzten Woche. Bei genug Erkenntnissen erscheint die erste Zusammenfassung direkt nach dem Aktivieren, sonst nach dem naechsten Wochenlauf (Sonntag).",
       "digest_pending_hint": "Dein erster Digest ist noch nicht bereit. Aktualisiere oben die Erkenntnisse oder warte auf den naechsten Wochenlauf (Sonntag).",
-      "digest_preview_link": "Digest-Vorschau oeffnen"
+      "digest_preview_link": "Digest-Vorschau oeffnen",
+      "trend_window_heading": "Analysefenster",
+      "trend_window_hint": "Gilt fuer Home, Trends und Erkenntnisse. Ein Fenster pro Aussage.",
+      "trend_window_d14": "14 Tage",
+      "trend_window_d28": "28 Tage",
+      "trend_window_d90": "90 Tage"
     },
     "privacy": {
       "heading": "Datenschutz",

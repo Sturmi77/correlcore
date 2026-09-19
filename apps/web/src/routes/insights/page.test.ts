@@ -324,7 +324,7 @@ describe('/insights page analysis range', () => {
   beforeEach(() => {
     testHelpers.tagCooccurrenceRequests.length = 0;
     localStorage.clear();
-    setAnalysisRange('week');
+    setAnalysisRange(14);
     vi.clearAllMocks();
   });
 
@@ -335,23 +335,23 @@ describe('/insights page analysis range', () => {
       expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '7d', min_count: 2 });
     });
 
-    await fireEvent.click(screen.getByTestId('insights-range-year'));
+    await fireEvent.click(screen.getByTestId('insights-range-90'));
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '1y', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '90d', min_count: 2 });
     });
 
-    testHelpers.tagCooccurrenceRequests[1]?.resolve(tagCooccurrenceResponse('1y'));
+    testHelpers.tagCooccurrenceRequests[1]?.resolve(tagCooccurrenceResponse('90d'));
 
     await waitFor(() => {
-      expect(screen.getAllByText('1y tag a').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('90d tag a').length).toBeGreaterThan(0);
     });
     expect(screen.queryByText('7d tag a')).toBeNull();
 
     testHelpers.tagCooccurrenceRequests[0]?.resolve(tagCooccurrenceResponse('7d'));
     await flushPromises();
 
-    expect(screen.getAllByText('1y tag a').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('90d tag a').length).toBeGreaterThan(0);
     expect(screen.queryByText('7d tag a')).toBeNull();
   });
 
@@ -369,7 +369,7 @@ describe('/insights page analysis range', () => {
     vi.mocked(fetchSymptomHeatmap).mockClear();
     vi.mocked(listEntries).mockClear();
 
-    await fireEvent.click(screen.getByTestId('insights-range-year'));
+    await fireEvent.click(screen.getByTestId('insights-range-90'));
 
     await waitFor(() => {
       expect(fetchSymptomHeatmap).toHaveBeenCalled();
@@ -407,7 +407,7 @@ describe('/insights page analysis range', () => {
       .mockClear()
       .mockResolvedValueOnce([entryResponse('2025-07-01')]);
 
-    await fireEvent.click(screen.getByTestId('insights-range-year'));
+    await fireEvent.click(screen.getByTestId('insights-range-90'));
 
     await waitFor(() => {
       expect(fetchSymptomHeatmap).toHaveBeenCalledTimes(1);
@@ -440,19 +440,19 @@ describe('/insights page analysis range', () => {
       .mockReturnValueOnce(staleHeatmap.promise)
       .mockResolvedValueOnce(symptomHeatmapResponse('fresh-month-window'));
 
-    await fireEvent.click(screen.getByTestId('insights-range-year'));
+    await fireEvent.click(screen.getByTestId('insights-range-90'));
     await waitFor(() => {
       expect(fetchSymptomHeatmap).toHaveBeenCalledTimes(1);
     });
 
-    await fireEvent.click(screen.getByTestId('insights-range-month'));
+    await fireEvent.click(screen.getByTestId('insights-range-28'));
     await waitFor(() => {
       expect(fetchSymptomHeatmap).toHaveBeenCalledTimes(2);
       expect(screen.getByText('insight-feed:entries:2')).toBeTruthy();
     });
 
     staleEntries.resolve([entryResponse('2025-07-01')]);
-    staleHeatmap.resolve(symptomHeatmapResponse('stale-year-window'));
+    staleHeatmap.resolve(symptomHeatmapResponse('stale-90d-window'));
     await flushPromises();
 
     expect(screen.getByText('insight-feed:entries:2')).toBeTruthy();
@@ -466,7 +466,7 @@ describe('/insights page analysis range', () => {
       expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '7d', min_count: 2 });
     });
 
-    await fireEvent.click(screen.getByTestId('insights-range-month'));
+    await fireEvent.click(screen.getByTestId('insights-range-28'));
 
     await waitFor(() => {
       expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '30d', min_count: 2 });

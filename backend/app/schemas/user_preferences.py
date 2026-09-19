@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Documented allowed keys — validated in ``normalize_home_sections`` before persist.
 HomeSectionKey = Literal[
@@ -28,6 +28,10 @@ InsightSectionKey = Literal[
     "tag_groups",
     "tag_cooccurrence",
 ]
+
+TrendWindowDays = Literal[14, 28, 90]
+TREND_WINDOW_DAYS_VALUES: tuple[int, ...] = (14, 28, 90)
+TREND_WINDOW_DAYS_DEFAULT: TrendWindowDays = 28
 
 
 class HomeSectionPreference(BaseModel):
@@ -54,6 +58,7 @@ class UserPreferencesUpdate(BaseModel):
     onboarding_maturity_intro_seen: bool | None = None
     cycle_tracking_enabled: bool | None = None
     home_weekday_day_trend_enabled: bool | None = None
+    trend_window_days: TrendWindowDays | None = None
     health_connect_sync_sleep_enabled: bool | None = None
     dismissed_insight_keys: list[str] | None = Field(default=None, max_length=128)
     reached_milestone_keys: list[str] | None = Field(default=None, max_length=128)
@@ -61,6 +66,15 @@ class UserPreferencesUpdate(BaseModel):
     last_seen_digest_at: datetime | None = None
     home_sections: list[HomeSectionPreference] | None = Field(default=None, max_length=16)
     insight_sections: list[InsightSectionPreference] | None = Field(default=None, max_length=16)
+
+    @field_validator("trend_window_days")
+    @classmethod
+    def _validate_trend_window_days(cls, value: int | None) -> int | None:
+        if value is None:
+            return None
+        if value not in TREND_WINDOW_DAYS_VALUES:
+            raise ValueError("trend_window_days must be one of 14, 28, 90")
+        return value
 
 
 class UserPreferencesResponse(BaseModel):
@@ -76,6 +90,7 @@ class UserPreferencesResponse(BaseModel):
     onboarding_maturity_intro_seen: bool = False
     cycle_tracking_enabled: bool = True
     home_weekday_day_trend_enabled: bool = True
+    trend_window_days: TrendWindowDays = TREND_WINDOW_DAYS_DEFAULT
     health_connect_sync_sleep_enabled: bool = True
     dismissed_insight_keys: list[str] = Field(default_factory=list)
     reached_milestone_keys: list[str] = Field(default_factory=list)

@@ -3877,6 +3877,12 @@ export interface components {
             /** Reached Milestone Keys */
             reached_milestone_keys?: string[];
             /**
+             * Trend Window Days
+             * @default 28
+             * @enum {integer}
+             */
+            trend_window_days: 14 | 28 | 90;
+            /**
              * Updated At
              * Format: date-time
              */
@@ -3920,6 +3926,8 @@ export interface components {
             onboarding_retro_completed?: boolean | null;
             /** Reached Milestone Keys */
             reached_milestone_keys?: string[] | null;
+            /** Trend Window Days */
+            trend_window_days?: (14 | 28 | 90) | null;
         };
         /** UserProfileResponse */
         UserProfileResponse: {
