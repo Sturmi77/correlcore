@@ -37,6 +37,8 @@ export interface UserPreferencesResponse {
   health_connect_sync_sleep_enabled?: boolean;
   // Additive (#868): per-weekday Home trend caret. Default on; omit → true.
   home_weekday_day_trend_enabled?: boolean;
+  // Additive (#867): shared analysis window. Default 28; omit → 28.
+  trend_window_days?: 14 | 28 | 90;
   dismissed_insight_keys: string[];
   reached_milestone_keys: string[];
   last_seen_insight_at: string | null;
@@ -60,6 +62,7 @@ export interface UserPreferencesUpdate {
   belastung_overlay_enabled?: boolean;
   health_connect_sync_sleep_enabled?: boolean;
   home_weekday_day_trend_enabled?: boolean;
+  trend_window_days?: 14 | 28 | 90;
   dismissed_insight_keys?: string[];
   reached_milestone_keys?: string[];
   last_seen_insight_at?: string | null;

@@ -13,6 +13,12 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
+  import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
+  import {
+    TREND_WINDOW_DAYS_OPTIONS,
+    coerceTrendWindowDays,
+    type TrendWindowDays,
+  } from '$lib/utils/trendWindowDays';
   import { fetchLatestInsightDigest, regenerateInsights } from '$lib/api/insights';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
@@ -24,6 +30,8 @@
   let regenerateError = '';
   /** #819: digest enabled but no persisted snapshot yet (modal cannot fire). */
   let digestPendingHint = false;
+
+  $: trendWindowDays = coerceTrendWindowDays(preferences?.trend_window_days ?? $analysisRange);
 
   async function refreshDigestPendingHint(): Promise<void> {
     digestPendingHint = false;
@@ -41,9 +49,23 @@
     if ($auth.status !== 'authenticated') return;
     try {
       preferences = await fetchUserPreferences();
+      analysisRange.hydrateFromServer(preferences.trend_window_days);
       await refreshDigestPendingHint();
     } catch (err) {
       preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
+    }
+  }
+
+  async function setTrendWindow(days: TrendWindowDays): Promise<void> {
+    preferencesBusy = true;
+    preferencesError = '';
+    try {
+      preferences = await updateUserPreferences({ trend_window_days: days });
+      setAnalysisRange(days);
+    } catch (err) {
+      preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
+    } finally {
+      preferencesBusy = false;
     }
   }
 
@@ -128,6 +150,26 @@
       <div class="analysis-settings__head">
         <p>{$_('settings.analysis.body')}</p>
       </div>
+      <fieldset class="analysis-settings__window" data-testid="trend-window-fieldset">
+        <legend>{$_('settings.analysis.trend_window_heading')}</legend>
+        <p class="analysis-settings__note">{$_('settings.analysis.trend_window_hint')}</p>
+        <div class="analysis-settings__window-options" role="radiogroup">
+          {#each TREND_WINDOW_DAYS_OPTIONS as days}
+            <label class="analysis-settings__window-option">
+              <input
+                type="radio"
+                name="trend-window-days"
+                value={days}
+                checked={trendWindowDays === days}
+                disabled={preferencesBusy}
+                data-testid={`trend-window-${days}`}
+                on:change={() => void setTrendWindow(days)}
+              />
+              <span>{$_(`settings.analysis.trend_window_d${days}`)}</span>
+            </label>
+          {/each}
+        </div>
+      </fieldset>
       <label class="analysis-settings__toggle-label">
         <input
           type="checkbox"
@@ -197,6 +239,30 @@
     margin: 0;
     color: var(--color-text-muted);
     line-height: 1.5;
+  }
+
+  .analysis-settings__window {
+    margin: 0 0 1rem;
+    padding: 0;
+    border: 0;
+  }
+
+  .analysis-settings__window legend {
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+  }
+
+  .analysis-settings__window-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .analysis-settings__window-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.75rem;
   }
 
   .analysis-settings__toggle-label {

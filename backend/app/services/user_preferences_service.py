@@ -5,13 +5,19 @@ from __future__ import annotations
 import logging
 import uuid
 
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.insight import Insight
 from app.models.user_preference import UserPreference
-from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
+from app.schemas.user_preferences import (
+    TREND_WINDOW_DAYS_DEFAULT,
+    TREND_WINDOW_DAYS_VALUES,
+    UserPreferencesResponse,
+    UserPreferencesUpdate,
+)
 from app.services.home_sections import merge_home_sections, normalize_home_sections
 from app.services.insight_sections import (
     CURRENT_INSIGHT_SECTIONS_VERSION,
@@ -213,6 +219,9 @@ async def update_user_preferences(
             current = preferences.last_seen_insight_at
             if current is not None and value < current:
                 continue
+        if key == "trend_window_days":
+            if value not in TREND_WINDOW_DAYS_VALUES:
+                continue
         setattr(preferences, key, value)
 
     await db.flush()
@@ -239,9 +248,12 @@ async def ensure_insight_sections_migrated(
     preferences: UserPreference,
 ) -> UserPreference:
     """Apply the Phase 6 v1→v2 hub shrink once and persist it."""
+    version = preferences.insight_sections_version
+    if version is None:
+        version = 1
     migrated_sections, migrated_version, dirty = migrate_insight_sections_to_current(
         preferences.insight_sections,
-        version=preferences.insight_sections_version,
+        version=version,
     )
     if not dirty:
         return preferences
@@ -251,8 +263,10 @@ async def ensure_insight_sections_migrated(
     preferences.insight_sections_version = migrated_version
     if migrated_sections is not None:
         flag_modified(preferences, "insight_sections")
-    await db.flush()
-    await db.refresh(preferences)
+    # Detached unit-test fixtures (and rare edge sessions) must not crash on refresh.
+    if sa_inspect(preferences).persistent:
+        await db.flush()
+        await db.refresh(preferences)
     return preferences
 
 
@@ -268,8 +282,17 @@ def to_preferences_response(preferences: UserPreference) -> UserPreferencesRespo
         "onboarding_profile_completed": preferences.onboarding_profile_completed,
         "onboarding_maturity_intro_seen": preferences.onboarding_maturity_intro_seen,
         "cycle_tracking_enabled": preferences.cycle_tracking_enabled,
-        "belastung_overlay_enabled": preferences.belastung_overlay_enabled,
+        "belastung_overlay_enabled": (
+            False
+            if preferences.belastung_overlay_enabled is None
+            else bool(preferences.belastung_overlay_enabled)
+        ),
         "home_weekday_day_trend_enabled": preferences.home_weekday_day_trend_enabled,
+        "trend_window_days": (
+            preferences.trend_window_days
+            if preferences.trend_window_days in TREND_WINDOW_DAYS_VALUES
+            else TREND_WINDOW_DAYS_DEFAULT
+        ),
         "health_connect_sync_sleep_enabled": preferences.health_connect_sync_sleep_enabled,
         "dismissed_insight_keys": preferences.dismissed_insight_keys,
         "reached_milestone_keys": preferences.reached_milestone_keys,
@@ -277,7 +300,11 @@ def to_preferences_response(preferences: UserPreference) -> UserPreferencesRespo
         "last_seen_digest_at": preferences.last_seen_digest_at,
         "home_sections": merge_home_sections(normalized_sections),
         "insight_sections": merge_insight_sections(normalized_insight_sections),
-        "insight_sections_version": preferences.insight_sections_version,
+        "insight_sections_version": (
+            CURRENT_INSIGHT_SECTIONS_VERSION
+            if preferences.insight_sections_version is None
+            else preferences.insight_sections_version
+        ),
         "created_at": preferences.created_at,
         "updated_at": preferences.updated_at,
     }

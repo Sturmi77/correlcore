@@ -5,7 +5,7 @@
 
 import type { TimeseriesPoint } from '$lib/api/stats';
 import type { MetricKey } from '$lib/utils/charts';
-import { shiftIsoDate } from '$lib/utils/streak';
+import { shiftIsoDate } from '$lib/utils/isoDate';
 
 export const SLEEP_ZEITVERSATZ_KEYS: readonly MetricKey[] = [
   'sleep_minutes_avg',

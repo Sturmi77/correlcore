@@ -12,6 +12,11 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 
 
+#: Allowed analysis-window lengths (#867). Mirrored in the Pydantic schema.
+TREND_WINDOW_DAYS_ALLOWED: tuple[int, ...] = (14, 28, 90)
+TREND_WINDOW_DAYS_DEFAULT = 28
+
+
 class UserPreference(Base):
     """One preferences row per user.
 
@@ -76,6 +81,13 @@ class UserPreference(Base):
         nullable=False,
         default=True,
         server_default="true",
+    )
+    # #867: shared analysis window for Home / Trends / Insights (14 | 28 | 90).
+    trend_window_days: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=TREND_WINDOW_DAYS_DEFAULT,
+        server_default="28",
     )
     # M8 Sprint 4 (#172): per-field toggle for Health Connect sleep sync.
     health_connect_sync_sleep_enabled: Mapped[bool] = mapped_column(

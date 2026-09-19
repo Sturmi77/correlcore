@@ -11,14 +11,15 @@ describe('analysisRange store', () => {
     vi.unstubAllGlobals();
   });
 
-  it('persists the selected range', async () => {
+  it('persists the selected window in days', async () => {
     vi.stubGlobal('window', { ...globalThis.window });
     const { analysisRange, setAnalysisRange } = await import('./analysisRange');
 
-    expect(get(analysisRange)).toBe('week');
+    expect(get(analysisRange)).toBe(28);
 
-    setAnalysisRange('quarter');
-    expect(get(analysisRange)).toBe('quarter');
+    setAnalysisRange(90);
+    expect(get(analysisRange)).toBe(90);
+    expect(localStorage.getItem('cc_trend_window_days')).toBe('90');
     expect(localStorage.getItem('cc_analysis_range')).toBe('quarter');
   });
 
@@ -26,6 +27,13 @@ describe('analysisRange store', () => {
     localStorage.setItem('cc_insights_cooccurrence_range', '90d');
     const { analysisRange } = await import('./analysisRange');
 
-    expect(get(analysisRange)).toBe('quarter');
+    expect(get(analysisRange)).toBe(90);
+  });
+
+  it('migrates legacy TimeseriesRange storage', async () => {
+    localStorage.setItem('cc_analysis_range', 'week');
+    const { analysisRange } = await import('./analysisRange');
+
+    expect(get(analysisRange)).toBe(14);
   });
 });

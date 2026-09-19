@@ -545,23 +545,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entries/stats/streak": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Return entry-streak metrics */
-        get: operations["get_entry_streak_endpoint_api_v1_entries_stats_streak_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/entries/stats/symptoms": {
         parameters: {
             query?: never;
@@ -2147,22 +2130,6 @@ export interface components {
          * @enum {string}
          */
         EntrySource: "direct" | "retrospective" | "import" | "wearable";
-        /** EntryStreakResponse */
-        EntryStreakResponse: {
-            /**
-             * As Of
-             * Format: date
-             */
-            as_of: string;
-            /** Current Streak */
-            current_streak: number;
-            /** Last Entry Date */
-            last_entry_date?: string | null;
-            /** Longest Streak */
-            longest_streak: number;
-            /** Total Entry Days */
-            total_entry_days: number;
-        };
         /**
          * EntrySymptomAssignment
          * @description Payload for ``PUT /api/v1/entries/{entry_id}/symptoms``.
@@ -4025,6 +3992,12 @@ export interface components {
             /** Reached Milestone Keys */
             reached_milestone_keys?: string[];
             /**
+             * Trend Window Days
+             * @default 28
+             * @enum {integer}
+             */
+            trend_window_days: 14 | 28 | 90;
+            /**
              * Updated At
              * Format: date-time
              */
@@ -4072,6 +4045,8 @@ export interface components {
             onboarding_retro_completed?: boolean | null;
             /** Reached Milestone Keys */
             reached_milestone_keys?: string[] | null;
+            /** Trend Window Days */
+            trend_window_days?: (14 | 28 | 90) | null;
         };
         /** UserProfileResponse */
         UserProfileResponse: {
@@ -5491,41 +5466,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthContextResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_entry_streak_endpoint_api_v1_entries_stats_streak_get: {
-        parameters: {
-            query?: {
-                as_of?: string | null;
-            };
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: {
-                access_token?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EntryStreakResponse"];
                 };
             };
             /** @description Validation Error */

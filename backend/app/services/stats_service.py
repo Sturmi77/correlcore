@@ -17,7 +17,6 @@ from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user_preference import UserPreference
 from app.schemas.stats import (
     COOCCURRENCE_RANGE_DAYS,
-    EntryStreakResponse,
     SymptomHeatmapDay,
     SymptomHeatmapResponse,
     SymptomHeatmapSymptom,
@@ -277,48 +276,6 @@ async def get_symptom_heatmap(
         )
 
     return SymptomHeatmapResponse(start_date=start_date, end_date=end_date, symptoms=symptoms)
-
-
-async def get_entry_streak(
-    db: AsyncSession,
-    *,
-    user_id: uuid.UUID,
-    as_of: date_type | None = None,
-) -> EntryStreakResponse:
-    as_of = as_of or _today()
-    result = await db.execute(
-        select(Entry.entry_date)
-        .where(Entry.user_id == user_id, Entry.entry_date <= as_of)
-        .distinct()
-        .order_by(Entry.entry_date.asc())
-    )
-    dates = [row[0] for row in result.all()]
-    date_set = set(dates)
-
-    current = 0
-    cursor = as_of
-    while cursor in date_set:
-        current += 1
-        cursor -= timedelta(days=1)
-
-    longest = 0
-    run = 0
-    previous: date_type | None = None
-    for day in dates:
-        if previous is not None and day == previous + timedelta(days=1):
-            run += 1
-        else:
-            run = 1
-        longest = max(longest, run)
-        previous = day
-
-    return EntryStreakResponse(
-        current_streak=current,
-        longest_streak=longest,
-        total_entry_days=len(dates),
-        last_entry_date=dates[-1] if dates else None,
-        as_of=as_of,
-    )
 
 
 def _cooccurrence_window(

@@ -75,48 +75,34 @@ Die Phasen 10–14 sind die vormals „bewusst liegengelassenen" Punkte aus #928
 plus die Changepoint-Erweiterung aus #875 §C.3. Sie sind eingeplant, nicht geparkt — die Recherche
 hat gezeigt, dass drei davon deutlich billiger sind als angenommen und zwei davon größer.
 
-## Phase 0 — Basis herstellen
+## Phase 0 — Basis herstellen ✅
 
-- [ADR-0043](../adr/0043-insight-surface-layers.md) von `Proposed` auf `Accepted` setzen, Datum ergänzen.
-- #931 Punkt 1: [docs/DESIGN_DOCUMENT.md](../DESIGN_DOCUMENT.md) §2.10 Zeile 278 korrigieren. Nicht nur „PNG implementiert", sondern der volle Befund: PNG ist implementiert (in `InsightMatrix.svelte`), PDF existiert in **keiner** Ebene, und Export hat keine gemeinsame Fläche. Verweis auf ADR-0043 Ebene 4.
-- §1.6: `Time-to-First-Insight < 14 Tage` wird zu `Time-to-First-Answer < 14 Tage` (Befund oder Nicht-Befund). Das ist die in ADR-0043 §5 festgehaltene Vorbedingung für D2 — muss vor Phase 7 stehen, sonst widerspricht die Metrik der Positionierung.
-- #930 Docs-Änderung an [docs/DESIGN_DOCUMENT.md](../DESIGN_DOCUMENT.md): §1.3 bleibt P1+P2, ergänzt um eine **Auslöser-Liste** (Rückkehr nach Krankheit, neuer Remote-Job, ärztliche Bitte um Aufzeichnung, Phase schlechten Schlafs) und einen eigenen Abschnitt „Betrieb / Vertriebsweg" (Operator als Kanal, `DEPLOYMENT_MODE` aus [backend/app/core/config.py](../../backend/app/core/config.py), Zeile 102). Keine neuen Personas. §1.5 Nicht-Ziele (heute Zeilen 68–74) um drei Zeilen erweitern: kein ADHS-Produkt, kein Symptom-Tracker als Produktkategorie, keine Team-Sicht / Arbeitgeber-Auswertung / Multi-Tenant / Support-Versprechen für Fremdbetrieb. Tiefe als Produktprinzip deklarieren (Verweis ADR-0043), nicht als Segmentachse.
-- Issue-Kommentare mit den formalen Entscheidungen zu D1–D5 und G1–G6, damit die Threads geschlossen lesbar sind. #928 und #930 bleiben offen bis die jeweiligen Implementierungsphasen durch sind; #931 Punkt 2 bleibt bis Phase 6.
+- [x] [ADR-0043](../adr/0043-insight-surface-layers.md) von `Proposed` auf `Accepted` setzen, Datum ergänzen.
+- [x] #931 Punkt 1: [docs/DESIGN_DOCUMENT.md](../DESIGN_DOCUMENT.md) §2.10 Export-Befund + Verweis ADR-0043 Ebene 4.
+- [x] §1.6: `Time-to-First-Answer < 14 Tage`.
+- [x] #930 Docs: §1.3 Auslöser + Betrieb/Vertriebsweg; §1.5 Nicht-Ziele erweitert.
+- Issue-Kommentare zu D1–D5 / G1–G6 bleiben optional bis zum Abschluss-PR.
 
-## Phase 1 — Copy und Hygiene (D3, D4, L7 und die Überschneidungen)
+## Phase 1 — Copy und Hygiene (D3, D4, L7 und die Überschneidungen) ✅
 
 Reine Copy- und i18n-Arbeit, keine Architekturfolgen, sofort sichtbar. Beide Locales gemeinsam
 ändern — [localeCompleteness.test.ts](../../apps/web/src/lib/i18n/localeCompleteness.test.ts)
 erzwingt Parität.
 
-- **D3 Evidenzsprache.** Das Muster existiert schon an den neuesten Stellen und wird zur Regel: `trends.compare.coincidence.summary` („Beide an {both} von {aTotal} Tagen mit {a} · {both} von {bTotal} Tagen mit {b}") und `trends.esm.split_counts`. Übertragen auf: Insight-Karte (`insights.card.*`), Tag-Kookkurrenz und Matrix. Lift/p/FDR bleiben internes Gate und Expertendetail hinter Disclosure.
-- Präzisierung gegenüber #928: Die Tag-Kookkurrenz ist **nicht** eine nackte Zahl ohne Nenner. `TagCooccurrencePair` liefert bereits `count`, `pct_of_a` und `pct_of_b` (`get_tag_cooccurrence` in [stats_service.py](../../backend/app/services/stats_service.py), Zeilen 531–538) — beide Nenner sind also vorhanden und müssen nur in die Copy gezogen werden. Das macht diesen Teil von O1 zu reiner Copy-Arbeit. Der wirklich fehlende Teil ist das interne Gate und wird eigenes Arbeitspaket (Phase 10).
-- **D4 Wörter trennen.** „Zeitversatz" bezeichnet ausschließlich Korrelation mit Vorzeichen (`insights.lag_heatmap.*`, `insights.card.lag_*`). „Abfolge" bezeichnet die Präsenzfolge (`trends.compare.lag1.*`). Keine gemeinsame Beschriftung mehr. Löst O2 auf der Copy-Seite.
-- **M05 umbenennen.** `insights.matrix.*` heißt heute „Korrelations-Matrix" und ist eine sortierte Tabelle. Umbenennen in Richtung Bericht/Tabelle, konsistent mit dem Ziel aus Phase 5. Löst O4 zusammen mit einer einzigen Konfidenz-Darstellung.
-- **O6 eine Konfidenzsprache.** [InsightEvidence.svelte](../../apps/web/src/lib/components/insights/InsightEvidence.svelte) ist die kanonische Quelle (Reife-Chip + Punkteskala + n). Matrix-Prozentspalte und Habit-r auf dieselbe Darstellung ziehen; das Unsicherheitsband aus `SymptomTrendOverlay` als Muster dokumentieren, nicht als vierten Begriff.
-- **L7 Ghost-Tabs entfernen.** `trends.tabs.mood`, `.activities`, `.health` aus [de.json](../../apps/web/src/lib/i18n/locales/de.json) und [en.json](../../apps/web/src/lib/i18n/locales/en.json) löschen (`TrendTab = 'compare' | 'habits'`). Nicht nachbauen. In [USER_WORKFLOWS.md](USER_WORKFLOWS.md) W6 die Tab-Liste „Compare | Health | Habits" auf den Ist-Stand korrigieren, ebenso W9 (`/settings/data` statt `/settings`, ZIP ergänzen).
-- **Streak-Namenserbe auflösen.** Billiger als gedacht, weil es keine Datenbankspalten gibt: `current_streak` / `longest_streak` werden in `get_entry_streak` ([stats_service.py](../../backend/app/services/stats_service.py), Zeilen 277–315) zur Laufzeit aus `Entry.entry_date` gerechnet. Entscheidend ist der zweite Befund: `fetchEntryStreak` in [stats.ts](../../apps/web/src/lib/api/stats.ts) hat **keinen Produktions-Aufrufer** — nur Tests, Dev-Fixtures und E2E-Mocks; die UI-Zahlen sind mit #852 verschwunden. Ebenso sind `trends.streak.*`, `trends.consistency.*` und `home.streak_label` verwaiste i18n-Keys ohne Komponentenreferenz.
-  - Verwaiste i18n-Keys löschen. Die Wächter bleiben: [noGamificationCopy.test.ts](../../apps/web/src/lib/i18n/noGamificationCopy.test.ts) verbietet das Wort in Copy, [TrendsHealthContext.test.ts](../../apps/web/src/lib/components/trends/TrendsHealthContext.test.ts) die Rekordzahlen.
-  - Für den Endpunkt `GET /api/v1/entries/stats/streak` die ehrliche Wahl treffen: **stilllegen** statt umbenennen. Er hat keinen Konsumenten, und ein Rename wäre ein Contract-Bruch (Pydantic, OpenAPI-Regen, `stats.ts`-DTO, alle Mocks) für eine Funktion, die niemand aufruft.
-  - `computeEntryStreak` in [streak.ts](../../apps/web/src/lib/utils/streak.ts) ebenfalls prüfen und entfernen — aber `localIsoDate` und `shiftIsoDate` bleiben, die haben rund 15 Importeure und sind allgemeine Datums-Helfer. Sie gehören in ein Datums-Util umgezogen, dann verschwindet der Dateiname mit.
+- [x] **D3 Evidenzsprache.** Zwei Nenner auf Karte, Kookkurrenz, Matrix-Frequenzspalte; Lift/p/FDR intern.
+- [x] **D4 Wörter trennen.** „Zeitversatz" vs. „Abfolge" (Lag-1).
+- [x] **M05 umbenennen.** Matrix-Heading Richtung Bericht/Tabelle.
+- [x] **O6 eine Konfidenzsprache.** `InsightEvidence` kanonisch (Matrix/Habits angepasst).
+- [x] **L7 Ghost-Tabs entfernen.** Nur `compare` | `habits`; W6/W9 Docs korrigiert.
+- [x] **Streak-Namenserbe.** Endpoint stillgelegt; i18n-Keys und `streak.ts` entfernt; Datumshilfe in `isoDate.ts`.
 
-## Phase 2 — Ein ehrliches Zeitfenster (#867 plus O5)
+## Phase 2 — Ein ehrliches Zeitfenster (#867 plus O5) ✅
 
-Der Kern des Vertrauensbruchs: Home rechnet server-fix 28 Tage
-([dashboard_service.py](../../backend/app/services/dashboard_service.py) `TREND_WINDOW_DAYS = 28`),
-Trends/Insights nutzen den Client-Store `cc_analysis_range`, und Compare ignoriert beides und fixiert
-365 Tage.
-
-- **#867 Server-Preference.** Spalte `trend_window_days` auf [user_preference.py](../../backend/app/models/user_preference.py) (Integer-Enum 14 | 28 | 90, Default 28) plus Alembic-Migration, Pydantic-Schema in [user_preferences.py](../../backend/app/schemas/user_preferences.py), Service-Zweig in [user_preferences_service.py](../../backend/app/services/user_preferences_service.py). `dashboard_service` parametrisieren; `trend_window_days` in der `/dashboard/summary`-Antwort spiegelt den effektiv genutzten Wert (existiert bereits als Feld).
-- Settings-UI ergänzen, und [analysisRange.ts](../../apps/web/src/lib/stores/analysisRange.ts) so anpassen, dass der Server-Wert die Quelle ist und `localStorage` nur noch Cache. Damit gilt „ein Fenster pro Aussage" tatsächlich für Home, Trends und Insights.
-- **O5 Compare bekommt den Regler zurück.** In [trends/+page.svelte](../../apps/web/src/routes/trends/+page.svelte): `showRangeControl={activeTab !== 'compare'}` (Zeile 458) auf `true`, `activeRange = activeTab === 'compare' ? 'year' : uiRange` und `compareWindowDays = 365` (Zeilen 167–171) durch den gewählten Range ersetzen, den Reaktiv-Block `activeTab !== 'compare'` (Zeilen 372–381) entschärfen, `displayRange` (Zeile 405) nachziehen. Das erfüllt das dokumentierte, bis heute offene W6-Kriterium „User can switch time range (week/month/quarter/year)".
-- **Fenster sichtbar beschriften.** Compare zeigt heute nur den Zoom-Status („{days} days / cell", `COMPARE_ZOOM_STAGES = [1,3,7,14,28]`) und im Heatmap-Header die sichtbare Datumsspanne. Ein Label „letzte {n} Tage" am Chart ergänzen, analog `habits.window_last`. Der Zoom bleibt davon getrennt: Fenster = Grundgesamtheit, Zoom = Auflösung.
-- **ESM von Compare erreichbar machen.** [EventAlignedSmallMultiplesSheet](../../apps/web/src/lib/components/trends/EventAlignedSmallMultiplesSheet.svelte) hängt heute nur an einer Insight-Karte ab Phase `provisional`. Wer in Compare zwei Zeilen pinnt, bekommt eine „diese Frage prüfen"-Aktion. Das ist der Zugang von Ebene 3 zu Ebene 2 und wird in Phase 7 auf das Signal-Detail umgehängt.
-- Regressionsrisiko: die Compare-Achse ist auf ein Jahr ausgelegt (`clampAxisRangeToData` in [trendsDateAxis.ts](../../apps/web/src/lib/utils/trendsDateAxis.ts), Bucket-Logik in [compareAxisZoom.ts](../../apps/web/src/lib/utils/compareAxisZoom.ts)). Bei 7-Tage-Fenster muss die Zoom-Stufe sinnvoll geklemmt werden, sonst zeigt eine Zelle mehr Tage als das Fenster hat. Dafür Tests in [UnifiedStripChart.test.ts](../../apps/web/src/lib/components/trends/UnifiedStripChart.test.ts) und [ComparisonHeatmap.test.ts](../../apps/web/src/lib/components/trends/ComparisonHeatmap.test.ts) erweitern.
-- **O7 gemeinsame Regler — gehört hierher, nicht in eine Hygiene-Runde.** Der Breakpoint ist `DESKTOP_SHELL_BREAKPOINT_PX = 768` ([surfaceContract.ts](../../apps/web/src/lib/ui/surfaceContract.ts)). [CompareOverlayControls.svelte](../../apps/web/src/lib/components/trends/CompareOverlayControls.svelte) ist das aus #919 vorhandene Muster und wird zur Vorlage: der Parent besitzt State und Persistenz, die geteilte Komponente besitzt Markup und Gate-Copy, `testIdPrefix` erlaubt zwei DOM-Instanzen.
-  - Doppeltes Markup zusammenführen: Sortierung ([TrendsComparePanel.svelte](../../apps/web/src/lib/components/trends/TrendsComparePanel.svelte) 600–614 gegen [TrendsCompareSettingsSheet.svelte](../../apps/web/src/lib/components/trends/TrendsCompareSettingsSheet.svelte) 159–174), Modus (577–597 gegen 137–157), Layer-Checkboxen (534–573 gegen 80–121). Der State liegt schon gemeinsam auf Seitenebene — dupliziert ist nur die Oberfläche.
-  - Der eigentliche Befund ist keine Dopplung, sondern eine **Lücke**: Fokus-/Cluster-Chips (Panel 618–648) und der Dichte-/Zoom-Regler (Panel 652–681) existieren **nur** auf dem Desktop und fehlen im mobilen Sheet vollständig.
-  - Daraus folgt eine harte Bedingung für O5: der neue Zeitraum-Regler muss in **beide** Flächen, sonst ist das W6-Kriterium desktop-only erfüllt und der Vorwurf „zwei Pfeile, zwei Grundgesamtheiten" bleibt für Mobilnutzer bestehen.
+- [x] **#867 Server-Preference.** `trend_window_days` (14|28|90, Default 28); Alembic `054` (nach Merge auf Stack 050–053).
+- [x] Settings-UI + `analysisRange` vom Server; `localStorage` nur Cache.
+- [x] **O5 Compare** nutzt dasselbe Fenster (kein festes Jahr); Label „letzte {n} Tage".
+- [x] Compare → Insights Layer-2 („diese Frage prüfen"); ESM bleibt Unlock hinter Reife.
+- [x] **O7** Fokus/Zoom auch im mobilen Settings-Sheet; geteilte Overlay-Controls.
 
 ## Phase 3 — #933 Changepoint bekommt ein ISO-Datum ✅
 

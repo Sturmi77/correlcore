@@ -14,7 +14,7 @@ import {
   type CoincidenceRow,
   type CoincidenceSubject,
 } from '$lib/utils/coincidenceMarkers';
-import { shiftIsoDate } from '$lib/utils/streak';
+import { shiftIsoDate } from '$lib/utils/isoDate';
 
 /** Minimum Lag-1 days before the highlight toggle may turn on. */
 export const MIN_LAG1_DAYS = 2;

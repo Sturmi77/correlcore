@@ -1,11 +1,8 @@
 <script lang="ts">
   import { _, locale } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
-  import {
-    buildMatrixDisplayRows,
-    matrixConfidencePercent,
-    matrixEffectTone,
-  } from '$lib/utils/insightMatrixRows';
+  import { buildMatrixDisplayRows, matrixEffectTone } from '$lib/utils/insightMatrixRows';
+  import InsightEvidence from './InsightEvidence.svelte';
 
   export let insights: InsightResponse[] = [];
   /**
@@ -39,8 +36,16 @@
     return matrixEffectTone(effect);
   }
 
-  function percent(value: number | null): string {
-    return matrixConfidencePercent(value);
+  /** Phase 1 / D3 — natural frequencies with two denominators when payload has them. */
+  function freqLabel(row: InsightResponse): string {
+    const withN = row.payload?.tagged_count;
+    const withoutN = row.payload?.untagged_count;
+    if (typeof withN !== 'number' || typeof withoutN !== 'number') {
+      return $_('insights.matrix.freq_sample', { values: { n: row.sample_n } });
+    }
+    return $_('insights.matrix.freq_split', {
+      values: { withN, withoutN },
+    });
   }
 </script>
 
@@ -109,6 +114,7 @@
       <span role="columnheader">{$_('insights.matrix.subject')}</span>
       <span role="columnheader">{$_('insights.matrix.metric')}</span>
       <span role="columnheader">{$_('insights.matrix.effect')}</span>
+      <span role="columnheader">{$_('insights.matrix.frequency')}</span>
       <span role="columnheader">{$_('insights.matrix.confidence')}</span>
     </div>
     {#each tableRows as row}
@@ -117,7 +123,7 @@
         class="insight-matrix__row"
         role="row"
         data-tone={tone(effect)}
-        title={`${row.statement ?? ''} | n=${row.sample_n} | confidence=${percent(row.confidence)}`}
+        title={`${row.statement ?? ''} | ${freqLabel(row)}`}
       >
         <span role="cell">{row.subject_label ?? '-'}</span>
         <span role="cell">{row.metric}</span>
@@ -128,7 +134,18 @@
           ></span>
           {effect.toFixed(2)}
         </span>
-        <span role="cell">{percent(row.confidence)}</span>
+        <span role="cell" class="insight-matrix__freq" data-testid="insight-matrix-freq">
+          {freqLabel(row)}
+        </span>
+        <span role="cell" class="insight-matrix__confidence">
+          <InsightEvidence
+            confidenceScore={row.confidence ?? 0}
+            currentTier={row.tier}
+            entryCount={row.sample_n}
+            showSample
+            showMaturityBadge={false}
+          />
+        </span>
       </div>
     {/each}
   </div>
@@ -196,9 +213,12 @@
   }
 
   .insight-matrix__row {
-    min-width: 42rem;
+    min-width: 48rem;
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.8fr);
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(
+        0,
+        1.4fr
+      );
     gap: 0.75rem;
     align-items: center;
     padding: 0.6rem 0.75rem;
@@ -231,6 +251,15 @@
     align-items: center;
     gap: 0.5rem;
     min-width: 0;
+  }
+
+  .insight-matrix__freq {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .insight-matrix__confidence :global(.evidence) {
+    flex-wrap: wrap;
   }
 
   .insight-matrix__effect-bar {

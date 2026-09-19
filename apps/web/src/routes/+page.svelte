@@ -37,7 +37,7 @@
   import { findLocalEntryByDateSlot, localEntryToEntryResponse } from '$lib/stores/entriesOffline';
   import { isCalendarContextInsight } from '$lib/utils/insightConfounder';
   import { selectNewestWeekdayPattern } from '$lib/utils/homeWeekdayOverview';
-  import { shiftIsoDate } from '$lib/utils/streak';
+  import { shiftIsoDate } from '$lib/utils/isoDate';
   import Button from '$lib/components/common/Button.svelte';
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';

@@ -83,6 +83,12 @@
   import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
+  import { localIsoDate } from '$lib/utils/isoDate';
+  import {
+    coerceTrendWindowDays,
+    trendWindowDaysToTimeseriesRange,
+    type TrendWindowDays,
+  } from '$lib/utils/trendWindowDays';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
   import { shouldShowMaturityMilestone } from '$lib/utils/insightMaturityMilestones';
   import { rankInsights } from '$lib/utils/insightRanking';
@@ -94,10 +100,9 @@
   } from '$lib/utils/insightAnalyticsGate';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
-  import { timeseriesRangeToCooccurrence, analysisDateWindow } from '$lib/utils/analysisRange';
-  import { rangeToDays } from '$lib/utils/trendsRange';
-  import { shiftIsoDate } from '$lib/utils/streak';
-  import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
+  import { timeseriesRangeToCooccurrence } from '$lib/utils/analysisRange';
+  import { shiftIsoDate } from '$lib/utils/isoDate';
+  import type { TimeseriesPoint } from '$lib/api/stats';
   import type { MetricKey } from '$lib/utils/charts';
   import {
     devEventWindowsFromHeatmaps,
@@ -190,35 +195,38 @@
   let mobileMedia: MediaQueryList | null = null;
   let activeDevFixtureKey = '';
 
-  const analysisRangeOptions: { id: TimeseriesRange; label: string }[] = [
-    { id: 'week', label: 'trends.range.week' },
-    { id: 'month', label: 'trends.range.month' },
-    { id: 'quarter', label: 'trends.range.quarter' },
-    { id: 'year', label: 'trends.range.year' },
+  const analysisRangeOptions: { id: string; label: string }[] = [
+    { id: '14', label: 'trends.range.d14' },
+    { id: '28', label: 'trends.range.d28' },
+    { id: '90', label: 'trends.range.d90' },
   ];
 
-  $: insightsEffectiveRange =
-    compactInsights && $analysisRange === 'year' ? 'quarter' : $analysisRange;
+  $: windowDays = $analysisRange;
+  $: insightsEffectiveRange = trendWindowDaysToTimeseriesRange(windowDays);
   $: cooccurrenceRange = timeseriesRangeToCooccurrence(insightsEffectiveRange);
   $: tagClusterMeta = buildTagClusterMeta(tagClusters);
-  $: analysisRangeDays = rangeToDays(insightsEffectiveRange);
-  $: toolbarAnalysisRange =
-    compactInsights && $analysisRange === 'year' ? 'quarter' : $analysisRange;
-  $: symptomWindowDataMatchesRange = symptomWindowDataRange === insightsEffectiveRange;
+  $: analysisRangeDays = windowDays;
+  $: symptomWindowDataMatchesRange = symptomWindowDataDays === windowDays;
   $: visibleEntryCount = symptomWindowDataMatchesRange ? entryCount : 0;
   $: visibleMoodEntries = symptomWindowDataMatchesRange ? moodEntries : [];
   $: visibleSymptomHeatmap = symptomWindowDataMatchesRange ? symptomHeatmap : null;
+  $: analysisRangeControlOptions = analysisRangeOptions.map((option) => ({
+    id: option.id,
+    label: $_(option.label),
+    testId: `insights-range-${option.id}`,
+  }));
 
-  let lastAnalysisRangeForCooccurrence: TimeseriesRange | null = null;
-  let lastAnalysisRangeForSymptomData: TimeseriesRange | null = null;
-  let symptomWindowDataRange: TimeseriesRange | null = null;
+  let lastWindowDaysForCooccurrence: TrendWindowDays | null = null;
+  let lastWindowDaysForSymptomData: TrendWindowDays | null = null;
+  let symptomWindowDataDays: TrendWindowDays | null = null;
 
-  function cooccurrenceApiRangeFor(timeseriesRange: TimeseriesRange): TagCooccurrenceRange {
-    return timeseriesRangeToCooccurrence(timeseriesRange);
+  function cooccurrenceApiRangeFor(days: TrendWindowDays): TagCooccurrenceRange {
+    return timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(days));
   }
 
-  function insightsRangeForData(range: TimeseriesRange = get(analysisRange)): TimeseriesRange {
-    return compactInsights && range === 'year' ? 'quarter' : range;
+  function trendWindowDateBounds(days: TrendWindowDays): { start_date: string; end_date: string } {
+    const end_date = localIsoDate(new Date());
+    return { start_date: shiftIsoDate(end_date, -(days - 1)), end_date };
   }
 
   function clearSymptomWindowData(): void {
@@ -226,34 +234,34 @@
     moodEntries = [];
     entryCount = 0;
     symptomHeatmap = null;
-    symptomWindowDataRange = null;
+    symptomWindowDataDays = null;
   }
 
   function applySymptomWindowData(
     entries: EntryResponse[],
     heatmap: SymptomHeatmapResponse,
-    range: TimeseriesRange
+    days: TrendWindowDays
   ): void {
     dayEntryDates = dayEntryDatesFromIsoEntries(entries);
     moodEntries = entries;
     entryCount = dayEntryDates.length;
     symptomHeatmap = heatmap;
-    lastAnalysisRangeForSymptomData = range;
-    symptomWindowDataRange = range;
+    lastWindowDaysForSymptomData = days;
+    symptomWindowDataDays = days;
   }
 
   async function reloadSymptomWindowData(): Promise<void> {
     if (get(auth).status !== 'authenticated') return;
-    const requestedRange = insightsRangeForData();
+    const requestedDays = windowDays;
     const requestId = ++symptomWindowRequestId;
-    const { start_date, end_date } = analysisDateWindow(requestedRange);
+    const { start_date, end_date } = trendWindowDateBounds(requestedDays);
     clearSymptomWindowData();
-    lastAnalysisRangeForSymptomData = requestedRange;
+    lastWindowDaysForSymptomData = requestedDays;
     symptomWindowLoading = true;
     try {
       if (get(devForceVisualizations)) {
         const fixture = getDevPhaseFixture(get(devPhase));
-        applySymptomWindowData(fixture.entries, fixture.symptomHeatmap, requestedRange);
+        applySymptomWindowData(fixture.entries, fixture.symptomHeatmap, requestedDays);
         return;
       }
 
@@ -261,8 +269,8 @@
         listEntries({ start_date, end_date }),
         fetchSymptomHeatmap({ start_date, end_date }),
       ]);
-      if (requestId !== symptomWindowRequestId || requestedRange !== insightsRangeForData()) return;
-      applySymptomWindowData(entries, heatmap, requestedRange);
+      if (requestId !== symptomWindowRequestId || requestedDays !== windowDays) return;
+      applySymptomWindowData(entries, heatmap, requestedDays);
     } catch {
       // Keep the current range empty rather than mixing entries and heatmap from different windows.
     } finally {
@@ -272,17 +280,14 @@
     }
   }
 
-  $: if (
-    $auth.status === 'authenticated' &&
-    insightsEffectiveRange !== lastAnalysisRangeForCooccurrence
-  ) {
-    const previousRange = lastAnalysisRangeForCooccurrence;
-    const nextRange = insightsEffectiveRange;
-    lastAnalysisRangeForCooccurrence = nextRange;
+  $: if ($auth.status === 'authenticated' && windowDays !== lastWindowDaysForCooccurrence) {
+    const previousDays = lastWindowDaysForCooccurrence;
+    const nextDays = windowDays;
+    lastWindowDaysForCooccurrence = nextDays;
 
-    if (previousRange !== null) {
-      const previousApiRange = cooccurrenceApiRangeFor(previousRange);
-      const nextApiRange = cooccurrenceApiRangeFor(nextRange);
+    if (previousDays !== null) {
+      const previousApiRange = cooccurrenceApiRangeFor(previousDays);
+      const nextApiRange = cooccurrenceApiRangeFor(nextDays);
       const apiWindowChanged = previousApiRange !== nextApiRange;
 
       if (apiWindowChanged && (cooccurrenceRequested || cooccurrenceLoading)) {
@@ -301,19 +306,10 @@
   $: if (
     $auth.status === 'authenticated' &&
     insightsLoaded &&
-    insightsEffectiveRange !== lastAnalysisRangeForSymptomData
+    windowDays !== lastWindowDaysForSymptomData
   ) {
     void reloadSymptomWindowData();
   }
-
-  $: visibleAnalysisRangeOptions = compactInsights
-    ? analysisRangeOptions.filter((option) => option.id !== 'year')
-    : analysisRangeOptions;
-  $: analysisRangeControlOptions = visibleAnalysisRangeOptions.map((option) => ({
-    id: option.id,
-    label: $_(option.label),
-    testId: `insights-range-${option.id}`,
-  }));
 
   function devFixtureKey(): string {
     return `${$devPhase.presetId}:${$devPhase.entryCount}:${$devPhase.onboardingCompleted}`;
@@ -576,7 +572,7 @@
     loading = true;
     error = null;
     try {
-      const requestedAnalysisRange = insightsRangeForData();
+      const requestedDays = windowDays;
       if (get(devForceVisualizations)) {
         const fixture = getDevPhaseFixture(get(devPhase));
         activeDevFixtureKey = devFixtureKey();
@@ -588,13 +584,12 @@
         symptomCooccurrence = fixture.symptomTagCooccurrenceByRange[cooccurrenceRange];
         tagClusters = fixture.tagClusters;
         cooccurrence = fixture.tagCooccurrenceByRange[cooccurrenceRange];
-        applySymptomWindowData(fixture.entries, fixture.symptomHeatmap, requestedAnalysisRange);
+        applySymptomWindowData(fixture.entries, fixture.symptomHeatmap, requestedDays);
         inactiveTagIds = [];
         return;
       }
 
-      const { start_date: startIso, end_date: todayIso } =
-        analysisDateWindow(requestedAnalysisRange);
+      const { start_date: startIso, end_date: todayIso } = trendWindowDateBounds(requestedDays);
       const [insightsResult, symptomWindowResult, tagResult, defaultTagsResult, preferencesResult] =
         await Promise.allSettled([
           listLatestInsights({ limit: 50 }),
@@ -622,13 +617,13 @@
       userPreferences =
         preferencesResult.status === 'fulfilled' ? preferencesResult.value : userPreferences;
 
-      if (requestedAnalysisRange === insightsRangeForData()) {
+      if (requestedDays === windowDays) {
         if (symptomWindowResult.status === 'fulfilled') {
           const [entries, heatmap] = symptomWindowResult.value;
-          applySymptomWindowData(entries, heatmap, requestedAnalysisRange);
-        } else if (lastAnalysisRangeForSymptomData !== requestedAnalysisRange) {
+          applySymptomWindowData(entries, heatmap, requestedDays);
+        } else if (lastWindowDaysForSymptomData !== requestedDays) {
           clearSymptomWindowData();
-          lastAnalysisRangeForSymptomData = requestedAnalysisRange;
+          lastWindowDaysForSymptomData = requestedDays;
         }
       }
 
@@ -710,6 +705,11 @@
     mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
     syncCompactInsights();
     mobileMedia?.addEventListener('change', syncCompactInsights);
+    void fetchUserPreferences()
+      .then((prefs) => analysisRange.hydrateFromServer(prefs.trend_window_days))
+      .catch(() => {
+        // Keep local cache when preferences are unavailable.
+      });
 
     const unregisterRefresh = registerPageRefresh(async () => {
       await loadInsights();
@@ -808,7 +808,7 @@
     if (!insight) return;
 
     const requestId = ++exploreEventsRequestId;
-    const capturedRange = insightsEffectiveRange;
+    const capturedDays = windowDays;
 
     exploreEventsInsight = insight;
     exploreEventsMetric = insightMetricToChartKey(insight.metric);
@@ -840,9 +840,12 @@
         exploreEventsTagHeatmap = fixture.tagHeatmap;
         applyExploreEventsPartner(
           insight,
-          fixture.tagCooccurrenceByRange[timeseriesRangeToCooccurrence(capturedRange)] ?? null,
-          fixture.symptomTagCooccurrenceByRange[timeseriesRangeToCooccurrence(capturedRange)] ??
-            null,
+          fixture.tagCooccurrenceByRange[
+            timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(capturedDays))
+          ] ?? null,
+          fixture.symptomTagCooccurrenceByRange[
+            timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(capturedDays))
+          ] ?? null,
           fixture.tagHeatmap,
           fixture.symptomHeatmap,
           true
@@ -852,7 +855,7 @@
 
       const response = await fetchInsightEventWindows(
         insight.id,
-        timeseriesRangeToCooccurrence(capturedRange)
+        timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(capturedDays))
       );
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
         return;
@@ -866,7 +869,7 @@
 
       exploreEventsLoading = false;
       exploreEventsPartnerLoading = true;
-      void ensureExploreEventsPartnerData(insight, requestId, insightId, capturedRange);
+      void ensureExploreEventsPartnerData(insight, requestId, insightId, capturedDays);
     } catch {
       if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
         return;
@@ -923,7 +926,7 @@
     insight: InsightResponse,
     requestId: number,
     insightId: string,
-    range: TimeseriesRange
+    days: TrendWindowDays
   ): Promise<void> {
     const subject = resolveEsmAlignSubject(insight);
     if (!subject) {
@@ -933,8 +936,8 @@
 
     const needsTagPairs = subject.kind === 'tag';
     const needsSymptomCells = subject.kind === 'symptom';
-    const apiRange = timeseriesRangeToCooccurrence(range);
-    const { start_date, end_date } = analysisDateWindow(range);
+    const apiRange = timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(days));
+    const { start_date, end_date } = trendWindowDateBounds(days);
     const heatmapStart = shiftIsoDate(start_date, -SMALL_MULTIPLES_RADIUS);
     const heatmapEnd = shiftIsoDate(end_date, SMALL_MULTIPLES_RADIUS);
 
@@ -1039,9 +1042,15 @@
     <svelte:fragment slot="controls">
       {#if $auth.status === 'authenticated'}
         <InsightsAnalysisToolbar
-          analysisRange={toolbarAnalysisRange}
+          analysisRange={$analysisRange}
           analysisRangeOptions={analysisRangeControlOptions}
-          on:rangeChange={(event) => setAnalysisRange(event.detail.value)}
+          on:rangeChange={(event) => {
+            const nextDays = coerceTrendWindowDays(event.detail.value);
+            setAnalysisRange(nextDays);
+            void updateUserPreferences({ trend_window_days: nextDays }).catch(() => {
+              // Optimistic local window; server sync can retry on next visit.
+            });
+          }}
         />
       {/if}
     </svelte:fragment>

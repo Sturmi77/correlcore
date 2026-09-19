@@ -200,9 +200,9 @@ The tag-embed path inside `EntrySheet` (`OnboardingTagSuggestions`) is retained 
 
 **Entry routes:** `/insights`, `/trends`
 
-**Trends tabs:** Compare (default) | Health | Habits
+**Trends tabs:** Compare (default) | Habits
 
-**Insights views:** Findings | Matrix; category filters (All/Mood/Symptoms/Sleep)
+**Insights views:** Findings | Associations; category filters (All/Mood/Symptoms/Sleep)
 
 **Surface:** Web-primary for full canvas; mobile summary + drill-down.
 
@@ -248,11 +248,11 @@ The tag-embed path inside `EntrySheet` (`OnboardingTagSuggestions`) is retained 
 
 **Success criteria:**
 
-- CSV/JSON export downloads successfully
+- CSV/JSON/ZIP export downloads successfully
 - Analytics toggle persists via preferences API
 - Account deletion available (with confirmation)
 
-**Entry routes:** `/settings`
+**Entry routes:** `/settings/data`
 
 **API:** `GET /export/csv`, `GET /export/json`, `GET /user/export` (ZIP), `PATCH /user/preferences`, `DELETE /user/me`
 
@@ -296,17 +296,17 @@ flowchart TD
 
 ## Route reference (all workflows)
 
-| Route                                                                | Workflow(s)     | AppNav          |
-| -------------------------------------------------------------------- | --------------- | --------------- |
-| `/auth/*`                                                            | W1              | hidden          |
-| `/onboarding`                                                        | W2              | hidden          |
-| `/onboarding/retro`, `/onboarding/profile`                           | W2 (legacy)     | hidden          |
-| `/`                                                                  | W2, W3, W5, W10 | yes             |
-| `/entries/new`, `/entries/day/[date]`                                | W3, W4          | yes (page mode) |
-| `/insights`, `/insights/disclaimer`                                  | W5, W6          | yes             |
-| `/trends`                                                            | W6, W7          | yes             |
-| `/settings`, `/settings/tags`, `/settings/symptoms`, `/settings/app` | W7, W8, W9, W10 | yes             |
-| `/offline`                                                           | W10             | hidden          |
+| Route                                                                                  | Workflow(s)     | AppNav          |
+| -------------------------------------------------------------------------------------- | --------------- | --------------- |
+| `/auth/*`                                                                              | W1              | hidden          |
+| `/onboarding`                                                                          | W2              | hidden          |
+| `/onboarding/retro`, `/onboarding/profile`                                             | W2 (legacy)     | hidden          |
+| `/`                                                                                    | W2, W3, W5, W10 | yes             |
+| `/entries/new`, `/entries/day/[date]`                                                  | W3, W4          | yes (page mode) |
+| `/insights`, `/insights/disclaimer`                                                    | W5, W6          | yes             |
+| `/trends`                                                                              | W6, W7          | yes             |
+| `/settings`, `/settings/data`, `/settings/tags`, `/settings/symptoms`, `/settings/app` | W7, W8, W9, W10 | yes             |
+| `/offline`                                                                             | W10             | hidden          |
 
 ---
 

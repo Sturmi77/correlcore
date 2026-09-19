@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
+import { updateUserPreferences } from '$lib/api/preferences';
 import { fetchSymptomHeatmap, fetchTimeseries } from '$lib/api/stats';
 import { listEntries } from '$lib/api/entries';
 import { ApiError } from '$lib/api/client';
@@ -111,6 +112,14 @@ vi.mock('$lib/api/habits', () => ({
   listHabits: vi.fn(async () => ({ habits: [] })),
 }));
 
+vi.mock('$lib/api/preferences', () => ({
+  fetchUserPreferences: vi.fn(async () => {
+    const raw = localStorage.getItem('cc_trend_window_days');
+    return { trend_window_days: raw ? Number(raw) : 28 };
+  }),
+  updateUserPreferences: vi.fn(async (preferences) => preferences),
+}));
+
 vi.mock('$lib/api/entries', () => ({
   listEntries: vi.fn(async () => [
     {
@@ -147,6 +156,8 @@ vi.mock('$lib/api/symptoms', () => ({
 
 describe('/trends page', () => {
   beforeEach(() => {
+    vi.setSystemTime(new Date('2026-05-16T12:00:00Z'));
+    localStorage.clear();
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       writable: true,
@@ -163,12 +174,15 @@ describe('/trends page', () => {
     });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders compare and habits tabs with health context on compare', async () => {
     render(Page);
 
     expect(await screen.findByTestId('trends-sticky-toolbar')).toBeTruthy();
-    // Compare hides range chips (fixed 365d zoom axis).
-    expect(screen.queryByTestId('trends-range-control')).toBeNull();
+    expect(await screen.findByTestId('trends-range-control')).toBeTruthy();
     expect(await screen.findByTestId('trends-tab-compare')).toBeTruthy();
     expect(screen.queryByTestId('trends-tab-health')).toBeNull();
     expect(screen.getByTestId('trends-tab-habits')).toBeTruthy();
@@ -203,6 +217,7 @@ describe('/trends page', () => {
   it('renders work context as a compare context row', async () => {
     render(Page);
 
+    expect(await screen.findByTestId('trends-compare-panel')).toBeTruthy();
     expect(await screen.findByText('entry.work_context.office')).toBeTruthy();
     expect(screen.getByText('trends.compare.work_contexts')).toBeTruthy();
   });
@@ -237,39 +252,39 @@ describe('/trends page', () => {
     expect(screen.queryByTestId('mobile-trends-detail-toggle')).toBeNull();
   });
 
-  it('loads Compare with a fixed year window and hides range chips', async () => {
-    localStorage.clear();
-    setAnalysisRange('week');
+  it('loads Compare with the selected analysis window', async () => {
+    setAnalysisRange(14);
     vi.mocked(fetchTimeseries).mockClear();
 
     render(Page);
     expect(await screen.findByTestId('trends-compare-panel')).toBeTruthy();
-    expect(screen.queryByTestId('trends-range-control')).toBeNull();
+    expect(screen.getByTestId('trends-range-control')).toBeTruthy();
 
     await waitFor(() => {
-      expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('year');
+      expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('week');
     });
   });
 
-  it('loads the newly selected range on Habits when the control changes', async () => {
-    localStorage.clear();
-    setAnalysisRange('week');
+  it('loads the newly selected range on Habits and persists the preference', async () => {
+    setAnalysisRange(14);
     vi.mocked(fetchTimeseries).mockClear();
     vi.mocked(listEntries).mockClear();
+    vi.mocked(updateUserPreferences).mockClear();
 
     render(Page);
     await fireEvent.click(await screen.findByTestId('trends-tab-habits'));
     await screen.findByTestId('trends-range-control');
 
-    await fireEvent.click(screen.getByTestId('trends-range-year'));
+    await fireEvent.click(screen.getByTestId('trends-range-90'));
 
     await waitFor(() => {
-      expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('year');
+      expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('quarter');
     });
+    expect(vi.mocked(updateUserPreferences)).toHaveBeenCalledWith({ trend_window_days: 90 });
 
     const callsAfterRangeChange = vi
       .mocked(fetchTimeseries)
-      .mock.calls.filter((call) => call[0] === 'year');
+      .mock.calls.filter((call) => call[0] === 'quarter');
     expect(callsAfterRangeChange.length).toBeGreaterThan(0);
   });
 

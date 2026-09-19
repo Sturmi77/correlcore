@@ -17,6 +17,7 @@
     habitTypeGlyph,
     groupHabitsByType,
   } from '$lib/utils/habitMetrics';
+  import { confidenceLabelKey } from '$lib/utils/confidenceLabel';
   import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
   import Minus from '@lucide/svelte/icons/minus';
   import TrendingDown from '@lucide/svelte/icons/trending-down';
@@ -84,8 +85,11 @@
     }
     return $_('habits.correlation_brief', {
       values: {
-        score: habit.correlation_score.toFixed(2),
+        label: $_(
+          `insights.confidence_label.${confidenceLabelKey(Math.abs(habit.correlation_score))}`
+        ),
         metric: metricLabel(habit.correlation_metric),
+        n: habit.days_tracked,
       },
     });
   }

@@ -20,6 +20,7 @@
    */
   import { _ } from 'svelte-i18n';
   import type { InsightMaturity, InsightTier } from '$lib/api/insights';
+  import { confidenceLabelKey as labelKeyForScore } from '$lib/utils/confidenceLabel';
 
   export let maturity: InsightMaturity | null = null;
   export let showMaturityBadge = true;
@@ -38,20 +39,7 @@
   $: filledDots = Math.round(clampedScore * DOT_COUNT);
   $: dotStates = Array.from({ length: DOT_COUNT }, (_, i) => i < filledDots);
 
-  /**
-   * Map a 0–1 confidence float to one of 5 semantic labels.
-   * Boundaries: [0,0.2) early | [0.2,0.4) emerging | [0.4,0.6) moderate
-   *             [0.6,0.8) strong | [0.8,1] very_strong
-   */
-  function confidenceLabel(score: number): string {
-    if (score < 0.2) return 'early_signal';
-    if (score < 0.4) return 'emerging_pattern';
-    if (score < 0.6) return 'moderate_finding';
-    if (score < 0.8) return 'strong_finding';
-    return 'very_strong_finding';
-  }
-
-  $: confidenceLabelKey = confidenceLabel(clampedScore);
+  $: confidenceLabelKey = labelKeyForScore(clampedScore);
 
   $: showTier = Boolean(maturity && showMaturityBadge);
   $: tierPhase = maturity?.phase ?? null;
