@@ -118,16 +118,16 @@ Trends/Insights nutzen den Client-Store `cc_analysis_range`, und Compare ignorie
   - Der eigentliche Befund ist keine Dopplung, sondern eine **Lücke**: Fokus-/Cluster-Chips (Panel 618–648) und der Dichte-/Zoom-Regler (Panel 652–681) existieren **nur** auf dem Desktop und fehlen im mobilen Sheet vollständig.
   - Daraus folgt eine harte Bedingung für O5: der neue Zeitraum-Regler muss in **beide** Flächen, sonst ist das W6-Kriterium desktop-only erfüllt und der Vorwurf „zwei Pfeile, zwei Grundgesamtheiten" bleibt für Mobilnutzer bestehen.
 
-## Phase 3 — #933 Changepoint bekommt ein ISO-Datum
+## Phase 3 — #933 Changepoint bekommt ein ISO-Datum ✅
 
 Backend-only, keine Blocker, kann parallel zu Phase 1/2 laufen.
 
-- In [changepoint.py](../../backend/app/services/insights/changepoint.py) `_changepoint_candidates` erweitern. Die Daten liegen bereits vor: `AnalyticsEntry.entry_date` existiert, und die Sequenz ist über `_dedupe_daily_entries` datumssortiert und tagesweise dedupliziert — `changepoint_index` zeigt also sauber auf `entries[index]`.
-- Payload ergänzen um `changepoint_date` (`entries[index].entry_date`, letzter Tag des Vorher-Segments), `shift_date` (`entries[index + 1].entry_date`, erster Tag des Nachher-Segments) und `changepoint_dates` für die volle `changepoints`-Liste. Beide Daten, weil `detect_changepoints()` laut Docstring „zero-based indices immediately before a detected shift" liefert und die Segmente `moods[:index+1]` / `moods[index+1:]` sind: der Wechsel liegt **zwischen** zwei Tagen, nicht auf einem.
-- `subject_label` von `entry_47` auf das Datum umstellen, `statement` ebenso.
-- Erkennung bleibt unverändert: PELT `rbf`, Penalty 3.0, `MIN_SEGMENT_SIZE = 5`, max. 3 Changepoints, `ANALYTICS_MIN_ENTRIES_CHANGEPOINT = 60`. Keine neuen Serien — Stress-/Energy-Changepoints sind ausdrücklich nicht in diesem Scope (§C.3 in #875 ist an dieser Stelle falsch und wird beim Durchgang auf „mood-only" korrigiert).
-- Tests: Index→Datum bei Lücken in der Eintragsfolge, Randfall `index + 1` außerhalb der Serie. [test_changepoint.py](../../backend/tests/test_changepoint.py) deckt heute nur `detect_changepoints` ab — `_changepoint_candidates` hat noch keinen Test.
-- Kein OpenAPI-Regen nötig: `payload` ist im Schema bereits `dict[str, Any]` beziehungsweise `additionalProperties: true`.
+- [x] In [changepoint.py](../../backend/app/services/insights/changepoint.py) `_changepoint_candidates` erweitern. Die Daten liegen bereits vor: `AnalyticsEntry.entry_date` existiert, und die Sequenz ist über `_dedupe_daily_entries` datumssortiert und tagesweise dedupliziert — `changepoint_index` zeigt also sauber auf `entries[index]`.
+- [x] Payload ergänzen um `changepoint_date` (`entries[index].entry_date`, letzter Tag des Vorher-Segments), `shift_date` (`entries[index + 1].entry_date`, erster Tag des Nachher-Segments) und `changepoint_dates` für die volle `changepoints`-Liste. Beide Daten, weil `detect_changepoints()` laut Docstring „zero-based indices immediately before a detected shift" liefert und die Segmente `moods[:index+1]` / `moods[index+1:]` sind: der Wechsel liegt **zwischen** zwei Tagen, nicht auf einem.
+- [x] `subject_label` von `entry_47` auf das Datum umstellen, `statement` ebenso.
+- [x] Erkennung bleibt unverändert: PELT `rbf`, Penalty 3.0, `MIN_SEGMENT_SIZE = 5`, max. 3 Changepoints, `ANALYTICS_MIN_ENTRIES_CHANGEPOINT = 60`. Keine neuen Serien — Stress-/Energy-Changepoints sind ausdrücklich nicht in diesem Scope (§C.3 in #875 ist an dieser Stelle falsch und wird beim Durchgang auf „mood-only" korrigiert).
+- [x] Tests: Index→Datum bei Lücken in der Eintragsfolge, Randfall `index + 1` außerhalb der Serie. [test_changepoint.py](../../backend/tests/test_changepoint.py) deckt `_changepoint_candidates` und `_resolve_changepoint_dates` ab.
+- [x] Kein OpenAPI-Regen nötig: `payload` ist im Schema bereits `dict[str, Any]` beziehungsweise `additionalProperties: true`.
 
 ## Phase 4 — Changepoint-Marker auf der Compare-Achse (L4)
 
