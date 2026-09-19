@@ -80,7 +80,7 @@ Die beiden Endpunkte einer divergenten Skala kommen aus den Theme-Tokens `--colo
 | Day-7 Retention                | ≥ 40 %              |
 | Day-30 Retention               | ≥ 20 %              |
 | Ø Tägliche Eintrags-Completion | ≥ 70 % aktiver User |
-| Time-to-First-Insight          | < 14 Tage           |
+| Time-to-First-Answer           | < 14 Tage           |
 | Crash-Free-Rate                | > 99,5 %            |
 
 ---

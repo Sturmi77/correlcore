@@ -162,18 +162,14 @@ Jetzt existiert ein Landeplatz. Der Default-Flip allein wirkt aber nicht.
 - [x] Explizite `enabled: false`-Wahlen bleiben erhalten; reine Legacy-Defaults werden auf das schlanke Layout ersetzt.
 - [x] #931 Punkt 2 / §2.10 und ADR-0017 an ADR-0043 angeglichen.
 
-## Phase 7 — D1, D2, G1, G2: Ebene 2 und das Nicht-Ergebnis
+## Phase 7 — D1, D2, G1, G2: Ebene 2 und das Nicht-Ergebnis ✅
 
 Der eine echte Neubau. Zweistufig, damit die Evidenzsprache validiert wird, bevor die Fläche entsteht.
 
-- **Schritt A — G2 in der Karte.** `insight-card__level2` in [InsightCard.svelte](../../apps/web/src/lib/components/insights/InsightCard.svelte) (Zeilen 510–547) existiert und enthält heute nur `InsightEvidence` plus ein technisches Meta-Grid. Dort den Verteilungsvergleich „mit / ohne" mit zwei Nennern einsetzen. Keine neue Route, kein Nav, reversibel. Das macht den häufigsten Insight-Typ (`pointbiserial`) erstmals prüfbar und schließt L2.
-- Dafür ist eine **Payload-Erweiterung im Backend** nötig: die Karte kennt heute nur `effect_size`, `confidence` und `sample_n`. Für zwei Nenner und eine Verteilungsdarstellung braucht `pointbiserial` die Gruppengrößen und eine Verteilungsangabe (Zählungen je Stufe oder Quantile) im Payload. Analog zum Lag-Profil, das schon über `payload.method === 'lag'` und `payload.lag_profile` läuft. Payload ist untypisiert (`JSONB` / `dict[str, Any]`), also additiv ohne Contract-Bruch.
-- **Schritt B — D2 Nicht-Ergebnis.** Derselbe Rahmen, anderes Ende, plus nächste Handlung (Mockup E3). Überlappende Verteilungen **sind** die Antwort „X hat nichts verändert" — das schließt L9 fast kostenlos mit ab. Voraussetzung ist die §1.6-Änderung aus Phase 0, sonst zählt dieses Ergebnis metrisch weiter als „kein Insight".
-- **Schritt C — D1 Signal-Detail.** Route `/insights/signal/[id]` als sekundäre Fläche (ADR-0043 §2). Ablauf nach Mockup E2: Satz → mit/ohne (G2) → Verlauf/ESM → **G1 Streudiagramm hinter Progressive Disclosure**. Lift bleibt hinter ⓘ. Das schließt L1, L2 und L6 auf einer Fläche und ist der Landeplatz für die Lag-Heatmap aus Phase 6.
-- Jede Ebene-1-Aussage bekommt genau **einen** Vorwärtspfad hierher (ADR-0043 §1), und die in Phase 2 gebaute Compare-Aktion zeigt hierher statt direkt aufs ESM.
-- **G4 Forest-Plot wird nicht gebaut**, aber **L3 wird beantwortet.** ADR-0017 Zeile 15 verwirft die duale Stärke×Konfidenz-Darstellung für diese Zielgruppe wörtlich, also ist der Forest-Plot nicht die Antwort. Die Lücke selbst ist echt: ein Effekt von 0,33 bei n=18 und einer von 0,62 bei n=34 sehen heute fast gleich aus. Die Antwort liegt in einem Muster, das die App schon besitzt und nur an einer Stelle nutzt — das explizite Unsicherheitsband in `SymptomTrendOverlay` (bis Phase `robust`). Dieses Band auf das Signal-Detail und den Bericht ausdehnen. Zusammen mit den zwei Nennern (n steht dann im Satz) ist L3 gedeckt, ohne eine abstrakte Geometrie einzuführen.
-- **L5 ist nicht mehr zurückgestellt**, sondern Phase 12 — mit dem Produktentscheid als erstem Schritt.
-- Datenschutz: G1/G2 zeigen erstmals Einzeltage als Punkte. Bleibt lokal zum Account, erhöht aber die Re-Identifizierbarkeit in geteilten Screenshots — dieselbe Behandlung wie beim PNG-Export vorsehen.
+- [x] **Schritt A — G2 in der Karte.** `WithWithoutDistribution` in `insight-card__level2` plus natürliche Häufigkeiten mit zwei Nennern auf der Karte. Payload um `with_distribution` / `without_distribution` / `with_good_count` / `without_good_count` erweitert.
+- [x] **Schritt B — D2 Nicht-Ergebnis.** Neuer Typ `null_association` (Alembic `051`) für kleine Effekte; gleiche G2-Fläche, Badge „Kein Muster“, Next-Actions auf dem Signal-Detail. §1.6 → Time-to-First-Answer.
+- [x] **Schritt C — D1 Signal-Detail.** Route `/insights/signal/[id]` mit Satz → G2 → ESM → G1-Scatter hinter Disclosure und L3 mean±SE-Bändern. CTA „Zusammenhang prüfen“ ist der eine Vorwärtspfad von Ebene 1. Compare verweist auf Insights (Layer 2), nicht auf ESM.
+- [x] ADR-0043 auf Accepted; G4 Forest-Plot bewusst nicht gebaut.
 
 ## Phase 8 — #892 Option 3, `work_context` neutral, #875 Belastungs-Overlay
 

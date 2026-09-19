@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-09-18)
+Accepted (2026-09-19)
 
 Amends and supersedes parts of [ADR-0017](0017-frontend-screen-architecture.md)
 (see "Relationship to ADR-0017" below). Context: analysis issues

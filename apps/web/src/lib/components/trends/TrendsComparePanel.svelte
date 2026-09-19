@@ -615,6 +615,13 @@
     </div>
   {/if}
 
+  {#if pinned.length >= 2}
+    <p class="compare__check" data-testid="trends-compare-check-question">
+      <a href="/insights">{$_('trends.compare.check_question')}</a>
+      <span class="compare__check-hint">{$_('trends.compare.check_question_hint')}</span>
+    </p>
+  {/if}
+
   {#if clustersAvailable && showTags}
     <div
       class="compare__clusters"
@@ -884,6 +891,25 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3);
+  }
+
+  .compare__check {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: var(--text-sm);
+  }
+
+  .compare__check a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .compare__check-hint {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
   }
 
   .compare__mode {

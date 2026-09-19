@@ -19,6 +19,7 @@ from app.services.insights.shared import (
     _METRIC_LABELS,
     _SLEEP_METRIC_LABELS,
     FDR_ALPHA,
+    MAX_NULL_ASSOCIATIONS,
     MIN_ABS_EFFECT_SIZE,
     MIN_BIVARIATE_ENTRIES,
     MIN_SLEEP_OBSERVATIONS,
@@ -38,6 +39,7 @@ from app.services.insights.shared import (
     _metric_value,
     _primary_confounder,
     _weekday_confounded_statement,
+    _with_without_distribution_payload,
     confidence_tier_for_sample,
     is_weekday_biased,
     is_work_context_biased,
@@ -259,9 +261,25 @@ def _pointbiserial_candidates(
             int,
             float,
             float,
+            list[int],
+            list[int],
             bool,
             bool,
             bool,
+        ]
+    ] = []
+    null_raw: list[
+        tuple[
+            uuid.UUID,
+            TagSnapshot,
+            float,
+            float,
+            int,
+            int,
+            float,
+            float,
+            list[int],
+            list[int],
         ]
     ] = []
     for tag_id, tag in sorted(tags.items(), key=lambda item: item[1].slug):
@@ -272,10 +290,39 @@ def _pointbiserial_candidates(
             continue
 
         mood_values = [entry.mood_score for entry in entries]
+        tagged_moods = [
+            entry.mood_score for entry, present in zip(entries, binary, strict=True) if present
+        ]
+        untagged_moods = [
+            entry.mood_score
+            for entry, present in zip(entries, binary, strict=True)
+            if not present
+        ]
         result = pointbiserialr(binary, mood_values)
         coefficient = _finite_float(result.statistic)
         p_value = _finite_float(result.pvalue)
-        if coefficient is None or p_value is None or abs(coefficient) < MIN_ABS_EFFECT_SIZE:
+        if coefficient is None or p_value is None:
+            continue
+
+        tagged_mood = sum(tagged_moods) / tagged_count
+        untagged_mood = sum(untagged_moods) / untagged_count
+
+        # Phase 7 / D2: small effects are non-results (overlapping distributions).
+        if abs(coefficient) < MIN_ABS_EFFECT_SIZE:
+            null_raw.append(
+                (
+                    tag_id,
+                    tag,
+                    coefficient,
+                    p_value,
+                    tagged_count,
+                    untagged_count,
+                    tagged_mood,
+                    untagged_mood,
+                    tagged_moods,
+                    untagged_moods,
+                )
+            )
             continue
 
         weekday_confounded = is_weekday_biased(entries, tag_id) or (
@@ -305,18 +352,6 @@ def _pointbiserial_candidates(
             )
         )
 
-        tagged_mood = (
-            sum(entry.mood_score for entry, present in zip(entries, binary, strict=True) if present)
-            / tagged_count
-        )
-        untagged_mood = (
-            sum(
-                entry.mood_score
-                for entry, present in zip(entries, binary, strict=True)
-                if not present
-            )
-            / untagged_count
-        )
         raw.append(
             (
                 tag_id,
@@ -327,6 +362,8 @@ def _pointbiserial_candidates(
                 untagged_count,
                 tagged_mood,
                 untagged_mood,
+                tagged_moods,
+                untagged_moods,
                 weekday_confounded,
                 work_context_confounded,
                 calendar_context_confounded,
@@ -343,6 +380,8 @@ def _pointbiserial_candidates(
         untagged_count,
         tagged_mood,
         untagged_mood,
+        tagged_moods,
+        untagged_moods,
         weekday_confounded,
         work_context_confounded,
         calendar_context_confounded,
@@ -390,9 +429,12 @@ def _pointbiserial_candidates(
                     "work_context_confounded": work_context_confounded,
                     "calendar_context_confounded": calendar_context_confounded,
                     "min_tag_usages": settings.ANALYTICS_MIN_TAG_USAGES,
+                    "non_result": False,
                 },
                 payload={
                     "tag_slug": tag.slug,
+                    "method": "pointbiserial",
+                    "outcome": "association",
                     "tagged_count": tagged_count,
                     "untagged_count": untagged_count,
                     "tagged_mood_avg": round(tagged_mood, 2),
@@ -400,6 +442,59 @@ def _pointbiserial_candidates(
                     "p_corrected": round(p_corrected, 4),
                     "confounder": _primary_confounder(confounders),
                     "confounders": confounders,
+                    **_with_without_distribution_payload(tagged_moods, untagged_moods),
+                },
+                generated_for_date=generated_for_date,
+            )
+        )
+
+    # Prefer the most overlapping (smallest |r|) null candidates, capped.
+    null_raw.sort(key=lambda item: (abs(item[2]), -(item[4] + item[5])))
+    for (
+        tag_id,
+        tag,
+        coefficient,
+        p_value,
+        tagged_count,
+        untagged_count,
+        tagged_mood,
+        untagged_mood,
+        tagged_moods,
+        untagged_moods,
+    ) in null_raw[:MAX_NULL_ASSOCIATIONS]:
+        statement = (
+            f"Days tagged {tag.label} currently look similar to other days "
+            f"for mood in your data."
+        )
+        candidates.append(
+            InsightCandidate(
+                insight_type=InsightType.NULL_ASSOCIATION,
+                tier=tier,
+                metric="mood_score",
+                subject_type="tag",
+                subject_id=tag_id,
+                subject_label=tag.label,
+                effect_size=round(coefficient, 4),
+                confidence=_confidence(coefficient, p_value, tier),
+                sample_n=len(entries),
+                statement=statement,
+                flags={
+                    **_base_flags(
+                        p_value=p_value,
+                        method="pointbiserial",
+                    ),
+                    "min_tag_usages": settings.ANALYTICS_MIN_TAG_USAGES,
+                    "non_result": True,
+                },
+                payload={
+                    "tag_slug": tag.slug,
+                    "method": "pointbiserial",
+                    "outcome": "null",
+                    "tagged_count": tagged_count,
+                    "untagged_count": untagged_count,
+                    "tagged_mood_avg": round(tagged_mood, 2),
+                    "untagged_mood_avg": round(untagged_mood, 2),
+                    **_with_without_distribution_payload(tagged_moods, untagged_moods),
                 },
                 generated_for_date=generated_for_date,
             )

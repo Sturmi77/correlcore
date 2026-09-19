@@ -40,6 +40,7 @@ class InsightType(StrEnum):
     """
 
     POINTBISERIAL = "pointbiserial"
+    NULL_ASSOCIATION = "null_association"
     SPEARMAN = "spearman"
     WEEKDAY_PATTERN = "weekday_pattern"
     WORK_CONTEXT_PATTERN = "work_context_pattern"

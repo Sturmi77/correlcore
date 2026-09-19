@@ -26,8 +26,14 @@
   } from '$lib/utils/insightConfounder';
   import InsightEvidence from './InsightEvidence.svelte';
   import NoteInsightEvidence from './NoteInsightEvidence.svelte';
+  import WithWithoutDistribution from './WithWithoutDistribution.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import { isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
+  import {
+    isNullAssociation,
+    isWithWithoutInsight,
+    parseWithWithoutView,
+  } from '$lib/utils/withWithoutDistribution';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
 
@@ -70,6 +76,9 @@
 
   $: noteEvidence = payloadRecord(insight?.payload?.evidence);
   $: hasNoteEvidence = Boolean(noteEvidence && typeof noteEvidence.signal === 'string');
+  $: withWithoutView = insight ? parseWithWithoutView(insight) : null;
+  $: isNullResult = insight ? isNullAssociation(insight) : false;
+  $: canVerifySignal = Boolean(insight && isWithWithoutInsight(insight));
 
   let expanded = false;
 
@@ -329,10 +338,12 @@
     class="insight-card"
     class:insight-card--featured={featured}
     class:insight-card--confounded={isConfounded}
+    class:insight-card--null={isNullResult}
     data-testid="insight-card"
     data-expanded={expanded ? 'true' : 'false'}
     data-direction={dirClass}
     data-featured={featured ? 'true' : 'false'}
+    data-null-result={isNullResult ? 'true' : 'false'}
     style="--insight-accent: {accentColor}"
   >
     <header class="insight-card__header">
@@ -355,6 +366,26 @@
         </button>
       {/if}
     </header>
+
+    {#if isNullResult}
+      <p class="insight-card__null-badge" data-testid="insight-card-null-badge">
+        {$_('insights.card.null_badge')}
+      </p>
+    {/if}
+
+    {#if withWithoutView}
+      <p class="insight-card__freq" data-testid="insight-card-freq">
+        {$_('insights.card.with_without_freq', {
+          values: {
+            withGood: withWithoutView.withGood,
+            withN: withWithoutView.withN,
+            withoutGood: withWithoutView.withoutGood,
+            withoutN: withWithoutView.withoutN,
+            subject: withWithoutView.subjectLabel,
+          },
+        })}
+      </p>
+    {/if}
 
     <p class="insight-card__caption" data-testid="insight-card-title">
       {title}
@@ -484,6 +515,16 @@
       </div>
     {/if}
 
+    {#if canVerifySignal}
+      <a
+        class="insight-card__verify"
+        href={`/insights/signal/${insight.id}`}
+        data-testid="insight-card-verify"
+      >
+        {$_('insights.card.verify_action')}
+      </a>
+    {/if}
+
     {#if canExploreEvents}
       <button
         type="button"
@@ -513,6 +554,10 @@
         class="insight-card__level2"
         data-testid="insight-card-level2"
       >
+        {#if withWithoutView}
+          <WithWithoutDistribution view={withWithoutView} compact />
+        {/if}
+
         <InsightEvidence
           confidenceScore={insight.confidence ?? 0}
           currentTier={insight.tier}
@@ -578,6 +623,40 @@
   .insight-card--confounded {
     opacity: 0.88;
     border-style: dashed;
+  }
+  .insight-card--null {
+    border-left-color: var(--color-success, #2f6f4e);
+  }
+  .insight-card__null-badge {
+    margin: 0;
+    align-self: flex-start;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm, 0.35rem);
+    border: 1px solid color-mix(in srgb, var(--color-success, #2f6f4e) 45%, var(--color-border));
+    color: var(--color-success, #2f6f4e);
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 600;
+  }
+  .insight-card__freq {
+    margin: 0;
+    font-size: var(--text-sm, 0.875rem);
+    line-height: 1.4;
+    color: var(--color-text-muted);
+  }
+  .insight-card__verify {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-md, 0.5rem);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+    color: var(--color-primary);
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .insight-card__verify:hover {
+    background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
   }
   .insight-card__confounder {
     margin: 0;

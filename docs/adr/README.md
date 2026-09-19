@@ -53,7 +53,7 @@ Status: `Vorgeschlagen | Accepted | Abgelehnt | Ersetzt durch ADR-XXXX`
 | [ADR-0040](0040-selfhost-auth-edge-passthrough.md)                      | Self-Host-Auth-Edge: Ein-Regel-Passthrough + Bearer-Fallback | Accepted   | 2026-07-25 |
 | [ADR-0041](0041-tag-habit-relabeling-and-onboarding-habit-selection.md) | Tag/Habit-Relabeling + Habit-Auswahl im Onboarding           | Proposed   | 2026-07-27 |
 | [ADR-0042](0042-health-connect-bridge-strategy.md)                      | Health Connect via a thin custom Capacitor plugin            | Accepted   | 2026-08-02 |
-| [ADR-0043](0043-insight-surface-layers.md)                              | Insight Surface Layers (depth on demand)                     | Proposed   | 2026-09-18 |
+| [ADR-0043](0043-insight-surface-layers.md)                              | Insight Surface Layers (depth on demand)                     | Accepted   | 2026-09-19 |
 
 ## Kurzübersicht der Entscheidungen
 

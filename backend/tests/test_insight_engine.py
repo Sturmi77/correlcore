@@ -313,10 +313,47 @@ def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
     assert tag_candidate.subject_id == sport_id
     assert tag_candidate.payload["tag_slug"] == "sport"
     assert tag_candidate.payload["tagged_count"] == 15
+    assert tag_candidate.payload["with_distribution"] == [0, 0, 0, 0, 15]
+    assert tag_candidate.payload["without_distribution"] == [0, 15, 0, 0, 0]
+    assert tag_candidate.payload["with_good_count"] == 15
+    assert tag_candidate.payload["without_good_count"] == 0
+    assert tag_candidate.payload["outcome"] == "association"
+
+
+def test_null_association_candidates_for_overlapping_tag_mood() -> None:
+    """Phase 7 / D2: small effects persist as null_association, not findings."""
+
+    coffee_id = uuid.uuid4()
+    coffee = TagSnapshot(id=coffee_id, label="Coffee", slug="coffee")
+    start = date(2026, 4, 1)
+    # Alternate tagging with a mood cycle that does not line up with the tag,
+    # so |r| stays below MIN_ABS_EFFECT_SIZE while both groups stay large.
+    mood_cycle = (2, 3, 4, 5, 3, 2, 4, 3)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=mood_cycle[offset % len(mood_cycle)],
+            energy=3,
+            stress=3,
+            tag_ids=frozenset({coffee_id}) if offset % 2 == 0 else frozenset(),
+        )
+        for offset in range(40)
+    ]
+
+    candidates = generate_insight_candidates(entries, [coffee], as_of=date(2026, 5, 10))
+    nulls = [c for c in candidates if c.insight_type == InsightType.NULL_ASSOCIATION]
+    assert nulls, "expected at least one null_association for overlapping distributions"
+    null = nulls[0]
+    assert null.subject_id == coffee_id
+    assert null.flags.get("non_result") is True
+    assert null.payload["outcome"] == "null"
+    assert "with_distribution" in null.payload
+    assert abs(null.effect_size if null.effect_size is not None else 1) < 0.25
 
 
 def test_sleep_mood_spearman_candidates_surface() -> None:
     """M8 Sprint 2 (#172): sleep↔mood correlations appear in the insights feed."""
+
     start = date(2026, 4, 1)
     entries = [
         _entry(

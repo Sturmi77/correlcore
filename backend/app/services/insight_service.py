@@ -19,6 +19,8 @@ from app.schemas.insight import (
     InsightEventWindowsResponse,
     InsightMaturity,
     InsightMaturityPhase,
+    InsightVerificationPoint,
+    InsightVerificationResponse,
 )
 from app.schemas.stats import TagCooccurrenceRange
 from app.services.stats_service import (
@@ -822,4 +824,121 @@ async def get_insight_event_windows(
         events=events,
         points=timeseries.points,
         lag_days=lag_days,
+    )
+
+
+def _metric_avg_from_point(point: object, metric: str) -> float | None:
+    mapping = {
+        "mood_score": "mood_avg",
+        "energy": "energy_avg",
+        "stress": "stress_avg",
+        "sleep_quality": "sleep_quality_avg",
+    }
+    attr = mapping.get(metric, "mood_avg")
+    value = getattr(point, attr, None)
+    return float(value) if isinstance(value, (int, float)) else None
+
+
+def _mean_and_se(values: list[float]) -> tuple[float | None, float | None]:
+    if not values:
+        return None, None
+    mean = sum(values) / len(values)
+    if len(values) < 2:
+        return round(mean, 3), None
+    variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+    se = (variance**0.5) / (len(values) ** 0.5)
+    return round(mean, 3), round(se, 3)
+
+
+async def get_insight_verification(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    insight_id: uuid.UUID,
+    range_: TagCooccurrenceRange,
+) -> InsightVerificationResponse:
+    """Day-level with/without series for Layer-2 scatter and uncertainty (Phase 7)."""
+
+    insight = await get_insight_by_id(db, user_id=user_id, insight_id=insight_id)
+    if insight.subject_type not in {"tag", "symptom"}:
+        raise InsightEventWindowsUnsupportedError(str(insight.subject_type))
+
+    from datetime import UTC, datetime
+
+    as_of = datetime.now(UTC).date()
+    start_date, end_date = _cooccurrence_window(range_, as_of)
+    empty = InsightVerificationResponse(
+        range=range_,
+        start_date=start_date,
+        end_date=end_date,
+        metric=insight.metric,
+        subject_label=insight.subject_label,
+        points=[],
+    )
+    if not await _analytics_enabled(db, user_id=user_id):
+        return empty
+
+    if insight.subject_type == "tag":
+        tag_slug = await _resolve_tag_slug(db, insight)
+        dates = (
+            await list_historical_tag_presence_dates_by_slug(
+                db,
+                user_id=user_id,
+                tag_slug=tag_slug,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            if tag_slug
+            else []
+        )
+    else:
+        symptom_slug = await _resolve_symptom_slug(db, insight)
+        dates = await list_symptom_presence_dates(
+            db,
+            user_id=user_id,
+            symptom_id=insight.subject_id,
+            symptom_slug=symptom_slug,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+    presence = set(dates)
+    timeseries = await get_timeseries(
+        db,
+        user_id=user_id,
+        range_=cooccurrence_range_to_timeseries(range_),
+    )
+    points: list[InsightVerificationPoint] = []
+    with_values: list[float] = []
+    without_values: list[float] = []
+    for point in timeseries.points:
+        if point.entry_count <= 0:
+            continue
+        value = _metric_avg_from_point(point, insight.metric)
+        if value is None:
+            continue
+        present = point.period_start in presence
+        points.append(
+            InsightVerificationPoint(date=point.period_start, value=value, present=present)
+        )
+        if present:
+            with_values.append(value)
+        else:
+            without_values.append(value)
+
+    with_mean, with_se = _mean_and_se(with_values)
+    without_mean, without_se = _mean_and_se(without_values)
+    return InsightVerificationResponse(
+        range=range_,
+        start_date=start_date,
+        end_date=end_date,
+        metric=insight.metric,
+        subject_label=insight.subject_label,
+        points=points,
+        with_mean=with_mean,
+        without_mean=without_mean,
+        with_se=with_se,
+        without_se=without_se,
+        with_n=len(with_values),
+        without_n=len(without_values),
     )
