@@ -312,6 +312,23 @@ def analytics_tag_predicate(user_id: uuid.UUID) -> ColumnElement[bool]:
     )
 
 
+async def _require_owned_entry(
+    db: AsyncSession, *, entry_id: uuid.UUID, user_id: uuid.UUID
+) -> None:
+    """Assert the entry belongs to ``user_id`` or raise :class:`EntryNotFoundForTagError`.
+
+    Selects the id only: a permission check has no reason to materialise the
+    row (and decrypt ``note_enc``). It also keeps this callable from migration
+    049's marker→tag backfill, which runs against revision 049's schema — a
+    full-row ``select(Entry)`` would emit columns added by later revisions.
+    """
+    result = await db.execute(
+        select(Entry.id).where(Entry.id == entry_id, Entry.user_id == user_id)
+    )
+    if result.scalar_one_or_none() is None:
+        raise EntryNotFoundForTagError("entry not found")
+
+
 async def _get_owned_entry(db: AsyncSession, *, entry_id: uuid.UUID, user_id: uuid.UUID) -> Entry:
     """Fetch an entry the user owns or raise :class:`EntryNotFoundForTagError`."""
     result = await db.execute(select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id))
@@ -538,7 +555,7 @@ async def list_tags_for_entry(
     entry_id: uuid.UUID,
 ) -> list[Tag]:
     """Return tags currently assigned to ``entry_id`` (owner-scoped)."""
-    await _get_owned_entry(db, entry_id=entry_id, user_id=user_id)
+    await _require_owned_entry(db, entry_id=entry_id, user_id=user_id)
 
     stmt = (
         select(Tag)
