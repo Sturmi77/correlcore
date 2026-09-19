@@ -18,6 +18,7 @@ export type InsightType =
   | 'weekday_pattern'
   | 'work_context_pattern'
   | 'weekday_context_pattern'
+  | 'changepoint'
   | (string & {});
 export type InsightTier = 'none' | 'early' | 'preliminary' | 'developing' | 'robust';
 export type InsightMaturityPhase = 'collecting' | 'early_patterns' | 'provisional' | 'robust';

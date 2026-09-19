@@ -25,6 +25,10 @@
   import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
   import { insightStore, loadInsights } from '$lib/stores/insights';
+  import {
+    insightsToChangepointMarkers,
+    insightsToChangepointSegments,
+  } from '$lib/utils/changepointMarkers';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
@@ -411,6 +415,14 @@
         }
       : timeseries;
   $: topInsight = $insightStore.latest;
+  $: changepointMarkers = insightsToChangepointMarkers($insightStore.insights, {
+    label: $_('trends.markers.phase_transition'),
+    descriptionFor: (before, after) =>
+      $_('trends.markers.phase_transition_detail', {
+        values: { before: before.toFixed(1), after: after.toFixed(1) },
+      }),
+  });
+  $: changepointSegments = insightsToChangepointSegments($insightStore.insights);
 
   onMount(() => {
     smoothing = readSmoothingPreference(typeof localStorage !== 'undefined' ? localStorage : null);
@@ -538,6 +550,8 @@
             bind:lag1Highlight={compareLag1Highlight}
             bind:overlayHintDismissed={compareOverlayHintDismissed}
             bind:overlayAvailabilityBinding={compareOverlayAvailability}
+            markers={changepointMarkers}
+            {changepointSegments}
             noteDates={noteEntryDates}
             on:selectDate={(event) => void openHistory(event.detail.date)}
             on:layerChange={(event) => setCompareLayers(event.detail)}

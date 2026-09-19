@@ -33,6 +33,7 @@
     formatBucketRangeLabel,
     type AxisBucket,
   } from '$lib/utils/compareAxisZoom';
+  import { remapEventMarkersToDisplayAxis } from '$lib/utils/changepointMarkers';
   import EventMarkerLayer, { type EventMarker } from './EventMarkerLayer.svelte';
   import TimelineCursorOverlay from './TimelineCursorOverlay.svelte';
 
@@ -204,24 +205,8 @@
     timelineCursor.setAxis(displayAxisKeys);
   }
 
-  /** Remap marker dates onto bucket starts when zoomed; EventMarkerLayer dedupes. */
-  $: displayMarkers =
-    buckets.length === 0
-      ? markers
-      : markers
-          .map((marker) => {
-            const start = buckets.find((b) => b.dates.includes(marker.date))?.start;
-            if (!start) return null;
-            const end = marker.endDate
-              ? buckets.find((b) => b.dates.includes(marker.endDate as string))?.start
-              : undefined;
-            return {
-              ...marker,
-              date: start,
-              ...(end && end !== start ? { endDate: end } : { endDate: undefined }),
-            };
-          })
-          .filter((marker): marker is EventMarker => marker !== null);
+  /** Remap marker dates onto bucket starts when zoomed; out-of-window → edge. */
+  $: displayMarkers = remapEventMarkersToDisplayAxis(markers, displayAxisKeys, buckets);
 
   let hostEl: HTMLDivElement | null = null;
 

@@ -708,7 +708,9 @@
       "partner_on_day": "{partner} also present"
     },
     "markers": {
-      "aria": "Event markers on the shared timeline"
+      "aria": "Event markers on the shared timeline",
+      "phase_transition": "Level shift",
+      "phase_transition_detail": "Mood average before {before}, after {after}"
     },
     "cursor": {
       "aria": "Shared timeline cursor"
@@ -1582,7 +1584,12 @@
       "lag_peak_marker": "Strongest at +{days} days ({direction})",
       "lag_profile_direction_positive": "same direction",
       "lag_profile_direction_negative": "opposite direction",
-      "lag_profile_direction_mixed": "mixed directions"
+      "lag_profile_direction_mixed": "mixed directions",
+      "changepoint_title": "Mood level shift",
+      "changepoint_statement": "Mood level shift from {date}: average before {before}, after {after} ({direction}).",
+      "changepoint_direction_higher": "higher",
+      "changepoint_direction_lower": "lower",
+      "changepoint_segment_aria": "Mood segment averages before and after the level shift"
     },
     "lag_heatmap": {
       "title": "Time-offset patterns",

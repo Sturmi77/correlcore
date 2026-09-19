@@ -708,7 +708,9 @@
       "partner_on_day": "{partner} ebenfalls vorhanden"
     },
     "markers": {
-      "aria": "Ereignis-Marker auf der gemeinsamen Zeitachse"
+      "aria": "Ereignis-Marker auf der gemeinsamen Zeitachse",
+      "phase_transition": "Niveauwechsel",
+      "phase_transition_detail": "Stimmungsmittelwert vorher {before}, danach {after}"
     },
     "cursor": {
       "aria": "Gemeinsamer Zeitachsen-Cursor"
@@ -1582,7 +1584,12 @@
       "lag_peak_marker": "Am staerksten bei +{days} Tagen ({direction})",
       "lag_profile_direction_positive": "gleichlaeufig",
       "lag_profile_direction_negative": "gegenlaeufig",
-      "lag_profile_direction_mixed": "gemischte Richtungen"
+      "lag_profile_direction_mixed": "gemischte Richtungen",
+      "changepoint_title": "Niveauwechsel Stimmung",
+      "changepoint_statement": "Niveauwechsel der Stimmung ab {date}: Mittelwert vorher {before}, danach {after} ({direction}).",
+      "changepoint_direction_higher": "hoeher",
+      "changepoint_direction_lower": "niedriger",
+      "changepoint_segment_aria": "Stimmungs-Segmentmittelwerte vor und nach dem Niveauwechsel"
     },
     "lag_heatmap": {
       "title": "Zeitversatz-Muster",

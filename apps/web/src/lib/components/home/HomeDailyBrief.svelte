@@ -4,6 +4,7 @@
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { topInsightLabel } from '$lib/utils/analysisCrossLinks';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
+  import { resolveInsightStatement } from '$lib/utils/changepointMarkers';
   import CorrelationHint from '$lib/components/insights/CorrelationHint.svelte';
   // Maintainer (#632): home shows a lead statement plus a single persistent
   // correlation hint (CorrelationHint) with a ≤1-click link to the canonical
@@ -27,6 +28,10 @@
   );
   $: insightBridgePreview = latestInsight ? topInsightLabel(latestInsight) : null;
   $: trendsBridgePreview = insightBridgePreview;
+  $: leadStatement = latestInsight
+    ? resolveInsightStatement(latestInsight, $_, stripLegacyInsightStatementTails) ||
+      $_('home.brief.insight_fallback')
+    : '';
 </script>
 
 <section class="daily-brief" data-testid="home-daily-brief" aria-busy={loading}>
@@ -37,8 +42,7 @@
   <div class="daily-brief__lead">
     {#if latestInsight}
       <p class="daily-brief__lead-statement" data-testid="daily-brief-lead-statement">
-        {stripLegacyInsightStatementTails(latestInsight.statement) ||
-          $_('home.brief.insight_fallback')}
+        {leadStatement}
       </p>
       <p class="daily-brief__caption" data-testid="daily-brief-lead-caption">
         {latestInsight.subject_label ?? latestInsight.metric}

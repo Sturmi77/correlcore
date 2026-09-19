@@ -16,6 +16,7 @@
     type AxisBucket,
   } from '$lib/utils/compareAxisZoom';
   import { pruneHeatmapRows, pruneHeatmapRowsByBuckets } from '$lib/utils/heatmapPruning';
+  import { clampIsoDateToWindow } from '$lib/utils/changepointMarkers';
   import { timelineCursor } from '$lib/stores/timelineCursor';
   import type { TagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
@@ -313,8 +314,26 @@
   // Sprint 1 (ADR-0035): mirror the cursor store to a local class for CSS
   // column highlighting via [data-date] selectors (bucket start = display key).
   $: cursorDate = $timelineCursor.date;
-  $: markerDateSet = new Set(markers.map((m) => m.date));
-  $: markerBandDates = markers
+  // Phase 4: keep out-of-window niveau shifts as edge markers (calendar clamp).
+  $: heatmapWindowStart = visibleBuckets[0]?.dates[0] ?? startDate;
+  $: heatmapWindowEnd =
+    visibleBuckets[visibleBuckets.length - 1]?.dates[
+      (visibleBuckets[visibleBuckets.length - 1]?.dates.length ?? 1) - 1
+    ] ?? endDate;
+  $: displayMarkers =
+    heatmapWindowStart && heatmapWindowEnd
+      ? markers.map((marker) => ({
+          ...marker,
+          date: clampIsoDateToWindow(marker.date, heatmapWindowStart, heatmapWindowEnd),
+          ...(marker.endDate
+            ? {
+                endDate: clampIsoDateToWindow(marker.endDate, heatmapWindowStart, heatmapWindowEnd),
+              }
+            : {}),
+        }))
+      : markers;
+  $: markerDateSet = new Set(displayMarkers.map((m) => m.date));
+  $: markerBandDates = displayMarkers
     .filter((m) => m.endDate)
     .flatMap((m) => buildIsoDateRange(m.date, m.endDate ?? m.date));
   $: markerBandSet = new Set(markerBandDates);

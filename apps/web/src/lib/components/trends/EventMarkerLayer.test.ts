@@ -21,4 +21,12 @@ describe('dedupeEventMarkers', () => {
     ];
     expect(dedupeEventMarkers(markers)).toHaveLength(2);
   });
+
+  it('keeps phase_transition beside other kinds on the same date (Phase 4)', () => {
+    const markers: EventMarker[] = [
+      { date: '2026-05-01', endDate: '2026-05-01', label: 'A∩B', kind: 'generic' },
+      { date: '2026-05-01', label: 'Niveauwechsel', kind: 'phase_transition' },
+    ];
+    expect(dedupeEventMarkers(markers)).toHaveLength(2);
+  });
 });

@@ -20,6 +20,11 @@
     formatBucketRangeLabel,
     type AxisBucket,
   } from '$lib/utils/compareAxisZoom';
+  import {
+    remapEventMarkersToDisplayAxis,
+    scoreToPlotY,
+    type ChangepointSegmentGuide,
+  } from '$lib/utils/changepointMarkers';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import EventMarkerLayer, {
     dedupeEventMarkers,
@@ -46,6 +51,11 @@
    * Only honoured when the chart is aligned to a daily axis.
    */
   export let markers: readonly EventMarker[] = [];
+  /**
+   * Phase 4 / L4: mood segment midlines from changepoint insights
+   * (`before_avg` / `after_avg` split at `shift_date`).
+   */
+  export let changepointSegments: readonly ChangepointSegmentGuide[] = [];
   /** ISO dates with a note — renders a small presence dot on the axis. */
   export let noteDates: readonly string[] = [];
   /**
@@ -225,28 +235,46 @@
     return base;
   }
 
-  function bucketStartForDate(date: string): string | null {
-    if (buckets.length === 0) return displayAxisKeys.includes(date) ? date : null;
-    return buckets.find((bucket) => bucket.dates.includes(date))?.start ?? null;
-  }
-
-  /** Remap marker dates onto display-axis keys when zoomed; dedupe per column. */
+  /** Remap marker dates onto display-axis keys; out-of-window → edge (Phase 4). */
   $: displayMarkers = dedupeEventMarkers(
-    buckets.length === 0
-      ? markers
-      : markers
-          .map((marker) => {
-            const start = bucketStartForDate(marker.date);
-            if (!start) return null;
-            const end = marker.endDate ? bucketStartForDate(marker.endDate) : undefined;
-            return {
-              ...marker,
-              date: start,
-              ...(end && end !== start ? { endDate: end } : { endDate: undefined }),
-            };
-          })
-          .filter((marker): marker is EventMarker => marker !== null)
+    remapEventMarkersToDisplayAxis(markers, displayAxisKeys, buckets)
   );
+
+  type ResolvedSegmentGuide = {
+    beforeY: number;
+    afterY: number;
+    splitX: number;
+    beforeAvg: number;
+    afterAvg: number;
+  };
+
+  $: segmentGuides = ((): ResolvedSegmentGuide[] => {
+    if (!aligned || !enabled.mood_avg || changepointSegments.length === 0) return [];
+    const remapped = remapEventMarkersToDisplayAxis(
+      changepointSegments.map((segment) => ({
+        date: segment.shiftDate,
+        kind: 'phase_transition' as const,
+        label: '',
+      })),
+      displayAxisKeys,
+      buckets
+    );
+    return changepointSegments.flatMap((segment, index): ResolvedSegmentGuide[] => {
+      const splitKey = remapped[index]?.date;
+      if (!splitKey) return [];
+      const splitIndex = displayAxisKeys.indexOf(splitKey);
+      if (splitIndex < 0) return [];
+      return [
+        {
+          beforeY: scoreToPlotY(segment.beforeAvg, innerH) + paddingTop,
+          afterY: scoreToPlotY(segment.afterAvg, innerH) + paddingTop,
+          splitX: dailyAxisXForIndex(splitIndex, plotLayout),
+          beforeAvg: segment.beforeAvg,
+          afterAvg: segment.afterAvg,
+        },
+      ];
+    });
+  })();
 
   onDestroy(() => {
     // Do not reset the cursor here — other components on the page may still
@@ -347,6 +375,37 @@
                 top={paddingTop}
                 height={innerH}
               />
+            {/if}
+            {#if segmentGuides.length > 0}
+              <g
+                class="timeseries__changepoint-segments"
+                role="group"
+                aria-label={$_('insights.card.changepoint_segment_aria')}
+                data-testid="timeseries-changepoint-segments"
+              >
+                {#each segmentGuides as guide (guide.splitX + ':' + guide.beforeAvg + ':' + guide.afterAvg)}
+                  <line
+                    class="timeseries__changepoint-midline"
+                    x1={plotStart}
+                    x2={guide.splitX}
+                    y1={guide.beforeY}
+                    y2={guide.beforeY}
+                    data-testid="timeseries-changepoint-before"
+                  >
+                    <title>{guide.beforeAvg.toFixed(1)}</title>
+                  </line>
+                  <line
+                    class="timeseries__changepoint-midline"
+                    x1={guide.splitX}
+                    x2={plotEnd}
+                    y1={guide.afterY}
+                    y2={guide.afterY}
+                    data-testid="timeseries-changepoint-after"
+                  >
+                    <title>{guide.afterAvg.toFixed(1)}</title>
+                  </line>
+                {/each}
+              </g>
             {/if}
             <line
               x1={plotStart}
@@ -738,6 +797,14 @@
     opacity: 0.22;
     stroke-width: 1;
     stroke-dasharray: 4 4;
+  }
+
+  .timeseries__changepoint-midline {
+    stroke: var(--color-event-marker);
+    stroke-width: 1.25;
+    stroke-dasharray: 6 4;
+    opacity: 0.85;
+    pointer-events: none;
   }
 
   .timeseries__tick {

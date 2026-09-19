@@ -30,6 +30,7 @@
   import { isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
+  import { resolveInsightStatement } from '$lib/utils/changepointMarkers';
 
   export let insight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
@@ -213,7 +214,8 @@
    * symptoms, context patterns) rather than guessing a color for them.
    */
   function metricAccentVar(metric: string | null | undefined): string {
-    if (metric === 'mood' || metric === 'mood_score') return 'var(--color-metric-mood)';
+    if (metric === 'mood' || metric === 'mood_score' || metric === 'mood_changepoint')
+      return 'var(--color-metric-mood)';
     if (metric === 'energy' || metric === 'energy_avg') return 'var(--color-metric-energy)';
     if (metric === 'stress' || metric === 'stress_avg') return 'var(--color-metric-stress)';
     return 'var(--color-primary)';
@@ -231,6 +233,9 @@
   }
 
   function buildTitle(ins: InsightResponse): string {
+    if (ins.insight_type === 'changepoint') {
+      return $_('insights.card.changepoint_title');
+    }
     if (ins.insight_type === 'symptom_mood_association') {
       const symptom = payloadString(ins, 'symptom_name') ?? ins.subject_label ?? 'Symptoms';
       return `${symptom} → ${ins.metric}`;
@@ -292,6 +297,10 @@
   $: primaryConfounder = insight ? primaryInsightConfounder(insight) : null;
   $: isContextInsight = insight ? isCalendarContextInsight(insight) : false;
   $: title = insight ? buildTitle(insight) : '';
+  $: statementText = insight
+    ? resolveInsightStatement(insight, $_, stripLegacyInsightStatementTails) ||
+      $_('home.insight.empty_statement')
+    : '';
   $: glyph = insight ? directionGlyph(insight.effect_size ?? 0) : '→';
   $: dirClass = insight ? directionClass(insight.effect_size ?? 0) : 'neutral';
   $: expandLabel = expanded ? $_('insights.card.collapse_aria') : $_('insights.card.expand_aria');
@@ -342,7 +351,7 @@
         data-testid="insight-card-direction">{glyph}</span
       >
       <p class="insight-card__statement" data-testid="insight-card-statement">
-        {stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')}
+        {statementText}
       </p>
       {#if dismissable}
         <button

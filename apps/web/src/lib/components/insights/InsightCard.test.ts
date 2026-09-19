@@ -504,4 +504,32 @@ describe('InsightCard lag profile mini-bars (#488 Phase 1b)', () => {
     expect(marker).toContain('insights.card.lag_profile_direction_positive');
     expect(marker).not.toContain('insights.card.lag_profile_direction_mixed');
   });
+
+  it('localizes changepoint statements from payload dates (Phase 4 / #933)', () => {
+    const changepoint: InsightResponse = {
+      ...INSIGHT,
+      id: 'test-changepoint',
+      insight_type: 'changepoint',
+      metric: 'mood_changepoint',
+      subject_label: '2026-03-07',
+      statement: 'Your mood average shifted to higher levels around 2026-03-07 (from 2026-03-09).',
+      payload: {
+        changepoint_index: 3,
+        changepoint_date: '2026-03-07',
+        shift_date: '2026-03-09',
+        before_avg: 2.1,
+        after_avg: 4.0,
+        changepoints: [3],
+        changepoint_dates: [{ index: 3, changepoint_date: '2026-03-07', shift_date: '2026-03-09' }],
+      },
+    };
+    render(InsightCard, { props: { insight: changepoint } });
+
+    expect(screen.getByTestId('insight-card-title').textContent).toContain(
+      'insights.card.changepoint_title'
+    );
+    const statement = screen.getByTestId('insight-card-statement').textContent ?? '';
+    expect(statement).toContain('insights.card.changepoint_statement');
+    expect(statement).not.toContain('Your mood average shifted');
+  });
 });

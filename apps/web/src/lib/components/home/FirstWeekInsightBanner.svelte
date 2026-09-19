@@ -3,6 +3,7 @@
   import { _ } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
+  import { resolveInsightStatement } from '$lib/utils/changepointMarkers';
 
   export let insight: InsightResponse | null = null;
 
@@ -13,13 +14,16 @@
     insight?.insight_type === 'weekday_context_pattern';
   $: titleKey = isWorkContext ? 'home.context_banner.title' : 'home.first_week_banner.title';
   $: bodyKey = isWorkContext ? 'home.context_banner.body' : 'home.first_week_banner.body';
+  $: bodyText = insight
+    ? resolveInsightStatement(insight, $_, stripLegacyInsightStatementTails) || $_(bodyKey)
+    : $_(bodyKey);
 </script>
 
 <section class="first-week-banner" data-testid="first-week-banner">
   <div class="first-week-banner__copy">
     <p class="first-week-banner__title">{$_(titleKey)}</p>
     <p class="first-week-banner__body">
-      {stripLegacyInsightStatementTails(insight?.statement) || $_(bodyKey)}
+      {bodyText}
     </p>
   </div>
   <div class="first-week-banner__actions">

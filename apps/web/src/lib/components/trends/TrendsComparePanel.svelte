@@ -57,6 +57,7 @@
     lag1DaysToMarkers,
     summarizeLag1,
   } from '$lib/utils/lag1Markers';
+  import type { ChangepointSegmentGuide } from '$lib/utils/changepointMarkers';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import MetricTimeseries from './MetricTimeseries.svelte';
@@ -100,6 +101,11 @@
    * symptom onsets, and habit goal changes; passed unfiltered.
    */
   export let markers: readonly EventMarker[] = [];
+  /**
+   * Phase 4 / L4: mood segment midlines from changepoint payloads
+   * (`before_avg` / `after_avg`), drawn on MetricTimeseries only.
+   */
+  export let changepointSegments: readonly ChangepointSegmentGuide[] = [];
   export let noteDates: readonly string[] = [];
   /**
    * Sprint 2 (ADR-0035): optional correlation map handed down to the
@@ -783,6 +789,7 @@
         buckets={axisBuckets}
         axisLayout={bucketAxisLayout}
         markers={activeMarkers}
+        {changepointSegments}
         {noteDates}
         enableCursor
         on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}

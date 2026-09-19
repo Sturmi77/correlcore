@@ -129,17 +129,17 @@ Backend-only, keine Blocker, kann parallel zu Phase 1/2 laufen.
 - [x] Tests: Index→Datum bei Lücken in der Eintragsfolge, Randfall `index + 1` außerhalb der Serie. [test_changepoint.py](../../backend/tests/test_changepoint.py) deckt `_changepoint_candidates` und `_resolve_changepoint_dates` ab.
 - [x] Kein OpenAPI-Regen nötig: `payload` ist im Schema bereits `dict[str, Any]` beziehungsweise `additionalProperties: true`.
 
-## Phase 4 — Changepoint-Marker auf der Compare-Achse (L4)
+## Phase 4 — Changepoint-Marker auf der Compare-Achse (L4) ✅
 
 Rider auf Phase 2, kein eigenständiges Feature. Die Infrastruktur ist vollständig vorhanden, es fehlt
 nur der Produzent.
 
-- [EventMarkerLayer.svelte](../../apps/web/src/lib/components/trends/EventMarkerLayer.svelte) kennt `phase_transition` in `EventMarkerKind`, aber nichts erzeugt es — der Kind existiert bisher nur in Tests. `trends/+page.svelte` übergibt `markers` gar nicht an `TrendsComparePanel`, obwohl das Prop existiert und dort mit Koinzidenz- und Lag-1-Markern gemerged wird.
-- Changepoint-Insights laden, `changepoint_date` / `shift_date` aus dem Payload zu einem Marker `kind: 'phase_transition'` machen und über den bestehenden `markers`-Pfad einspeisen. Bei aktiver Zoom-Stufe die Marker auf Bucket-Starts remappen — das Muster existiert in [MetricTimeseries.svelte](../../apps/web/src/lib/components/trends/MetricTimeseries.svelte) (Zeilen 233–249) und [UnifiedStripChart.svelte](../../apps/web/src/lib/components/trends/UnifiedStripChart.svelte) (207–224).
-- `before_avg` / `after_avg` als zwei Segment-Mittellinien zeichnen. Das sind genau die zwei Werte, die das Mockup G3 zeigt, und sie liegen schon im Payload.
-- Die in Phase 2 entstehende Frage entscheiden: ein Changepoint **außerhalb** des gewählten Fensters verschwindet nicht, sondern bleibt als Randmarker sichtbar. Sonst wechselt die Aussage mit dem Fenster, und genau das war der O5-Vorwurf.
-- Ebene 1 (der Satz) muss mit: `statement` wird heute als englischer Backend-String durchgereicht (`stripLegacyInsightStatementTails` übersetzt nicht). Für den Changepoint wird die Karte aus dem Payload lokalisiert gerendert (Datum, Richtung, zwei Mittelwerte) statt `statement` roh anzuzeigen. Das ist die in #933 als „offene Kleinigkeit" markierte Stelle und betrifft nur diese Insight-Familie.
-- Leitplanke: Formulierung „Niveauwechsel", nicht „ausgelöst durch". Der Changepoint bleibt in der neutralen Ebene und wandert **nicht** in das Belastungs-Overlay aus Phase 8.
+- [x] [EventMarkerLayer.svelte](../../apps/web/src/lib/components/trends/EventMarkerLayer.svelte) kennt `phase_transition` in `EventMarkerKind`, aber nichts erzeugt es — der Kind existiert bisher nur in Tests. `trends/+page.svelte` übergibt `markers` gar nicht an `TrendsComparePanel`, obwohl das Prop existiert und dort mit Koinzidenz- und Lag-1-Markern gemerged wird.
+- [x] Changepoint-Insights laden, `changepoint_date` / `shift_date` aus dem Payload zu einem Marker `kind: 'phase_transition'` machen und über den bestehenden `markers`-Pfad einspeisen. Bei aktiver Zoom-Stufe die Marker auf Bucket-Starts remappen — das Muster existiert in [MetricTimeseries.svelte](../../apps/web/src/lib/components/trends/MetricTimeseries.svelte) und [UnifiedStripChart.svelte](../../apps/web/src/lib/components/trends/UnifiedStripChart.svelte) (jetzt über `remapEventMarkersToDisplayAxis`).
+- [x] `before_avg` / `after_avg` als zwei Segment-Mittellinien zeichnen. Das sind genau die zwei Werte, die das Mockup G3 zeigt, und sie liegen schon im Payload.
+- [x] Die in Phase 2 entstehende Frage entscheiden: ein Changepoint **außerhalb** des gewählten Fensters verschwindet nicht, sondern bleibt als Randmarker sichtbar. Sonst wechselt die Aussage mit dem Fenster, und genau das war der O5-Vorwurf.
+- [x] Ebene 1 (der Satz) muss mit: `statement` wird heute als englischer Backend-String durchgereicht (`stripLegacyInsightStatementTails` übersetzt nicht). Für den Changepoint wird die Karte aus dem Payload lokalisiert gerendert (Datum, Richtung, zwei Mittelwerte) statt `statement` roh anzuzeigen. Das ist die in #933 als „offene Kleinigkeit" markierte Stelle und betrifft nur diese Insight-Familie.
+- [x] Leitplanke: Formulierung „Niveauwechsel", nicht „ausgelöst durch". Der Changepoint bleibt in der neutralen Ebene und wandert **nicht** in das Belastungs-Overlay aus Phase 8.
 
 ## Phase 5 — Ebene 4: die Bericht-Fläche (Vorbedingung für D5)
 
