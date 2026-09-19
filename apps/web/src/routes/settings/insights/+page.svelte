@@ -11,7 +11,11 @@
     type InsightSectionPreference,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
-  import { DEFAULT_INSIGHT_SECTIONS, mergeInsightSections } from '$lib/utils/insightSections';
+  import {
+    CURRENT_INSIGHT_SECTIONS_VERSION,
+    DEFAULT_INSIGHT_SECTIONS,
+    mergeInsightSections,
+  } from '$lib/utils/insightSections';
   import { createLatestWinsGate } from '$lib/utils/latestWinsPersist';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
@@ -48,7 +52,10 @@
       if (!persistGate.isCurrent(seq)) return;
       try {
         const toSend = sections;
-        const saved = await updateUserPreferences({ insight_sections: toSend });
+        const saved = await updateUserPreferences({
+          insight_sections: toSend,
+          insight_sections_version: CURRENT_INSIGHT_SECTIONS_VERSION,
+        });
         confirmedSections = mergeInsightSections(saved.insight_sections);
         if (!persistGate.isCurrent(seq)) return;
         preferences = saved;

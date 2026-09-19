@@ -61,6 +61,7 @@ class UserPreferencesUpdate(BaseModel):
     last_seen_digest_at: datetime | None = None
     home_sections: list[HomeSectionPreference] | None = Field(default=None, max_length=16)
     insight_sections: list[InsightSectionPreference] | None = Field(default=None, max_length=16)
+    insight_sections_version: int | None = Field(default=None, ge=1, le=32)
 
 
 class UserPreferencesResponse(BaseModel):
@@ -83,5 +84,6 @@ class UserPreferencesResponse(BaseModel):
     last_seen_digest_at: datetime | None = None
     home_sections: list[HomeSectionPreference] | None = None
     insight_sections: list[InsightSectionPreference] | None = None
+    insight_sections_version: int = 2
     created_at: datetime
     updated_at: datetime

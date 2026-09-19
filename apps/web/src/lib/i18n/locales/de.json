@@ -1326,7 +1326,11 @@
       "analytics_hint": "Symptome und gemeinsame Tags",
       "analysis_range_label": "Analysezeitraum",
       "history_link": "Erkenntnis-Verlauf",
-      "report_link": "Bericht & Export"
+      "report_link": "Bericht & Export",
+      "tools_aria": "Weitere Erkenntnis-Werkzeuge",
+      "tools_heading": "Weitere Werkzeuge",
+      "tools_settings_link": "Werkzeuge in den Einstellungen einblenden",
+      "dismissed_link": "Ausgeblendete Erkenntnisse ({count})"
     },
     "report": {
       "title": "Bericht",

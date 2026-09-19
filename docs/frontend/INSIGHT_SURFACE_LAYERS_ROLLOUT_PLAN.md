@@ -152,15 +152,15 @@ den einzigen PNG-Export des Produkts entfernen.
 - [x] ADR-0043 §1: Export-Controls nicht mehr in `InsightMatrix` — Link zur Bericht-Route statt PNG-Button.
 - [x] Datenschutz: Der Bericht zeigt aggregierte Zeilen, kein Einzeltag. Disclaimer und Nicht-Diagnose-Hinweis im Bericht.
 
-## Phase 6 — D5: Ebene 1 schrumpfen, mit versionierter Migration
+## Phase 6 — D5: Ebene 1 schrumpfen, mit versionierter Migration ✅
 
 Jetzt existiert ein Landeplatz. Der Default-Flip allein wirkt aber nicht.
 
-- Befund im Code: `merge()` in [sectionPreferences.ts](../../apps/web/src/lib/utils/sectionPreferences.ts) (Zeilen 47–70) behandelt gespeicherte Präferenzen als maßgeblich und hängt nur **fehlende** Keys aus den Defaults an. Wer je auf `/settings/insights` sortiert oder abgeschaltet hat, hat `{key: 'correlation_matrix', enabled: true}` gespeichert — eine Änderung an `DEFAULT_INSIGHT_SECTIONS` erreicht diese Nutzer nicht. Der einzige heute wirksame Hebel wäre, den Key aus `validKeys` zu entfernen, dann verwirft `coerce()` ihn — aber für **alle**, auch für Beta-Tester, die ihn bewusst aktiviert haben. Es gibt keinen Pfad „Default ändern, explizite Wahl respektieren".
-- Also: **Versionierung einführen.** Ein `insight_sections_version` (oder ein Wrapper-Objekt) auf [user_preference.py](../../backend/app/models/user_preference.py) plus Alembic-Migration, und eine einmalige Transformation in `normalize_insight_sections` / `merge_insight_sections`. Frontend ([insightSections.ts](../../apps/web/src/lib/utils/insightSections.ts), `sectionPreferences.ts`) und Backend ([insight_sections.py](../../backend/app/services/insight_sections.py), [section_preferences.py](../../backend/app/services/section_preferences.py)) spiegeln `validKeys`, `defaults` und `lockedKeys` heute manuell — beide Seiten müssen synchron geändert werden.
-- Neuer Default für Ebene 1: `stage_header`, `insight_feed` bleiben. `correlation_matrix` wandert nach Ebene 4, `lag_heatmap` in die Karte / das Signal-Detail (O2), `tag_cooccurrence` hinter das Signal oder nach Compare (Ebene 3), `dismissed` hinter einen Link statt in den Default-Viewport, `symptom_analytics` und `tag_groups` in eine „weitere Werkzeuge"-Zeile nach Mockup E1. Nichts wird gelöscht — es verliert nur die Default-Präsenz im Einstieg.
-- Akzeptanzkriterium, das explizit im Issue stehen muss: Ein Bestandsnutzer mit gespeicherten Präferenzen sieht nach der Migration tatsächlich den schlankeren Hub, und eine bewusst getroffene Wahl wird nicht stillschweigend überschrieben — die Migration ist versioniert und einmalig, kein Flag-Flip.
-- Danach #931 Punkt 2 auflösen: §2.10 und ADR-0017 in einem Zug nachziehen, mit ADR-0043 als Referenz. Erst jetzt, weil eine vorgezogene Doku-Änderung eine stillschweigende Produktentscheidung gewesen wäre.
+- [x] Befund im Code: `merge()` in [sectionPreferences.ts](../../apps/web/src/lib/utils/sectionPreferences.ts) behandelt gespeicherte Präferenzen als maßgeblich und hängt nur **fehlende** Keys aus den Defaults an.
+- [x] **Versionierung:** Spalte `insight_sections_version` (Alembic `050`) plus einmalige Transformation in `migrate_insight_sections_to_current` (Backend + Frontend-Spiegel). Lazy Persistenz beim GET/PATCH `/user/preferences`.
+- [x] Neuer Default: `stage_header` + `insight_feed` an; `correlation_matrix`, `lag_heatmap`, `dismissed`, `symptom_analytics`, `tag_groups`, `tag_cooccurrence` aus dem Default-Viewport (Keys bleiben gültig). Hub zeigt „Weitere Werkzeuge"-Zeile inkl. Bericht-/Settings-Links und ausgeblendeter Erkenntnisse.
+- [x] Explizite `enabled: false`-Wahlen bleiben erhalten; reine Legacy-Defaults werden auf das schlanke Layout ersetzt.
+- [x] #931 Punkt 2 / §2.10 und ADR-0017 an ADR-0043 angeglichen.
 
 ## Phase 7 — D1, D2, G1, G2: Ebene 2 und das Nicht-Ergebnis
 

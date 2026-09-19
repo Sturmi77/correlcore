@@ -200,6 +200,18 @@ vi.mock('$lib/api/preferences', () => ({
     dismissed_insight_keys: [],
     reached_milestone_keys: [],
     last_seen_insight_at: null,
+    // Explicit all-on so range/reload tests still mount optional tool sections.
+    insight_sections_version: 2,
+    insight_sections: [
+      { key: 'stage_header', enabled: true },
+      { key: 'insight_feed', enabled: true },
+      { key: 'correlation_matrix', enabled: true },
+      { key: 'lag_heatmap', enabled: true },
+      { key: 'dismissed', enabled: true },
+      { key: 'symptom_analytics', enabled: true },
+      { key: 'tag_groups', enabled: true },
+      { key: 'tag_cooccurrence', enabled: true },
+    ],
     created_at: '2026-05-01T00:00:00Z',
     updated_at: '2026-05-01T00:00:00Z',
   })),

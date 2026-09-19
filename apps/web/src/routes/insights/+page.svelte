@@ -49,7 +49,11 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
-  import { mergeInsightSections, resolveEnabledInsightSections } from '$lib/utils/insightSections';
+  import {
+    INSIGHT_TOOL_SECTION_KEYS,
+    mergeInsightSections,
+    resolveEnabledInsightSections,
+  } from '$lib/utils/insightSections';
   import Button from '$lib/components/common/Button.svelte';
   import Panel from '$lib/components/common/Panel.svelte';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
@@ -116,6 +120,7 @@
 
   let insights: InsightResponse[] = [];
   let dismissedItems: DismissedInsightItem[] = [];
+  let showDismissedPanel = false;
   let loading = false;
   let insightsLoaded = false;
   let error: string | null = null;
@@ -760,6 +765,11 @@
     mergeInsightSections(userPreferences?.insight_sections ?? null)
   ).map((section) => section.key);
   $: stageHeaderEnabled = enabledInsightSectionKeys.includes('stage_header');
+  $: dismissedSectionEnabled = enabledInsightSectionKeys.includes('dismissed');
+  $: enabledSectionSet = new Set(enabledInsightSectionKeys);
+  $: hiddenToolKeys = INSIGHT_TOOL_SECTION_KEYS.filter((key) => !enabledSectionSet.has(key));
+  $: showToolsRow =
+    hiddenToolKeys.length > 0 || (!dismissedSectionEnabled && dismissedItems.length > 0);
   // The milestone belongs to the stage_header section, so hiding that section
   // hides the milestone everywhere. On mobile-with-primary the milestone-only
   // strip lives inside MobileInsightLead (gated by showLeadMilestone), and the
@@ -1208,6 +1218,45 @@
       {/if}
     {/each}
 
+    {#if showToolsRow}
+      <nav
+        class="insights-page__tools"
+        data-testid="insights-tools-row"
+        aria-label={$_('insights.page.tools_aria')}
+      >
+        <p class="insights-page__tools-label">{$_('insights.page.tools_heading')}</p>
+        <div class="insights-page__tools-links">
+          {#if hiddenToolKeys.includes('correlation_matrix')}
+            <a href="/insights/report">{$_('insights.page.report_link')}</a>
+          {/if}
+          {#if !dismissedSectionEnabled && dismissedItems.length > 0}
+            <button
+              type="button"
+              class="insights-page__tools-button"
+              data-testid="insights-dismissed-link"
+              on:click={() => (showDismissedPanel = !showDismissedPanel)}
+            >
+              {$_('insights.page.dismissed_link', { values: { count: dismissedItems.length } })}
+            </button>
+          {/if}
+          {#if hiddenToolKeys.some((key) => key !== 'correlation_matrix')}
+            <a href="/settings/insights" data-testid="insights-tools-settings-link">
+              {$_('insights.page.tools_settings_link')}
+            </a>
+          {/if}
+        </div>
+      </nav>
+      {#if showDismissedPanel && !dismissedSectionEnabled}
+        <DismissedInsightsSection
+          items={dismissedItems}
+          maturity={insightMaturity}
+          {inactiveTagIds}
+          on:undismiss={(event) =>
+            void handleUndismissInsight(event.detail.id, event.detail.dismissalId)}
+        />
+      {/if}
+    {/if}
+
     <CooccurrenceEntrySheet
       open={cooccurrenceHistoryOpen}
       title={cooccurrenceHistoryTitle}
@@ -1276,6 +1325,39 @@
   .insights-page__history-link {
     margin: 0;
     font-size: var(--text-sm);
+  }
+
+  .insights-page__tools {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: var(--space-2);
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .insights-page__tools-label {
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .insights-page__tools-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.85rem;
+    font-size: var(--text-sm);
+  }
+
+  .insights-page__tools-links a,
+  .insights-page__tools-button {
+    color: var(--color-primary);
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
   }
 
   .insights-page__matrix {

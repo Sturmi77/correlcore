@@ -1326,7 +1326,11 @@
       "analytics_hint": "Symptoms and shared tags",
       "analysis_range_label": "Analysis time window",
       "history_link": "Insight timeline",
-      "report_link": "Report & export"
+      "report_link": "Report & export",
+      "tools_aria": "More insight tools",
+      "tools_heading": "More tools",
+      "tools_settings_link": "Show tools in Settings",
+      "dismissed_link": "Hidden insights ({count})"
     },
     "report": {
       "title": "Report",

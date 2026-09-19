@@ -42,6 +42,8 @@ export interface UserPreferencesResponse {
   last_seen_digest_at?: string | null;
   home_sections?: HomeSectionPreference[] | null;
   insight_sections?: InsightSectionPreference[] | null;
+  /** Phase 6: 1 = legacy all-on layout, 2 = slim hub. */
+  insight_sections_version?: number;
   created_at: string;
   updated_at: string;
 }
@@ -61,6 +63,7 @@ export interface UserPreferencesUpdate {
   last_seen_digest_at?: string | null;
   home_sections?: HomeSectionPreference[];
   insight_sections?: InsightSectionPreference[];
+  insight_sections_version?: number;
 }
 
 export async function fetchUserPreferences(): Promise<UserPreferencesResponse> {

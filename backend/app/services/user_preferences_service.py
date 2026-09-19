@@ -14,7 +14,9 @@ from app.models.user_preference import UserPreference
 from app.schemas.user_preferences import UserPreferencesResponse, UserPreferencesUpdate
 from app.services.home_sections import merge_home_sections, normalize_home_sections
 from app.services.insight_sections import (
+    CURRENT_INSIGHT_SECTIONS_VERSION,
     merge_insight_sections,
+    migrate_insight_sections_to_current,
     normalize_insight_sections,
 )
 
@@ -50,7 +52,10 @@ async def get_or_create_user_preferences(
     if preferences is not None:
         return preferences
 
-    preferences = UserPreference(user_id=user_id)
+    preferences = UserPreference(
+        user_id=user_id,
+        insight_sections_version=CURRENT_INSIGHT_SECTIONS_VERSION,
+    )
     db.add(preferences)
     await db.flush()
     await db.refresh(preferences)
@@ -185,6 +190,14 @@ async def update_user_preferences(
             if normalized is not None:
                 preferences.insight_sections = [dict(section) for section in normalized]
                 flag_modified(preferences, "insight_sections")
+                # Saving a layout from a post-Phase-6 client pins the version.
+                preferences.insight_sections_version = CURRENT_INSIGHT_SECTIONS_VERSION
+            continue
+        if key == "insight_sections_version":
+            # Clients must not write an older version over a migrated row.
+            if value < preferences.insight_sections_version:
+                continue
+            preferences.insight_sections_version = value
             continue
         if key == "last_seen_digest_at":
             # High-water mark (#739): never move it backward. A stale client
@@ -221,6 +234,28 @@ async def update_user_preferences(
     return preferences
 
 
+async def ensure_insight_sections_migrated(
+    db: AsyncSession,
+    preferences: UserPreference,
+) -> UserPreference:
+    """Apply the Phase 6 v1→v2 hub shrink once and persist it."""
+    migrated_sections, migrated_version, dirty = migrate_insight_sections_to_current(
+        preferences.insight_sections,
+        version=preferences.insight_sections_version,
+    )
+    if not dirty:
+        return preferences
+    preferences.insight_sections = (
+        [dict(section) for section in migrated_sections] if migrated_sections is not None else None
+    )
+    preferences.insight_sections_version = migrated_version
+    if migrated_sections is not None:
+        flag_modified(preferences, "insight_sections")
+    await db.flush()
+    await db.refresh(preferences)
+    return preferences
+
+
 def to_preferences_response(preferences: UserPreference) -> UserPreferencesResponse:
     """Serialize preferences with merged home section defaults."""
     normalized_sections = normalize_home_sections(preferences.home_sections)
@@ -241,6 +276,7 @@ def to_preferences_response(preferences: UserPreference) -> UserPreferencesRespo
         "last_seen_digest_at": preferences.last_seen_digest_at,
         "home_sections": merge_home_sections(normalized_sections),
         "insight_sections": merge_insight_sections(normalized_insight_sections),
+        "insight_sections_version": preferences.insight_sections_version,
         "created_at": preferences.created_at,
         "updated_at": preferences.updated_at,
     }

@@ -275,7 +275,7 @@ keine inferenziellen Korrelationen.
 - Charts mobile-freundlich! Keine riesigen Dashboards.
 - Export als PNG/CSV/PDF für Arzt-Gespräche.
 
-**Entscheidung:** Chart-Implementierung via **Custom-SVG-Komponenten** in SvelteKit (D-002 entschieden — siehe §7). CSV/JSON-Export implementiert. PDF ab v1.1. PNG-Export im Backlog.
+**Entscheidung:** Chart-Implementierung via **Custom-SVG-Komponenten** in SvelteKit (D-002 entschieden — siehe §7). Export-Heimat ist die sekundäre Bericht-Route `/insights/report` (ADR-0043 Ebene 4): PNG und PDF clientseitig, CSV/JSON über die bestehenden Export-Endpunkte. Die Korrelations-/Berichtstabelle ist nicht mehr der Hub-Default (Phase 6 / D5); der Hub bleibt schlank (`stage_header` + `insight_feed`).
 
 **Priorität:** MUST
 

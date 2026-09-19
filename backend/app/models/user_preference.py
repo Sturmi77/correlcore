@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, func, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -108,6 +108,13 @@ class UserPreference(Base):
     insight_sections: Mapped[list[dict[str, object]] | None] = mapped_column(
         JSONB,
         nullable=True,
+    )
+    # Phase 6 / D5: layout generation for insight_sections (1 = legacy, 2 = slim).
+    insight_sections_version: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=2,
+        server_default="2",
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
