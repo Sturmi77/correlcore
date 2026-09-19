@@ -1709,6 +1709,16 @@
     "weekday_confounded_note": "Note: this pattern occurs primarily on specific weekdays.",
     "work_context_confounded_note": "Note: this pattern may mainly reflect your work situation.",
     "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap.",
+    "changepoint": {
+      "series_mood_score": "mood",
+      "series_stress": "stress",
+      "series_energy": "energy",
+      "direction_higher": "higher",
+      "direction_lower": "lower",
+      "statement": "Level shift in {series} around {date}: average moved from {before} to {after} ({direction}). Not a forecast.",
+      "marker_label": "Level shift · {series}",
+      "marker_description": "{before} → {after} (around {date})"
+    },
     "note_evidence": {
       "soft_prompt": "Add notes to better understand patterns in your data.",
       "lead_signal": "On days with note signal \"{signal}\", your mood averaged {delta} points different from your note-day average.",

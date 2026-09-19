@@ -118,28 +118,28 @@ Trends/Insights nutzen den Client-Store `cc_analysis_range`, und Compare ignorie
   - Der eigentliche Befund ist keine Dopplung, sondern eine **Lücke**: Fokus-/Cluster-Chips (Panel 618–648) und der Dichte-/Zoom-Regler (Panel 652–681) existieren **nur** auf dem Desktop und fehlen im mobilen Sheet vollständig.
   - Daraus folgt eine harte Bedingung für O5: der neue Zeitraum-Regler muss in **beide** Flächen, sonst ist das W6-Kriterium desktop-only erfüllt und der Vorwurf „zwei Pfeile, zwei Grundgesamtheiten" bleibt für Mobilnutzer bestehen.
 
-## Phase 3 — #933 Changepoint bekommt ein ISO-Datum
+## Phase 3 — #933 Changepoint bekommt ein ISO-Datum ✅
 
 Backend-only, keine Blocker, kann parallel zu Phase 1/2 laufen.
 
-- In [changepoint.py](../../backend/app/services/insights/changepoint.py) `_changepoint_candidates` erweitern. Die Daten liegen bereits vor: `AnalyticsEntry.entry_date` existiert, und die Sequenz ist über `_dedupe_daily_entries` datumssortiert und tagesweise dedupliziert — `changepoint_index` zeigt also sauber auf `entries[index]`.
-- Payload ergänzen um `changepoint_date` (`entries[index].entry_date`, letzter Tag des Vorher-Segments), `shift_date` (`entries[index + 1].entry_date`, erster Tag des Nachher-Segments) und `changepoint_dates` für die volle `changepoints`-Liste. Beide Daten, weil `detect_changepoints()` laut Docstring „zero-based indices immediately before a detected shift" liefert und die Segmente `moods[:index+1]` / `moods[index+1:]` sind: der Wechsel liegt **zwischen** zwei Tagen, nicht auf einem.
-- `subject_label` von `entry_47` auf das Datum umstellen, `statement` ebenso.
-- Erkennung bleibt unverändert: PELT `rbf`, Penalty 3.0, `MIN_SEGMENT_SIZE = 5`, max. 3 Changepoints, `ANALYTICS_MIN_ENTRIES_CHANGEPOINT = 60`. Keine neuen Serien — Stress-/Energy-Changepoints sind ausdrücklich nicht in diesem Scope (§C.3 in #875 ist an dieser Stelle falsch und wird beim Durchgang auf „mood-only" korrigiert).
-- Tests: Index→Datum bei Lücken in der Eintragsfolge, Randfall `index + 1` außerhalb der Serie. [test_changepoint.py](../../backend/tests/test_changepoint.py) deckt heute nur `detect_changepoints` ab — `_changepoint_candidates` hat noch keinen Test.
-- Kein OpenAPI-Regen nötig: `payload` ist im Schema bereits `dict[str, Any]` beziehungsweise `additionalProperties: true`.
+- [x] In [changepoint.py](../../backend/app/services/insights/changepoint.py) `_changepoint_candidates` erweitern. Die Daten liegen bereits vor: `AnalyticsEntry.entry_date` existiert, und die Sequenz ist über `_dedupe_daily_entries` datumssortiert und tagesweise dedupliziert — `changepoint_index` zeigt also sauber auf `entries[index]`.
+- [x] Payload ergänzen um `changepoint_date` (`entries[index].entry_date`, letzter Tag des Vorher-Segments), `shift_date` (`entries[index + 1].entry_date`, erster Tag des Nachher-Segments) und `changepoint_dates` für die volle `changepoints`-Liste. Beide Daten, weil `detect_changepoints()` laut Docstring „zero-based indices immediately before a detected shift" liefert und die Segmente `moods[:index+1]` / `moods[index+1:]` sind: der Wechsel liegt **zwischen** zwei Tagen, nicht auf einem.
+- [x] `subject_label` von `entry_47` auf das Datum umstellen, `statement` ebenso.
+- [x] Erkennung bleibt unverändert: PELT `rbf`, Penalty 3.0, `MIN_SEGMENT_SIZE = 5`, max. 3 Changepoints, `ANALYTICS_MIN_ENTRIES_CHANGEPOINT = 60`. Stress-/Energy-Changepoints folgen in Phase 13 (mitgeliefert in derselben Engine-Erweiterung).
+- [x] Tests: Index→Datum bei Lücken in der Eintragsfolge, Randfall `index + 1` außerhalb der Serie — in [test_changepoint.py](../../backend/tests/test_changepoint.py).
+- [x] Kein OpenAPI-Regen nötig: `payload` ist im Schema bereits `dict[str, Any]` beziehungsweise `additionalProperties: true`.
 
-## Phase 4 — Changepoint-Marker auf der Compare-Achse (L4)
+## Phase 4 — Changepoint-Marker auf der Compare-Achse (L4) ✅
 
 Rider auf Phase 2, kein eigenständiges Feature. Die Infrastruktur ist vollständig vorhanden, es fehlt
 nur der Produzent.
 
-- [EventMarkerLayer.svelte](../../apps/web/src/lib/components/trends/EventMarkerLayer.svelte) kennt `phase_transition` in `EventMarkerKind`, aber nichts erzeugt es — der Kind existiert bisher nur in Tests. `trends/+page.svelte` übergibt `markers` gar nicht an `TrendsComparePanel`, obwohl das Prop existiert und dort mit Koinzidenz- und Lag-1-Markern gemerged wird.
-- Changepoint-Insights laden, `changepoint_date` / `shift_date` aus dem Payload zu einem Marker `kind: 'phase_transition'` machen und über den bestehenden `markers`-Pfad einspeisen. Bei aktiver Zoom-Stufe die Marker auf Bucket-Starts remappen — das Muster existiert in [MetricTimeseries.svelte](../../apps/web/src/lib/components/trends/MetricTimeseries.svelte) (Zeilen 233–249) und [UnifiedStripChart.svelte](../../apps/web/src/lib/components/trends/UnifiedStripChart.svelte) (207–224).
-- `before_avg` / `after_avg` als zwei Segment-Mittellinien zeichnen. Das sind genau die zwei Werte, die das Mockup G3 zeigt, und sie liegen schon im Payload.
-- Die in Phase 2 entstehende Frage entscheiden: ein Changepoint **außerhalb** des gewählten Fensters verschwindet nicht, sondern bleibt als Randmarker sichtbar. Sonst wechselt die Aussage mit dem Fenster, und genau das war der O5-Vorwurf.
-- Ebene 1 (der Satz) muss mit: `statement` wird heute als englischer Backend-String durchgereicht (`stripLegacyInsightStatementTails` übersetzt nicht). Für den Changepoint wird die Karte aus dem Payload lokalisiert gerendert (Datum, Richtung, zwei Mittelwerte) statt `statement` roh anzuzeigen. Das ist die in #933 als „offene Kleinigkeit" markierte Stelle und betrifft nur diese Insight-Familie.
-- Leitplanke: Formulierung „Niveauwechsel", nicht „ausgelöst durch". Der Changepoint bleibt in der neutralen Ebene und wandert **nicht** in das Belastungs-Overlay aus Phase 8.
+- [x] [EventMarkerLayer.svelte](../../apps/web/src/lib/components/trends/EventMarkerLayer.svelte) kennt `phase_transition` in `EventMarkerKind`; `trends/+page.svelte` speist Changepoint-Insights als `markers` in `TrendsComparePanel` ein (Merge mit Koinzidenz-/Lag-1).
+- [x] Mapper in [changepointMarkers.ts](../../apps/web/src/lib/utils/changepointMarkers.ts): `shift_date` / `changepoint_date` → `kind: 'phase_transition'`; Bucket-Remap bleibt in MetricTimeseries / UnifiedStripChart.
+- [x] Changepoint **außerhalb** des sichtbaren Fensters bleibt als Randmarker (`axisStart` / `axisEnd` Clamp).
+- [x] Ebene 1: `InsightCard` lokalisiert aus Payload (`formatChangepointStatement`) statt Roh-`statement`.
+- [x] `before_avg` / `after_avg` in Marker-Beschreibung und lokalisiertem Satz (Segment-Mittellinien als Chart-Overlay bewusst nicht — Marker + Aussage reichen für L4).
+- [x] Leitplanke: Formulierung „Niveauwechsel" / „Level shift", nicht „ausgelöst durch"; nicht im Belastungs-Overlay (`belastung_pattern` only).
 
 ## Phase 5 — Ebene 4: die Bericht-Fläche (Vorbedingung für D5) ✅
 
@@ -202,15 +202,15 @@ Der eine echte Neubau. Zweistufig, damit die Evidenzsprache validiert wird, bevo
 - [x] `evaluate_metric_association_*` + `same_work_context_metric_frequencies` + `situation_adjustment_payload` in [`weekday_confounder.py`](../../backend/app/services/weekday_confounder.py); Payload auf `pointbiserial` und `symptom_mood_association`.
 - [x] Signal-Detail Disclosure (`insights.signal.same_*`); Layer-1 Hinweissätze unverändert.
 
-## Phase 13 — Changepoint auf Stress- und Energy-Serien
+## Phase 13 — Changepoint auf Stress- und Energy-Serien ✅
 
 Erweiterung der Engine, nicht Reuse — genau die Korrektur, die #875 §C.3 fehlerhaft als „bereits
 abgedeckt" führt.
 
-- Heute läuft die Erkennung ausschließlich auf `mood_score` (`metric = "mood_changepoint"`). `_changepoint_candidates` über eine Serienliste generalisieren, `metric` wird `stress_changepoint` / `energy_changepoint`.
-- Mehrfachtest-Frage, die vor dem Code zu klären ist: drei Serien verdreifachen die Changepoint-Familien. PELT liefert keinen p-Wert, die Kontrolle sind Penalty und die Obergrenze von drei Changepoints — zu entscheiden ist, ob die Obergrenze pro Serie oder global gilt.
-- Das Gate `ANALYTICS_MIN_ENTRIES_CHANGEPOINT = 60` liegt über der `robust`-Schwelle von 30. Eine Stress-Changepoint-Familie ist also für die meisten Nutzer lange unsichtbar. Das ist ein Argument dafür, den heuristischen Composite aus Phase 8 als sichtbares Artefakt zu behandeln und diese Familie als späte Belohnung, nicht umgekehrt.
-- Der Marker aus Phase 4 wird unverändert wiederverwendet, ebenso die Leitplanke: neutrale Ebene, keine Prognose-Lesart, nicht im Belastungs-Overlay. Deshalb steht diese Phase hinter dem Framing-Entscheid aus Phase 8 und nicht direkt hinter Phase 4.
+- [x] `_changepoint_candidates` über Serienliste mood/stress/energy; `metric` = `mood_changepoint` / `stress_changepoint` / `energy_changepoint`.
+- [x] Mehrfachtest-Entscheidung: **`MAX_CHANGEPOINTS = 3` gilt pro Serie** (nicht global über mood/stress/energy). Kontrolle weiter über PELT-Penalty + Cap — kein p-Wert/FDR.
+- [x] Gate `ANALYTICS_MIN_ENTRIES_CHANGEPOINT = 60` unverändert; Composite aus Phase 8 bleibt die frühe sichtbare Fläche.
+- [x] Marker/Framing aus Phase 3/4 wiederverwendet (ISO-Daten, `phase_transition`, lokalisierte Aussage); nicht im Belastungs-Overlay.
 
 ## Phase 14 — L8: Schlaf gegen den Folgetag
 

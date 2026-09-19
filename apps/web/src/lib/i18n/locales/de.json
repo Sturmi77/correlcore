@@ -1709,6 +1709,16 @@
     "weekday_confounded_note": "Hinweis: Dieses Muster tritt vorwiegend an bestimmten Wochentagen auf.",
     "work_context_confounded_note": "Hinweis: Dieses Muster kann vor allem mit deiner Arbeitssituation zusammenhaengen.",
     "calendar_context_confounded_note": "Hinweis: Dieses Muster kann vor allem Kalender- oder Arbeitskontext-Ueberlappungen zeigen.",
+    "changepoint": {
+      "series_mood_score": "Stimmung",
+      "series_stress": "Stress",
+      "series_energy": "Energie",
+      "direction_higher": "hoeher",
+      "direction_lower": "niedriger",
+      "statement": "Niveauwechsel bei {series} um {date}: Mittelwert von {before} auf {after} ({direction}). Keine Prognose.",
+      "marker_label": "Niveauwechsel · {series}",
+      "marker_description": "{before} → {after} (um {date})"
+    },
     "note_evidence": {
       "soft_prompt": "Fuege Notizen hinzu, um Zusammenhaenge besser zu verstehen.",
       "lead_signal": "An Tagen mit Signal \"{signal}\" lag dein Mood im Schnitt {delta} Punkte von deinem Notiz-Tagesmittel entfernt.",

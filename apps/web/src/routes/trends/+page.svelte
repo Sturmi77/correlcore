@@ -58,6 +58,8 @@
   import type { TabBarOption } from '$lib/components/common/TabBar.svelte';
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
+  import { changepointInsightsToMarkers } from '$lib/utils/changepointMarkers';
+  import type { EventMarker } from '$lib/components/trends/EventMarkerLayer.svelte';
   import {
     readCompareMode,
     readCompareSortMode,
@@ -411,6 +413,10 @@
         }
       : timeseries;
   $: topInsight = $insightStore.latest;
+  $: changepointMarkers = changepointInsightsToMarkers($insightStore.insights, $_, {
+    axisStart: displayTimeseries?.points?.[0]?.period_start,
+    axisEnd: displayTimeseries?.points?.[displayTimeseries.points.length - 1]?.period_start,
+  }) satisfies EventMarker[];
 
   onMount(() => {
     smoothing = readSmoothingPreference(typeof localStorage !== 'undefined' ? localStorage : null);
@@ -521,6 +527,7 @@
             points={displayTimeseries?.points ?? []}
             range="year"
             enabled={metrics}
+            markers={changepointMarkers}
             tagHeatmap={heatmap}
             {symptomHeatmap}
             {workContextHeatmap}

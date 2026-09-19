@@ -36,6 +36,7 @@
   } from '$lib/utils/withWithoutDistribution';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
+  import { formatChangepointStatement } from '$lib/utils/changepointMarkers';
 
   export let insight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
@@ -78,6 +79,12 @@
   $: hasNoteEvidence = Boolean(noteEvidence && typeof noteEvidence.signal === 'string');
   $: withWithoutView = insight ? parseWithWithoutView(insight) : null;
   $: isNullResult = insight ? isNullAssociation(insight) : false;
+  $: changepointStatement = insight ? formatChangepointStatement(insight, $_) : null;
+  $: displayStatement =
+    changepointStatement ||
+    (insight
+      ? stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')
+      : '');
   $: canVerifySignal = Boolean(insight && isWithWithoutInsight(insight));
 
   let expanded = false;
@@ -353,7 +360,7 @@
         data-testid="insight-card-direction">{glyph}</span
       >
       <p class="insight-card__statement" data-testid="insight-card-statement">
-        {stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')}
+        {displayStatement}
       </p>
       {#if dismissable}
         <button
