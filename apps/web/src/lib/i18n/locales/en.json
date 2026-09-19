@@ -50,7 +50,6 @@
     "view_trends": "View trends",
     "secondary_nav": "More areas",
     "loading_today": "Loading today's status\u2026",
-    "streak_label": "tracking consistency",
     "brief": {
       "label": "Daily brief",
       "heading": "Today at a glance",
@@ -520,9 +519,6 @@
     "tabs": {
       "label": "Trend sections",
       "compare": "Compare",
-      "mood": "Mood",
-      "activities": "Activities",
-      "health": "Health",
       "habits": "Habits"
     },
     "metric": {
@@ -546,18 +542,6 @@
       "x_axis_label": "Date",
       "loading": "Loading time series",
       "empty": "No mood scores in this range yet."
-    },
-    "streak": {
-      "heading": "Tracking consistency",
-      "current": "Current continuity",
-      "longest": "Best continuity",
-      "total": "Logged days"
-    },
-    "consistency": {
-      "heading": "Tracking consistency",
-      "current": "Current continuity",
-      "longest": "Best continuity",
-      "total": "Logged days"
     },
     "health": {
       "heading": "Health readiness",
@@ -638,15 +622,15 @@
         "and": "and"
       },
       "lag1": {
-        "toggle": "Highlight next-day sequence",
+        "toggle": "Highlight sequence",
         "toggle_aria": "Highlight days where a pinned row is followed by the next pinned row on the following day",
-        "need_pins": "Pin at least two rows to highlight next-day sequences.",
-        "empty": "Need at least {min} next-day sequences in the pinned order to highlight Lag-1.",
+        "need_pins": "Pin at least two rows to highlight sequences.",
+        "empty": "Need at least {min} next-day sequences in the pinned order to highlight sequence.",
         "legend": "Lines mark when one pinned row is followed by the next on the following day — an association in your entries, not a cause.",
         "cursor": "{from} then {to} (+1 day)",
         "marker": "Sequence: {from} → {to} (+1d)",
         "summary": "{from} then {to}: {forward} of {forwardTotal} · {to} then {from}: {reverse} of {reverseTotal}",
-        "swatch": "Lag-1 — dashed line"
+        "swatch": "Sequence — dashed line"
       },
       "frequency_note": "Counts cover the selected period only.",
       "overlay_group_label": "Highlight",
@@ -742,10 +726,10 @@
     "days_tracked": "Tracked days",
     "target_days": "Target days",
     "target_frequency": "Weekly target",
-    "correlation": "Correlation contribution",
-    "correlation_brief": "r={score} {metric}",
-    "correlation_pending": "No correlation data yet",
-    "correlation_predictor": "{name} is a notable {metric} predictor (r={score})",
+    "correlation": "Association",
+    "correlation_brief": "{label} · {metric} · {n} days",
+    "correlation_pending": "No reliable association yet",
+    "correlation_predictor": "{name} and {metric}: {label} (over {n} days)",
     "adherence_meter": "Adherence rate",
     "adherence_meter_text": "{type}: {percent}; {goal}",
     "insufficient_data": "Not enough data yet. Keep tracking to see your adherence rate.",
@@ -1140,8 +1124,8 @@
           "description": "Current analysis maturity phase with a progress bar and milestones."
         },
         "correlation_matrix": {
-          "label": "Correlation matrix",
-          "description": "Overview matrix of the strongest links between factors."
+          "label": "Associations",
+          "description": "Sorted table of the strongest links between factors."
         },
         "insight_feed": {
           "label": "Insight feed",
@@ -1423,19 +1407,22 @@
       }
     },
     "matrix": {
-      "heading": "Correlation Matrix",
-      "subtitle": "Tags, symptoms and habits sorted by effect size.",
+      "heading": "Associations",
+      "subtitle": "Tags, symptoms and habits sorted by effect size — with frequencies and one confidence scale.",
       "tag": "Tag",
-      "subject": "Subject",
+      "subject": "Factor",
       "metric": "Metric",
       "effect": "Effect",
+      "frequency": "Frequencies",
+      "freq_split": "{withN} with · {withoutN} without",
+      "freq_sample": "n={n}",
       "confidence": "Confidence",
       "export": "Export PNG",
       "empty": "No sufficiently stable patterns yet.",
-      "empty_strong": "No reliable correlations right now. Weaker patterns are listed below.",
+      "empty_strong": "No reliable associations right now. Weaker patterns are listed below.",
       "updated": "Last updated: {date}",
-      "weak_toggle": "Show {count} weaker correlations",
-      "weak_note": "These correlations are below the reliability threshold and may still change as more data arrives."
+      "weak_toggle": "Show {count} weaker associations",
+      "weak_note": "These associations are below the reliability threshold and may still change as more data arrives."
     },
     "cooccurrence": {
       "heading": "Patterns",
@@ -1450,8 +1437,8 @@
       "legend": "Co-occurrence intensity",
       "less": "Less",
       "more": "More",
-      "cell_aria": "{tagA} and {tagB} together on {count} entries",
-      "cell_title": "{tagA} + {tagB}: {count} shared entries",
+      "cell_aria": "{tagA} and {tagB}: both on {count} of {aTotal} days with {tagA} · {count} of {bTotal} days with {tagB}",
+      "cell_title": "Both on {count} of {aTotal} days with {tagA} · {count} of {bTotal} days with {tagB}",
       "sort_clustered": "Cluster by similarity",
       "sort_alphabetical": "Sort A–Z",
       "focus_label": "Focus on a tag group",
@@ -1562,6 +1549,7 @@
       "dismiss_aria": "Hide insight \"{title}\"",
       "disclaimer_link": "What does this mean?",
       "sample_meta": "Based on {n} entries \u00b7 {days} days",
+      "freq_split": "avg {withAvg} on {withN} days with {tag} · avg {withoutAvg} on {withoutN} days without",
       "meta_r": "r (Pearson)",
       "meta_rho": "\u03c1 (Spearman)",
       "meta_p": "p-value",
@@ -1577,8 +1565,8 @@
       "inactive_tag_hint": "This tag is no longer used for new calculations.",
       "cluster_features": "Multiple factors",
       "lag_days_unit": "days",
-      "lag_profile_label": "Association by delay (days)",
-      "lag_profile_aria": "Association strength by delay; strongest at +{days} days ({direction})",
+      "lag_profile_label": "Association by time offset (days)",
+      "lag_profile_aria": "Association strength by time offset; strongest at +{days} days ({direction})",
       "lag_peak_marker": "Strongest at +{days} days ({direction})",
       "lag_profile_direction_positive": "same direction",
       "lag_profile_direction_negative": "opposite direction",
@@ -1586,8 +1574,8 @@
     },
     "lag_heatmap": {
       "title": "Time-offset patterns",
-      "subtitle": "Association strength per pair and delay (1–7 days). Not a causal claim.",
-      "aria": "Time-offset association heatmap: rows are pairs, columns are days of delay",
+      "subtitle": "Association strength per pair and time offset (1–7 days). Not a causal claim.",
+      "aria": "Time-offset association heatmap: rows are pairs, columns are days of time offset",
       "row_summary": "{pair}: strongest at +{lag} days (r {r})",
       "legend_neg": "opposite",
       "legend_pos": "aligned"

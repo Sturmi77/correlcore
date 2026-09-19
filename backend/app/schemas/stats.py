@@ -77,14 +77,6 @@ class SymptomHeatmapResponse(BaseModel):
     symptoms: list[SymptomHeatmapSymptom] = Field(default_factory=list)
 
 
-class EntryStreakResponse(BaseModel):
-    current_streak: int
-    longest_streak: int
-    total_entry_days: int
-    last_entry_date: date_type | None = None
-    as_of: date_type
-
-
 # ---------------------------------------------------------------------------
 # Health Data Maturity (Issue #852) — honest data-readiness / coverage panel.
 # See docs/features/health-data-maturity.md. This is a coverage/maturity

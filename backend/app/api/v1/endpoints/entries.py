@@ -38,7 +38,6 @@ from app.schemas.entry import (
 )
 from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 from app.schemas.stats import (
-    EntryStreakResponse,
     HealthContextResponse,
     SymptomHeatmapResponse,
     TagHeatmapResponse,
@@ -66,7 +65,6 @@ from app.services.health_context_service import get_health_context
 from app.services.insight_worker_service import schedule_post_batch_insight_regeneration
 from app.services.note_signal_extractor import run_note_signal_extraction_background
 from app.services.stats_service import (
-    get_entry_streak,
     get_symptom_heatmap,
     get_tag_heatmap,
     get_timeseries,
@@ -251,19 +249,7 @@ async def get_symptom_heatmap_endpoint(
     )
 
 
-@router.get(
-    "/stats/streak",
-    response_model=EntryStreakResponse,
-    summary="Return entry-streak metrics",
-)
-@limiter.limit("120/minute")
-async def get_entry_streak_endpoint(
-    request: Request,
-    as_of: date_type | None = Query(default=None, alias="as_of"),
-    user: User = Depends(get_current_verified_user),
-    db: AsyncSession = Depends(get_session),
-) -> EntryStreakResponse:
-    return await get_entry_streak(db, user_id=user.id, as_of=as_of)
+
 
 
 @router.get(

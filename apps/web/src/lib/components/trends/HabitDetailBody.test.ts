@@ -5,7 +5,8 @@ import HabitDetailBody from './HabitDetailBody.svelte';
 vi.mock('svelte-i18n', async () => {
   const { readable } = await import('svelte/store');
   return {
-    _: readable((key: string) => {
+    _: readable((key: string, options?: { values?: Record<string, unknown> }) => {
+      const values = options?.values ?? {};
       if (key === 'habits.insufficient_data') return 'Not enough data yet';
       if (key === 'habits.adherence_meter') return 'Adherence';
       if (key === 'habits.days_tracked') return 'Tracked days';
@@ -20,6 +21,13 @@ vi.mock('svelte-i18n', async () => {
       if (key === 'habits.period') return 'Period';
       if (key === 'habits.adherence_meter_text') return '100%; 3 of 3 target days';
       if (key === 'habits.type.build') return 'Build habit';
+      if (key === 'habits.correlation_predictor') {
+        return `${values.name} and ${values.metric}: ${values.label} (${values.n} days)`;
+      }
+      if (typeof key === 'string' && key.startsWith('insights.confidence_label.')) {
+        return key.replace('insights.confidence_label.', '');
+      }
+      if (key === 'home.confidence_scale.entry_count') return `Based on ${values.n} entries`;
       return key;
     }),
   };

@@ -71,6 +71,21 @@
   $: noteEvidence = payloadRecord(insight?.payload?.evidence);
   $: hasNoteEvidence = Boolean(noteEvidence && typeof noteEvidence.signal === 'string');
 
+  $: freqSplit =
+    insight?.insight_type === 'pointbiserial' &&
+    typeof insight.payload?.tagged_count === 'number' &&
+    typeof insight.payload?.untagged_count === 'number' &&
+    typeof insight.payload?.tagged_mood_avg === 'number' &&
+    typeof insight.payload?.untagged_mood_avg === 'number'
+      ? {
+          tag: insight.subject_label ?? '',
+          withN: insight.payload.tagged_count,
+          withoutN: insight.payload.untagged_count,
+          withAvg: insight.payload.tagged_mood_avg,
+          withoutAvg: insight.payload.untagged_mood_avg,
+        }
+      : null;
+
   let expanded = false;
 
   function toggleExpanded() {
@@ -375,15 +390,29 @@
     {/if}
 
     <p class="insight-card__meta" data-testid="insight-card-meta">
-      {$_('insights.card.sample_meta', {
-        values: {
-          n: insight.sample_n ?? 0,
-          days:
-            typeof insight.payload?.time_window_days === 'number'
-              ? insight.payload.time_window_days
-              : 90,
-        },
-      })}
+      {#if freqSplit}
+        <span data-testid="insight-card-freq">
+          {$_('insights.card.freq_split', {
+            values: {
+              tag: freqSplit.tag,
+              withN: freqSplit.withN,
+              withoutN: freqSplit.withoutN,
+              withAvg: freqSplit.withAvg,
+              withoutAvg: freqSplit.withoutAvg,
+            },
+          })}
+        </span>
+      {:else}
+        {$_('insights.card.sample_meta', {
+          values: {
+            n: insight.sample_n ?? 0,
+            days:
+              typeof insight.payload?.time_window_days === 'number'
+                ? insight.payload.time_window_days
+                : 90,
+          },
+        })}
+      {/if}
       {#if isInactiveTag}
         <span class="insight-card__inactive-hint">{$_('insights.card.inactive_tag_hint')}</span>
       {/if}

@@ -50,7 +50,6 @@
     "view_trends": "Trends ansehen",
     "secondary_nav": "Weitere Bereiche",
     "loading_today": "Lade Heute-Status\u2026",
-    "streak_label": "Tracking-Konsistenz",
     "brief": {
       "label": "Daily Brief",
       "heading": "Heute auf einen Blick",
@@ -520,9 +519,6 @@
     "tabs": {
       "label": "Trend-Bereiche",
       "compare": "Vergleichen",
-      "mood": "Stimmung",
-      "activities": "Aktivitaeten",
-      "health": "Gesundheit",
       "habits": "Gewohnheiten"
     },
     "metric": {
@@ -546,18 +542,6 @@
       "x_axis_label": "Datum",
       "loading": "Lade Zeitreihe",
       "empty": "Noch keine Scores in diesem Zeitraum."
-    },
-    "streak": {
-      "heading": "Tracking-Konsistenz",
-      "current": "Aktuelle Kontinuit\u00e4t",
-      "longest": "Beste Kontinuit\u00e4t",
-      "total": "Erfasste Tage"
-    },
-    "consistency": {
-      "heading": "Tracking-Konsistenz",
-      "current": "Aktuelle Kontinuit\u00e4t",
-      "longest": "Beste Kontinuit\u00e4t",
-      "total": "Erfasste Tage"
     },
     "health": {
       "heading": "Gesundheitsbereitschaft",
@@ -638,15 +622,15 @@
         "and": "und"
       },
       "lag1": {
-        "toggle": "Naechster-Tag-Sequenz hervorheben",
+        "toggle": "Abfolge hervorheben",
         "toggle_aria": "Tage hervorheben, an denen eine angepinnte Zeile am Folgetag von der naechsten gefolgt wird",
-        "need_pins": "Pinnen Sie mindestens zwei Zeilen, um Folgetag-Sequenzen hervorzuheben.",
-        "empty": "Mindestens {min} Folgetag-Sequenzen in der Pin-Reihenfolge noetig, um Lag-1 hervorzuheben.",
+        "need_pins": "Pinnen Sie mindestens zwei Zeilen, um Abfolgen hervorzuheben.",
+        "empty": "Mindestens {min} Folgetag-Abfolgen in der Pin-Reihenfolge noetig, um Abfolge hervorzuheben.",
         "legend": "Linien markieren, wann eine angepinnte Zeile am Folgetag von der naechsten gefolgt wird — ein Zusammenhang in deinen Eintraegen, keine Ursache.",
         "cursor": "{from} dann {to} (+1 Tag)",
-        "marker": "Sequenz: {from} → {to} (+1d)",
+        "marker": "Abfolge: {from} → {to} (+1d)",
         "summary": "{from} dann {to}: {forward} von {forwardTotal} · {to} dann {from}: {reverse} von {reverseTotal}",
-        "swatch": "Lag-1 — gestrichelte Linie"
+        "swatch": "Abfolge — gestrichelte Linie"
       },
       "frequency_note": "Zahlen gelten nur fuer den gewaehlten Zeitraum.",
       "overlay_group_label": "Hervorheben",
@@ -742,10 +726,10 @@
     "days_tracked": "Erfasste Tage",
     "target_days": "Zieltage",
     "target_frequency": "Wochenziel",
-    "correlation": "Korrelationsbeitrag",
-    "correlation_brief": "r={score} {metric}",
-    "correlation_pending": "Noch keine Korrelationsdaten",
-    "correlation_predictor": "{name} ist ein relevanter {metric}-Prädiktor (r={score})",
+    "correlation": "Zusammenhang",
+    "correlation_brief": "{label} · {metric} · {n} Tage",
+    "correlation_pending": "Noch kein belastbarer Zusammenhang",
+    "correlation_predictor": "{name} und {metric}: {label} (an {n} Tagen)",
     "adherence_meter": "Adherence-Rate",
     "adherence_meter_text": "{type}: {percent}; {goal}",
     "insufficient_data": "Noch nicht genug Daten. Tracke weiter, um deine Adherence-Rate zu sehen.",
@@ -1140,8 +1124,8 @@
           "description": "Aktuelle Analyse-Reifephase mit Fortschrittsbalken und Meilensteinen."
         },
         "correlation_matrix": {
-          "label": "Korrelationsmatrix",
-          "description": "\u00dcbersichts-Matrix der st\u00e4rksten Zusammenh\u00e4nge zwischen Faktoren."
+          "label": "Zusammenhänge",
+          "description": "Sortierte Tabelle der staerksten Zusammenhaenge zwischen Faktoren."
         },
         "insight_feed": {
           "label": "Erkenntnis-Feed",
@@ -1423,12 +1407,15 @@
       }
     },
     "matrix": {
-      "heading": "Korrelations-Matrix",
-      "subtitle": "Tags, Symptome und Habits nach Effektstaerke sortiert.",
+      "heading": "Zusammenhänge",
+      "subtitle": "Tags, Symptome und Habits nach Effektstaerke sortiert — mit Häufigkeiten und einer Konfidenzskala.",
       "tag": "Tag",
       "subject": "Faktor",
       "metric": "Metrik",
       "effect": "Effekt",
+      "frequency": "Häufigkeiten",
+      "freq_split": "{withN} mit · {withoutN} ohne",
+      "freq_sample": "n={n}",
       "confidence": "Konfidenz",
       "export": "PNG exportieren",
       "empty": "Noch keine ausreichend stabilen Muster vorhanden.",
@@ -1450,8 +1437,8 @@
       "legend": "Co-Occurrence-Intensitaet",
       "less": "Weniger",
       "more": "Mehr",
-      "cell_aria": "{tagA} und {tagB} gemeinsam auf {count} Entries",
-      "cell_title": "{tagA} + {tagB}: {count} gemeinsame Entries",
+      "cell_aria": "{tagA} und {tagB}: beide an {count} von {aTotal} Tagen mit {tagA} · {count} von {bTotal} Tagen mit {tagB}",
+      "cell_title": "Beide an {count} von {aTotal} Tagen mit {tagA} · {count} von {bTotal} Tagen mit {tagB}",
       "sort_clustered": "Nach Aehnlichkeit clustern",
       "sort_alphabetical": "Alphabetisch sortieren",
       "focus_label": "Auf Tag-Gruppe fokussieren",
@@ -1562,6 +1549,7 @@
       "dismiss_aria": "Erkenntnis \"{title}\" ausblenden",
       "disclaimer_link": "Was bedeutet das?",
       "sample_meta": "Basierend auf {n} Eintraegen \u00b7 {days} Tage",
+      "freq_split": "Ø {withAvg} an {withN} Tagen mit {tag} · Ø {withoutAvg} an {withoutN} Tagen ohne",
       "meta_r": "r (Pearson)",
       "meta_rho": "\u03c1 (Spearman)",
       "meta_p": "p-Wert",
@@ -1577,8 +1565,8 @@
       "inactive_tag_hint": "Dieser Tag wird fuer neue Berechnungen nicht mehr verwendet.",
       "cluster_features": "Mehrere Faktoren",
       "lag_days_unit": "Tage",
-      "lag_profile_label": "Zusammenhang je Verzoegerung (Tage)",
-      "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen ({direction})",
+      "lag_profile_label": "Zusammenhang je Zeitversatz (Tage)",
+      "lag_profile_aria": "Zusammenhangsstaerke je Zeitversatz; am staerksten bei +{days} Tagen ({direction})",
       "lag_peak_marker": "Am staerksten bei +{days} Tagen ({direction})",
       "lag_profile_direction_positive": "gleichlaeufig",
       "lag_profile_direction_negative": "gegenlaeufig",
@@ -1586,8 +1574,8 @@
     },
     "lag_heatmap": {
       "title": "Zeitversatz-Muster",
-      "subtitle": "Zusammenhangsstaerke je Paar und Verzoegerung (1–7 Tage). Kein Kausalnachweis.",
-      "aria": "Heatmap der Zeitversatz-Zusammenhaenge: Zeilen sind Paare, Spalten sind Tage Verzoegerung",
+      "subtitle": "Zusammenhangsstaerke je Paar und Zeitversatz (1–7 Tage). Kein Kausalnachweis.",
+      "aria": "Heatmap der Zeitversatz-Zusammenhaenge: Zeilen sind Paare, Spalten sind Tage Zeitversatz",
       "row_summary": "{pair}: am staerksten bei +{lag} Tagen (r {r})",
       "legend_neg": "gegenlaeufig",
       "legend_pos": "gleichlaeufig"

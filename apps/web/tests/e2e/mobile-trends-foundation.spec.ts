@@ -141,15 +141,6 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
             ],
       });
     }
-    if (path === '/entries/stats/streak') {
-      return json(200, {
-        current_streak: 3,
-        longest_streak: 5,
-        total_entry_days: 12,
-        last_entry_date: '2026-06-23',
-        as_of: '2026-06-23',
-      });
-    }
     if (path === '/habits') return json(200, { habits: [] });
     if (path === '/tags' || path === '/tags/default') return json(200, []);
     if (path === '/symptoms' || path === '/symptoms/default') return json(200, []);

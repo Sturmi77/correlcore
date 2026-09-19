@@ -1484,47 +1484,6 @@
         "title": "EntrySource",
         "type": "string"
       },
-      "EntryStreakResponse": {
-        "properties": {
-          "as_of": {
-            "format": "date",
-            "title": "As Of",
-            "type": "string"
-          },
-          "current_streak": {
-            "title": "Current Streak",
-            "type": "integer"
-          },
-          "last_entry_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Entry Date"
-          },
-          "longest_streak": {
-            "title": "Longest Streak",
-            "type": "integer"
-          },
-          "total_entry_days": {
-            "title": "Total Entry Days",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "current_streak",
-          "longest_streak",
-          "total_entry_days",
-          "as_of"
-        ],
-        "title": "EntryStreakResponse",
-        "type": "object"
-      },
       "EntrySymptomAssignment": {
         "description": "Payload for ``PUT /api/v1/entries/{entry_id}/symptoms``.\n\nReplace-set semantics: the supplied list overwrites the entry's\nfull symptom set. An empty list clears all symptoms on the entry.",
         "properties": {
@@ -8896,88 +8855,6 @@
           }
         },
         "summary": "Return the honest data-readiness / coverage panel (Issue #852)",
-        "tags": [
-          "entries"
-        ]
-      }
-    },
-    "/api/v1/entries/stats/streak": {
-      "get": {
-        "operationId": "get_entry_streak_endpoint_api_v1_entries_stats_streak_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "as_of",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "format": "date",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "As Of"
-            }
-          },
-          {
-            "in": "header",
-            "name": "authorization",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          },
-          {
-            "in": "cookie",
-            "name": "access_token",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Access Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EntryStreakResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Return entry-streak metrics",
         "tags": [
           "entries"
         ]

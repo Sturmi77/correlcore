@@ -91,7 +91,7 @@
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { timeseriesRangeToCooccurrence, analysisDateWindow } from '$lib/utils/analysisRange';
   import { rangeToDays } from '$lib/utils/trendsRange';
-  import { shiftIsoDate } from '$lib/utils/streak';
+  import { shiftIsoDate } from '$lib/utils/isoDate';
   import type { TimeseriesPoint, TimeseriesRange } from '$lib/api/stats';
   import type { MetricKey } from '$lib/utils/charts';
   import {

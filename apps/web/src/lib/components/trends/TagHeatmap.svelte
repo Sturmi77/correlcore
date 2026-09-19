@@ -5,7 +5,7 @@
   import type { TagHeatmapResponse } from '$lib/api/stats';
   import EntryLaunchButton from '$lib/components/entries/EntryLaunchButton.svelte';
   import { heatmapLevel } from '$lib/utils/charts';
-  import { shiftIsoDate } from '$lib/utils/streak';
+  import { shiftIsoDate } from '$lib/utils/isoDate';
 
   export let heatmap: TagHeatmapResponse | null = null;
   export let loading = false;

@@ -58,14 +58,6 @@ export interface SymptomHeatmapResponse {
   symptoms: SymptomHeatmapSymptom[];
 }
 
-export interface EntryStreakResponse {
-  current_streak: number;
-  longest_streak: number;
-  total_entry_days: number;
-  last_entry_date: string | null;
-  as_of: string;
-}
-
 // Health Data Maturity (Issue #852) — honest data-readiness / coverage panel.
 // See docs/features/health-data-maturity.md. Not a physiological score.
 export type HealthContextSectionId = 'symptom' | 'sleep';
@@ -150,11 +142,6 @@ export async function fetchSymptomHeatmap(
   return api.get<SymptomHeatmapResponse>(
     qs ? `/entries/stats/symptoms?${qs}` : '/entries/stats/symptoms'
   );
-}
-
-export async function fetchEntryStreak(asOf?: string): Promise<EntryStreakResponse> {
-  const qs = asOf ? `?as_of=${encodeURIComponent(asOf)}` : '';
-  return api.get<EntryStreakResponse>(`/entries/stats/streak${qs}`);
 }
 
 export async function fetchHealthContext(asOf?: string): Promise<HealthContextResponse> {

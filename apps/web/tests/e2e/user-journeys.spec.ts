@@ -451,16 +451,6 @@ async function installJourneyApi(
       return json(200, { start_date: '2026-06-01', end_date: '2026-06-30', symptoms: [] });
     }
 
-    if (path.startsWith('/entries/stats/streak')) {
-      return json(200, {
-        current_streak: entryCount > 0 ? Math.min(entryCount, 7) : 0,
-        longest_streak: entryCount,
-        total_entry_days: entryCount,
-        last_entry_date: entryCount > 0 ? '2026-06-30' : null,
-        as_of: '2026-06-30',
-      });
-    }
-
     if (path.startsWith('/insights/tag-cooccurrence')) {
       return json(200, {
         range: '90d',

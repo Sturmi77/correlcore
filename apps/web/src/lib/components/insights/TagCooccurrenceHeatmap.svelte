@@ -5,6 +5,7 @@
   import type { CooccurrenceSortMode } from '$lib/utils/cooccurrenceClusterOrder';
   import {
     buildTagCooccurrenceMatrix,
+    cooccurrenceDenominators,
     cooccurrenceIntensityLevel,
     orderTagCooccurrenceMatrix,
     focusTagCooccurrenceMatrixOnCluster,
@@ -141,6 +142,24 @@
     if (option === '30d') return $_('insights.cooccurrence.range_30d');
     if (option === '90d') return $_('insights.cooccurrence.range_90d');
     return $_('insights.cooccurrence.range_1y');
+  }
+
+  function pairEvidence(
+    tagAId: string,
+    tagBId: string,
+    count: number
+  ): { aTotal: number; bTotal: number } {
+    const pair = data?.pairs.find(
+      (item) =>
+        (item.tag_a.tag_id === tagAId && item.tag_b.tag_id === tagBId) ||
+        (item.tag_a.tag_id === tagBId && item.tag_b.tag_id === tagAId)
+    );
+    if (!pair) return { aTotal: count, bTotal: count };
+    // pct_of_* are oriented to tag_a / tag_b as returned by the API.
+    if (pair.tag_a.tag_id === tagAId) {
+      return cooccurrenceDenominators(pair.count, pair.pct_of_a, pair.pct_of_b);
+    }
+    return cooccurrenceDenominators(pair.count, pair.pct_of_b, pair.pct_of_a);
   }
 
   function toggleSortMode(): void {
@@ -375,6 +394,7 @@
               ></div>
             {:else if count > 0}
               {@const cellKey = `${rowTag.tag_id}:${colTag.tag_id}`}
+              {@const evidence = pairEvidence(rowTag.tag_id, colTag.tag_id, count)}
               <button
                 type="button"
                 class={`cooccurrence__cell cooccurrence__cell--${level}`}
@@ -385,10 +405,22 @@
                 data-tag-co-cell={cellKey}
                 data-testid="tag-cooccurrence-cell"
                 aria-label={$_('insights.cooccurrence.cell_aria', {
-                  values: { tagA: rowTag.name, tagB: colTag.name, count },
+                  values: {
+                    tagA: rowTag.name,
+                    tagB: colTag.name,
+                    count,
+                    aTotal: evidence.aTotal,
+                    bTotal: evidence.bTotal,
+                  },
                 })}
                 title={$_('insights.cooccurrence.cell_title', {
-                  values: { tagA: rowTag.name, tagB: colTag.name, count },
+                  values: {
+                    tagA: rowTag.name,
+                    tagB: colTag.name,
+                    count,
+                    aTotal: evidence.aTotal,
+                    bTotal: evidence.bTotal,
+                  },
                 })}
                 on:click={() => selectPair(rowTag, colTag)}
                 on:keydown={(event) =>

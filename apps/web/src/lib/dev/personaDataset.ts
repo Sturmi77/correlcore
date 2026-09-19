@@ -12,7 +12,7 @@ import type { EntryResponse } from '$lib/api/entries';
 import type { TagCooccurrencePair, TagCooccurrenceTagRef } from '$lib/api/insights';
 import type { SymptomHeatmapResponse, TagHeatmapResponse } from '$lib/api/stats';
 import type { TagCategory } from '$lib/api/tags';
-import { shiftIsoDate } from '$lib/utils/streak';
+import { shiftIsoDate } from '$lib/utils/isoDate';
 
 export interface PersonaTagRef {
   tag_id: string;

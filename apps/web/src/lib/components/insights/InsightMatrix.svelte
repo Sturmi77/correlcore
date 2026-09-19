@@ -2,6 +2,7 @@
   import { _, locale } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
   import { isMatrixInsight, isWeakMatrixInsight } from '$lib/utils/insightMatrixGate';
+  import InsightEvidence from './InsightEvidence.svelte';
 
   export let insights: InsightResponse[] = [];
   /**
@@ -94,9 +95,15 @@
     return 'neutral';
   }
 
-  function percent(value: number | null): string {
-    if (value === null) return '-';
-    return `${Math.round(value * 100)}%`;
+  function freqLabel(row: InsightResponse): string {
+    const withN = row.payload?.tagged_count;
+    const withoutN = row.payload?.untagged_count;
+    if (typeof withN !== 'number' || typeof withoutN !== 'number') {
+      return $_('insights.matrix.freq_sample', { values: { n: row.sample_n } });
+    }
+    return $_('insights.matrix.freq_split', {
+      values: { withN, withoutN },
+    });
   }
 
   function themeColor(name: string): string {
@@ -136,8 +143,9 @@
       ctx.fillRect(32, y - 18, Math.max(8, Math.abs(effect) * 280), 24);
       ctx.fillStyle = colors.text;
       ctx.fillText(row.subject_label ?? row.metric, 332, y);
-      ctx.fillText(effect.toFixed(2), 560, y);
-      ctx.fillText(percent(row.confidence), 650, y);
+      ctx.fillText(effect.toFixed(2), 520, y);
+      ctx.fillText(freqLabel(row), 600, y);
+      ctx.fillText(`${Math.round((row.confidence ?? 0) * 100)}%`, 820, y);
     });
 
     const link = document.createElement('a');
@@ -217,6 +225,7 @@
       <span role="columnheader">{$_('insights.matrix.subject')}</span>
       <span role="columnheader">{$_('insights.matrix.metric')}</span>
       <span role="columnheader">{$_('insights.matrix.effect')}</span>
+      <span role="columnheader">{$_('insights.matrix.frequency')}</span>
       <span role="columnheader">{$_('insights.matrix.confidence')}</span>
     </div>
     {#each tableRows as row}
@@ -225,7 +234,7 @@
         class="insight-matrix__row"
         role="row"
         data-tone={tone(effect)}
-        title={`${row.statement ?? ''} | n=${row.sample_n} | confidence=${percent(row.confidence)}`}
+        title={`${row.statement ?? ''} | ${freqLabel(row)}`}
       >
         <span role="cell">{row.subject_label ?? '-'}</span>
         <span role="cell">{row.metric}</span>
@@ -236,7 +245,18 @@
           ></span>
           {effect.toFixed(2)}
         </span>
-        <span role="cell">{percent(row.confidence)}</span>
+        <span role="cell" class="insight-matrix__freq" data-testid="insight-matrix-freq">
+          {freqLabel(row)}
+        </span>
+        <span role="cell" class="insight-matrix__confidence">
+          <InsightEvidence
+            confidenceScore={row.confidence ?? 0}
+            currentTier={row.tier}
+            entryCount={row.sample_n}
+            showSample
+            showMaturityBadge={false}
+          />
+        </span>
       </div>
     {/each}
   </div>
@@ -302,9 +322,12 @@
   }
 
   .insight-matrix__row {
-    min-width: 42rem;
+    min-width: 48rem;
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.8fr);
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(
+        0,
+        1.4fr
+      );
     gap: 0.75rem;
     align-items: center;
     padding: 0.6rem 0.75rem;
@@ -337,6 +360,15 @@
     align-items: center;
     gap: 0.5rem;
     min-width: 0;
+  }
+
+  .insight-matrix__freq {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .insight-matrix__confidence :global(.evidence) {
+    flex-wrap: wrap;
   }
 
   .insight-matrix__effect-bar {

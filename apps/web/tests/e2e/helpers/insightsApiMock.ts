@@ -114,15 +114,6 @@ export async function installInsightsApiMock(
         tags: [],
       });
     }
-    if (path.startsWith('/entries/stats/streak') && method === 'GET') {
-      return json(route, 200, {
-        current_streak: 6,
-        longest_streak: 9,
-        total_entry_days: mockEntries.length,
-        last_entry_date: mockEntries[0]?.entry_date ?? null,
-        as_of: mockEntries[0]?.entry_date ?? '2026-06-30',
-      });
-    }
     if (path.startsWith('/insights/tag-cooccurrence') && method === 'GET') {
       const range = (url.searchParams.get('range') ??
         '90d') as keyof typeof mockTagCooccurrenceByRange;

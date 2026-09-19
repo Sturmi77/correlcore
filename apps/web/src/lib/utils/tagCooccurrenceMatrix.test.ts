@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TagCooccurrencePair } from '$lib/api/insights';
 import {
   buildTagCooccurrenceMatrix,
+  cooccurrenceDenominators,
   cooccurrenceIntensityLevel,
   orderTagIdsByCluster,
   orderTagCooccurrenceMatrix,
@@ -65,6 +66,11 @@ describe('tagCooccurrenceMatrix', () => {
     expect(cooccurrenceIntensityLevel(0, 8)).toBe(0);
     expect(cooccurrenceIntensityLevel(2, 8)).toBe(1);
     expect(cooccurrenceIntensityLevel(8, 8)).toBe(4);
+  });
+
+  it('recovers two denominators from co-occurrence percents', () => {
+    expect(cooccurrenceDenominators(3, 75, 60)).toEqual({ aTotal: 4, bTotal: 5 });
+    expect(cooccurrenceDenominators(2, 0, 50)).toEqual({ aTotal: 0, bTotal: 4 });
   });
 });
 

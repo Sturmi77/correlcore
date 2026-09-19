@@ -27,7 +27,7 @@
   import { insightStore, loadInsights } from '$lib/stores/insights';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
-  import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
+  import { localIsoDate, shiftIsoDate } from '$lib/utils/isoDate';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import {
     rangeToDays,

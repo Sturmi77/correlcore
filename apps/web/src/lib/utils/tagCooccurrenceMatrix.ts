@@ -188,6 +188,20 @@ export function focusTagCooccurrenceMatrixOnCluster(
   };
 }
 
+/**
+ * Recover the two natural-frequency denominators from co-occurrence percents.
+ * `pct_of_a` / `pct_of_b` are shares of entries that already have tag A / B.
+ */
+export function cooccurrenceDenominators(
+  count: number,
+  pctOfA: number,
+  pctOfB: number
+): { aTotal: number; bTotal: number } {
+  const aTotal = pctOfA > 0 ? Math.max(count, Math.round(count / (pctOfA / 100))) : 0;
+  const bTotal = pctOfB > 0 ? Math.max(count, Math.round(count / (pctOfB / 100))) : 0;
+  return { aTotal, bTotal };
+}
+
 export function cooccurrenceIntensityLevel(count: number, max: number): number {
   if (count <= 0 || max <= 0) return 0;
   const ratio = count / max;
