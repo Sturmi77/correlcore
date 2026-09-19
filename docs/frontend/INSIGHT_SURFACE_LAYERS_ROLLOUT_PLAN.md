@@ -190,15 +190,11 @@ Der eine echte Neubau. Zweistufig, damit die Evidenzsprache validiert wird, bevo
 - [x] `_cooccurrence_stats` ist signal-agnostisch; `heatmap_tag_tag_associations` / `compute_tag_tag_associations` in [`symptom_analytics.py`](../../backend/app/services/symptom_analytics.py); `get_tag_cooccurrence` gated in [`stats_service.py`](../../backend/app/services/stats_service.py).
 - [x] Anzeige bleibt `count` + zwei Nenner (`pct_of_a` / `pct_of_b`); Lift/FDR entscheiden nur, welche Paare erscheinen. Confounder-Checks laufen mit (weekday / work_context / calendar), ohne neues Response-Feld.
 
-## Phase 11 — O3: Tagespräsenz konsolidieren
+## Phase 11 — O3: Tagespräsenz konsolidieren ✅
 
-Korrektur am Inventar von #928: Es sind nicht „4× dasselbe". Es sind **zwei Flächen auf einer
-geteilten Komponente plus zwei eigenständige Geometrien**.
-
-- Geteilt ist bereits: [ComparisonHeatmap.svelte](../../apps/web/src/lib/components/trends/ComparisonHeatmap.svelte) dient sowohl den Compare-Kontextzeilen (`TrendsComparePanel`) als auch der Symptom-Heatmap in `SymptomAnalyticsSection` — dieselbe Komponente, nur ein anderer `headingKey`. Die Vermutung aus #928 trifft also zu, und es ist nichts zu tun.
-- Der „Symptomverlauf" ist dagegen **nicht** dieselbe Komponente, sondern `SymptomTrendOverlay` — ein Liniendiagramm mit Unsicherheitsband, keine Tageszellen. Es gehört gar nicht in die O3-Gruppe, sondern ist die Vorlage für L3 in Phase 7.
-- Echte Arbeit ist genau eine Stelle: das Habit-Raster [TagHeatmap.svelte](../../apps/web/src/lib/components/trends/TagHeatmap.svelte) baut ein eigenes CSS-Grid (`repeat(var(--day-count), 0.8rem)`) statt `DailyAxisLayout` zu nutzen, obwohl es dieselbe `heatmapLevel`-Skala verwendet. Auf die geteilte Achse und das geteilte Zellen-Primitiv ziehen — damit fällt die dritte Achsen-Implementierung weg und das Raster ist mit den Compare-Zeilen ausgerichtet.
-- `SymptomCalendarHeatmap` bleibt eigenständig und wird **nicht** vereinheitlicht: die Wochentag×Woche-Achse ist ihr Alleinstellungsmerkmal (Saisonalität) und der einzige Ort, an dem das sichtbar wird. Zu entscheiden ist nur, ob sie binär bleibt (`cell.present`) oder Intensitätsstufen bekommt — heute wirft sie Intensität weg, die `ComparisonHeatmap` zeigt.
+- [x] `ComparisonHeatmap` bleibt die geteilte Fläche für Compare-Kontextzeilen und Symptom-Heatmap — keine weitere Arbeit.
+- [x] `TagHeatmap` nutzt denselben `DailyAxisLayout`-Vertrag (`--axis-label-width` / `--axis-day-width` / `--axis-gap`) wie Compare; Datumsspanne über `buildIsoDateRange`; Default-Pitch = `compareDailyAxisLayoutFromRoot`, Compact/Coarse über `habitDailyAxisLayout`.
+- [x] `SymptomCalendarHeatmap` bleibt eigenständig (Wochentag×Woche) — unverändert.
 
 ## Phase 12 — L5: adjustierte Effekte und Confounder sichtbar machen
 
