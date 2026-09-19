@@ -10,7 +10,7 @@
 export const ENTRY_CONTRACT = {
   entrySlots: ['day', 'morning', 'noon', 'evening'],
   entrySources: ['direct', 'retrospective', 'import', 'wearable'],
-  workContexts: ['homeoffice', 'office', 'vacation', 'sick', 'weekend', 'travel'],
+  workContexts: ['homeoffice', 'office', 'vacation', 'sick', 'weekend', 'travel', 'other'],
   metrics: {
     mood_score: { min: 1, max: 5, invert: false },
     energy: { min: 1, max: 5, invert: false },

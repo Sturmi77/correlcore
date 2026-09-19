@@ -31,6 +31,8 @@ export interface UserPreferencesResponse {
   onboarding_profile_completed: boolean;
   onboarding_maturity_intro_seen: boolean;
   cycle_tracking_enabled: boolean;
+  /** Phase 8 / #875: opt-in Belastung & Erholung overlay. Default false. */
+  belastung_overlay_enabled?: boolean;
   // Additive (M8 Sprint 4): older mocks/fallbacks may omit it — treat as true.
   health_connect_sync_sleep_enabled?: boolean;
   // Additive (#868): per-weekday Home trend caret. Default on; omit → true.
@@ -55,6 +57,7 @@ export interface UserPreferencesUpdate {
   onboarding_profile_completed?: boolean;
   onboarding_maturity_intro_seen?: boolean;
   cycle_tracking_enabled?: boolean;
+  belastung_overlay_enabled?: boolean;
   health_connect_sync_sleep_enabled?: boolean;
   home_weekday_day_trend_enabled?: boolean;
   dismissed_insight_keys?: string[];

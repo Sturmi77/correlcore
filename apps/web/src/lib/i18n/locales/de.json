@@ -260,7 +260,8 @@
       "vacation": "Urlaub",
       "sick": "Krank",
       "weekend": "Wochenende",
-      "travel": "Unterwegs"
+      "travel": "Unterwegs",
+      "other": "Sonstiges"
     },
     "save_busy": "Speichere\u2026",
     "saved_redirect": "Eintrag gespeichert.",
@@ -909,6 +910,12 @@
       "delete_busy": "Loesche…",
       "delete_success": "Zyklusdaten aus {count} Eintraegen entfernt.",
       "delete_error": "Zyklusdaten konnten nicht geloescht werden."
+    },
+    "belastung": {
+      "heading": "Belastung & Erholung",
+      "body": "Optionaler Ebene-1-Zusammenfassung zu Stress, Energie und Erschoepfung. Standardmaessig aus.",
+      "enabled": "Belastungs-Zusammenfassung anzeigen",
+      "hint": "Nutzt nur bestehende Eintraege — keine neuen Pflichtfelder. Analyse muss aktiv bleiben. Heuristik, keine medizinische Einschaetzung, niemals fuer einen Arbeitgeber."
     },
     "vocabulary": {
       "heading": "Tracking-Vokabular",
@@ -1656,6 +1663,17 @@
       "next_log": "Heute eintragen",
       "next_compare": "In Trends vergleichen",
       "next_other": "Andere Erkenntnisse"
+    },
+    "belastung": {
+      "aria": "Belastung und Erholung",
+      "title": "Belastungsmuster der letzten 14 Tage",
+      "subtitle": "Optionaler Bereich · in Einstellungen aktiviert",
+      "heuristic_badge": "Hinweis, keine Bewertung",
+      "freq": "Erschoepfung an {fatigueRecent} von {recentN} Tagen · davor an {fatiguePrior} von {priorN}. Erholungstage: {recoveryRecent} von {recentN} · davor {recoveryPrior} von {priorN}.",
+      "cta_intensity": "Arbeitsintensitaet pruefen →",
+      "cta_sleep": "Schlaf → Folgetag pruefen →",
+      "disclaimer": "Dies ist keine medizinische Einschaetzung und keine Diagnose. CorrelCore zeigt Muster in deinen eigenen Eintraegen. Wenn dich deine Belastung anhaltend beeintraechtigt, sprich mit einer Aerztin oder Therapeutin. Diese Daten liegen ausschliesslich bei dir — niemals bei einem Arbeitgeber.",
+      "analytics_off": "Schalte die Analyse in den Einstellungen wieder ein, um diese Zusammenfassung zu aktualisieren."
     },
     "lag_heatmap": {
       "title": "Zeitversatz-Muster",

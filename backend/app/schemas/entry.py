@@ -28,7 +28,7 @@ from datetime import date as date_type
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.models.entry import BleedingLevel, EntrySlot, EntrySource, WorkContext
+from app.models.entry import BleedingLevel, EntrySlot, EntrySource, InferredPeriod, WorkContext
 from app.schemas.note import EntryNoteSignalResponse
 from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 from app.schemas.tag import TagResponse
@@ -153,6 +153,8 @@ class EntryResponse(BaseModel):
     sleep_quality: int | None = None
     source: EntrySource
     work_context: WorkContext
+    logged_local_hour: int | None = Field(default=None, ge=0, le=23)
+    inferred_period: InferredPeriod | None = None
     note: str | None = Field(default=None, validation_alias="note_enc")
     note_raw: str | None = Field(default=None, validation_alias="note_enc")
     note_summary_short: str | None = None

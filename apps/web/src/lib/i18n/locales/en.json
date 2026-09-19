@@ -260,7 +260,8 @@
       "vacation": "Vacation",
       "sick": "Sick",
       "weekend": "Weekend",
-      "travel": "Travel"
+      "travel": "Travel",
+      "other": "Other"
     },
     "save_busy": "Saving\u2026",
     "saved_redirect": "Entry saved.",
@@ -909,6 +910,12 @@
       "delete_busy": "Deleting…",
       "delete_success": "Cycle data cleared from {count} entries.",
       "delete_error": "Could not delete cycle data."
+    },
+    "belastung": {
+      "heading": "Load & recovery",
+      "body": "Optional Layer-1 summary of stress, energy and fatigue patterns. Off by default.",
+      "enabled": "Show load & recovery summary",
+      "hint": "Uses existing entries only — no new required fields. Analysis must stay enabled. This is a heuristic, not a medical assessment, and never for an employer."
     },
     "vocabulary": {
       "heading": "Tracking vocabulary",
@@ -1656,6 +1663,17 @@
       "next_log": "Log today",
       "next_compare": "Compare in Trends",
       "next_other": "Other insights"
+    },
+    "belastung": {
+      "aria": "Load and recovery summary",
+      "title": "Load pattern of the last 14 days",
+      "subtitle": "Optional area · enabled in Settings",
+      "heuristic_badge": "Hint, not a score",
+      "freq": "Fatigue on {fatigueRecent} of {recentN} days · before on {fatiguePrior} of {priorN}. Recovery days: {recoveryRecent} of {recentN} · before {recoveryPrior} of {priorN}.",
+      "cta_intensity": "Check work intensity →",
+      "cta_sleep": "Check sleep → next day →",
+      "disclaimer": "This is not a medical assessment or diagnosis. CorrelCore shows patterns in your own entries. If load keeps affecting you, talk to a clinician. These data stay with you — never with an employer.",
+      "analytics_off": "Turn analysis back on in Settings to refresh this summary."
     },
     "lag_heatmap": {
       "title": "Time-offset patterns",

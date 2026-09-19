@@ -171,19 +171,11 @@ Der eine echte Neubau. Zweistufig, damit die Evidenzsprache validiert wird, bevo
 - [x] **Schritt C — D1 Signal-Detail.** Route `/insights/signal/[id]` mit Satz → G2 → ESM → G1-Scatter hinter Disclosure und L3 mean±SE-Bändern. CTA „Zusammenhang prüfen“ ist der eine Vorwärtspfad von Ebene 1. Compare verweist auf Insights (Layer 2), nicht auf ESM.
 - [x] ADR-0043 auf Accepted; G4 Forest-Plot bewusst nicht gebaut.
 
-## Phase 8 — #892 Option 3, `work_context` neutral, #875 Belastungs-Overlay
+## Phase 8 — #892 Option 3, `work_context` neutral, #875 Belastungs-Overlay ✅
 
-Erst hier, weil der Overlay sonst als neunte Sektion auf einem Hub landet, der gerade geschrumpft
-wurde.
-
-- **#892 Option 3.** Nicht-uniques, abgeleitetes Feld `logged_local_hour` / `inferred_period` aus der **ersten** lokalen Schreibzeit des Tages; `entries.slot` bleibt `day`. TZ-Logik aus [widget_service.py](../../backend/app/services/widget_service.py) wiederverwenden (`resolve_zone`, IANA vom Client, Fallback UTC). ADR-0016 bleibt gewahrt: Write-Zeit nur als Kovariate zu `entry_date`, nie als Zeitindex. In Export und Delete einbeziehen. Optionen 2, 4 und 6 im Issue-Body ausdrücklich verwerfen: `slot` zu schreiben riskiert 409 gegen den Unique-Constraint `(user_id, entry_date, slot)` und bricht die Tracking-Consistency-Berechnung, die in [streak.ts](../../apps/web/src/lib/utils/streak.ts) ausschließlich `slot === 'day'` zählt.
-- **`work_context` braucht einen neutralen Wert.** Der Enum in [entry.py](../../backend/app/models/entry.py) (Zeilen 82–90) ist `homeoffice | office | vacation | sick | weekend | travel` — es gibt kein `other`. Wer in Elternzeit, Studium, Rente oder Arbeitslosigkeit ist, muss falsch labeln oder das Feld leer lassen. Das trifft ausgerechnet die in #875 vorgeschlagene Leitsituation (Wiedereinstieg nach Krankheit). Enum-Wert `other` plus Migration und UI-Option ist Voraussetzung sowohl für den Recovery-Teil des Composite als auch für G3 in Phase 9.
-- **#875 Option 1.** Feature-Doc analog [cycle-tracking.md](../features/cycle-tracking.md): Framing, opt-in, Sprache, Composite-Definition mit Heuristik-Kennzeichnung.
-- Opt-in Boolean auf `user_preferences` (nicht Feature-Flag), Default `false` — anders als `cycle_tracking_enabled`, das `true` ist. `analytics_enabled` bleibt Master-Switch. Kein eigenes Delete nötig, weil es ein Thin Overlay auf bestehenden Entry-Daten ist.
-- Benannter Composite als Insight-/Home-Payload **ohne** neues Persistenzfeld am Entry: „Belastungsmuster der letzten 14 Tage" aus Stress↑ + Energy↓ + `fatigue`-Häufigkeit, beide Nenner gegen die Vorperiode, Trend-Slope über Fenster als Input. Maturity-gegated, als Heuristik gekennzeichnet.
-- Keine neuen Tags. `overtime` ≈ `work_intense`, `recovery_day` ≈ `vacation`/`weekend`; das Recovery-Signal `achievement` ist mit #890 schon entstanden. Das After-Hours-Signal kommt aus `inferred_period` („Erst-Log nach 22:00"), nicht aus einem neuen Tap.
-- Landung auf **Ebene 1** als eigener opt-in Bereich nach Mockup E5, mit Disclaimer, der Leitplanke „niemals mit einem Arbeitgeber" und zwei CTAs nach Ebene 2. Keine parallele Burnout-IA, keine neunte Hub-Sektion.
-- Keine klinischen Inventare (MBI/CBI), keine neuen Pflichtfelder, kein Changepoint im Overlay.
+- [x] **#892 Option 3.** `logged_local_hour` / `inferred_period` from first local write (`POST /entries?tz=`); `slot` stays `day`; export includes both fields.
+- [x] **`work_context.other`** (+ UI / i18n) for non-work life contexts.
+- [x] Feature doc [`docs/features/belastung-erholung.md`](../features/belastung-erholung.md); opt-in `belastung_overlay_enabled` (default false); composite `belastung_pattern` (heuristic); Layer-1 `BelastungOverlay` with employer guardrail and CTAs to signal detail.
 
 ## Phase 9 — G3 und die Positionierungsfolge
 

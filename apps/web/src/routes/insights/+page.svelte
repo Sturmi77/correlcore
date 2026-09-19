@@ -65,6 +65,7 @@
   import LagCorrelationHeatmap from '$lib/components/insights/LagCorrelationHeatmap.svelte';
   import { buildLagHeatmapRows } from '$lib/utils/lagHeatmap';
   import InsightStageHeader from '$lib/components/insights/InsightStageHeader.svelte';
+  import BelastungOverlay from '$lib/components/insights/BelastungOverlay.svelte';
   import MobileInsightLead from '$lib/components/insights/MobileInsightLead.svelte';
   import CooccurrenceEntrySheet from '$lib/components/insights/CooccurrenceEntrySheet.svelte';
   import CorrelationDisclaimer from '$lib/components/insights/CorrelationDisclaimer.svelte';
@@ -777,6 +778,12 @@
   $: showLeadMilestone = showMaturityMilestone && stageHeaderEnabled;
   $: showStageMilestone =
     showMaturityMilestone && stageHeaderEnabled && !(compactInsights && primaryMobileInsight);
+  $: belastungInsight =
+    insights.find((insight) => insight.insight_type === 'belastung_pattern') ?? null;
+  $: showBelastungOverlay =
+    Boolean(userPreferences?.belastung_overlay_enabled) &&
+    userPreferences?.analytics_enabled !== false &&
+    Boolean(belastungInsight);
 
   function ensureAnalyticsLoaded(): void {
     if (!cooccurrenceRequested && !cooccurrenceLoading) {
@@ -1060,6 +1067,13 @@
          The readiness stage header (#823) is now a regular section here; the
          milestone-only strip still lives inside MobileInsightLead, so
          showStageMilestone suppresses the duplicate on mobile-with-primary. -->
+    {#if showBelastungOverlay && belastungInsight}
+      <BelastungOverlay
+        insight={belastungInsight}
+        analyticsEnabled={userPreferences?.analytics_enabled !== false}
+      />
+    {/if}
+
     {#each enabledInsightSectionKeys as sectionKey (sectionKey)}
       {#if sectionKey === 'stage_header'}
         {#if insightMaturity}

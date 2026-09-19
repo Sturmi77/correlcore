@@ -268,6 +268,7 @@ def to_preferences_response(preferences: UserPreference) -> UserPreferencesRespo
         "onboarding_profile_completed": preferences.onboarding_profile_completed,
         "onboarding_maturity_intro_seen": preferences.onboarding_maturity_intro_seen,
         "cycle_tracking_enabled": preferences.cycle_tracking_enabled,
+        "belastung_overlay_enabled": preferences.belastung_overlay_enabled,
         "home_weekday_day_trend_enabled": preferences.home_weekday_day_trend_enabled,
         "health_connect_sync_sleep_enabled": preferences.health_connect_sync_sleep_enabled,
         "dismissed_insight_keys": preferences.dismissed_insight_keys,

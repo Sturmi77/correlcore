@@ -20,6 +20,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import date as date_type
+from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -92,11 +93,14 @@ async def create_entry_endpoint(
     request: Request,
     payload: EntryCreate,
     background_tasks: BackgroundTasks,
+    tz: Annotated[str | None, Query(description="IANA timezone for write-time covariates")] = None,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> EntryResponse:
     try:
-        entry = await create_entry(db, user_id=user.id, payload=payload)
+        entry = await create_entry(
+            db, user_id=user.id, payload=payload, client_timezone=tz
+        )
     except EntryDateOutOfRangeError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

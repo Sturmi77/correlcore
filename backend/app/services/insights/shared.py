@@ -21,7 +21,7 @@ from scipy.stats import chisquare
 from statsmodels.stats.multitest import multipletests
 
 from app.core.config import settings
-from app.models.entry import WorkContext
+from app.models.entry import InferredPeriod, WorkContext
 from app.models.insight import InsightTier, InsightType
 
 EARLY_ENTRY_COUNT = 3
@@ -67,6 +67,7 @@ _WORK_CONTEXT_LABELS: dict[WorkContext, str] = {
     WorkContext.VACATION: "Vacation",
     WorkContext.SICK: "Sick leave",
     WorkContext.WEEKEND: "Weekend",
+    WorkContext.OTHER: "Other",
 }
 
 
@@ -86,6 +87,9 @@ class AnalyticsEntry:
     # sleep record — sleep↔mood correlations use pairwise deletion on these.
     sleep_minutes: int | None = None
     sleep_quality: int | None = None
+    # #892 Option 3: first local write covariates (may be null on legacy rows).
+    logged_local_hour: int | None = None
+    inferred_period: InferredPeriod | None = None
 
 
 @dataclass(frozen=True)

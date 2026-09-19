@@ -62,6 +62,13 @@ class UserPreference(Base):
         default=True,
         server_default="true",
     )
+    # Phase 8 / #875: opt-in Belastung & Erholung overlay (default off).
+    belastung_overlay_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
     # #868: per-weekday (W2) trend caret on Home. Default on; Settings can hide
     # it because day-level windows are noisy (~4 values per weekday at N=28).
     home_weekday_day_trend_enabled: Mapped[bool] = mapped_column(
