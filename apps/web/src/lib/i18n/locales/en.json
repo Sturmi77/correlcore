@@ -2143,7 +2143,7 @@
     "badge": "Self-hosted · v{version}",
     "badge_hosted": "Hosted · v{version}",
     "hero_title": "Understand why some days are good — and others aren't.",
-    "hero_subtitle": "Log 60 seconds a day. The analysis shows which factors actually relate to mood and energy — on your instance, with no third-party tracking.",
+    "hero_subtitle": "Log 60 seconds a day. The analysis shows which factors — sleep, stress, work situation — relate to mood and energy — on your instance, with no third-party tracking.",
     "hero_micro": "Associations are ranked by how confident they are, and at what delay they show up.",
     "cta_register": "Create account",
     "cta_login": "Log in",

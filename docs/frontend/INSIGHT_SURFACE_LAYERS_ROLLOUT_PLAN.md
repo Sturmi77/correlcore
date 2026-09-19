@@ -177,10 +177,12 @@ Der eine echte Neubau. Zweistufig, damit die Evidenzsprache validiert wird, bevo
 - [x] **`work_context.other`** (+ UI / i18n) for non-work life contexts.
 - [x] Feature doc [`docs/features/belastung-erholung.md`](../features/belastung-erholung.md); opt-in `belastung_overlay_enabled` (default false); composite `belastung_pattern` (heuristic); Layer-1 `BelastungOverlay` with employer guardrail and CTAs to signal detail.
 
-## Phase 9 — G3 und die Positionierungsfolge
+## Phase 9 — G3 und die Positionierungsfolge ✅
 
-- Erst wenn Ebene 2 ausgeliefert ist und die Fenster ehrlich sind: das Copy-Register „Arbeitsmuster-Vokabular" aktivieren. Klinisches Vokabular nie. Mood/Habit nicht streichen, solange W3/W7 der Alltag sind; `work_context` bleibt Differenzierungsfeld, wird nicht Kategorie-Titel.
-- Store-Listing (#720) ist bis dahin mit dem heutigen Anker ausgeliefert; G3 wird ein Listing-Update. Die Data-Safety-Deklaration (#721) muss mit der **finalen** Copy übereinstimmen — je näher an „Belastung/Burnout", desto größer das in der SWOT genannte Health-Claim-Risiko.
+- [x] Copy-Register [`docs/features/arbeitsmuster-vokabular.md`](../features/arbeitsmuster-vokabular.md) aktiviert (Preferred / Avoid / Never). Klinisches Vokabular nie. Mood/Habit bleiben; `work_context` bleibt Differenzierungsfeld.
+- [x] DESIGN §1.3–§1.5 (Auslöser, Betrieb/Vertriebsweg, Nicht-Ziele, G3-Anker) + ADR-0043 Open Question G3 geschlossen.
+- [x] Store-Listing (#720) und Data-Safety-Mapping (#721) auf das Register abgestimmt — kein Burnout-Produktclaim; Belastung-Overlay deklariert keine neuen Play-Datentypen.
+- [x] Leichte Landing-i18n (Arbeitssituation im Hero-Subtitle) + `noClinicalProductCopy.test.ts`.
 
 ## Phase 10 — O1: eine Kookkurrenz-Statistik statt drei (Backend-Gate)
 

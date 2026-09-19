@@ -71,10 +71,12 @@ both fields; account delete cascades with the entry row.
 
 ## Language & framing
 
+- Follow [`arbeitsmuster-vokabular.md`](arbeitsmuster-vokabular.md) (Phase 9 / #930 G3)
 - Prefer “load / recovery / pattern / hint” — never clinical burnout labels in UI
 - Always mark the composite as a **heuristic**
 - Disclaimer includes the guardrail: data stays with the user, **never with an employer**
 - Two CTAs open Layer 2 (`/insights/signal/[id]`) — work intensity and sleep/next-day
+- `work_context` stays the field label (Work context / Arbeitssituation), not a category title
 
 ## Landing surface
 
