@@ -452,7 +452,8 @@ def test_pointbiserial_marks_work_context_confounder() -> None:
             mood=5 if offset < 10 else 2,
             energy=3,
             stress=3,
-            work_context=WorkContext.OFFICE if offset < 10 else WorkContext.HOMEOFFICE,
+            # Office days include tagged + untagged so same-situation frequencies have both arms.
+            work_context=WorkContext.OFFICE if offset < 15 else WorkContext.HOMEOFFICE,
             tag_ids=frozenset({tag_id}) if offset < 10 else frozenset(),
         )
         for offset in range(30)
@@ -467,6 +468,12 @@ def test_pointbiserial_marks_work_context_confounder() -> None:
     assert candidate.payload["confounder"] == "work_context"
     assert candidate.payload["confounders"] == ["work_context"]
     assert "work contexts" in candidate.statement
+    assert candidate.payload["same_work_context"] == "office"
+    assert candidate.payload["same_work_context_with_n"] == 10
+    assert candidate.payload["same_work_context_without_n"] == 5
+    assert "situation_effect_survives" in candidate.payload
+    assert "weekday_held_coefficient" in candidate.payload
+    assert "calendar_held_coefficient" in candidate.payload
 
 
 def test_work_context_biased_uses_available_context_day_baseline() -> None:

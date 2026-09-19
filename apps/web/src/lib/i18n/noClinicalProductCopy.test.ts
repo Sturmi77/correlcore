@@ -16,7 +16,8 @@ describe('no clinical product-framing UI copy', () => {
   it('does not expose burnout or clinical-inventory product claims in locale strings', () => {
     // Affirmative product framing only. Negated diagnosis disclaimers stay allowed.
     // See docs/features/arbeitsmuster-vokabular.md (Phase 9 / #930 G3).
-    const forbidden = /\bburnout\b|\bMBI\b|\bCBI\b|burnout[- ]prevention|Burnout-Prävention/i;
+    const forbidden =
+      /\bburnout\b|\bMBI\b|\bCBI\b|burnout[- ]prevention|Burnout-Prävention|\bbereinigt\b|\bcleaned\b/i;
     const strings = [...collectStrings(en), ...collectStrings(de)];
 
     expect(strings.filter((copy) => forbidden.test(copy))).toEqual([]);

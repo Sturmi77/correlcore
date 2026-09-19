@@ -45,10 +45,12 @@ from app.services.insights.shared import (
     is_work_context_biased,
 )
 from app.services.weekday_confounder import (
+    evaluate_metric_association_calendar_context,
+    evaluate_metric_association_weekday,
     is_continuous_association_calendar_context_confounded,
     is_continuous_association_weekday_confounded,
-    is_metric_association_calendar_context_confounded,
-    is_metric_association_weekday_confounded,
+    same_work_context_metric_frequencies,
+    situation_adjustment_payload,
 )
 
 
@@ -325,31 +327,34 @@ def _pointbiserial_candidates(
             )
             continue
 
-        weekday_confounded = is_weekday_biased(entries, tag_id) or (
-            is_metric_association_weekday_confounded(
-                [entry.entry_date for entry in entries],
-                mood_values,
-                binary,
-                raw_coefficient=coefficient,
-                raw_p_value=p_value,
-                min_effect=MIN_ABS_EFFECT_SIZE,
-                alpha=FDR_ALPHA,
-            )
+        weekday_adj = evaluate_metric_association_weekday(
+            [entry.entry_date for entry in entries],
+            mood_values,
+            binary,
+            raw_coefficient=coefficient,
+            raw_p_value=p_value,
+            min_effect=MIN_ABS_EFFECT_SIZE,
+            alpha=FDR_ALPHA,
         )
+        calendar_adj = evaluate_metric_association_calendar_context(
+            [entry.entry_date for entry in entries],
+            [entry.work_context.value for entry in entries],
+            mood_values,
+            binary,
+            raw_coefficient=coefficient,
+            raw_p_value=p_value,
+            min_effect=MIN_ABS_EFFECT_SIZE,
+            alpha=FDR_ALPHA,
+        )
+        weekday_confounded = is_weekday_biased(entries, tag_id) or weekday_adj.confounded
         work_context_confounded = is_work_context_biased(entries, tag_id)
         calendar_context_confounded = (
-            weekday_confounded
-            or work_context_confounded
-            or is_metric_association_calendar_context_confounded(
-                [entry.entry_date for entry in entries],
-                [entry.work_context.value for entry in entries],
-                mood_values,
-                binary,
-                raw_coefficient=coefficient,
-                raw_p_value=p_value,
-                min_effect=MIN_ABS_EFFECT_SIZE,
-                alpha=FDR_ALPHA,
-            )
+            weekday_confounded or work_context_confounded or calendar_adj.confounded
+        )
+        situation = same_work_context_metric_frequencies(
+            [entry.work_context.value for entry in entries],
+            binary,
+            mood_values,
         )
 
         raw.append(
@@ -367,6 +372,9 @@ def _pointbiserial_candidates(
                 weekday_confounded,
                 work_context_confounded,
                 calendar_context_confounded,
+                weekday_adj,
+                calendar_adj,
+                situation,
             )
         )
 
@@ -385,6 +393,9 @@ def _pointbiserial_candidates(
         weekday_confounded,
         work_context_confounded,
         calendar_context_confounded,
+        weekday_adj,
+        calendar_adj,
+        situation,
     ), (significant, p_corrected) in zip(
         raw,
         _fdr_results([item[3] for item in raw]),
@@ -407,6 +418,7 @@ def _pointbiserial_candidates(
             work_context_confounded=work_context_confounded,
             calendar_context_confounded=calendar_context_confounded,
         )
+        primary = _primary_confounder(confounders)
         candidates.append(
             InsightCandidate(
                 insight_type=InsightType.POINTBISERIAL,
@@ -440,9 +452,15 @@ def _pointbiserial_candidates(
                     "tagged_mood_avg": round(tagged_mood, 2),
                     "untagged_mood_avg": round(untagged_mood, 2),
                     "p_corrected": round(p_corrected, 4),
-                    "confounder": _primary_confounder(confounders),
+                    "confounder": primary,
                     "confounders": confounders,
                     **_with_without_distribution_payload(tagged_moods, untagged_moods),
+                    **situation_adjustment_payload(
+                        weekday=weekday_adj,
+                        calendar=calendar_adj,
+                        situation=situation,
+                        primary_confounder=primary,
+                    ),
                 },
                 generated_for_date=generated_for_date,
             )

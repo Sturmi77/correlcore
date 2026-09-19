@@ -27,6 +27,7 @@
   import type { TimeseriesPoint } from '$lib/api/stats';
   import { insightMetricToChartKey, isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
   import { isNullAssociation, parseWithWithoutView } from '$lib/utils/withWithoutDistribution';
+  import { parseSameSituationView } from '$lib/utils/sameSituation';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
@@ -37,6 +38,7 @@
   let loading = true;
   let error: string | null = null;
   let showScatter = false;
+  let showSameSituation = false;
   let esmOpen = false;
   let esmWindows: EventWindow[] = [];
   let esmPoints: TimeseriesPoint[] = [];
@@ -45,6 +47,7 @@
 
   $: insightId = $page.params.id ?? '';
   $: withWithout = insight ? parseWithWithoutView(insight) : null;
+  $: sameSituation = insight ? parseSameSituationView(insight) : null;
   $: isNull = insight ? isNullAssociation(insight) : false;
   $: title =
     insight?.subject_label && insight.metric
@@ -143,6 +146,45 @@
     {#if withWithout}
       <section class="signal-page__card">
         <WithWithoutDistribution view={withWithout} />
+      </section>
+    {/if}
+
+    {#if sameSituation}
+      <section class="signal-page__card" data-testid="signal-same-situation">
+        <button
+          type="button"
+          class="signal-page__chip"
+          data-testid="signal-toggle-same-situation"
+          aria-expanded={showSameSituation}
+          on:click={() => (showSameSituation = !showSameSituation)}
+        >
+          {showSameSituation
+            ? $_('insights.signal.same_situation_hide')
+            : $_('insights.signal.same_situation_show')}
+        </button>
+        {#if showSameSituation}
+          <p class="signal-page__means" data-testid="signal-same-situation-freq">
+            {$_('insights.signal.same_work_context_freq', {
+              values: {
+                context: sameSituation.context,
+                withGood: sameSituation.withGood,
+                withN: sameSituation.withN,
+                withoutGood: sameSituation.withoutGood,
+                withoutN: sameSituation.withoutN,
+                subject: insight.subject_label ?? '',
+              },
+            })}
+          </p>
+          {#if sameSituation.effectSurvives === false}
+            <p class="signal-page__hint" data-testid="signal-same-situation-gone">
+              {$_('insights.signal.same_situation_gone')}
+            </p>
+          {:else if sameSituation.effectSurvives === true}
+            <p class="signal-page__hint" data-testid="signal-same-situation-stays">
+              {$_('insights.signal.same_situation_stays')}
+            </p>
+          {/if}
+        {/if}
       </section>
     {/if}
 

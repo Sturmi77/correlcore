@@ -196,16 +196,11 @@ Der eine echte Neubau. Zweistufig, damit die Evidenzsprache validiert wird, bevo
 - [x] `TagHeatmap` nutzt denselben `DailyAxisLayout`-Vertrag (`--axis-label-width` / `--axis-day-width` / `--axis-gap`) wie Compare; Datumsspanne über `buildIsoDateRange`; Default-Pitch = `compareDailyAxisLayoutFromRoot`, Compact/Coarse über `habitDailyAxisLayout`.
 - [x] `SymptomCalendarHeatmap` bleibt eigenständig (Wochentag×Woche) — unverändert.
 
-## Phase 12 — L5: adjustierte Effekte und Confounder sichtbar machen
+## Phase 12 — L5: adjustierte Effekte und Confounder sichtbar machen ✅
 
-Erst ab Ebene 2, weil ein adjustierter Effekt auf Ebene 1 kausaler klingt als ein roher. Erster
-Schritt ist der Produktentscheid, den #928 als Frage 4 stellt und der bis heute offen ist.
-
-- Ist-Stand: [multivariate_analytics.py](../../backend/app/services/multivariate_analytics.py) rechnet LassoCV (`MIN_ML_ENTRIES = 90`, `MIN_ABS_LASSO_COEFFICIENT = 0.05`, `TIMESERIES_SPLITS = 5`) und eine Lag-Analyse mit `LAG_FDR_ALPHA = 0.10`. Beide landen als `InsightType.SYMPTOM_CLUSTER` mit `payload.method` `"lasso"` oder `"lag"`.
-- Der entscheidende Befund: **kein Payload enthält heute einen rohen und einen adjustierten Effekt für dasselbe Paar.** Die OLS-adjustierten Koeffizienten werden in `weekday_confounder.py` berechnet, aber nur als Boolean-Gate benutzt und **nie serialisiert**. In der UI erscheint davon lediglich ein Hinweissatz (`insights.work_context_confounded_note`, gerendert in [InsightCard.svelte](../../apps/web/src/lib/components/insights/InsightCard.svelte) Zeilen 371–374) und ein gestrichelter Zellrand in `SymptomCooccurrenceHeatmap`.
-- Umsetzung, wenn der Entscheid „ja" lautet: den adjustierten Koeffizienten neben dem rohen ins Payload schreiben — das ist die konkrete fehlende Daten-Hälfte, nicht eine neue Rechnung.
-- Darstellung nur im Signal-Detail hinter Disclosure, und **nicht** als „bereinigter" Wert. Das Wort fällt nicht; die Aussage bleibt in der Form der zwei Nenner („auch an Tagen mit derselben Arbeitssituation: X von Y"). Ein Nicht-Übrigbleiben ist dabei ein gültiges Ergebnis und trifft sich mit D2.
-- Wenn der Entscheid „nein" lautet: als solches im ADR festhalten und den Hinweissatz behalten. Nicht ein drittes Mal vertagen.
+- [x] **#928 Q4 = YES** (ADR-0043): OLS-Koeffizienten und Same-Situation-Häufigkeiten serialisieren; Darstellung nur Layer 2 hinter Disclosure; nie „bereinigt"/„cleaned".
+- [x] `evaluate_metric_association_*` + `same_work_context_metric_frequencies` + `situation_adjustment_payload` in [`weekday_confounder.py`](../../backend/app/services/weekday_confounder.py); Payload auf `pointbiserial` und `symptom_mood_association`.
+- [x] Signal-Detail Disclosure (`insights.signal.same_*`); Layer-1 Hinweissätze unverändert.
 
 ## Phase 13 — Changepoint auf Stress- und Energy-Serien
 
