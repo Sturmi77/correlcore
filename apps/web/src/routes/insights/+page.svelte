@@ -1031,6 +1031,10 @@
   </ScreenHeader>
   <p class="insights-page__history-link">
     <a href="/insights/history">{$_('insights.page.history_link')}</a>
+    <span aria-hidden="true"> · </span>
+    <a href="/insights/report" data-testid="insights-report-link"
+      >{$_('insights.page.report_link')}</a
+    >
   </p>
 
   {#if $auth.status !== 'authenticated'}

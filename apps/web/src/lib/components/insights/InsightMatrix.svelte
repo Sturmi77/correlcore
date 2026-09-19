@@ -1,7 +1,11 @@
 <script lang="ts">
   import { _, locale } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
-  import { isMatrixInsight, isWeakMatrixInsight } from '$lib/utils/insightMatrixGate';
+  import {
+    buildMatrixDisplayRows,
+    matrixConfidencePercent,
+    matrixEffectTone,
+  } from '$lib/utils/insightMatrixRows';
 
   export let insights: InsightResponse[] = [];
   /**
@@ -10,69 +14,12 @@
    */
   export let preview = false;
 
-  function canonicalMetric(insight: InsightResponse): string {
-    if (
-      insight.subject_type === 'tag' &&
-      ['mood', 'mood_score', 'mood_avg'].includes(insight.metric)
-    ) {
-      return 'mood_score';
-    }
-    return insight.metric;
-  }
-
-  function normaliseLabel(value: string): string {
-    return value.toLocaleLowerCase().trim().replace(/\s+/g, ' ');
-  }
-
-  function rowKey(insight: InsightResponse): string {
-    const tagSlug =
-      typeof insight.payload?.tag_slug === 'string' ? normaliseLabel(insight.payload.tag_slug) : '';
-    const subject =
-      insight.subject_type === 'tag'
-        ? tagSlug ||
-          (insight.subject_label ? normaliseLabel(insight.subject_label) : '') ||
-          insight.subject_id ||
-          ''
-        : insight.subject_id || insight.subject_label || '';
-    return [
-      insight.insight_type,
-      canonicalMetric(insight),
-      insight.subject_type ?? '',
-      subject,
-    ].join(':');
-  }
-
-  function strongerRow(left: InsightResponse, right: InsightResponse): InsightResponse {
-    const leftEffect = Math.abs(left.effect_size ?? 0);
-    const rightEffect = Math.abs(right.effect_size ?? 0);
-    if (leftEffect !== rightEffect) return leftEffect > rightEffect ? left : right;
-    const leftConfidence = left.confidence ?? 0;
-    const rightConfidence = right.confidence ?? 0;
-    if (leftConfidence !== rightConfidence) return leftConfidence > rightConfidence ? left : right;
-    return left.generated_at >= right.generated_at ? left : right;
-  }
-
-  function dedupeRows(items: InsightResponse[]): InsightResponse[] {
-    const byKey = new Map<string, InsightResponse>();
-    for (const insight of items) {
-      const key = rowKey(insight);
-      const existing = byKey.get(key);
-      byKey.set(key, existing ? strongerRow(existing, insight) : insight);
-    }
-    return [...byKey.values()];
-  }
-
-  function byEffectDesc(a: InsightResponse, b: InsightResponse): number {
-    return Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0);
-  }
-
   // #725: dedupe once across all renderable rows, then split into reliable
   // (strong) and weakened bands so a subject never appears in both.
-  $: displayRows = dedupeRows(
-    insights.filter((insight) => isMatrixInsight(insight) || isWeakMatrixInsight(insight))
-  );
-  $: rows = displayRows.filter(isMatrixInsight).sort(byEffectDesc);
-  $: weakRows = preview ? [] : displayRows.filter(isWeakMatrixInsight).sort(byEffectDesc);
+  // Export lives on /insights/report (Phase 5 / ADR-0043 Ebene 4) — not here.
+  $: matrixRows = buildMatrixDisplayRows(insights, { includeWeak: !preview });
+  $: rows = matrixRows.strong;
+  $: weakRows = matrixRows.weak;
 
   // #725 transparency: surface when the matrix was last recomputed, so lines
   // shifting after a regenerate read as an update rather than a glitch.
@@ -89,61 +36,11 @@
   $: lastUpdatedLabel = lastUpdated ? formatUpdated(lastUpdated) : '';
 
   function tone(effect: number): 'positive' | 'negative' | 'neutral' {
-    if (effect >= 0.15) return 'positive';
-    if (effect <= -0.15) return 'negative';
-    return 'neutral';
+    return matrixEffectTone(effect);
   }
 
   function percent(value: number | null): string {
-    if (value === null) return '-';
-    return `${Math.round(value * 100)}%`;
-  }
-
-  function themeColor(name: string): string {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  }
-
-  function exportPng(): void {
-    const canvas = document.createElement('canvas');
-    canvas.width = 900;
-    canvas.height = Math.max(220, rows.length * 56 + 96);
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const colors = {
-      background: themeColor('--color-surface'),
-      text: themeColor('--color-text'),
-      muted: themeColor('--color-text-muted'),
-      success: themeColor('--color-success'),
-      error: themeColor('--color-error'),
-    };
-
-    ctx.fillStyle = colors.background;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = colors.text;
-    ctx.font = '700 24px sans-serif';
-    ctx.fillText('CorrelCore Insight Matrix', 32, 44);
-    ctx.font = '14px sans-serif';
-    rows.forEach((row, index) => {
-      const y = 88 + index * 52;
-      const effect = row.effect_size ?? 0;
-      ctx.fillStyle =
-        tone(effect) === 'positive'
-          ? colors.success
-          : tone(effect) === 'negative'
-            ? colors.error
-            : colors.muted;
-      ctx.fillRect(32, y - 18, Math.max(8, Math.abs(effect) * 280), 24);
-      ctx.fillStyle = colors.text;
-      ctx.fillText(row.subject_label ?? row.metric, 332, y);
-      ctx.fillText(effect.toFixed(2), 560, y);
-      ctx.fillText(percent(row.confidence), 650, y);
-    });
-
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = 'correlcore-insight-matrix.png';
-    link.click();
+    return matrixConfidencePercent(value);
   }
 </script>
 
@@ -162,16 +59,11 @@
             {$_('insights.matrix.updated', { values: { date: lastUpdatedLabel } })}
           </p>
         {/if}
-      </div>
-      <div class="insight-matrix__actions">
-        <button
-          class="btn btn-sm btn--secondary"
-          type="button"
-          on:click={exportPng}
-          disabled={!rows.length}
-        >
-          {$_('insights.matrix.export')}
-        </button>
+        <p class="insight-matrix__report-link">
+          <a href="/insights/report" data-testid="insight-matrix-report-link">
+            {$_('insights.matrix.report_link')}
+          </a>
+        </p>
       </div>
     </header>
   {/if}
@@ -256,13 +148,6 @@
     gap: 1rem;
   }
 
-  .insight-matrix__actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.5rem;
-  }
-
   .insight-matrix__header h2,
   .insight-matrix__header p,
   .insight-matrix__empty {
@@ -282,6 +167,15 @@
   .insight-matrix__updated {
     margin-top: 0.25rem;
     font-size: var(--text-xs);
+  }
+
+  .insight-matrix__report-link {
+    margin-top: 0.5rem;
+    font-size: var(--text-sm);
+  }
+
+  .insight-matrix__report-link a {
+    color: var(--color-primary);
   }
 
   .insight-matrix__table {
@@ -413,8 +307,7 @@
   }
 
   @media (max-width: 480px) {
-    .insight-matrix__header,
-    .insight-matrix__actions {
+    .insight-matrix__header {
       flex-direction: column;
       align-items: stretch;
     }

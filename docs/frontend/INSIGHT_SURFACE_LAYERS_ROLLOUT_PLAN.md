@@ -141,16 +141,16 @@ nur der Produzent.
 - Ebene 1 (der Satz) muss mit: `statement` wird heute als englischer Backend-String durchgereicht (`stripLegacyInsightStatementTails` übersetzt nicht). Für den Changepoint wird die Karte aus dem Payload lokalisiert gerendert (Datum, Richtung, zwei Mittelwerte) statt `statement` roh anzuzeigen. Das ist die in #933 als „offene Kleinigkeit" markierte Stelle und betrifft nur diese Insight-Familie.
 - Leitplanke: Formulierung „Niveauwechsel", nicht „ausgelöst durch". Der Changepoint bleibt in der neutralen Ebene und wandert **nicht** in das Belastungs-Overlay aus Phase 8.
 
-## Phase 5 — Ebene 4: die Bericht-Fläche (Vorbedingung für D5)
+## Phase 5 — Ebene 4: die Bericht-Fläche (Vorbedingung für D5) ✅
 
 Ohne diese Fläche ist D5 nicht durchführbar: `correlation_matrix` aus dem Default zu nehmen würde
 den einzigen PNG-Export des Produkts entfernen.
 
-- Neue sekundäre Route `/insights/report` innerhalb der Insights-Route. Kein fünfter Primary Screen, Bottom-Nav unverändert — so festgelegt in ADR-0043 §2.
-- Inhalt nach Mockup E6: Effekt, beide Nenner, **eine** Konfidenzskala, Datenreife, Abdeckungszahlen, Disclaimer, Zeilen abwählbar. Dichte ist hier richtig, weil ein Ausdruck eine Tabelle sein soll.
-- Export an einem Ort zusammenführen: `exportPng()` aus [InsightMatrix.svelte](../../apps/web/src/lib/components/insights/InsightMatrix.svelte) (Zeile 106) dorthin verlagern, CSV/JSON über die bestehenden Endpunkte `GET /export/csv`, `GET /export/json`, `GET /user/export` aus [export.ts](../../apps/web/src/lib/api/export.ts) anbinden, und **PDF neu bauen** — `pdf` existiert heute in keiner Ebene. Damit bekommt der als _kritisch_ geführte §2.10-Job „Export als PNG/CSV/PDF für Arzt-Gespräche" erstmals eine Heimat.
-- ADR-0043 §1 verlangt zusätzlich: Export-Controls dürfen nicht in Analyse-Komponenten eingebettet bleiben. `InsightMatrix` wird zur Berichtstabelle ohne eigenen Export-Button.
-- Datenschutz: Der Bericht zeigt aggregierte Zeilen, kein Einzeltag — die in #928 notierte Re-Identifizierbarkeit betrifft erst G1/G2 in Phase 7. Disclaimer und Nicht-Diagnose-Hinweis in den Bericht aufnehmen.
+- [x] Neue sekundäre Route `/insights/report` innerhalb der Insights-Route. Kein fünfter Primary Screen, Bottom-Nav unverändert — so festgelegt in ADR-0043 §2.
+- [x] Inhalt nach Mockup E6: Effekt, Abdeckung (Sample-n bis Phase 7 beide Nenner liefert), **eine** Konfidenzskala (`InsightEvidence`), Datenreife, Abdeckungszahlen, Disclaimer, Zeilen abwählbar. Dichte ist hier richtig, weil ein Ausdruck eine Tabelle sein soll.
+- [x] Export an einem Ort zusammenführen: `exportPng()` nach [insightMatrixExport.ts](../../apps/web/src/lib/utils/insightMatrixExport.ts) verlagert; CSV/JSON über `downloadExport` / `saveBlob`; **PDF** clientseitig neu. ZIP bleibt auf `/settings/data` (Datenschutz-Export).
+- [x] ADR-0043 §1: Export-Controls nicht mehr in `InsightMatrix` — Link zur Bericht-Route statt PNG-Button.
+- [x] Datenschutz: Der Bericht zeigt aggregierte Zeilen, kein Einzeltag. Disclaimer und Nicht-Diagnose-Hinweis im Bericht.
 
 ## Phase 6 — D5: Ebene 1 schrumpfen, mit versionierter Migration
 
