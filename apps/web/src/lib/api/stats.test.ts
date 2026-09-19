@@ -7,13 +7,7 @@ vi.mock('./client', () => ({
 }));
 
 import { api } from './client';
-import {
-  fetchEntryStreak,
-  fetchHealthContext,
-  fetchSymptomHeatmap,
-  fetchTagHeatmap,
-  fetchTimeseries,
-} from './stats';
+import { fetchHealthContext, fetchSymptomHeatmap, fetchTagHeatmap, fetchTimeseries } from './stats';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -51,12 +45,6 @@ describe('stats API client', () => {
     expect(path).toContain('/entries/stats/symptoms?');
     expect(path).toContain('start_date=2026-01-01');
     expect(path).toContain('end_date=2026-01-31');
-  });
-
-  it('fetches streak with optional as_of', async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ current_streak: 1 });
-    await fetchEntryStreak('2026-05-09');
-    expect(api.get).toHaveBeenCalledWith('/entries/stats/streak?as_of=2026-05-09');
   });
 
   it('fetches the health context', async () => {

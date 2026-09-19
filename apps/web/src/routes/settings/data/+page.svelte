@@ -62,6 +62,18 @@
     }
   }
 
+  async function toggleBelastungOverlay(enabled: boolean): Promise<void> {
+    preferencesBusy = true;
+    preferencesError = '';
+    try {
+      preferences = await updateUserPreferences({ belastung_overlay_enabled: enabled });
+    } catch (err) {
+      preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
+    } finally {
+      preferencesBusy = false;
+    }
+  }
+
   function openCycleDeleteDialog(): void {
     cycleDeleteError = '';
     cycleDeleteMessage = '';
@@ -178,6 +190,25 @@
       {#if preferencesError}
         <InlineAlert variant="error" message={preferencesError} />
       {/if}
+    </Panel>
+
+    <Panel variant="bordered" data-testid="settings-section-belastung">
+      <div class="data-settings__head">
+        <h2>{$_('settings.belastung.heading')}</h2>
+        <p>{$_('settings.belastung.body')}</p>
+      </div>
+      <label class="data-settings__toggle-label">
+        <input
+          type="checkbox"
+          class="data-settings__toggle"
+          checked={preferences?.belastung_overlay_enabled ?? false}
+          disabled={preferencesBusy || !(preferences?.analytics_enabled ?? true)}
+          data-testid="belastung-overlay-toggle"
+          on:change={(e) => void toggleBelastungOverlay(e.currentTarget.checked)}
+        />
+        <span>{$_('settings.belastung.enabled')}</span>
+      </label>
+      <p class="data-settings__note">{$_('settings.belastung.hint')}</p>
     </Panel>
 
     <Panel variant="bordered" data-testid="settings-section-export">

@@ -215,9 +215,10 @@ describe('chart utilities', () => {
     expect(metricStyles.energy_avg.shape).toBe('diamond');
     expect(metricStyles.stress_avg.shape).toBe('triangle');
     expect(metricStyles.sleep_quality_avg.shape).toBe('square');
-    // Distinct shapes and dasharrays keep the four lines separable without colour.
+    expect(metricStyles.sleep_minutes_avg.shape).toBe('square');
+    // Distinct dasharrays keep five lines separable; sleep metrics share square.
     expect(new Set(Object.values(metricStyles).map((style) => style.shape)).size).toBe(4);
-    expect(new Set(Object.values(metricStyles).map((style) => style.dasharray)).size).toBe(4);
+    expect(new Set(Object.values(metricStyles).map((style) => style.dasharray)).size).toBe(5);
   });
 
   it('smooths timeseries with a trailing average and preserves null gaps', () => {

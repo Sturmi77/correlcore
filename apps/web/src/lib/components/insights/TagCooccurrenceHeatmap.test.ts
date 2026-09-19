@@ -131,7 +131,7 @@ describe('TagCooccurrenceHeatmap', () => {
     expect(screen.getByRole('grid')).toBeTruthy();
 
     const cell = screen.getByTitle(
-      'insights.cooccurrence.cell_title:{"tagA":"Focus","tagB":"Walk","count":3}'
+      'insights.cooccurrence.cell_title:{"tagA":"Focus","tagB":"Walk","count":3,"aTotal":4,"bTotal":5}'
     );
     await fireEvent.click(cell);
 

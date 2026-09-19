@@ -20,10 +20,14 @@ vi.mock('svelte-i18n', async () => {
     _: readable((key: string, options?: { values?: Record<string, unknown> }) => {
       const values = options?.values ?? {};
       if (key === 'habits.window_last') return `last ${values.n} days`;
-      if (key === 'habits.correlation_brief') return `r=${values.score} ${values.metric}`;
+      if (key === 'habits.correlation_brief')
+        return `${values.label} · ${values.metric} · ${values.n} days`;
       if (key === 'habits.correlation_pending') return 'No correlation data yet';
       if (key === 'habits.correlation_predictor') {
-        return `${values.name} predictor r=${values.score}`;
+        return `${values.name} and ${values.metric}: ${values.label} (${values.n} days)`;
+      }
+      if (typeof key === 'string' && key.startsWith('insights.confidence_label.')) {
+        return key.replace('insights.confidence_label.', '');
       }
       if (key === 'habits.goal.build') return `${values.tracked} of ${values.target} target days`;
       if (key === 'habits.goal.reduce') return `${values.tracked} of max ${values.target} days`;
@@ -92,8 +96,8 @@ describe('HabitsPanel', () => {
     expect(screen.queryByText(/63%.*last 28 days/)).toBeNull();
     expect(screen.getAllByText('10 of 16 target days')).toHaveLength(2);
     expect(screen.getAllByText('+13 pp vs previous period')).toHaveLength(2);
-    expect(screen.getByText('r=0.72 mood')).toBeTruthy();
-    expect(screen.getByText('Walk predictor r=0.72')).toBeTruthy();
+    expect(screen.getByText('strong_finding · mood · 10 days')).toBeTruthy();
+    expect(screen.getByText('Walk and mood: strong_finding (10 days)')).toBeTruthy();
   });
 
   it('shows the active global range window label', () => {
@@ -166,7 +170,7 @@ describe('HabitsPanel', () => {
     });
 
     expect(screen.queryByTestId('habit-insufficient-data')).toBeNull();
-    expect(screen.getByRole('meter')).toBeTruthy();
+    expect(screen.getAllByRole('meter').length).toBeGreaterThan(0);
   });
 
   it('normalizes mood_score correlation labels', () => {
@@ -178,6 +182,6 @@ describe('HabitsPanel', () => {
       },
     });
 
-    expect(screen.getByText('r=0.72 mood')).toBeTruthy();
+    expect(screen.getByText('strong_finding · mood · 10 days')).toBeTruthy();
   });
 });

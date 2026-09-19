@@ -114,6 +114,13 @@ class LagFinding:
     # #488 Phase 1b: r at every observed lag 1..MAX_LAG_DAYS for this pair, so
     # the UI can draw a small lag profile. Empty when no other lags were usable.
     profile: tuple[LagProfilePoint, ...] = ()
+    # Phase 14 / L8: natural frequencies with two denominators (median split of
+    # the lagged feature at the winning lag). Empty when not computable.
+    high_feature_n: int | None = None
+    high_feature_good_count: int | None = None
+    low_feature_n: int | None = None
+    low_feature_good_count: int | None = None
+    good_threshold: int | None = None
 
 
 def m7_time_series_split() -> TimeSeriesSplit:
@@ -380,6 +387,60 @@ def _lag_pairs(
     return raw
 
 
+def _lag_median_split_frequencies(
+    frame: pd.DataFrame,
+    *,
+    target: str,
+    feature: str,
+    lag_days: int,
+) -> dict[str, int] | None:
+    """Natural frequencies with two denominators for lag Layer-2 (Phase 14 / L8).
+
+    Splits the lagged feature at its median and counts \"good\" outcome days
+    (mood/energy ≥ 4; stress ≤ 2 on the raw scale). Returns None when the split
+    is empty on either side.
+    """
+
+    if target not in frame.columns or feature not in frame.columns:
+        return None
+    pair_lagged = build_lagged_frame(
+        frame[[target, feature]],
+        [feature],
+        max_lag_days=max(lag_days, 1),
+        dropna=False,
+    )
+    lag_column = f"{feature}_lag{lag_days}"
+    if lag_column not in pair_lagged.columns:
+        return None
+    pair = pair_lagged[[target, lag_column]].dropna()
+    if len(pair) < 4 or pair[lag_column].nunique() < 2:
+        return None
+
+    median = float(pair[lag_column].median())
+    high = pair[pair[lag_column] >= median]
+    low = pair[pair[lag_column] < median]
+    if len(high) == 0 or len(low) == 0:
+        return None
+
+    # Stress: lower raw is better → \"good\" when ≤ 2 (display ≥ 4 on inverted scale).
+    if target == "stress":
+        good_threshold = 2
+        high_good = int((high[target] <= good_threshold).sum())
+        low_good = int((low[target] <= good_threshold).sum())
+    else:
+        good_threshold = 4
+        high_good = int((high[target] >= good_threshold).sum())
+        low_good = int((low[target] >= good_threshold).sum())
+
+    return {
+        "high_feature_n": int(len(high)),
+        "high_feature_good_count": high_good,
+        "low_feature_n": int(len(low)),
+        "low_feature_good_count": low_good,
+        "good_threshold": good_threshold,
+    }
+
+
 def run_lag_analysis(
     frame: pd.DataFrame,
     feature_meta: Mapping[str, FeatureMetadata],
@@ -513,6 +574,39 @@ def run_lag_analysis(
         ):
             best_by_pair[pair] = finding
     findings = list(best_by_pair.values())
+
+    # Phase 14: attach median-split frequencies for Layer-2 two denominators.
+    enriched: list[LagFinding] = []
+    for finding in findings:
+        freqs: dict[str, int] | None = None
+        if finding.target.kind == "metric":
+            freqs = _lag_median_split_frequencies(
+                frame,
+                target=finding.target.key,
+                feature=finding.feature.key,
+                lag_days=finding.lag_days,
+            )
+        if freqs is None:
+            enriched.append(finding)
+            continue
+        enriched.append(
+            LagFinding(
+                target=finding.target,
+                feature=finding.feature,
+                lag_days=finding.lag_days,
+                correlation=finding.correlation,
+                p_value=finding.p_value,
+                p_corrected=finding.p_corrected,
+                sample_n=finding.sample_n,
+                profile=finding.profile,
+                high_feature_n=freqs["high_feature_n"],
+                high_feature_good_count=freqs["high_feature_good_count"],
+                low_feature_n=freqs["low_feature_n"],
+                low_feature_good_count=freqs["low_feature_good_count"],
+                good_threshold=freqs["good_threshold"],
+            )
+        )
+    findings = enriched
 
     findings.sort(
         key=lambda item: (

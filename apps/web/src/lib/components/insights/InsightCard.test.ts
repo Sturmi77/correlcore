@@ -18,6 +18,8 @@ vi.mock('svelte-i18n', async () => {
         return `Based on ${options?.values?.n} entries`;
       if (key === 'insights.card.sample_meta')
         return `Based on ${options?.values?.n} entries · ${options?.values?.days} days`;
+      if (key === 'insights.card.freq_split')
+        return `avg ${options?.values?.withAvg} on ${options?.values?.withN} days with ${options?.values?.tag} · avg ${options?.values?.withoutAvg} on ${options?.values?.withoutN} days without`;
       if (key === 'insights.card.lag_peak_marker')
         return `Strongest at +${options?.values?.days} days (${options?.values?.direction})`;
       if (key === 'insights.card.lag_profile_aria')
@@ -208,6 +210,28 @@ describe('InsightCard', () => {
 
     expect(badge.textContent).toContain('42 entries');
     expect(badge.textContent).not.toContain('0 entries');
+  });
+
+  it('shows two-denominator frequencies for pointbiserial insights', () => {
+    render(InsightCard, {
+      props: {
+        insight: {
+          ...INSIGHT,
+          insight_type: 'pointbiserial',
+          payload: {
+            tagged_count: 12,
+            untagged_count: 30,
+            tagged_mood_avg: 4.1,
+            untagged_mood_avg: 3.2,
+          },
+        },
+        maturity: MATURITY,
+      },
+    });
+
+    expect(screen.getByTestId('insight-card-freq').textContent).toContain(
+      'avg 4.1 on 12 days with sport · avg 3.2 on 30 days without'
+    );
   });
 
   it('does not show explore-events action unless the parent opts in', () => {

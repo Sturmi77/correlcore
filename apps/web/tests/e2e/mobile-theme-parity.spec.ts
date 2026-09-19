@@ -74,9 +74,6 @@ async function installDarkThemeApi(page: Page) {
     }
     if (path.startsWith('/entries/stats/tags')) return json(200, { tags: [] });
     if (path.startsWith('/entries/stats/symptoms')) return json(200, { symptoms: [] });
-    if (path.startsWith('/entries/stats/streak')) {
-      return json(200, { current_streak: 0, longest_streak: 0, as_of: '2026-06-27' });
-    }
     if (path.startsWith('/insights/maturity')) {
       return json(200, {
         phase: 'collecting',

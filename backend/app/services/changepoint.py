@@ -1,4 +1,9 @@
-"""Mood changepoint detection via ruptures PELT (#149)."""
+"""Metric time-series changepoint detection via ruptures PELT (#149, Phase 13).
+
+``MAX_CHANGEPOINTS`` applies **per series fit** (mood, stress, energy each get
+their own cap of 3). There is no global cap across series and no FDR — PELT
+does not produce p-values; multiplicity is controlled by ``PENALTY`` + this max.
+"""
 
 from __future__ import annotations
 
@@ -14,10 +19,10 @@ MIN_SEGMENT_SIZE = 5
 
 
 def detect_changepoints(series: Sequence[float]) -> list[int]:
-    """Detect up to three changepoint indices in a mood time series.
+    """Detect up to three changepoint indices in a numeric time series.
 
     Returns zero-based indices immediately before a detected shift. Flat series
-    should return an empty list.
+    should return an empty list. Cap is per call / series, not global.
     """
 
     min_entries = settings.ANALYTICS_MIN_ENTRIES_CHANGEPOINT

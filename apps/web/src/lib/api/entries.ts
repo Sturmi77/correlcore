@@ -124,7 +124,9 @@ export interface EntryDeltaResponse {
 
 /** POST /entries — create today's (or backdated up to 7 local days) entry. */
 export async function createEntry(payload: EntryCreatePayload): Promise<EntryResponse> {
-  return api.post<EntryResponse>('/entries', payload);
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const qs = tz ? `?tz=${encodeURIComponent(tz)}` : '';
+  return api.post<EntryResponse>(`/entries${qs}`, payload);
 }
 
 /** POST /entries/batch — create up to seven retrospective onboarding entries. */

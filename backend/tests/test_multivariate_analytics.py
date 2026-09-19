@@ -263,6 +263,15 @@ def test_lag_analysis_sleep_predictor_keeps_gappy_pairwise_pairs() -> None:
     assert sleep_to_mood, "gappy sleep must still produce sleep→mood lag findings"
     assert sleep_to_mood[0].lag_days == 1
     assert sleep_to_mood[0].sample_n == fixed_n
+    # Phase 14: median-split frequencies for Layer-2 two denominators.
+    assert sleep_to_mood[0].high_feature_n is not None
+    assert sleep_to_mood[0].low_feature_n is not None
+    assert sleep_to_mood[0].high_feature_good_count is not None
+    assert sleep_to_mood[0].low_feature_good_count is not None
+    assert (
+        sleep_to_mood[0].high_feature_n + sleep_to_mood[0].low_feature_n
+        == sleep_to_mood[0].sample_n
+    )
 
 
 def test_lag_analysis_never_targets_sleep_and_uses_pairwise_deletion() -> None:

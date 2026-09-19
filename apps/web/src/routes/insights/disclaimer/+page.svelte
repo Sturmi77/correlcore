@@ -20,7 +20,13 @@
   // Surfaces that may link here; the `return` query param preserves the origin
   // on close so users are not bounced to /insights. Allowlisted to avoid any
   // open-redirect via an attacker-supplied return target.
-  const RETURN_ALLOWLIST = new Set(['/', '/insights', '/insights/digest', '/insights/history']);
+  const RETURN_ALLOWLIST = new Set([
+    '/',
+    '/insights',
+    '/insights/digest',
+    '/insights/history',
+    '/insights/report',
+  ]);
 
   $: rawReturn = $page.url.searchParams.get('return');
   $: returnTo = rawReturn && RETURN_ALLOWLIST.has(rawReturn) ? rawReturn : '/insights';

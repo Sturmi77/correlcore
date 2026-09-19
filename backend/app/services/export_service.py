@@ -184,6 +184,10 @@ async def build_export_envelope(db: AsyncSession, *, user: User) -> ExportEnvelo
                 "sleep_minutes": entry.sleep_minutes,
                 "sleep_quality": entry.sleep_quality,
                 "work_context": entry.work_context.value,
+                "logged_local_hour": entry.logged_local_hour,
+                "inferred_period": (
+                    entry.inferred_period.value if entry.inferred_period is not None else None
+                ),
                 "source": entry.source.value,
                 "note": None if note_hidden else entry.note_enc,
                 "note_visibility": visibility_value,

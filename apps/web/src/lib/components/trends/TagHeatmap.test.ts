@@ -56,6 +56,24 @@ describe('TagHeatmap', () => {
   it('marks compact heatmaps for dense mobile layouts', () => {
     const { container } = render(TagHeatmap, { props: { heatmap, loading: false, compact: true } });
     expect(container.querySelector('.heatmap--compact')).toBeTruthy();
+    const grid = container.querySelector('[data-testid="tag-heatmap-grid"]') as HTMLElement;
+    expect(grid.style.getPropertyValue('--axis-day-width')).toBe(`${0.65 * 16}px`);
+    expect(grid.style.getPropertyValue('--axis-label-width')).toBe(`${4.5 * 16}px`);
+  });
+
+  it('uses the shared DailyAxisLayout CSS vars (Phase 11 / O3)', () => {
+    const { container } = render(TagHeatmap, {
+      props: {
+        heatmap,
+        loading: false,
+        axisLayout: { labelWidth: 160, dayWidth: 18, dayGap: 4, rightPadding: 0 },
+      },
+    });
+    const grid = container.querySelector('[data-testid="tag-heatmap-grid"]') as HTMLElement;
+    expect(grid.style.getPropertyValue('--day-count')).toBe('3');
+    expect(grid.style.getPropertyValue('--axis-label-width')).toBe('160px');
+    expect(grid.style.getPropertyValue('--axis-day-width')).toBe('18px');
+    expect(grid.style.getPropertyValue('--axis-gap')).toBe('4px');
   });
 
   it('renders skeleton and empty states', () => {

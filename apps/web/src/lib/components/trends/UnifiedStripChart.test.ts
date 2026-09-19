@@ -16,6 +16,7 @@ const enabled = {
   energy_avg: true,
   stress_avg: true,
   sleep_quality_avg: false,
+  sleep_minutes_avg: false,
 };
 
 describe('UnifiedStripChart', () => {

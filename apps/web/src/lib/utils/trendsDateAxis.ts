@@ -42,6 +42,43 @@ export function compareDailyAxisLayoutFromRoot(rootPx = 16): DailyAxisLayout {
   return toDailyAxisLayout(trendsDayAxisMetrics(rootPx));
 }
 
+/** Habit TagHeatmap compact density (Habits detail sheet). */
+export const HABIT_COMPACT_DAY_CELL_REM = 0.65;
+export const HABIT_COMPACT_DAY_GAP_REM = 0.15;
+export const HABIT_COMPACT_LABEL_REM = 4.5;
+
+/** Touch-friendly day cells when not compact (legacy TagHeatmap coarse grid). */
+export const HABIT_COARSE_DAY_CELL_REM = 2.75;
+export const HABIT_COARSE_DAY_GAP_REM = 0.25;
+
+/**
+ * DailyAxisLayout for the Habit TagHeatmap (Phase 11 / O3).
+ * Default matches Compare (`compareDailyAxisLayoutFromRoot`) so day columns align;
+ * compact/coarse preserve prior Habit densities via the same --axis-* contract.
+ */
+export function habitDailyAxisLayout(
+  options: { compact?: boolean; coarsePointer?: boolean; rootPx?: number } = {}
+): DailyAxisLayout {
+  const rootPx = options.rootPx ?? 16;
+  if (options.compact) {
+    return {
+      labelWidth: HABIT_COMPACT_LABEL_REM * rootPx,
+      dayWidth: HABIT_COMPACT_DAY_CELL_REM * rootPx,
+      dayGap: HABIT_COMPACT_DAY_GAP_REM * rootPx,
+      rightPadding: 0,
+    };
+  }
+  if (options.coarsePointer) {
+    return {
+      labelWidth: TRENDS_LABEL_MIN_REM * rootPx,
+      dayWidth: HABIT_COARSE_DAY_CELL_REM * rootPx,
+      dayGap: HABIT_COARSE_DAY_GAP_REM * rootPx,
+      rightPadding: 0,
+    };
+  }
+  return compareDailyAxisLayoutFromRoot(rootPx);
+}
+
 /** X center of a day column (for tests and optional direct SVG use). */
 export function trendsDayCenterX(index: number, metrics: TrendsDayAxisMetrics): number {
   return metrics.labelPx + index * (metrics.cellPx + metrics.gapPx) + metrics.cellPx / 2;

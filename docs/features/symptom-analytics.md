@@ -162,6 +162,11 @@ One BH family across **all symptom × tag pairs computed**. For a user with 8 sy
 the eligibility floor, this is up to 120 tests. Without correction, ~6 false positives at α = 0.05 are
 expected.
 
+**Tag×Tag (Phase 10 / O1):** `GET /insights/tag-cooccurrence` uses the same daily unit, Lift/Fisher
+pipeline, and `COOCCURRENCE_FDR_ALPHA = 0.10` (alias of `SYMPTOM_FDR_ALPHA`). It does **not** use
+`insights/shared.FDR_ALPHA = 0.05` (bivariate insight cards). The Tag×Tag response still returns only
+`count` + two denominators; Lift/FDR gate which pairs appear.
+
 #### Insight Type
 
 `symptom_tag_cooccurrence`

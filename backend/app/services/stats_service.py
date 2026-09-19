@@ -17,7 +17,6 @@ from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user_preference import UserPreference
 from app.schemas.stats import (
     COOCCURRENCE_RANGE_DAYS,
-    EntryStreakResponse,
     SymptomHeatmapDay,
     SymptomHeatmapResponse,
     SymptomHeatmapSymptom,
@@ -40,6 +39,7 @@ from app.services.symptom_analytics import (
     SymptomRef,
     TagRef,
     heatmap_symptom_tag_associations,
+    heatmap_tag_tag_associations,
 )
 from app.services.tag_service import (
     active_tag_predicate,
@@ -135,6 +135,10 @@ async def get_timeseries(
                 # have a rating, so buckets without any sleep data stay None (#653 B2).
                 sleep_quality_avg=_round_avg(
                     [e.sleep_quality for e in bucket if e.sleep_quality is not None]
+                ),
+                # Optional duration — average only days that recorded minutes (#653 B2 pattern).
+                sleep_minutes_avg=_round_avg(
+                    [e.sleep_minutes for e in bucket if e.sleep_minutes is not None]
                 ),
             )
         )
@@ -272,48 +276,6 @@ async def get_symptom_heatmap(
         )
 
     return SymptomHeatmapResponse(start_date=start_date, end_date=end_date, symptoms=symptoms)
-
-
-async def get_entry_streak(
-    db: AsyncSession,
-    *,
-    user_id: uuid.UUID,
-    as_of: date_type | None = None,
-) -> EntryStreakResponse:
-    as_of = as_of or _today()
-    result = await db.execute(
-        select(Entry.entry_date)
-        .where(Entry.user_id == user_id, Entry.entry_date <= as_of)
-        .distinct()
-        .order_by(Entry.entry_date.asc())
-    )
-    dates = [row[0] for row in result.all()]
-    date_set = set(dates)
-
-    current = 0
-    cursor = as_of
-    while cursor in date_set:
-        current += 1
-        cursor -= timedelta(days=1)
-
-    longest = 0
-    run = 0
-    previous: date_type | None = None
-    for day in dates:
-        if previous is not None and day == previous + timedelta(days=1):
-            run += 1
-        else:
-            run = 1
-        longest = max(longest, run)
-        previous = day
-
-    return EntryStreakResponse(
-        current_streak=current,
-        longest_streak=longest,
-        total_entry_days=len(dates),
-        last_entry_date=dates[-1] if dates else None,
-        as_of=as_of,
-    )
 
 
 def _cooccurrence_window(
@@ -470,7 +432,14 @@ async def get_tag_cooccurrence(
     min_count: int = 2,
     as_of: date_type | None = None,
 ) -> TagCooccurrenceResponse:
-    """Count tag pairs that appear together on the same entry within a range."""
+    """Return tag×tag pairs gated by daily Lift / Fisher / BH-FDR (α=0.10).
+
+    Display stays count + two denominators (pct_of_a / pct_of_b). Lift and FDR
+    decide which pairs appear; aggregation is per calendar day (slots unioned),
+    matching symptom×tag. Weekday / work-context confounder checks run inside
+    the association pipeline (same helpers as symptom×tag) but are not exposed
+    on this response shape — Tag×Tag has no dashed-border annotation yet.
+    """
 
     as_of = as_of or _today()
     start_date, end_date = _cooccurrence_window(range_, as_of)
@@ -484,59 +453,85 @@ async def get_tag_cooccurrence(
             pairs=[],
         )
 
-    result = await db.execute(
-        select(Entry.id, Tag)
-        .join(EntryTag, EntryTag.entry_id == Entry.id)
-        .join(Tag, Tag.id == EntryTag.tag_id)
-        .where(
+    entry_result = await db.execute(
+        select(Entry).where(
             Entry.user_id == user_id,
+            Entry.entry_date >= start_date,
+            Entry.entry_date <= end_date,
+        )
+    )
+    entries = list(entry_result.scalars().all())
+    if not entries:
+        return TagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+        )
+
+    tag_result = await db.execute(
+        select(EntryTag.entry_id, Tag)
+        .join(Tag, Tag.id == EntryTag.tag_id)
+        .join(Entry, Entry.id == EntryTag.entry_id)
+        .where(
             EntryTag.user_id == user_id,
+            Entry.user_id == user_id,
             Entry.entry_date >= start_date,
             Entry.entry_date <= end_date,
             analytics_tag_predicate(user_id),
         )
-        .order_by(Entry.id.asc(), Tag.id.asc())
+        .order_by(Entry.entry_date.asc(), Tag.slug.asc())
     )
 
-    raw_entry_tags: dict[uuid.UUID, list[Tag]] = defaultdict(list)
-    for entry_id, tag in result.all():
-        raw_entry_tags[entry_id].append(tag)
+    raw_tag_ids_by_entry: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    tags_by_slug: dict[str, list[Tag]] = defaultdict(list)
+    for entry_id, tag in tag_result.all():
+        raw_tag_ids_by_entry[entry_id].add(tag.id)
+        tags_by_slug[tag.slug].append(tag)
 
-    aliases, tags_by_id = canonicalize_tags_by_slug(
-        tag for tags in raw_entry_tags.values() for tag in tags
+    tag_aliases, tags_by_id = canonicalize_tags_by_slug(
+        tag for tags in tags_by_slug.values() for tag in tags
     )
-
-    entry_tags: dict[uuid.UUID, set[uuid.UUID]] = {
-        entry_id: {aliases.get(tag.id, tag.id) for tag in tags}
-        for entry_id, tags in raw_entry_tags.items()
+    tag_ids_by_entry = {
+        entry_id: {tag_aliases.get(tag_id, tag_id) for tag_id in tag_ids}
+        for entry_id, tag_ids in raw_tag_ids_by_entry.items()
     }
 
-    tag_entry_counts: dict[uuid.UUID, int] = defaultdict(int)
-    pair_counts: dict[tuple[uuid.UUID, uuid.UUID], int] = defaultdict(int)
-
-    for canonical_ids in entry_tags.values():
-        tags = sorted(canonical_ids)
-        for tag_id in tags:
-            tag_entry_counts[tag_id] += 1
-        for index, tag_a_id in enumerate(tags):
-            for tag_b_id in tags[index + 1 :]:
-                pair_counts[(tag_a_id, tag_b_id)] += 1
-
-    pairs: list[TagCooccurrencePair] = []
-    for (tag_a_id, tag_b_id), count in pair_counts.items():
-        if count < min_count:
-            continue
-        entries_with_a = tag_entry_counts[tag_a_id]
-        entries_with_b = tag_entry_counts[tag_b_id]
-        pairs.append(
-            TagCooccurrencePair(
-                tag_a=_tag_ref(tags_by_id[tag_a_id]),
-                tag_b=_tag_ref(tags_by_id[tag_b_id]),
-                count=count,
-                pct_of_a=round((count / entries_with_a) * 100, 1),
-                pct_of_b=round((count / entries_with_b) * 100, 1),
+    daily_entries = _dedupe_daily_symptom_entries(
+        [
+            DailySymptomEntry(
+                entry_date=entry.entry_date,
+                mood_score=entry.mood_score,
+                energy=entry.energy,
+                stress=entry.stress,
+                tag_ids=frozenset(tag_ids_by_entry.get(entry.id, set())),
+                symptom_ids=frozenset(),
+                work_context=entry.work_context,
             )
+            for entry in sorted(entries, key=lambda item: (item.entry_date, item.slot.value))
+        ]
+    )
+    associations = heatmap_tag_tag_associations(
+        daily_entries,
+        {
+            tag_id: TagRef(id=tag.id, label=tag.name, slug=tag.slug)
+            for tag_id, tag in tags_by_id.items()
+        },
+        min_tag_usages=max(min_count, 5),
+    )
+
+    pairs: list[TagCooccurrencePair] = [
+        TagCooccurrencePair(
+            tag_a=_tag_ref(tags_by_id[association.tag_a.id]),
+            tag_b=_tag_ref(tags_by_id[association.tag_b.id]),
+            count=association.co_count,
+            pct_of_a=round((association.co_count / association.tag_a_count) * 100, 1),
+            pct_of_b=round((association.co_count / association.tag_b_count) * 100, 1),
         )
+        for association in associations
+        if association.co_count >= min_count
+    ]
 
     pairs.sort(key=lambda pair: (-pair.count, pair.tag_a.slug, pair.tag_b.slug))
     return TagCooccurrenceResponse(

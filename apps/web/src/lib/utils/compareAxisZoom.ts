@@ -1,6 +1,6 @@
 /**
  * Shared-axis display zoom for Trends Compare (CAZ-1).
- * Buckets coarsen the calendar axis without changing the loaded 365d window.
+ * Buckets coarsen the calendar axis without changing the loaded analysis window.
  */
 
 export const COMPARE_ZOOM_STAGES = [1, 3, 7, 14, 28] as const;
@@ -23,6 +23,21 @@ export function stageDays(stage: CompareZoomStageIndex): number {
 export function clampZoomStage(stage: number): CompareZoomStageIndex {
   if (!Number.isFinite(stage)) return 0;
   return Math.max(0, Math.min(4, Math.floor(stage))) as CompareZoomStageIndex;
+}
+
+/** Highest zoom stage whose bucket size fits inside the analysis window (#928 O5). */
+export function maxZoomStageForWindow(windowDays: number): CompareZoomStageIndex {
+  let max: CompareZoomStageIndex = 0;
+  for (let stage = 0; stage < COMPARE_ZOOM_STAGES.length; stage += 1) {
+    if (stageDays(stage as CompareZoomStageIndex) <= windowDays) {
+      max = stage as CompareZoomStageIndex;
+    }
+  }
+  return max;
+}
+
+export function clampZoomStageForWindow(stage: number, windowDays: number): CompareZoomStageIndex {
+  return clampZoomStage(Math.min(stage, maxZoomStageForWindow(windowDays)));
 }
 
 export function isCompareZoomStage(value: unknown): value is CompareZoomStageIndex {

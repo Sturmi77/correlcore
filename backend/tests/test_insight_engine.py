@@ -12,6 +12,7 @@ import pytest
 from app.core.config import settings
 from app.models.entry import WorkContext
 from app.models.insight import InsightTier, InsightType
+from app.models.user_preference import UserPreference
 from app.services.insight_engine import (
     AnalyticsEntry,
     InsightLockTimeoutError,
@@ -50,6 +51,20 @@ def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
 def _scalar_result_single(value: object) -> MagicMock:
     result = MagicMock()
     result.scalar.return_value = value
+    return result
+
+
+def _preferences_result(
+    *,
+    analytics_enabled: bool = True,
+    belastung_overlay_enabled: bool = False,
+) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = UserPreference(
+        user_id=uuid.uuid4(),
+        analytics_enabled=analytics_enabled,
+        belastung_overlay_enabled=belastung_overlay_enabled,
+    )
     return result
 
 
@@ -313,10 +328,47 @@ def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
     assert tag_candidate.subject_id == sport_id
     assert tag_candidate.payload["tag_slug"] == "sport"
     assert tag_candidate.payload["tagged_count"] == 15
+    assert tag_candidate.payload["with_distribution"] == [0, 0, 0, 0, 15]
+    assert tag_candidate.payload["without_distribution"] == [0, 15, 0, 0, 0]
+    assert tag_candidate.payload["with_good_count"] == 15
+    assert tag_candidate.payload["without_good_count"] == 0
+    assert tag_candidate.payload["outcome"] == "association"
+
+
+def test_null_association_candidates_for_overlapping_tag_mood() -> None:
+    """Phase 7 / D2: small effects persist as null_association, not findings."""
+
+    coffee_id = uuid.uuid4()
+    coffee = TagSnapshot(id=coffee_id, label="Coffee", slug="coffee")
+    start = date(2026, 4, 1)
+    # Alternate tagging with a mood cycle that does not line up with the tag,
+    # so |r| stays below MIN_ABS_EFFECT_SIZE while both groups stay large.
+    mood_cycle = (2, 3, 4, 5, 3, 2, 4, 3)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=mood_cycle[offset % len(mood_cycle)],
+            energy=3,
+            stress=3,
+            tag_ids=frozenset({coffee_id}) if offset % 2 == 0 else frozenset(),
+        )
+        for offset in range(40)
+    ]
+
+    candidates = generate_insight_candidates(entries, [coffee], as_of=date(2026, 5, 10))
+    nulls = [c for c in candidates if c.insight_type == InsightType.NULL_ASSOCIATION]
+    assert nulls, "expected at least one null_association for overlapping distributions"
+    null = nulls[0]
+    assert null.subject_id == coffee_id
+    assert null.flags.get("non_result") is True
+    assert null.payload["outcome"] == "null"
+    assert "with_distribution" in null.payload
+    assert abs(null.effect_size if null.effect_size is not None else 1) < 0.25
 
 
 def test_sleep_mood_spearman_candidates_surface() -> None:
     """M8 Sprint 2 (#172): sleep↔mood correlations appear in the insights feed."""
+
     start = date(2026, 4, 1)
     entries = [
         _entry(
@@ -415,7 +467,8 @@ def test_pointbiserial_marks_work_context_confounder() -> None:
             mood=5 if offset < 10 else 2,
             energy=3,
             stress=3,
-            work_context=WorkContext.OFFICE if offset < 10 else WorkContext.HOMEOFFICE,
+            # Office days include tagged + untagged so same-situation frequencies have both arms.
+            work_context=WorkContext.OFFICE if offset < 15 else WorkContext.HOMEOFFICE,
             tag_ids=frozenset({tag_id}) if offset < 10 else frozenset(),
         )
         for offset in range(30)
@@ -430,6 +483,12 @@ def test_pointbiserial_marks_work_context_confounder() -> None:
     assert candidate.payload["confounder"] == "work_context"
     assert candidate.payload["confounders"] == ["work_context"]
     assert "work contexts" in candidate.statement
+    assert candidate.payload["same_work_context"] == "office"
+    assert candidate.payload["same_work_context_with_n"] == 10
+    assert candidate.payload["same_work_context_without_n"] == 5
+    assert "situation_effect_survives" in candidate.payload
+    assert "weekday_held_coefficient" in candidate.payload
+    assert "calendar_held_coefficient" in candidate.payload
 
 
 def test_work_context_biased_uses_available_context_day_baseline() -> None:
@@ -667,6 +726,7 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
             _scalar_result(entries),
             _row_result(tag_rows),
             _row_result([]),
+            _preferences_result(),
             MagicMock(),  # delete prior insights for the day
         ]
     )
@@ -675,13 +735,13 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     stored = await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
 
     assert stored
-    assert db.execute.await_count == 5
+    assert db.execute.await_count == 6
     lock_stmt = db.execute.await_args_list[0].args[0]
     assert "pg_try_advisory_xact_lock" in str(lock_stmt)
     load_stmt = db.execute.await_args_list[1].args[0]
     assert "entries.entry_date < :entry_date_1" in str(load_stmt.whereclause)
     assert "ORDER BY entries.entry_date ASC" in str(load_stmt)
-    delete_stmt = db.execute.await_args_list[4].args[0]
+    delete_stmt = db.execute.await_args_list[5].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert db.add.call_count == len(stored)
     assert db.flush.await_count == 1
@@ -940,6 +1000,7 @@ async def test_generate_and_store_insights_survives_undecryptable_note() -> None
             _scalar_result(poison),
             _row_result(tag_rows),
             _row_result([]),
+            _preferences_result(),
             MagicMock(),
         ]
     )

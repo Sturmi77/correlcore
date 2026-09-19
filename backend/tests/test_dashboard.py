@@ -12,6 +12,7 @@ from app.main import app
 from app.models.entry import WorkContext
 from app.models.insight import InsightTier
 from app.models.user import User
+from app.models.user_preference import UserPreference
 from app.schemas.dashboard import DashboardSummaryResponse
 from app.services.dashboard_service import (
     TREND_DELTA_THRESHOLD,
@@ -25,6 +26,13 @@ from app.services.dashboard_service import (
 )
 from app.services.insight_engine import confidence_tier_for_sample
 from tests.conftest import make_user
+
+
+def _prefs(user: User, *, trend_window_days: int = TREND_WINDOW_DAYS) -> UserPreference:
+    preferences = UserPreference()
+    preferences.user_id = user.id
+    preferences.trend_window_days = trend_window_days
+    return preferences
 
 
 def _scalar_one_result(value: object) -> MagicMock:
@@ -95,7 +103,12 @@ async def test_dashboard_summary_counts_distinct_entry_dates() -> None:
         ]
     )
 
-    out = await get_dashboard_summary(db, user_id=user.id, as_of=date(2026, 5, 12))
+    with patch(
+        "app.services.dashboard_service.get_or_create_user_preferences",
+        new_callable=AsyncMock,
+        return_value=_prefs(user),
+    ):
+        out = await get_dashboard_summary(db, user_id=user.id, as_of=date(2026, 5, 12))
 
     assert out.entry_count == 15
     assert out.insight_tier == InsightTier.DEVELOPING
@@ -131,7 +144,12 @@ async def test_dashboard_summary_omits_weekday_summary_without_full_week_coverag
         ]
     )
 
-    out = await get_dashboard_summary(db, user_id=user.id, as_of=date(2026, 5, 12))
+    with patch(
+        "app.services.dashboard_service.get_or_create_user_preferences",
+        new_callable=AsyncMock,
+        return_value=_prefs(user),
+    ):
+        out = await get_dashboard_summary(db, user_id=user.id, as_of=date(2026, 5, 12))
 
     assert out.entry_count == 9
     assert out.weekday_summary == []
@@ -407,7 +425,12 @@ async def test_dashboard_summary_attaches_window_trends() -> None:
         ]
     )
 
-    out = await get_dashboard_summary(db, user_id=user.id, as_of=date(2026, 5, 12))
+    with patch(
+        "app.services.dashboard_service.get_or_create_user_preferences",
+        new_callable=AsyncMock,
+        return_value=_prefs(user),
+    ):
+        out = await get_dashboard_summary(db, user_id=user.id, as_of=date(2026, 5, 12))
 
     office = out.work_context_summary[0]
     assert office.mood_trend is not None

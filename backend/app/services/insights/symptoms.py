@@ -31,8 +31,15 @@ from app.services.symptom_analytics import (
     SymptomRef,
     SymptomTagAssociation,
     TagRef,
+    _metric_value,
     compute_symptom_metric_associations,
     compute_symptom_tag_associations,
+)
+from app.services.weekday_confounder import (
+    evaluate_metric_association_calendar_context,
+    evaluate_metric_association_weekday,
+    same_work_context_metric_frequencies,
+    situation_adjustment_payload,
 )
 
 
@@ -100,8 +107,9 @@ def _symptom_metric_candidates(
     tier: InsightTier,
     generated_for_date: date_type,
 ) -> list[InsightCandidate]:
+    daily = _symptom_entries(entries)
     findings = compute_symptom_metric_associations(
-        _symptom_entries(entries),
+        daily,
         _symptom_refs(symptoms),
     )
     candidates: list[InsightCandidate] = []
@@ -110,6 +118,33 @@ def _symptom_metric_candidates(
             weekday_confounded=finding.weekday_confounded,
             work_context_confounded=finding.work_context_confounded,
             calendar_context_confounded=finding.calendar_context_confounded,
+        )
+        primary = _primary_confounder(confounders)
+        metric_values = [_metric_value(entry, finding.metric) for entry in daily]
+        binary = [1 if finding.symptom.id in entry.symptom_ids else 0 for entry in daily]
+        weekday_adj = evaluate_metric_association_weekday(
+            [entry.entry_date for entry in daily],
+            metric_values,
+            binary,
+            raw_coefficient=finding.coefficient,
+            raw_p_value=finding.p_value,
+            min_effect=0.25,
+            alpha=0.10,
+        )
+        calendar_adj = evaluate_metric_association_calendar_context(
+            [entry.entry_date for entry in daily],
+            [entry.work_context.value for entry in daily],
+            metric_values,
+            binary,
+            raw_coefficient=finding.coefficient,
+            raw_p_value=finding.p_value,
+            min_effect=0.25,
+            alpha=0.10,
+        )
+        situation = same_work_context_metric_frequencies(
+            [entry.work_context.value for entry in daily],
+            binary,
+            metric_values,
         )
         candidates.append(
             InsightCandidate(
@@ -148,8 +183,14 @@ def _symptom_metric_candidates(
                     "comparison_n": finding.comparison_count,
                     "symptom_metric_avg": finding.symptom_metric_avg,
                     "comparison_metric_avg": finding.comparison_metric_avg,
-                    "confounder": _primary_confounder(confounders),
+                    "confounder": primary,
                     "confounders": confounders,
+                    **situation_adjustment_payload(
+                        weekday=weekday_adj,
+                        calendar=calendar_adj,
+                        situation=situation,
+                        primary_confounder=primary,
+                    ),
                 },
                 generated_for_date=generated_for_date,
             )

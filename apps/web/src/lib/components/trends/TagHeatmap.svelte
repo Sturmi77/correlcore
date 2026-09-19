@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { tick } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { TagHeatmapResponse } from '$lib/api/stats';
   import EntryLaunchButton from '$lib/components/entries/EntryLaunchButton.svelte';
-  import { heatmapLevel } from '$lib/utils/charts';
-  import { shiftIsoDate } from '$lib/utils/streak';
+  import { buildIsoDateRange, heatmapLevel, type DailyAxisLayout } from '$lib/utils/charts';
+  import { habitDailyAxisLayout } from '$lib/utils/trendsDateAxis';
 
   export let heatmap: TagHeatmapResponse | null = null;
   export let loading = false;
@@ -13,6 +13,11 @@
   export let compact = false;
   /** ISO dates with notes — shows a dot above the date column. */
   export let noteDates: readonly string[] = [];
+  /**
+   * Shared ADR-0035 day-axis contract (same CSS vars as ComparisonHeatmap).
+   * When omitted, derives from compact / coarse-pointer via habitDailyAxisLayout.
+   */
+  export let axisLayout: DailyAxisLayout | null = null;
 
   const dispatch = createEventDispatcher<{ selectDate: { date: string; tagId: string } }>();
 
@@ -20,26 +25,37 @@
 
   let scroller: HTMLDivElement;
   let lastScrolledHeatmap: TagHeatmapResponse | null = null;
+  let coarsePointer = false;
+
+  onMount(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+    const mq = window.matchMedia('(pointer: coarse)');
+    const sync = () => {
+      coarsePointer = mq.matches;
+    };
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  });
 
   $: noteDateSet = new Set(noteDates);
-  $: dates = heatmap ? buildDates(heatmap.start_date, heatmap.end_date) : [];
+  $: dates = heatmap ? buildIsoDateRange(heatmap.start_date, heatmap.end_date) : [];
   $: maxCount = heatmap
     ? Math.max(0, ...heatmap.tags.flatMap((tag) => tag.days.map((day) => day.count)))
     : 0;
+  $: resolvedLayout = axisLayout ?? habitDailyAxisLayout({ compact, coarsePointer });
+  $: gridStyle = [
+    `--day-count: ${dates.length}`,
+    `--axis-label-width: ${resolvedLayout.labelWidth}px`,
+    `--axis-day-width: ${resolvedLayout.dayWidth}px`,
+    `--axis-gap: ${resolvedLayout.dayGap}px`,
+  ].join('; ');
   $: showSkeleton = loading && !heatmap;
   $: if (heatmap && heatmap !== lastScrolledHeatmap) {
     lastScrolledHeatmap = heatmap;
     void scrollToLatest();
-  }
-
-  function buildDates(start: string, end: string): string[] {
-    const out: string[] = [];
-    let cursor = start;
-    while (cursor <= end && out.length < 370) {
-      out.push(cursor);
-      cursor = shiftIsoDate(cursor, 1);
-    }
-    return out;
   }
 
   async function scrollToLatest(): Promise<void> {
@@ -72,7 +88,7 @@
     </div>
   {:else if heatmap && heatmap.tags.length > 0}
     <div class="heatmap__scroller" aria-label={$_('trends.heatmap.aria')} bind:this={scroller}>
-      <div class="heatmap__grid" style={`--day-count: ${dates.length}`}>
+      <div class="heatmap__grid" style={gridStyle} data-testid="tag-heatmap-grid">
         <div class="heatmap__tag heatmap__tag--notes">{$_('trends.heatmap.notes_row')}</div>
         {#each dates as date}
           <span
@@ -145,8 +161,9 @@
 
   .heatmap__grid {
     display: grid;
-    grid-template-columns: minmax(7rem, 9rem) repeat(var(--day-count), 0.8rem);
-    gap: var(--heatmap-cell-gap);
+    grid-template-columns: var(--axis-label-width) repeat(var(--day-count), var(--axis-day-width));
+    column-gap: var(--axis-gap);
+    row-gap: var(--heatmap-cell-gap);
     min-width: max-content;
     align-items: center;
   }
@@ -182,8 +199,8 @@
 
   .heatmap__cell,
   .heatmap__legend-cell {
-    width: 0.8rem;
-    height: 0.8rem;
+    width: var(--axis-day-width);
+    height: var(--axis-day-width);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border-chart);
     background: var(--color-surface-dynamic);
@@ -276,28 +293,6 @@
     .heatmap__skeleton span {
       animation: none;
     }
-  }
-
-  @media (pointer: coarse) {
-    .heatmap:not(.heatmap--compact) .heatmap__grid {
-      grid-template-columns: minmax(7rem, 9rem) repeat(var(--day-count), 2.75rem);
-      gap: var(--heatmap-cell-gap-coarse);
-    }
-
-    .heatmap:not(.heatmap--compact) .heatmap__cell {
-      width: 2.75rem;
-      height: 2.75rem;
-    }
-  }
-
-  .heatmap--compact .heatmap__grid {
-    grid-template-columns: minmax(4.5rem, 6rem) repeat(var(--day-count), 0.65rem);
-    gap: var(--heatmap-cell-gap-compact);
-  }
-
-  .heatmap--compact .heatmap__cell {
-    width: 0.65rem;
-    height: 0.65rem;
   }
 
   @media (max-width: 480px) {

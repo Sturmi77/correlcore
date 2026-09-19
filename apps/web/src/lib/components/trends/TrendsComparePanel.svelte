@@ -17,13 +17,15 @@
   import { buildIsoDateRange, compareDailyAxisLayout, type MetricKey } from '$lib/utils/charts';
   import {
     buildAxisBuckets,
-    clampZoomStage,
+    clampZoomStageForWindow,
     findBucketForDate,
     formatBucketRangeLabel,
+    maxZoomStageForWindow,
     stageDays,
     type AxisBucket,
     type CompareZoomStageIndex,
   } from '$lib/utils/compareAxisZoom';
+  import { TREND_WINDOW_DAYS_DEFAULT, type TrendWindowDays } from '$lib/utils/trendWindowDays';
   import { clampAxisRangeToData, compareDailyAxisLayoutFromRoot } from '$lib/utils/trendsDateAxis';
   import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
   import {
@@ -48,9 +50,13 @@
     clampPinnedIds,
     coincidenceDaysToMarkers,
     deriveCoincidence,
+    isRowActiveOnDay,
     summarizeCoincidence,
     type CoincidenceRow,
   } from '$lib/utils/coincidenceMarkers';
+  import { datesToEventWindows } from '$lib/utils/exploreEventWindows';
+  import type { EventWindow } from './EventAlignedSmallMultiplesSheet.svelte';
+  import Button from '$lib/components/common/Button.svelte';
   import {
     deriveLag1,
     hasReportableLag1,
@@ -68,6 +74,8 @@
 
   export let points: TimeseriesPoint[] = [];
   export let range: TimeseriesRange = 'week';
+  /** Analysis window in days — clamps zoom so a cell never exceeds the window (#928 O5). */
+  export let windowDays: TrendWindowDays = TREND_WINDOW_DAYS_DEFAULT;
   export let enabled: Record<MetricKey, boolean>;
   export let tagHeatmap: TagHeatmapResponse | null = null;
   export let symptomHeatmap: SymptomHeatmapResponse | null = null;
@@ -82,6 +90,14 @@
   export let clusterRefreshToken = 0;
   /** Bound by parent for compact settings sheet cluster-sort availability (#597). */
   export let clustersAvailableBinding = false;
+  /** Bound by parent so the mobile settings sheet can drive focus chips (#928 O7). */
+  export let focusedClusterId: number | null = null;
+  /** Bound by parent so zoom is shared with the mobile settings sheet (#928 O7). */
+  export let zoomStage: CompareZoomStageIndex = readCompareZoomStage();
+  /** Tag group labels for the mobile settings sheet focus chips. */
+  export let tagClusterLabelsBinding: { cluster_id: number; label: string }[] = [];
+  /** When true, show the compare → ESM affordance (#928 Phase 2). */
+  export let esmUnlocked = false;
   export let mode: CompareMode = readCompareMode();
   export let sortMode: CompareSortMode = readCompareSortMode();
   /** #919: bindable so the mobile settings sheet can drive the same overlays. */
@@ -115,6 +131,7 @@
     coincidenceChange: { value: boolean };
     lag1Change: { value: boolean };
     overlayHintDismiss: void;
+    checkQuestion: { windows: EventWindow[]; label: string };
   }>();
 
   // Sprint 1 (ADR-0035): the Compare panel owns the cursor lifecycle.
@@ -166,14 +183,13 @@
     )
   );
 
-  let zoomStage: CompareZoomStageIndex = readCompareZoomStage();
   let axisScroller: HTMLDivElement;
   let lastAxisKey = '';
   let pendingFocusDate: string | null = null;
   let tagClusters: TagClustersResponse | null = null;
-  let focusedClusterId: number | null = null;
 
   $: tagClusterMeta = buildTagClusterMeta(tagClusters);
+  $: tagClusterLabelsBinding = tagClusterMeta.labels;
   $: tagRowsWithClusters =
     showTags && tagHeatmap
       ? tagHeatmap.tags.filter((tag) => tagClusterMeta.byTagId.has(tag.tag_id))
@@ -204,6 +220,20 @@
     focusedClusterId = clusterId;
   }
 
+  function activeDatesForRow(row: CoincidenceRow): string[] {
+    return row.days.filter((day) => isRowActiveOnDay(row, day.date)).map((day) => day.date);
+  }
+
+  function openCheckQuestion(): void {
+    if (pinned.length < 2) return;
+    const firstRow = coincidenceRows.find((row) => row.id === pinned[0]);
+    if (!firstRow) return;
+    dispatch('checkQuestion', {
+      windows: datesToEventWindows(activeDatesForRow(firstRow), firstRow.label),
+      label: firstRow.label,
+    });
+  }
+
   function setMode(next: CompareMode): void {
     // #482: Strips now share the Lines bucket aggregation, so the zoom stage
     // carries across modes — no gate, no reset.
@@ -226,11 +256,11 @@
   }
 
   function zoomOut(): void {
-    setZoomStage(clampZoomStage(zoomStage + 1));
+    setZoomStage(clampZoomStageForWindow(zoomStage + 1, windowDays));
   }
 
   function zoomIn(): void {
-    setZoomStage(clampZoomStage(zoomStage - 1));
+    setZoomStage(clampZoomStageForWindow(zoomStage - 1, windowDays));
   }
 
   /**
@@ -241,7 +271,7 @@
   function zoomInBucket(bucket: AxisBucket): void {
     if (zoomStage === 0 || bucket.dates.length <= 1) return;
     pendingFocusDate = bucket.start;
-    zoomStage = clampZoomStage(zoomStage - 1);
+    zoomStage = clampZoomStageForWindow(zoomStage - 1, windowDays);
     writeCompareZoomStage(zoomStage);
   }
 
@@ -317,10 +347,9 @@
     points[points.length - 1]?.period_start ??
     '';
   /**
-   * #676: the compare tab always loads a fixed 365-day window, so the raw bounds
-   * above can reach past the user's first/last logged day and leave an empty
-   * scroll region with no "Anschlag". Clamp the axis to the days that actually
-   * hold entries so the timeline stops hard at the data on both ends.
+   * #676: heatmap/context bounds can extend past the user's first/last logged day
+   * and leave an empty scroll region with no hard stop. Clamp the axis to days
+   * that actually hold entries so the timeline stops at the data on both ends.
    */
   $: dataDates = points.filter((point) => point.entry_count > 0).map((point) => point.period_start);
   $: ({ start: axisStart, end: axisEnd } = clampAxisRangeToData(
@@ -342,8 +371,16 @@
           ...axisLayout,
           dayWidth: Math.max(axisLayout.dayWidth, 28),
         };
+  $: maxZoomStage = maxZoomStageForWindow(windowDays);
+  $: {
+    const clamped = clampZoomStageForWindow(zoomStage, windowDays);
+    if (clamped !== zoomStage) {
+      zoomStage = clamped;
+      writeCompareZoomStage(clamped);
+    }
+  }
   $: zoomDays = stageDays(effectiveZoomStage);
-  $: canZoomOut = zoomStage < 4;
+  $: canZoomOut = zoomStage < maxZoomStage;
   $: canZoomIn = zoomStage > 0;
   $: axisKey = `${axisStart}:${axisEnd}:${axisDates.length}:${effectiveZoomStage}:${mode}`;
   $: if (axisKey && axisKey !== lastAxisKey) {
@@ -615,6 +652,13 @@
     </div>
   {/if}
 
+  {#if pinned.length >= 2}
+    <p class="compare__check" data-testid="trends-compare-check-question">
+      <a href="/insights">{$_('trends.compare.check_question')}</a>
+      <span class="compare__check-hint">{$_('trends.compare.check_question_hint')}</span>
+    </p>
+  {/if}
+
   {#if clustersAvailable && showTags}
     <div
       class="compare__clusters"
@@ -650,6 +694,9 @@
 
   {#if axisDates.length > 0}
     <div class="compare__zoom-block" data-testid="trends-compare-zoom-block">
+      <p class="compare__window-label" data-testid="trends-compare-window-label">
+        {$_('habits.window_last', { values: { n: windowDays } })}
+      </p>
       <div
         class="compare__zoom"
         role="group"
@@ -720,6 +767,16 @@
           {/if}
         </svelte:fragment>
       </CompareOverlayControls>
+      {#if esmUnlocked && pinned.length >= 2}
+        <Button
+          variant="secondary"
+          size="sm"
+          data-testid="trends-compare-check-question"
+          on:click={openCheckQuestion}
+        >
+          {$_('trends.compare.check_question')}
+        </Button>
+      {/if}
       {#if showFrequencyNote}
         <p class="compare__coincidence-hint" data-testid="trends-compare-frequency-note">
           {$_('trends.compare.frequency_note')}
@@ -886,6 +943,25 @@
     gap: var(--space-3);
   }
 
+  .compare__check {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: var(--text-sm);
+  }
+
+  .compare__check a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .compare__check-hint {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
   .compare__mode {
     display: inline-flex;
     align-items: center;
@@ -960,6 +1036,13 @@
   .compare__zoom-block {
     display: grid;
     gap: var(--space-1);
+  }
+
+  .compare__window-label {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-weight: 600;
   }
 
   .compare__zoom {

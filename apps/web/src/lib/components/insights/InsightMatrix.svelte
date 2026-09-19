@@ -1,7 +1,8 @@
 <script lang="ts">
   import { _, locale } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
-  import { isMatrixInsight, isWeakMatrixInsight } from '$lib/utils/insightMatrixGate';
+  import { buildMatrixDisplayRows, matrixEffectTone } from '$lib/utils/insightMatrixRows';
+  import InsightEvidence from './InsightEvidence.svelte';
 
   export let insights: InsightResponse[] = [];
   /**
@@ -10,69 +11,12 @@
    */
   export let preview = false;
 
-  function canonicalMetric(insight: InsightResponse): string {
-    if (
-      insight.subject_type === 'tag' &&
-      ['mood', 'mood_score', 'mood_avg'].includes(insight.metric)
-    ) {
-      return 'mood_score';
-    }
-    return insight.metric;
-  }
-
-  function normaliseLabel(value: string): string {
-    return value.toLocaleLowerCase().trim().replace(/\s+/g, ' ');
-  }
-
-  function rowKey(insight: InsightResponse): string {
-    const tagSlug =
-      typeof insight.payload?.tag_slug === 'string' ? normaliseLabel(insight.payload.tag_slug) : '';
-    const subject =
-      insight.subject_type === 'tag'
-        ? tagSlug ||
-          (insight.subject_label ? normaliseLabel(insight.subject_label) : '') ||
-          insight.subject_id ||
-          ''
-        : insight.subject_id || insight.subject_label || '';
-    return [
-      insight.insight_type,
-      canonicalMetric(insight),
-      insight.subject_type ?? '',
-      subject,
-    ].join(':');
-  }
-
-  function strongerRow(left: InsightResponse, right: InsightResponse): InsightResponse {
-    const leftEffect = Math.abs(left.effect_size ?? 0);
-    const rightEffect = Math.abs(right.effect_size ?? 0);
-    if (leftEffect !== rightEffect) return leftEffect > rightEffect ? left : right;
-    const leftConfidence = left.confidence ?? 0;
-    const rightConfidence = right.confidence ?? 0;
-    if (leftConfidence !== rightConfidence) return leftConfidence > rightConfidence ? left : right;
-    return left.generated_at >= right.generated_at ? left : right;
-  }
-
-  function dedupeRows(items: InsightResponse[]): InsightResponse[] {
-    const byKey = new Map<string, InsightResponse>();
-    for (const insight of items) {
-      const key = rowKey(insight);
-      const existing = byKey.get(key);
-      byKey.set(key, existing ? strongerRow(existing, insight) : insight);
-    }
-    return [...byKey.values()];
-  }
-
-  function byEffectDesc(a: InsightResponse, b: InsightResponse): number {
-    return Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0);
-  }
-
   // #725: dedupe once across all renderable rows, then split into reliable
   // (strong) and weakened bands so a subject never appears in both.
-  $: displayRows = dedupeRows(
-    insights.filter((insight) => isMatrixInsight(insight) || isWeakMatrixInsight(insight))
-  );
-  $: rows = displayRows.filter(isMatrixInsight).sort(byEffectDesc);
-  $: weakRows = preview ? [] : displayRows.filter(isWeakMatrixInsight).sort(byEffectDesc);
+  // Export lives on /insights/report (Phase 5 / ADR-0043 Ebene 4) — not here.
+  $: matrixRows = buildMatrixDisplayRows(insights, { includeWeak: !preview });
+  $: rows = matrixRows.strong;
+  $: weakRows = matrixRows.weak;
 
   // #725 transparency: surface when the matrix was last recomputed, so lines
   // shifting after a regenerate read as an update rather than a glitch.
@@ -89,61 +33,19 @@
   $: lastUpdatedLabel = lastUpdated ? formatUpdated(lastUpdated) : '';
 
   function tone(effect: number): 'positive' | 'negative' | 'neutral' {
-    if (effect >= 0.15) return 'positive';
-    if (effect <= -0.15) return 'negative';
-    return 'neutral';
+    return matrixEffectTone(effect);
   }
 
-  function percent(value: number | null): string {
-    if (value === null) return '-';
-    return `${Math.round(value * 100)}%`;
-  }
-
-  function themeColor(name: string): string {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  }
-
-  function exportPng(): void {
-    const canvas = document.createElement('canvas');
-    canvas.width = 900;
-    canvas.height = Math.max(220, rows.length * 56 + 96);
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const colors = {
-      background: themeColor('--color-surface'),
-      text: themeColor('--color-text'),
-      muted: themeColor('--color-text-muted'),
-      success: themeColor('--color-success'),
-      error: themeColor('--color-error'),
-    };
-
-    ctx.fillStyle = colors.background;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = colors.text;
-    ctx.font = '700 24px sans-serif';
-    ctx.fillText('CorrelCore Insight Matrix', 32, 44);
-    ctx.font = '14px sans-serif';
-    rows.forEach((row, index) => {
-      const y = 88 + index * 52;
-      const effect = row.effect_size ?? 0;
-      ctx.fillStyle =
-        tone(effect) === 'positive'
-          ? colors.success
-          : tone(effect) === 'negative'
-            ? colors.error
-            : colors.muted;
-      ctx.fillRect(32, y - 18, Math.max(8, Math.abs(effect) * 280), 24);
-      ctx.fillStyle = colors.text;
-      ctx.fillText(row.subject_label ?? row.metric, 332, y);
-      ctx.fillText(effect.toFixed(2), 560, y);
-      ctx.fillText(percent(row.confidence), 650, y);
+  /** Phase 1 / D3 — natural frequencies with two denominators when payload has them. */
+  function freqLabel(row: InsightResponse): string {
+    const withN = row.payload?.tagged_count;
+    const withoutN = row.payload?.untagged_count;
+    if (typeof withN !== 'number' || typeof withoutN !== 'number') {
+      return $_('insights.matrix.freq_sample', { values: { n: row.sample_n } });
+    }
+    return $_('insights.matrix.freq_split', {
+      values: { withN, withoutN },
     });
-
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = 'correlcore-insight-matrix.png';
-    link.click();
   }
 </script>
 
@@ -162,16 +64,11 @@
             {$_('insights.matrix.updated', { values: { date: lastUpdatedLabel } })}
           </p>
         {/if}
-      </div>
-      <div class="insight-matrix__actions">
-        <button
-          class="btn btn-sm btn--secondary"
-          type="button"
-          on:click={exportPng}
-          disabled={!rows.length}
-        >
-          {$_('insights.matrix.export')}
-        </button>
+        <p class="insight-matrix__report-link">
+          <a href="/insights/report" data-testid="insight-matrix-report-link">
+            {$_('insights.matrix.report_link')}
+          </a>
+        </p>
       </div>
     </header>
   {/if}
@@ -217,6 +114,7 @@
       <span role="columnheader">{$_('insights.matrix.subject')}</span>
       <span role="columnheader">{$_('insights.matrix.metric')}</span>
       <span role="columnheader">{$_('insights.matrix.effect')}</span>
+      <span role="columnheader">{$_('insights.matrix.frequency')}</span>
       <span role="columnheader">{$_('insights.matrix.confidence')}</span>
     </div>
     {#each tableRows as row}
@@ -225,7 +123,7 @@
         class="insight-matrix__row"
         role="row"
         data-tone={tone(effect)}
-        title={`${row.statement ?? ''} | n=${row.sample_n} | confidence=${percent(row.confidence)}`}
+        title={`${row.statement ?? ''} | ${freqLabel(row)}`}
       >
         <span role="cell">{row.subject_label ?? '-'}</span>
         <span role="cell">{row.metric}</span>
@@ -236,7 +134,18 @@
           ></span>
           {effect.toFixed(2)}
         </span>
-        <span role="cell">{percent(row.confidence)}</span>
+        <span role="cell" class="insight-matrix__freq" data-testid="insight-matrix-freq">
+          {freqLabel(row)}
+        </span>
+        <span role="cell" class="insight-matrix__confidence">
+          <InsightEvidence
+            confidenceScore={row.confidence ?? 0}
+            currentTier={row.tier}
+            entryCount={row.sample_n}
+            showSample
+            showMaturityBadge={false}
+          />
+        </span>
       </div>
     {/each}
   </div>
@@ -254,13 +163,6 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-  }
-
-  .insight-matrix__actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.5rem;
   }
 
   .insight-matrix__header h2,
@@ -284,6 +186,15 @@
     font-size: var(--text-xs);
   }
 
+  .insight-matrix__report-link {
+    margin-top: 0.5rem;
+    font-size: var(--text-sm);
+  }
+
+  .insight-matrix__report-link a {
+    color: var(--color-primary);
+  }
+
   .insight-matrix__table {
     overflow-x: auto;
     border: 1px solid var(--color-border-chart);
@@ -302,9 +213,12 @@
   }
 
   .insight-matrix__row {
-    min-width: 42rem;
+    min-width: 48rem;
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 0.8fr);
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(
+        0,
+        1.4fr
+      );
     gap: 0.75rem;
     align-items: center;
     padding: 0.6rem 0.75rem;
@@ -337,6 +251,15 @@
     align-items: center;
     gap: 0.5rem;
     min-width: 0;
+  }
+
+  .insight-matrix__freq {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  .insight-matrix__confidence :global(.evidence) {
+    flex-wrap: wrap;
   }
 
   .insight-matrix__effect-bar {
@@ -413,8 +336,7 @@
   }
 
   @media (max-width: 480px) {
-    .insight-matrix__header,
-    .insight-matrix__actions {
+    .insight-matrix__header {
       flex-direction: column;
       align-items: stretch;
     }

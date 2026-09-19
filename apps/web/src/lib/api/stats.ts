@@ -11,6 +11,8 @@ export interface TimeseriesPoint {
   energy_avg: number | null;
   stress_avg: number | null;
   sleep_quality_avg: number | null;
+  /** Phase 14 — optional duration series for Compare Zeitversatz. */
+  sleep_minutes_avg?: number | null;
 }
 
 export interface TimeseriesResponse {
@@ -56,14 +58,6 @@ export interface SymptomHeatmapResponse {
   start_date: string;
   end_date: string;
   symptoms: SymptomHeatmapSymptom[];
-}
-
-export interface EntryStreakResponse {
-  current_streak: number;
-  longest_streak: number;
-  total_entry_days: number;
-  last_entry_date: string | null;
-  as_of: string;
 }
 
 // Health Data Maturity (Issue #852) — honest data-readiness / coverage panel.
@@ -150,11 +144,6 @@ export async function fetchSymptomHeatmap(
   return api.get<SymptomHeatmapResponse>(
     qs ? `/entries/stats/symptoms?${qs}` : '/entries/stats/symptoms'
   );
-}
-
-export async function fetchEntryStreak(asOf?: string): Promise<EntryStreakResponse> {
-  const qs = asOf ? `?as_of=${encodeURIComponent(asOf)}` : '';
-  return api.get<EntryStreakResponse>(`/entries/stats/streak${qs}`);
 }
 
 export async function fetchHealthContext(asOf?: string): Promise<HealthContextResponse> {

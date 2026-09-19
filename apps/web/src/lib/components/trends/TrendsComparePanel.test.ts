@@ -68,7 +68,13 @@ vi.mock('$app/environment', () => ({
   browser: false,
 }));
 
-const enabled = { mood_avg: true, energy_avg: true, stress_avg: true, sleep_quality_avg: false };
+const enabled = {
+  mood_avg: true,
+  energy_avg: true,
+  stress_avg: true,
+  sleep_quality_avg: false,
+  sleep_minutes_avg: false,
+};
 
 function dayPoint(date: string, entry_count = 1): TimeseriesPoint {
   return {

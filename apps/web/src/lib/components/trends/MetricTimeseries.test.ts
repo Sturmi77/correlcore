@@ -38,7 +38,13 @@ describe('MetricTimeseries', () => {
         points,
         range: 'year',
         loading: false,
-        enabled: { mood_avg: true, energy_avg: true, stress_avg: true, sleep_quality_avg: false },
+        enabled: {
+          mood_avg: true,
+          energy_avg: true,
+          stress_avg: true,
+          sleep_quality_avg: false,
+          sleep_minutes_avg: false,
+        },
       },
     });
 
@@ -58,7 +64,13 @@ describe('MetricTimeseries', () => {
         points: sleepPoints,
         range: 'year',
         loading: false,
-        enabled: { mood_avg: true, energy_avg: true, stress_avg: true, sleep_quality_avg: true },
+        enabled: {
+          mood_avg: true,
+          energy_avg: true,
+          stress_avg: true,
+          sleep_quality_avg: true,
+          sleep_minutes_avg: false,
+        },
       },
     });
 
@@ -77,7 +89,13 @@ describe('MetricTimeseries', () => {
         points,
         range: 'week',
         loading: false,
-        enabled: { mood_avg: true, energy_avg: true, stress_avg: true, sleep_quality_avg: false },
+        enabled: {
+          mood_avg: true,
+          energy_avg: true,
+          stress_avg: true,
+          sleep_quality_avg: false,
+          sleep_minutes_avg: false,
+        },
         axisDates: ['2026-05-01', '2026-05-02'],
       },
     });
@@ -96,7 +114,13 @@ describe('MetricTimeseries', () => {
         points,
         range: 'week',
         loading: false,
-        enabled: { mood_avg: true, energy_avg: true, stress_avg: true, sleep_quality_avg: false },
+        enabled: {
+          mood_avg: true,
+          energy_avg: true,
+          stress_avg: true,
+          sleep_quality_avg: false,
+          sleep_minutes_avg: false,
+        },
         axisDates: ['2026-05-01', '2026-05-02'],
       },
     });
@@ -113,7 +137,13 @@ describe('MetricTimeseries', () => {
         points: [],
         range: 'week',
         loading: true,
-        enabled: { mood_avg: true, energy_avg: true, stress_avg: true, sleep_quality_avg: false },
+        enabled: {
+          mood_avg: true,
+          energy_avg: true,
+          stress_avg: true,
+          sleep_quality_avg: false,
+          sleep_minutes_avg: false,
+        },
       },
     });
     expect(loading.getByLabelText('trends.timeseries.loading')).toBeTruthy();
@@ -134,7 +164,13 @@ describe('MetricTimeseries', () => {
         ],
         range: 'week',
         loading: false,
-        enabled: { mood_avg: true, energy_avg: true, stress_avg: true, sleep_quality_avg: false },
+        enabled: {
+          mood_avg: true,
+          energy_avg: true,
+          stress_avg: true,
+          sleep_quality_avg: false,
+          sleep_minutes_avg: false,
+        },
       },
     });
     expect(screen.getByText('trends.timeseries.empty')).toBeTruthy();

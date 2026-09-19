@@ -1,0 +1,310 @@
+<script lang="ts">
+  /**
+   * /insights/report — Ebene 4 report surface (Phase 5 / ADR-0043).
+   * Secondary route under Insights; export home for PNG/CSV/JSON/PDF.
+   */
+  import { onMount } from 'svelte';
+  import { _ } from 'svelte-i18n';
+  import { goto } from '$app/navigation';
+  import { auth } from '$lib/stores/auth';
+  import {
+    listLatestInsights,
+    type InsightMaturity,
+    type InsightResponse,
+  } from '$lib/api/insights';
+  import { downloadExport, exportFilename, saveBlob, type ExportKind } from '$lib/api/export';
+  import {
+    exportMatrixPdf,
+    exportMatrixPng,
+    reportExportFilename,
+  } from '$lib/utils/insightMatrixExport';
+  import { buildMatrixDisplayRows, matrixCoverageStats } from '$lib/utils/insightMatrixRows';
+  import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
+  import InlineAlert from '$lib/components/common/InlineAlert.svelte';
+  import InsightReportTable from '$lib/components/insights/InsightReportTable.svelte';
+  import CorrelationHint from '$lib/components/insights/CorrelationHint.svelte';
+  import { registerPageRefresh } from '$lib/stores/pageRefresh';
+
+  let insights: InsightResponse[] = [];
+  let maturity: InsightMaturity | null = null;
+  let loading = true;
+  let error: string | null = null;
+  let selectedIds: string[] = [];
+  let exportBusy: 'pdf' | 'png' | 'csv' | 'json' | null = null;
+  let exportError: string | null = null;
+
+  $: reportRows = buildMatrixDisplayRows(insights, { includeWeak: false }).strong;
+  $: selectedRows = reportRows.filter((row) => selectedIds.includes(row.id));
+  $: coverage = matrixCoverageStats(selectedRows.length > 0 ? selectedRows : reportRows);
+
+  $: {
+    const valid = new Set(reportRows.map((row) => row.id));
+    const kept = selectedIds.filter((id) => valid.has(id));
+    const next =
+      kept.length === 0 && reportRows.length > 0 ? reportRows.map((row) => row.id) : kept;
+    const same =
+      next.length === selectedIds.length && next.every((id, index) => id === selectedIds[index]);
+    if (!same) selectedIds = next;
+  }
+
+  async function loadReport(): Promise<void> {
+    loading = true;
+    error = null;
+    try {
+      const response = await listLatestInsights({ limit: 50 });
+      insights = response.insights;
+      maturity = response.insight_maturity;
+    } catch (err) {
+      error = err instanceof Error ? err.message : $_('insights.report.error');
+      insights = [];
+      maturity = null;
+    } finally {
+      loading = false;
+    }
+  }
+
+  function toggleRow(id: string, selected: boolean): void {
+    if (selected) {
+      if (!selectedIds.includes(id)) selectedIds = [...selectedIds, id];
+      return;
+    }
+    selectedIds = selectedIds.filter((item) => item !== id);
+  }
+
+  function toggleAll(selected: boolean): void {
+    selectedIds = selected ? reportRows.map((row) => row.id) : [];
+  }
+
+  function handlePng(): void {
+    exportError = null;
+    if (selectedRows.length === 0) {
+      exportError = $_('insights.report.export_empty');
+      return;
+    }
+    exportBusy = 'png';
+    try {
+      exportMatrixPng(selectedRows, reportExportFilename('png'));
+    } finally {
+      exportBusy = null;
+    }
+  }
+
+  function handlePdf(): void {
+    exportError = null;
+    if (selectedRows.length === 0) {
+      exportError = $_('insights.report.export_empty');
+      return;
+    }
+    exportBusy = 'pdf';
+    try {
+      exportMatrixPdf(selectedRows, {
+        title: $_('insights.report.title'),
+        subtitle: $_('insights.report.pdf_subtitle'),
+        disclaimer: $_('insights.report.disclaimer'),
+        filename: reportExportFilename('pdf'),
+      });
+    } finally {
+      exportBusy = null;
+    }
+  }
+
+  async function handleDataExport(kind: Extract<ExportKind, 'csv' | 'json'>): Promise<void> {
+    exportError = null;
+    exportBusy = kind;
+    try {
+      const blob = await downloadExport(kind);
+      saveBlob(blob, exportFilename(kind));
+    } catch (err) {
+      exportError = err instanceof Error ? err.message : $_('insights.report.export_error');
+    } finally {
+      exportBusy = null;
+    }
+  }
+
+  onMount(() => {
+    if ($auth.status !== 'authenticated') {
+      void goto('/auth/login?next=/insights/report');
+      return;
+    }
+    void loadReport();
+    return registerPageRefresh(() => loadReport());
+  });
+</script>
+
+<svelte:head>
+  <title>{$_('insights.report.title')} - {$_('app.name')}</title>
+</svelte:head>
+
+<div class="report-page" data-testid="insights-report-page">
+  <ScreenHeader
+    title={$_('insights.report.title')}
+    subtitle={$_('insights.report.subtitle')}
+    back={{ href: '/insights', label: $_('nav.insights') }}
+  />
+
+  <div class="report-page__exports" role="group" aria-label={$_('insights.report.export_aria')}>
+    <button
+      type="button"
+      class="btn btn-sm btn--primary"
+      data-testid="insight-report-export-pdf"
+      disabled={exportBusy !== null || loading}
+      on:click={handlePdf}
+    >
+      {exportBusy === 'pdf' ? $_('insights.report.export_busy') : $_('insights.report.export_pdf')}
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn--secondary"
+      data-testid="insight-report-export-png"
+      disabled={exportBusy !== null || loading}
+      on:click={handlePng}
+    >
+      {exportBusy === 'png' ? $_('insights.report.export_busy') : $_('insights.report.export_png')}
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn--secondary"
+      data-testid="insight-report-export-csv"
+      disabled={exportBusy !== null || loading}
+      on:click={() => void handleDataExport('csv')}
+    >
+      {exportBusy === 'csv' ? $_('insights.report.export_busy') : $_('insights.report.export_csv')}
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn--secondary"
+      data-testid="insight-report-export-json"
+      disabled={exportBusy !== null || loading}
+      on:click={() => void handleDataExport('json')}
+    >
+      {exportBusy === 'json'
+        ? $_('insights.report.export_busy')
+        : $_('insights.report.export_json')}
+    </button>
+  </div>
+
+  {#if exportError}
+    <InlineAlert variant="error" message={exportError} />
+  {/if}
+  {#if error}
+    <InlineAlert variant="error" message={error} />
+  {/if}
+
+  {#if loading}
+    <p class="report-page__status" role="status">{$_('insights.report.loading')}</p>
+  {:else if reportRows.length === 0}
+    <p class="report-page__status" data-testid="insight-report-empty">
+      {$_('insights.report.empty')}
+    </p>
+  {:else}
+    <section class="report-page__card" data-testid="insight-report-card">
+      <header class="report-page__card-head">
+        <div>
+          <h2>{$_('insights.report.table_heading')}</h2>
+          <p>{$_('insights.report.table_subtitle')}</p>
+        </div>
+        <p class="report-page__selection-hint">{$_('insights.report.selection_hint')}</p>
+      </header>
+
+      <InsightReportTable
+        rows={reportRows}
+        {selectedIds}
+        {maturity}
+        onToggle={toggleRow}
+        onToggleAll={toggleAll}
+      />
+
+      <footer class="report-page__footer">
+        <p class="report-page__coverage" data-testid="insight-report-coverage">
+          {$_('insights.report.coverage', {
+            values: { rows: coverage.rowCount, n: coverage.maxSampleN },
+          })}
+        </p>
+        <p class="report-page__disclaimer" data-testid="insight-report-disclaimer">
+          {$_('insights.report.disclaimer')}
+        </p>
+      </footer>
+    </section>
+  {/if}
+
+  <div class="report-page__hint">
+    <CorrelationHint returnTo="/insights/report" />
+  </div>
+</div>
+
+<style>
+  .report-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 0 2rem;
+  }
+
+  .report-page__exports {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .report-page__status {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .report-page__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .report-page__card-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .report-page__card-head h2,
+  .report-page__card-head p {
+    margin: 0;
+  }
+
+  .report-page__card-head h2 {
+    font-size: var(--text-lg, 1.1rem);
+  }
+
+  .report-page__card-head p,
+  .report-page__selection-hint {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .report-page__footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-border-chart);
+  }
+
+  .report-page__coverage,
+  .report-page__disclaimer {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .report-page__disclaimer {
+    max-width: 28rem;
+  }
+
+  .report-page__hint {
+    margin-top: 0.25rem;
+  }
+</style>

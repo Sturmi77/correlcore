@@ -9,7 +9,8 @@ import type { EntryMetricField } from '$lib/contracts/apiContract';
 
 export type { EntryMetricField } from '$lib/contracts/apiContract';
 
-export type TimeseriesMetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg' | 'sleep_quality_avg';
+export type TimeseriesMetricKey =
+  'mood_avg' | 'energy_avg' | 'stress_avg' | 'sleep_quality_avg' | 'sleep_minutes_avg';
 
 export interface MetricDefinition {
   field: EntryMetricField;
@@ -67,6 +68,6 @@ export function getEntryMetric(field: EntryMetricField): MetricDefinition {
 
 export function timeseriesMetricInvert(key: TimeseriesMetricKey): boolean {
   const field = TIMESERIES_METRIC_FIELDS[key];
-  // No entry-field mapping (e.g. sleep_quality_avg) → higher is better, never inverted.
+  // No entry-field mapping (e.g. sleep_quality_avg / sleep_minutes_avg) → never inverted.
   return field ? ENTRY_METRICS[field].invert : false;
 }

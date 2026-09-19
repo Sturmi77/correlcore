@@ -110,6 +110,31 @@ class InsightEventWindowsResponse(BaseModel):
     lag_days: int | None = None
 
 
+class InsightVerificationPoint(BaseModel):
+    """One day for G1 scatter / course on the signal detail surface."""
+
+    date: date_type
+    value: float
+    present: bool
+
+
+class InsightVerificationResponse(BaseModel):
+    """With/without series for Layer-2 verification (Phase 7 / G1)."""
+
+    range: TagCooccurrenceRange
+    start_date: date_type
+    end_date: date_type
+    metric: str
+    subject_label: str | None = None
+    points: list[InsightVerificationPoint] = Field(default_factory=list)
+    with_mean: float | None = None
+    without_mean: float | None = None
+    with_se: float | None = None
+    without_se: float | None = None
+    with_n: int = 0
+    without_n: int = 0
+
+
 class InsightRegenerateResponse(BaseModel):
     """Outcome of an on-demand insight + tag-cluster regeneration run."""
 

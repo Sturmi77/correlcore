@@ -49,12 +49,31 @@ CorrelCore ist ein privacy-first Mood- und Habit-Tracker, der Korrelationen zwis
 
 **Secondary Persona „Health-Aware Recoverer":** Migräne-/Verdauungs-/Burnout-Historie; nutzt App als Ergänzung zu Arzt/Therapie.
 
+Keine neuen Personas. Zusätzliche **Auslöser** (gleiche Personas, andere Einstiegslage):
+
+- Rückkehr nach Krankheit oder längerer Pause
+- Neuer Remote-/Hybrid-Job oder spürbar andere Wochenstruktur
+- Ärztliche oder therapeutische Bitte um eine eigene Aufzeichnung
+- Phase schlechten Schlafs oder anhaltender Last ohne klinische Einordnung
+
+**Betrieb / Vertriebsweg:** CorrelCore bleibt ein Client zu einer Instanz
+(`DEPLOYMENT_MODE` hosted vs. selfhost). Der Operator ist Kanal, nicht Segment.
+Tiefe der Auswertung ist Produktprinzip ([ADR-0043](adr/0043-insight-surface-layers.md)),
+keine Segmentachse (n:n-Stapel je Account, #930 G6).
+
+**Kategorie-Anker (#930 G3):** Kein Pivot auf „Burnout" oder Occupational Health.
+Store- und Marketing-Copy nutzen das Register
+[Arbeitsmuster-Vokabular](features/arbeitsmuster-vokabular.md). Mood/Habit bleiben
+Alltags-Jobs (W3/W7). `work_context` bleibt Differenzierungsfeld
+(UI: Arbeitssituation), nicht Kategorie-Titel.
+
 ### 1.4 Value Proposition
 
 - **Zusammenhänge statt Rohdaten** — die App erklärt, warum Tage gut/schlecht waren
 - **Selfhosted + PWA-Shell + feature-flagged Dexie Offline-Sync (M4.1)** — deine Gesundheitsdaten bleiben auf deiner Instanz; Offline-Sync ist geliefert (feature-flagged)
 - **60 Sekunden pro Tag** — nicht mehr, sonst wird es nicht gemacht
 - **No gamification, ever** — du trackst deine Gewohnheiten, nicht wie oft du die App öffnest. Kein Streak-Druck, keine Badges, keine Belohnungsschleifen.
+- **Arbeitsmuster ohne Klinik-Framing** — optionale Belastung/Erholung-Hinweise aus bestehenden Einträgen; kein klinisches Inventar, keine Arbeitgeber-Sicht ([Copy-Register](features/arbeitsmuster-vokabular.md))
 
 **Visualisierungs-Konsequenz (Theme-agnostische Fassung, präzisiert durch [ADR-0035](adr/0035-temporal-correspondence-pattern.md)):**
 
@@ -72,6 +91,9 @@ Die beiden Endpunkte einer divergenten Skala kommen aus den Theme-Tokens `--colo
 - Kein Chat-Bot/Therapeut-Ersatz
 - Keine Ads, kein Daten-Verkauf — Monetarisierung ausschließlich via Selfhost-Lizenz oder SaaS-Abo
 - **Keine Gamification** — keine Streaks, Punkte, Badges oder Engagement-Loops (s. §1.4)
+- Kein ADHS-Produkt und keine ADHS-Positionierung als Kategorie
+- Kein Symptom-Tracker als Produktkategorie (Symptome bleiben Felder im Check-in)
+- Keine Team-Sicht, keine Arbeitgeber-Auswertung, kein Multi-Tenant, kein Support-Versprechen für Fremdbetrieb (Selfhost durch Dritte bleibt deren Betrieb; #930 G5)
 
 ### 1.6 Erfolgsmetriken
 
@@ -80,7 +102,7 @@ Die beiden Endpunkte einer divergenten Skala kommen aus den Theme-Tokens `--colo
 | Day-7 Retention                | ≥ 40 %              |
 | Day-30 Retention               | ≥ 20 %              |
 | Ø Tägliche Eintrags-Completion | ≥ 70 % aktiver User |
-| Time-to-First-Insight          | < 14 Tage           |
+| Time-to-First-Answer           | < 14 Tage           |
 | Crash-Free-Rate                | > 99,5 %            |
 
 ---
@@ -275,7 +297,7 @@ keine inferenziellen Korrelationen.
 - Charts mobile-freundlich! Keine riesigen Dashboards.
 - Export als PNG/CSV/PDF für Arzt-Gespräche.
 
-**Entscheidung:** Chart-Implementierung via **Custom-SVG-Komponenten** in SvelteKit (D-002 entschieden — siehe §7). CSV/JSON-Export implementiert. PDF ab v1.1. PNG-Export im Backlog.
+**Entscheidung:** Chart-Implementierung via **Custom-SVG-Komponenten** in SvelteKit (D-002 entschieden — siehe §7). Export-Heimat ist die sekundäre Bericht-Route `/insights/report` (ADR-0043 Ebene 4): PNG und PDF clientseitig, CSV/JSON über die bestehenden Export-Endpunkte. Die Korrelations-/Berichtstabelle ist nicht mehr der Hub-Default (Phase 6 / D5); der Hub bleibt schlank (`stage_header` + `insight_feed`).
 
 **Priorität:** MUST
 

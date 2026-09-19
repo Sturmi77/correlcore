@@ -32,6 +32,7 @@
     energy_avg: 'trends.metric.energy',
     stress_avg: 'trends.metric.stress',
     sleep_quality_avg: 'trends.metric.sleep_quality',
+    sleep_minutes_avg: 'trends.metric.sleep_minutes',
   } as const;
 
   function score(value: number): string {

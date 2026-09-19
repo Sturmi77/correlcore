@@ -6,7 +6,10 @@ vi.mock('svelte-i18n', async () => {
   const { readable } = await import('svelte/store');
 
   return {
-    _: readable((key: string) => key),
+    _: readable((key: string, options?: { values?: Record<string, unknown> }) => {
+      if (options?.values) return `${key}:${JSON.stringify(options.values)}`;
+      return key;
+    }),
     locale: readable('en'),
   };
 });

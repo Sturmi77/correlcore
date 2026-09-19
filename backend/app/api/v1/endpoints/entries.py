@@ -20,6 +20,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import date as date_type
+from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,7 +39,6 @@ from app.schemas.entry import (
 )
 from app.schemas.note import NoteVisibility as NoteVisibilitySchema
 from app.schemas.stats import (
-    EntryStreakResponse,
     HealthContextResponse,
     SymptomHeatmapResponse,
     TagHeatmapResponse,
@@ -66,7 +66,6 @@ from app.services.health_context_service import get_health_context
 from app.services.insight_worker_service import schedule_post_batch_insight_regeneration
 from app.services.note_signal_extractor import run_note_signal_extraction_background
 from app.services.stats_service import (
-    get_entry_streak,
     get_symptom_heatmap,
     get_tag_heatmap,
     get_timeseries,
@@ -92,11 +91,12 @@ async def create_entry_endpoint(
     request: Request,
     payload: EntryCreate,
     background_tasks: BackgroundTasks,
+    tz: Annotated[str | None, Query(description="IANA timezone for write-time covariates")] = None,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> EntryResponse:
     try:
-        entry = await create_entry(db, user_id=user.id, payload=payload)
+        entry = await create_entry(db, user_id=user.id, payload=payload, client_timezone=tz)
     except EntryDateOutOfRangeError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -249,21 +249,6 @@ async def get_symptom_heatmap_endpoint(
         start_date=start_date,
         end_date=end_date,
     )
-
-
-@router.get(
-    "/stats/streak",
-    response_model=EntryStreakResponse,
-    summary="Return entry-streak metrics",
-)
-@limiter.limit("120/minute")
-async def get_entry_streak_endpoint(
-    request: Request,
-    as_of: date_type | None = Query(default=None, alias="as_of"),
-    user: User = Depends(get_current_verified_user),
-    db: AsyncSession = Depends(get_session),
-) -> EntryStreakResponse:
-    return await get_entry_streak(db, user_id=user.id, as_of=as_of)
 
 
 @router.get(

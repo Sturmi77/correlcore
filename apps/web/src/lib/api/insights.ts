@@ -14,6 +14,7 @@ export type { ApiInsightResponse, ApiInsightListResponse } from './contracts.gen
 
 export type InsightType =
   | 'pointbiserial'
+  | 'null_association'
   | 'spearman'
   | 'weekday_pattern'
   | 'work_context_pattern'
@@ -287,6 +288,43 @@ export async function fetchInsightEventWindows(
   const params = new URLSearchParams({ range });
   return api.get<InsightEventWindowsResponse>(
     `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`
+  );
+}
+
+/** GET /insights/{id} — single insight for Layer-2 signal detail. */
+export async function fetchInsight(insightId: string): Promise<InsightResponse> {
+  return api.get<InsightResponse>(`/insights/${encodeURIComponent(insightId)}`);
+}
+
+export interface InsightVerificationPoint {
+  date: string;
+  value: number;
+  present: boolean;
+}
+
+export interface InsightVerificationResponse {
+  range: TagCooccurrenceRange;
+  start_date: string;
+  end_date: string;
+  metric: string;
+  subject_label: string | null;
+  points: InsightVerificationPoint[];
+  with_mean: number | null;
+  without_mean: number | null;
+  with_se: number | null;
+  without_se: number | null;
+  with_n: number;
+  without_n: number;
+}
+
+/** GET /insights/{id}/verification — with/without day series (Phase 7 / G1). */
+export async function fetchInsightVerification(
+  insightId: string,
+  range: TagCooccurrenceRange = '90d'
+): Promise<InsightVerificationResponse> {
+  const params = new URLSearchParams({ range });
+  return api.get<InsightVerificationResponse>(
+    `/insights/${encodeURIComponent(insightId)}/verification?${params}`
   );
 }
 
