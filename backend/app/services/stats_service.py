@@ -137,6 +137,10 @@ async def get_timeseries(
                 sleep_quality_avg=_round_avg(
                     [e.sleep_quality for e in bucket if e.sleep_quality is not None]
                 ),
+                # Optional duration — average only days that recorded minutes (#653 B2 pattern).
+                sleep_minutes_avg=_round_avg(
+                    [e.sleep_minutes for e in bucket if e.sleep_minutes is not None]
+                ),
             )
         )
     return TimeseriesResponse(range=range_, points=points)

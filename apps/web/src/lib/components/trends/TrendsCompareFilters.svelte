@@ -9,18 +9,24 @@
   export let smoothingAvailable = false;
   export let metrics: Record<MetricKey, boolean>;
   export let selectedCategory: TagCategory | 'all' = 'all';
+  /** Phase 14: shift sleep series +1 day (Zeitversatz) — not Lag-1 Abfolge. */
+  export let sleepZeitversatz = false;
 
   const metricLabels: Record<MetricKey, string> = {
     mood_avg: 'trends.metric.mood',
     energy_avg: 'trends.metric.energy',
     stress_avg: 'trends.metric.stress',
     sleep_quality_avg: 'trends.metric.sleep_quality',
+    sleep_minutes_avg: 'trends.metric.sleep_minutes',
   };
   const dispatch = createEventDispatcher<{
     smoothingChange: { value: boolean };
     metricToggle: { metric: MetricKey };
     categoryChange: { category: TagCategory | 'all' };
+    sleepZeitversatzChange: { value: boolean };
   }>();
+
+  $: sleepSeriesEnabled = metrics.sleep_minutes_avg || metrics.sleep_quality_avg;
 
   $: smoothingOptions = [
     { id: 'raw', label: $_('trends.smoothing.raw'), testId: 'trends-smoothing-raw' },
@@ -52,6 +58,24 @@
       </label>
     {/each}
   </fieldset>
+  {#if sleepSeriesEnabled}
+    <label class="compare-filters__zeitversatz" data-testid="trends-sleep-zeitversatz">
+      <input
+        type="checkbox"
+        checked={sleepZeitversatz}
+        on:change={(event) =>
+          dispatch('sleepZeitversatzChange', { value: event.currentTarget.checked })}
+      />
+      <span>
+        <span class="compare-filters__zeitversatz-label"
+          >{$_('trends.compare.sleep_zeitversatz.toggle')}</span
+        >
+        <span class="compare-filters__zeitversatz-hint"
+          >{$_('trends.compare.sleep_zeitversatz.hint')}</span
+        >
+      </span>
+    </label>
+  {/if}
   <label class="compare-filters__select">
     <span>{$_('trends.category')}</span>
     <select
@@ -90,11 +114,28 @@
   }
 
   .compare-filters__metrics label,
+  .compare-filters__zeitversatz,
   .compare-filters__select {
     min-height: var(--screen-header-control-min-height, 44px);
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
+  }
+
+  .compare-filters__zeitversatz {
+    align-items: flex-start;
+    max-width: 22rem;
+  }
+
+  .compare-filters__zeitversatz-label {
+    display: block;
+    font-size: var(--text-sm);
+  }
+
+  .compare-filters__zeitversatz-hint {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
   }
 
   .compare-filters__select span {

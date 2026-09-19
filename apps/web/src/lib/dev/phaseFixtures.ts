@@ -219,6 +219,7 @@ function makeTimeseries(entries: EntryResponse[]): TimeseriesResponse {
         energy_avg: entry.energy,
         stress_avg: entry.stress,
         sleep_quality_avg: entry.sleep_quality ?? null,
+        sleep_minutes_avg: entry.sleep_minutes ?? null,
       })),
   };
 }

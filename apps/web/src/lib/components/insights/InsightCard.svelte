@@ -281,7 +281,18 @@
         return `${featureText} → ${target}`;
       }
       if (method === 'lag') {
-        const feature = payloadFeatureLabel(ins.payload?.feature) ?? ins.subject_label ?? 'Feature';
+        const featureRaw =
+          payloadFeatureLabel(ins.payload?.feature) ?? ins.subject_label ?? 'Feature';
+        const featureKey =
+          typeof ins.payload?.feature === 'object' && ins.payload?.feature
+            ? String((ins.payload.feature as { key?: string }).key ?? '')
+            : '';
+        const feature =
+          featureKey === 'sleep_minutes'
+            ? $_('trends.metric.sleep_minutes')
+            : featureKey === 'sleep_quality'
+              ? $_('trends.metric.sleep_quality')
+              : featureRaw;
         const lagDays = payloadNumber(ins, 'lag_days');
         const lagSuffix =
           lagDays !== null ? ` (+${lagDays} ${$_('insights.card.lag_days_unit')})` : '';
@@ -290,7 +301,7 @@
     }
     if (ins.metric === 'mood_sleep_minutes' || ins.metric === 'mood_sleep_quality') {
       const sleepKey = ins.metric === 'mood_sleep_minutes' ? 'sleep_minutes' : 'sleep_quality';
-      return `${metricLabel('mood')} → ${metricLabel(sleepKey)}`;
+      return `${metricLabel('mood')} → ${metricLabel(sleepKey)} (${$_('insights.signal.same_day_badge')})`;
     }
     const a = ins.metric ?? '?';
     const b = ins.subject_label ?? null;

@@ -205,6 +205,20 @@ def _lag_candidates(
                     "lag_profile": [
                         {"lag": point.lag_days, "r": point.correlation} for point in finding.profile
                     ],
+                    # Phase 14 / L8: two-denominator natural frequencies (median split).
+                    **(
+                        {
+                            "high_feature_n": finding.high_feature_n,
+                            "high_feature_good_count": finding.high_feature_good_count,
+                            "low_feature_n": finding.low_feature_n,
+                            "low_feature_good_count": finding.low_feature_good_count,
+                            "good_threshold": finding.good_threshold,
+                            "feature_split": "median",
+                        }
+                        if finding.high_feature_n is not None
+                        and finding.low_feature_n is not None
+                        else {}
+                    ),
                 },
                 generated_for_date=generated_for_date,
             )

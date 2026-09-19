@@ -29,6 +29,8 @@
   import { isNullAssociation, parseWithWithoutView } from '$lib/utils/withWithoutDistribution';
   import { parseSameSituationView } from '$lib/utils/sameSituation';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
+  import { isLagInsight, isSameDaySleepSpearman } from '$lib/utils/lagInsight';
+  import SignalLagEvidence from '$lib/components/insights/SignalLagEvidence.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
 
@@ -49,6 +51,8 @@
   $: withWithout = insight ? parseWithWithoutView(insight) : null;
   $: sameSituation = insight ? parseSameSituationView(insight) : null;
   $: isNull = insight ? isNullAssociation(insight) : false;
+  $: isLag = insight ? isLagInsight(insight) : false;
+  $: isSameDaySleep = insight ? isSameDaySleepSpearman(insight) : false;
   $: title =
     insight?.subject_label && insight.metric
       ? `${insight.subject_label} → ${insight.metric}`
@@ -133,6 +137,15 @@
       <p class="signal-page__statement">
         {stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')}
       </p>
+      {#if isLag}
+        <p class="signal-page__badge" data-testid="signal-zeitversatz-badge">
+          {$_('insights.signal.zeitversatz_badge')}
+        </p>
+      {:else if isSameDaySleep}
+        <p class="signal-page__badge" data-testid="signal-same-day-badge">
+          {$_('insights.signal.same_day_badge')}
+        </p>
+      {/if}
       <p class="signal-page__hint">{$_('insights.signal.non_causal')}</p>
       <InsightEvidence
         {maturity}
@@ -146,6 +159,12 @@
     {#if withWithout}
       <section class="signal-page__card">
         <WithWithoutDistribution view={withWithout} />
+      </section>
+    {/if}
+
+    {#if isLag}
+      <section class="signal-page__card">
+        <SignalLagEvidence {insight} />
       </section>
     {/if}
 
@@ -293,6 +312,16 @@
     margin: 0;
     font-size: var(--text-md, 1rem);
     line-height: 1.45;
+  }
+  .signal-page__badge {
+    margin: 0;
+    align-self: flex-start;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm, 0.35rem);
+    background: oklch(from var(--color-primary) l c h / 0.12);
+    color: var(--color-text);
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 600;
   }
   .signal-page__hint,
   .signal-page__means,

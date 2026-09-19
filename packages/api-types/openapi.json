@@ -1340,6 +1340,29 @@
             "title": "Id",
             "type": "string"
           },
+          "inferred_period": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InferredPeriod"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "logged_local_hour": {
+            "anyOf": [
+              {
+                "maximum": 23.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logged Local Hour"
+          },
           "mood_score": {
             "title": "Mood Score",
             "type": "integer"
@@ -2286,6 +2309,17 @@
         "title": "HomeSectionPreference",
         "type": "object"
       },
+      "InferredPeriod": {
+        "description": "First local write-time bucket (#892 Option 3). Not stored in ``slot``.",
+        "enum": [
+          "morning",
+          "daytime",
+          "evening",
+          "after_hours"
+        ],
+        "title": "InferredPeriod",
+        "type": "string"
+      },
       "InsightCuriosity": {
         "enum": [
           "work_life",
@@ -3171,6 +3205,8 @@
         "description": "Supported insight families.\n\nThe values are storage/API values; display wording is a frontend/i18n\nconcern and must stay neutral under the No-Gamification principle.",
         "enum": [
           "pointbiserial",
+          "null_association",
+          "belastung_pattern",
           "spearman",
           "weekday_pattern",
           "work_context_pattern",
@@ -3182,6 +3218,140 @@
         ],
         "title": "InsightType",
         "type": "string"
+      },
+      "InsightVerificationPoint": {
+        "description": "One day for G1 scatter / course on the signal detail surface.",
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "present": {
+            "title": "Present",
+            "type": "boolean"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "value",
+          "present"
+        ],
+        "title": "InsightVerificationPoint",
+        "type": "object"
+      },
+      "InsightVerificationResponse": {
+        "description": "With/without series for Layer-2 verification (Phase 7 / G1).",
+        "properties": {
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/InsightVerificationPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "range": {
+            "enum": [
+              "7d",
+              "30d",
+              "90d",
+              "1y"
+            ],
+            "title": "Range",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "subject_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Label"
+          },
+          "with_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "With Mean"
+          },
+          "with_n": {
+            "default": 0,
+            "title": "With N",
+            "type": "integer"
+          },
+          "with_se": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "With Se"
+          },
+          "without_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Without Mean"
+          },
+          "without_n": {
+            "default": 0,
+            "title": "Without N",
+            "type": "integer"
+          },
+          "without_se": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Without Se"
+          }
+        },
+        "required": [
+          "range",
+          "start_date",
+          "end_date",
+          "metric"
+        ],
+        "title": "InsightVerificationResponse",
+        "type": "object"
       },
       "InsightWorkerRunSummary": {
         "description": "Latest per-user insight generation attempt for Home / status UI.",
@@ -5485,6 +5655,17 @@
             "title": "Period Start",
             "type": "string"
           },
+          "sleep_minutes_avg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sleep Minutes Avg"
+          },
           "sleep_quality_avg": {
             "anyOf": [
               {
@@ -5596,6 +5777,11 @@
             "title": "Analytics Enabled",
             "type": "boolean"
           },
+          "belastung_overlay_enabled": {
+            "default": false,
+            "title": "Belastung Overlay Enabled",
+            "type": "boolean"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -5655,6 +5841,11 @@
               }
             ],
             "title": "Insight Sections"
+          },
+          "insight_sections_version": {
+            "default": 2,
+            "title": "Insight Sections Version",
+            "type": "integer"
           },
           "last_seen_digest_at": {
             "anyOf": [
@@ -5735,6 +5926,17 @@
               }
             ],
             "title": "Analytics Enabled"
+          },
+          "belastung_overlay_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Belastung Overlay Enabled"
           },
           "cycle_tracking_enabled": {
             "anyOf": [
@@ -5824,6 +6026,19 @@
               }
             ],
             "title": "Insight Sections"
+          },
+          "insight_sections_version": {
+            "anyOf": [
+              {
+                "maximum": 32.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insight Sections Version"
           },
           "last_seen_digest_at": {
             "anyOf": [
@@ -6258,7 +6473,8 @@
           "vacation",
           "sick",
           "weekend",
-          "travel"
+          "travel",
+          "other"
         ],
         "title": "WorkContext",
         "type": "string"
@@ -8515,6 +8731,24 @@
       "post": {
         "operationId": "create_entry_endpoint_api_v1_entries_post",
         "parameters": [
+          {
+            "description": "IANA timezone for write-time covariates",
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IANA timezone for write-time covariates",
+              "title": "Tz"
+            }
+          },
           {
             "in": "header",
             "name": "authorization",
@@ -11210,7 +11444,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Tag co-occurrence pairs for heatmap visualisation",
+        "summary": "Tag co-occurrence pairs gated by daily Lift/Fisher/FDR",
         "tags": [
           "insights"
         ]
@@ -11276,6 +11510,81 @@
           }
         },
         "summary": "Run scheduled insight generation for all eligible users (admin)",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/{insight_id}": {
+      "get": {
+        "operationId": "get_insight_endpoint_api_v1_insights__insight_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "insight_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Insight Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "access_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fetch a single insight by id",
         "tags": [
           "insights"
         ]
@@ -11361,6 +11670,91 @@
           }
         },
         "summary": "Event-aligned onset dates and timeseries for an insight",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/{insight_id}/verification": {
+      "get": {
+        "operationId": "get_insight_verification_endpoint_api_v1_insights__insight_id__verification_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "insight_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Insight Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "range",
+            "required": false,
+            "schema": {
+              "default": "90d",
+              "title": "Range",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "access_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightVerificationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "With/without day series for signal verification (Phase 7)",
         "tags": [
           "insights"
         ]

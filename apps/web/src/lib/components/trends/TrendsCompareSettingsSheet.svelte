@@ -28,12 +28,14 @@
   export let lag1Highlight = false;
   export let overlayAvailability: CompareOverlayAvailability = EMPTY_COMPARE_OVERLAY_AVAILABILITY;
   export let overlayHintDismissed = false;
+  export let sleepZeitversatz = false;
 
   const dispatch = createEventDispatcher<{
     close: void;
     smoothingChange: { value: boolean };
     metricToggle: { metric: MetricKey };
     categoryChange: { category: TagCategory | 'all' };
+    sleepZeitversatzChange: { value: boolean };
     layerChange: { showTags: boolean; showSymptoms: boolean; showWorkContexts: boolean };
     modeChange: { value: CompareMode };
     sortChange: { value: CompareSortMode };
@@ -72,8 +74,10 @@
       {smoothingAvailable}
       {metrics}
       {selectedCategory}
+      {sleepZeitversatz}
       on:smoothingChange={(event) => dispatch('smoothingChange', event.detail)}
       on:metricToggle={(event) => dispatch('metricToggle', event.detail)}
+      on:sleepZeitversatzChange={(event) => dispatch('sleepZeitversatzChange', event.detail)}
       on:categoryChange={(event) => dispatch('categoryChange', event.detail)}
     />
 

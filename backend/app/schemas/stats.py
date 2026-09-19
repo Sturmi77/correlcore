@@ -30,6 +30,8 @@ class TimeseriesPoint(BaseModel):
     energy_avg: float | None = None
     stress_avg: float | None = None
     sleep_quality_avg: float | None = None
+    # Phase 14 / L8: duration for Compare Zeitversatz vs next-day mood/energy.
+    sleep_minutes_avg: float | None = None
 
 
 class TimeseriesResponse(BaseModel):

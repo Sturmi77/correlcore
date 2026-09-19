@@ -212,17 +212,15 @@ abgedeckt" führt.
 - [x] Gate `ANALYTICS_MIN_ENTRIES_CHANGEPOINT = 60` unverändert; Composite aus Phase 8 bleibt die frühe sichtbare Fläche.
 - [x] Marker/Framing aus Phase 3/4 wiederverwendet (ISO-Daten, `phase_transition`, lokalisierte Aussage); nicht im Belastungs-Overlay.
 
-## Phase 14 — L8: Schlaf gegen den Folgetag
+## Phase 14 — L8: Schlaf gegen den Folgetag ✅
 
 Auch hier war die Einschätzung zu pessimistisch: die **Erkennung existiert schon**, es fehlt die
 Darstellung.
 
-- `run_lag_analysis` in [multivariate_analytics.py](../../backend/app/services/multivariate_analytics.py) verschiebt Prädiktoren per `shift(lag_days)` über Lags 1–7 und behandelt Schlaf ausdrücklich als Prädiktor, nie als Ziel („prior sleep explains mood/energy", Zeilen 431–454). Der Zusammenhang „Schlaf heute Nacht → Stimmung morgen" ist also bereits ein Insight, mit FDR-Korrektur.
-- Was fehlt, ist dreierlei:
-  - **Die Serie.** Die Timeseries-API liefert nur `sleep_quality_avg` — `sleep_minutes` ist kein Timeseries-Key. Für einen Vergleich auf der Compare-Achse muss die Dauer dazu; das ist eine Schema-Änderung mit OpenAPI-Regen (`export_openapi.py`, dann `pnpm --filter @correlcore/api-types generate`).
-  - **Der Ort.** Die Lag-Aussage bekommt ihr Zuhause im Signal-Detail aus Phase 7, mit der Lag-Achse und den zwei Nennern. `_sleep_spearman_candidates` in [correlation.py](../../backend/app/services/insights/correlation.py) bleibt daneben, ist aber ausdrücklich **taggleich** — die beiden dürfen in der UI nicht denselben Namen tragen (das ist D4 in der Anwendung).
-  - **Die optionale Compare-Geste.** Die Schlafserie um einen Tag versetzt anzeigen, als benannter, beschrifteter Modus — keine stille Transformation. Beschriftung „Zeitversatz", nicht „Abfolge".
-- Wird durch Phase 8 nicht billiger als gedacht, aber ergänzt: `inferred_period` liefert zusätzlich „Erst-Log nach 22:00" als Kovariate neben der Schlafdauer.
+- [x] Timeseries liefert `sleep_minutes_avg` (nullable, nur geloggte Tage); OpenAPI + api-types regen; Chart-Normalisierung 0–720 min → 1–5-Domäne.
+- [x] Signal-Detail: Lag-Achse (`lag_profile`) + zwei Nenner (Median-Split `high_*` / `low_*` im Lag-Payload); D4-Badges „Zeitversatz“ vs. „Derselbe Kalendertag“ für Spearman.
+- [x] Compare: beschrifteter Modus **Zeitversatz (+1 Tag bei Schlaf)** — keine stille Verschiebung, getrennt von Lag-1 **Abfolge**.
+- [x] `_sleep_spearman_candidates` bleibt taggleich und teilt nicht den Zeitversatz-Namen.
 
 ## Abschluss
 

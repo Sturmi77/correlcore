@@ -120,6 +120,7 @@ def make_entry(
     stress: int = 3,
     cycle_day: int | None = None,
     sleep_quality: int | None = None,
+    sleep_minutes: int | None = None,
     source: EntrySource = EntrySource.DIRECT,
     work_context: WorkContext = WorkContext.HOMEOFFICE,
     note: str | None = None,
@@ -139,6 +140,7 @@ def make_entry(
     e.stress = stress
     e.cycle_day = cycle_day
     e.sleep_quality = sleep_quality
+    e.sleep_minutes = sleep_minutes
     e.source = source
     e.work_context = work_context
     # Issue #26: ``note`` on the model maps to ``note_enc`` storage. In

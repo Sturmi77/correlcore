@@ -651,6 +651,10 @@
         "summary": "{from} then {to}: {forward} of {forwardTotal} · {to} then {from}: {reverse} of {reverseTotal}",
         "swatch": "Lag-1 — dashed line"
       },
+      "sleep_zeitversatz": {
+        "toggle": "Time offset (+1 day on sleep)",
+        "hint": "Show last night’s sleep next to today’s mood/energy — not a sequence highlight."
+      },
       "frequency_note": "Counts cover the selected period only.",
       "overlay_group_label": "Highlight",
       "overlay_hint_lead": "Two rows pinned.",
@@ -1648,6 +1652,12 @@
       "loading": "Loading signal…",
       "error": "This signal could not be loaded.",
       "non_causal": "An association in your entries — not a cause.",
+      "zeitversatz_badge": "Time offset (not same calendar day)",
+      "same_day_badge": "Same calendar day",
+      "lag_heading": "Association by delay",
+      "lag_hint": "Bars show correlation strength for each delay in days. The highlighted bar is the selected peak — not a forecast.",
+      "lag_freq": "After higher {feature}: good days on {highGood} of {highN} · after lower: {lowGood} of {lowN} (outcome +{days} days).",
+      "lag_feature_fallback": "feature",
       "same_situation_show": "Same work situation ▾",
       "same_situation_hide": "Same work situation ▴",
       "same_work_context_freq": "Also on days with the same work situation ({context}): good on {withGood} of {withN} with {subject} · {withoutGood} of {withoutN} without",

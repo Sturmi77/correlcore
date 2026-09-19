@@ -11,6 +11,8 @@ export interface TimeseriesPoint {
   energy_avg: number | null;
   stress_avg: number | null;
   sleep_quality_avg: number | null;
+  /** Phase 14 — optional duration series for Compare Zeitversatz. */
+  sleep_minutes_avg?: number | null;
 }
 
 export interface TimeseriesResponse {

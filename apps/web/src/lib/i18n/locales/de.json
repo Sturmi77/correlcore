@@ -651,6 +651,10 @@
         "summary": "{from} dann {to}: {forward} von {forwardTotal} · {to} dann {from}: {reverse} von {reverseTotal}",
         "swatch": "Lag-1 — gestrichelte Linie"
       },
+      "sleep_zeitversatz": {
+        "toggle": "Zeitversatz (+1 Tag bei Schlaf)",
+        "hint": "Zeigt den Schlaf der vorherigen Nacht neben Stimmung/Energie von heute — kein Sequenz-Highlight."
+      },
       "frequency_note": "Zahlen gelten nur fuer den gewaehlten Zeitraum.",
       "overlay_group_label": "Hervorheben",
       "overlay_hint_lead": "Zwei Zeilen gepinnt.",
@@ -1648,6 +1652,12 @@
       "loading": "Signal wird geladen…",
       "error": "Dieses Signal konnte nicht geladen werden.",
       "non_causal": "Ein Zusammenhang in deinen Eintraegen — keine Ursache.",
+      "zeitversatz_badge": "Zeitversatz (nicht derselbe Kalendertag)",
+      "same_day_badge": "Derselbe Kalendertag",
+      "lag_heading": "Zusammenhang nach Verzoegerung",
+      "lag_hint": "Balken zeigen die Korrelationsstaerke je Verzoegerung in Tagen. Der hervorgehobene Balken ist der gewaehlte Peak — keine Prognose.",
+      "lag_freq": "Nach hoeherem {feature}: gute Tage an {highGood} von {highN} · nach niedrigerem: {lowGood} von {lowN} (Ergebnis +{days} Tage).",
+      "lag_feature_fallback": "Merkmal",
       "same_situation_show": "Gleiche Arbeitssituation ▾",
       "same_situation_hide": "Gleiche Arbeitssituation ▴",
       "same_work_context_freq": "Auch an Tagen mit derselben Arbeitssituation ({context}): gut an {withGood} von {withN} mit {subject} · {withoutGood} von {withoutN} ohne",

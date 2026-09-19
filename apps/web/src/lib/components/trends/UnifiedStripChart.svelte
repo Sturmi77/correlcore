@@ -19,13 +19,13 @@
   import { _ } from 'svelte-i18n';
   import type { TimeseriesPoint } from '$lib/api/stats';
   import {
+    chartNormalizeTimeseriesValue,
     compareDailyAxisLayout,
     dailyAxisXForIndex,
     dailyPlotContentWidth,
     type DailyAxisLayout,
     type MetricKey,
   } from '$lib/utils/charts';
-  import { displayTimeseriesValue } from '$lib/utils/metrics';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
   import { StripCellMapper } from '$lib/charts/adapter';
   import {
@@ -42,6 +42,7 @@
     energy_avg: true,
     stress_avg: true,
     sleep_quality_avg: true,
+    sleep_minutes_avg: false,
   };
   export let loading = false;
   export let axisDates: string[] = [];
@@ -104,6 +105,11 @@
       label: 'trends.metric.sleep_quality',
       mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
     },
+    {
+      key: 'sleep_minutes_avg',
+      label: 'trends.metric.sleep_minutes',
+      mapper: new StripCellMapper({ midpoint: 3, span: 4 }),
+    },
   ];
 
   $: visibleMetrics = metrics.filter((m) => enabled[m.key]);
@@ -145,7 +151,9 @@
     return meanBucketMetric((date) => {
       const point = byDate.get(date);
       const raw = point ? point[metric.key] : null;
-      return raw === null || raw === undefined ? null : displayTimeseriesValue(metric.key, raw);
+      return raw === null || raw === undefined
+        ? null
+        : chartNormalizeTimeseriesValue(metric.key, raw);
     }, bucket);
   }
 
@@ -166,7 +174,9 @@
         const point = byDate.get(key) ?? null;
         const value = point ? point[metric.key] : null;
         display =
-          value === null || value === undefined ? null : displayTimeseriesValue(metric.key, value);
+          value === null || value === undefined
+            ? null
+            : chartNormalizeTimeseriesValue(metric.key, value);
         raw = value ?? null;
       }
       const encoded = metric.mapper.encode(display ?? NaN);

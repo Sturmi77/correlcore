@@ -78,6 +78,11 @@
     EMPTY_COMPARE_OVERLAY_AVAILABILITY,
     type CompareOverlayAvailability,
   } from '$lib/utils/compareOverlayAvailability';
+  import {
+    applySleepZeitversatz,
+    readSleepZeitversatzPreference,
+    writeSleepZeitversatzPreference,
+  } from '$lib/utils/sleepZeitversatz';
 
   type TrendTab = 'compare' | 'habits';
 
@@ -113,6 +118,7 @@
     energy_avg: true,
     stress_avg: true,
     sleep_quality_avg: true,
+    sleep_minutes_avg: false,
   };
   let loading = false;
   let trendsLoaded = false;
@@ -140,6 +146,7 @@
   let compareLag1Highlight = false;
   let compareOverlayHintDismissed = false;
   let compareOverlayAvailability: CompareOverlayAvailability = EMPTY_COMPARE_OVERLAY_AVAILABILITY;
+  let sleepZeitversatz = false;
   let mobileMedia: MediaQueryList | null = null;
   let activeDevFixtureKey = '';
 
@@ -405,13 +412,20 @@
   // daily shape stays readable (see smoothingWindowDays).
   $: smoothingAvailable = true;
   $: displayRange = (activeTab === 'compare' ? 'year' : range) as TimeseriesRange;
-  $: displayTimeseries =
-    timeseries && smoothing && smoothingAvailable
-      ? {
-          ...timeseries,
-          points: smoothTimeseriesPoints(timeseries.points, smoothingWindowDays(displayRange)),
-        }
-      : timeseries;
+  $: displayTimeseries = (() => {
+    const base =
+      timeseries && smoothing && smoothingAvailable
+        ? {
+            ...timeseries,
+            points: smoothTimeseriesPoints(timeseries.points, smoothingWindowDays(displayRange)),
+          }
+        : timeseries;
+    if (!base) return base;
+    return {
+      ...base,
+      points: applySleepZeitversatz(base.points, sleepZeitversatz),
+    };
+  })();
   $: topInsight = $insightStore.latest;
   $: changepointMarkers = changepointInsightsToMarkers($insightStore.insights, $_, {
     axisStart: displayTimeseries?.points?.[0]?.period_start,
@@ -425,6 +439,9 @@
     compareCoincidenceHighlight = readCompareCoincidenceHighlight();
     compareLag1Highlight = readCompareLag1Highlight();
     compareOverlayHintDismissed = readCompareOverlayHintDismissed();
+    sleepZeitversatz = readSleepZeitversatzPreference(
+      typeof localStorage !== 'undefined' ? localStorage : null
+    );
     restoreCompareLayers();
     mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
     const updateCompactTrends = () => {
@@ -488,8 +505,16 @@
                 {smoothingAvailable}
                 {metrics}
                 {selectedCategory}
+                {sleepZeitversatz}
                 on:smoothingChange={(event) => setSmoothing(event.detail.value)}
                 on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+                on:sleepZeitversatzChange={(event) => {
+                  sleepZeitversatz = event.detail.value;
+                  writeSleepZeitversatzPreference(
+                    typeof localStorage !== 'undefined' ? localStorage : null,
+                    event.detail.value
+                  );
+                }}
                 on:categoryChange={(event) => {
                   selectedCategory = event.detail.category;
                   void loadTrends();
@@ -559,6 +584,7 @@
         {smoothingAvailable}
         {metrics}
         {selectedCategory}
+        {sleepZeitversatz}
         showTags={showTagRows}
         showSymptoms={showSymptomRows}
         showWorkContexts={showWorkContextRows}
@@ -584,6 +610,13 @@
         }}
         on:smoothingChange={(event) => setSmoothing(event.detail.value)}
         on:metricToggle={(event) => toggleMetric(event.detail.metric)}
+        on:sleepZeitversatzChange={(event) => {
+          sleepZeitversatz = event.detail.value;
+          writeSleepZeitversatzPreference(
+            typeof localStorage !== 'undefined' ? localStorage : null,
+            event.detail.value
+          );
+        }}
         on:categoryChange={(event) => {
           selectedCategory = event.detail.category;
           void loadTrends();

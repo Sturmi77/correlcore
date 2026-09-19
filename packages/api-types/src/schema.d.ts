@@ -1007,7 +1007,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Tag co-occurrence pairs for heatmap visualisation */
+        /** Tag co-occurrence pairs gated by daily Lift/Fisher/FDR */
         get: operations["get_tag_cooccurrence_endpoint_api_v1_insights_tag_cooccurrence_get"];
         put?: never;
         post?: never;
@@ -1034,6 +1034,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/insights/{insight_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single insight by id */
+        get: operations["get_insight_endpoint_api_v1_insights__insight_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/insights/{insight_id}/event-windows": {
         parameters: {
             query?: never;
@@ -1043,6 +1060,23 @@ export interface paths {
         };
         /** Event-aligned onset dates and timeseries for an insight */
         get: operations["get_insight_event_windows_endpoint_api_v1_insights__insight_id__event_windows_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/{insight_id}/verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** With/without day series for signal verification (Phase 7) */
+        get: operations["get_insight_verification_endpoint_api_v1_insights__insight_id__verification_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2064,6 +2098,9 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            inferred_period?: components["schemas"]["InferredPeriod"] | null;
+            /** Logged Local Hour */
+            logged_local_hour?: number | null;
             /** Mood Score */
             mood_score: number;
             /** Note */
@@ -2448,6 +2485,12 @@ export interface components {
             /** Key */
             key: string;
         };
+        /**
+         * InferredPeriod
+         * @description First local write-time bucket (#892 Option 3). Not stored in ``slot``.
+         * @enum {string}
+         */
+        InferredPeriod: "morning" | "daytime" | "evening" | "after_hours";
         /**
          * InsightCuriosity
          * @enum {string}
@@ -2844,7 +2887,67 @@ export interface components {
          *     concern and must stay neutral under the No-Gamification principle.
          * @enum {string}
          */
-        InsightType: "pointbiserial" | "spearman" | "weekday_pattern" | "work_context_pattern" | "weekday_context_pattern" | "symptom_cluster" | "symptom_mood_association" | "symptom_tag_cooccurrence" | "changepoint";
+        InsightType: "pointbiserial" | "null_association" | "belastung_pattern" | "spearman" | "weekday_pattern" | "work_context_pattern" | "weekday_context_pattern" | "symptom_cluster" | "symptom_mood_association" | "symptom_tag_cooccurrence" | "changepoint";
+        /**
+         * InsightVerificationPoint
+         * @description One day for G1 scatter / course on the signal detail surface.
+         */
+        InsightVerificationPoint: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Present */
+            present: boolean;
+            /** Value */
+            value: number;
+        };
+        /**
+         * InsightVerificationResponse
+         * @description With/without series for Layer-2 verification (Phase 7 / G1).
+         */
+        InsightVerificationResponse: {
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /** Metric */
+            metric: string;
+            /** Points */
+            points?: components["schemas"]["InsightVerificationPoint"][];
+            /**
+             * Range
+             * @enum {string}
+             */
+            range: "7d" | "30d" | "90d" | "1y";
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Subject Label */
+            subject_label?: string | null;
+            /** With Mean */
+            with_mean?: number | null;
+            /**
+             * With N
+             * @default 0
+             */
+            with_n: number;
+            /** With Se */
+            with_se?: number | null;
+            /** Without Mean */
+            without_mean?: number | null;
+            /**
+             * Without N
+             * @default 0
+             */
+            without_n: number;
+            /** Without Se */
+            without_se?: number | null;
+        };
         /**
          * InsightWorkerRunSummary
          * @description Latest per-user insight generation attempt for Home / status UI.
@@ -3818,6 +3921,8 @@ export interface components {
              * Format: date
              */
             period_start: string;
+            /** Sleep Minutes Avg */
+            sleep_minutes_avg?: number | null;
             /** Sleep Quality Avg */
             sleep_quality_avg?: number | null;
             /** Stress Avg */
@@ -3864,6 +3969,11 @@ export interface components {
             /** Analytics Enabled */
             analytics_enabled: boolean;
             /**
+             * Belastung Overlay Enabled
+             * @default false
+             */
+            belastung_overlay_enabled: boolean;
+            /**
              * Created At
              * Format: date-time
              */
@@ -3894,6 +4004,11 @@ export interface components {
             home_weekday_day_trend_enabled: boolean;
             /** Insight Sections */
             insight_sections?: components["schemas"]["InsightSectionPreference"][] | null;
+            /**
+             * Insight Sections Version
+             * @default 2
+             */
+            insight_sections_version: number;
             /** Last Seen Digest At */
             last_seen_digest_at?: string | null;
             /** Last Seen Insight At */
@@ -3927,6 +4042,8 @@ export interface components {
         UserPreferencesUpdate: {
             /** Analytics Enabled */
             analytics_enabled?: boolean | null;
+            /** Belastung Overlay Enabled */
+            belastung_overlay_enabled?: boolean | null;
             /** Cycle Tracking Enabled */
             cycle_tracking_enabled?: boolean | null;
             /** Digest Enabled */
@@ -3941,6 +4058,8 @@ export interface components {
             home_weekday_day_trend_enabled?: boolean | null;
             /** Insight Sections */
             insight_sections?: components["schemas"]["InsightSectionPreference"][] | null;
+            /** Insight Sections Version */
+            insight_sections_version?: number | null;
             /** Last Seen Digest At */
             last_seen_digest_at?: string | null;
             /** Last Seen Insight At */
@@ -4084,7 +4203,7 @@ export interface components {
          * @description User's working/life context for the day (DESIGN_DOCUMENT.md §2.7).
          * @enum {string}
          */
-        WorkContext: "homeoffice" | "office" | "vacation" | "sick" | "weekend" | "travel";
+        WorkContext: "homeoffice" | "office" | "vacation" | "sick" | "weekend" | "travel" | "other";
         /** WorkContextSummaryItem */
         WorkContextSummaryItem: {
             /** Energy Avg */
@@ -5204,7 +5323,10 @@ export interface operations {
     };
     create_entry_endpoint_api_v1_entries_post: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description IANA timezone for write-time covariates */
+                tz?: string | null;
+            };
             header?: {
                 authorization?: string | null;
             };
@@ -6467,6 +6589,41 @@ export interface operations {
             };
         };
     };
+    get_insight_endpoint_api_v1_insights__insight_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                insight_id: string;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_insight_event_windows_endpoint_api_v1_insights__insight_id__event_windows_get: {
         parameters: {
             query?: {
@@ -6491,6 +6648,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InsightEventWindowsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_insight_verification_endpoint_api_v1_insights__insight_id__verification_get: {
+        parameters: {
+            query?: {
+                range?: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                insight_id: string;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightVerificationResponse"];
                 };
             };
             /** @description Validation Error */
