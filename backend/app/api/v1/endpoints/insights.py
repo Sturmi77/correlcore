@@ -283,7 +283,7 @@ async def list_insight_history_endpoint(
 @router.get(
     "/tag-cooccurrence",
     response_model=TagCooccurrenceResponse,
-    summary="Tag co-occurrence pairs for heatmap visualisation",
+    summary="Tag co-occurrence pairs gated by daily Lift/Fisher/FDR",
 )
 @limiter.limit("120/minute")
 async def get_tag_cooccurrence_endpoint(

@@ -184,16 +184,11 @@ Der eine echte Neubau. Zweistufig, damit die Evidenzsprache validiert wird, bevo
 - [x] Store-Listing (#720) und Data-Safety-Mapping (#721) auf das Register abgestimmt — kein Burnout-Produktclaim; Belastung-Overlay deklariert keine neuen Play-Datentypen.
 - [x] Leichte Landing-i18n (Arbeitssituation im Hero-Subtitle) + `noClinicalProductCopy.test.ts`.
 
-## Phase 10 — O1: eine Kookkurrenz-Statistik statt drei (Backend-Gate)
+## Phase 10 — O1: eine Kookkurrenz-Statistik statt drei (Backend-Gate) ✅
 
-Die Copy-Hälfte ist in Phase 1 erledigt. Hier folgt die Statistik-Hälfte, und die ist eine echte
-Asymmetrie: Symptom×Tag ist die statistisch ehrlichste Fläche der App, Tag×Tag die naivste.
-
-- Ist-Stand Symptom×Tag ([symptom_analytics.py](../../backend/app/services/symptom_analytics.py)): Lift (`observed / expected`, Zeilen 349–351), Fisher-exakt, phi, jaccard, Benjamini-Hochberg mit `SYMPTOM_FDR_ALPHA = 0.10`, plus Confounder-Erkennung über Wochentag, Arbeitssituation und Kalenderkontext aus [weekday_confounder.py](../../backend/app/services/weekday_confounder.py).
-- Ist-Stand Tag×Tag (`get_tag_cooccurrence` in [stats_service.py](../../backend/app/services/stats_service.py), Zeilen 465–548): reine Zählung plus zwei Prozentwerte. Kein Lift, kein Signifikanztest, keine Confounder-Flags, und die Aggregation läuft auf Entry-/Slot-Ebene statt tagesweise dedupliziert.
-- Also: Lift, Fisher/FDR und die Confounder-Prüfung für Tag×Tag nachziehen. `_cooccurrence_stats` und `weekday_confounder.py` sind wiederverwendbar; nicht wiederverwendbar ist die Tagesaggregation — `_dedupe_daily_symptom_entries` hat kein Tag-Pendant.
-- Zweck ist bewusst **nicht** eine dritte Zahl in der Oberfläche, sondern das Gate: welches Paar überhaupt gezeigt wird. `min_count` steht heute auf Default 2 ohne jede Signifikanzprüfung — das ist der Grund, warum „Sport + Spaziergang: 12" ohne Einordnung erscheinen kann. Lift und FDR entscheiden über die Auswahl und das Ranking, die Anzeige bleibt bei den zwei Nennern.
-- Achtung Mehrfachtests: die beiden Familien nutzen unterschiedliche Alphas (`SYMPTOM_FDR_ALPHA = 0.10` gegen `FDR_ALPHA = 0.05` in [insights/shared.py](../../backend/app/services/insights/shared.py)). Eine dritte Familie darf das nicht weiter zersplittern — Alpha bewusst wählen und dokumentieren.
+- [x] Tag×Tag nutzt dieselbe Familie wie Symptom×Tag: tägliche Deduplizierung, Lift, Fisher-exakt, BH-FDR mit `COOCCURRENCE_FDR_ALPHA = 0.10` (bewusst **nicht** `insights/shared.FDR_ALPHA = 0.05`).
+- [x] `_cooccurrence_stats` ist signal-agnostisch; `heatmap_tag_tag_associations` / `compute_tag_tag_associations` in [`symptom_analytics.py`](../../backend/app/services/symptom_analytics.py); `get_tag_cooccurrence` gated in [`stats_service.py`](../../backend/app/services/stats_service.py).
+- [x] Anzeige bleibt `count` + zwei Nenner (`pct_of_a` / `pct_of_b`); Lift/FDR entscheiden nur, welche Paare erscheinen. Confounder-Checks laufen mit (weekday / work_context / calendar), ohne neues Response-Feld.
 
 ## Phase 11 — O3: Tagespräsenz konsolidieren
 
