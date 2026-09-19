@@ -38,7 +38,9 @@ function lagInsight(overrides: Partial<InsightResponse> = {}): InsightResponse {
       good_threshold: 4,
     },
     generated_for_date: '2026-05-01',
+    generated_at: '2026-05-01T00:00:00Z',
     created_at: '2026-05-01T00:00:00Z',
+    updated_at: '2026-05-01T00:00:00Z',
     ...overrides,
   };
 }

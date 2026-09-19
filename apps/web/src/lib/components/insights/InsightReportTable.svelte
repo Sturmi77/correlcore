@@ -144,9 +144,9 @@
   }
 
   .report-table__effect-bar {
-    width: calc(var(--effect) * 3.5rem);
+    width: calc(var(--effect, 0) * 3.5rem);
     height: 0.55rem;
-    border-radius: 2px;
+    border-radius: var(--radius-sm); /* token-exempt: 2px micro-bar; sm is closest token */
     background: var(--color-text-muted);
     flex-shrink: 0;
   }

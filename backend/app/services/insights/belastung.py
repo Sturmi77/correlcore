@@ -117,9 +117,7 @@ def _belastung_candidates(
 
     def after_hours_count(rows: Sequence[AnalyticsEntry]) -> int:
         return sum(
-            1
-            for row in rows
-            if getattr(row, "inferred_period", None) == InferredPeriod.AFTER_HOURS
+            1 for row in rows if getattr(row, "inferred_period", None) == InferredPeriod.AFTER_HOURS
         )
 
     recent_stress = [float(row.stress) for row in recent]
@@ -154,7 +152,7 @@ def _belastung_candidates(
     if stress_prior is not None:
         effect += stress_recent - stress_prior
     if energy_prior is not None:
-        effect += (energy_prior - energy_recent)
+        effect += energy_prior - energy_recent
     if prior:
         effect += (fatigue_recent / len(recent)) - (fatigue_prior / len(prior))
     effect = round(effect / 3, 4)
@@ -174,14 +172,10 @@ def _belastung_candidates(
     )
 
     work_intense_days = (
-        sum(1 for row in recent if work_intense_id and work_intense_id in row.tag_ids)
-        if work_intense_id
-        else 0
+        sum(1 for row in recent if work_intense_id in row.tag_ids) if work_intense_id else 0
     )
     achievement_days = (
-        sum(1 for row in recent if achievement_id and achievement_id in row.tag_ids)
-        if achievement_id
-        else 0
+        sum(1 for row in recent if achievement_id in row.tag_ids) if achievement_id else 0
     )
 
     confidence = _confidence(max(0.2, abs(effect)), 0.2, tier)

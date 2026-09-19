@@ -126,7 +126,8 @@ def _same_layout(
     if len(left) != len(right):
         return False
     return all(
-        a["key"] == b["key"] and a["enabled"] == b["enabled"] for a, b in zip(left, right, strict=True)
+        a["key"] == b["key"] and a["enabled"] == b["enabled"]
+        for a, b in zip(left, right, strict=True)
     )
 
 

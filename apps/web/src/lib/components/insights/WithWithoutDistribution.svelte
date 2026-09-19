@@ -150,7 +150,8 @@
   .ww__bar {
     flex: 1;
     min-width: 0;
-    border-radius: 2px 2px 0 0;
+    /* token-exempt: 2px micro-bar cap; sm is the closest token */
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   }
   .ww__bar--with {
     background: var(--color-primary);
@@ -162,7 +163,7 @@
     display: flex;
     justify-content: space-between;
     margin-left: 8rem;
-    font-size: 0.65rem;
+    font-size: var(--text-2xs);
     color: var(--color-text-faint);
     font-variant-numeric: tabular-nums;
   }

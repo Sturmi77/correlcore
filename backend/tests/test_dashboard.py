@@ -12,6 +12,7 @@ from app.main import app
 from app.models.entry import WorkContext
 from app.models.insight import InsightTier
 from app.models.user import User
+from app.models.user_preference import UserPreference
 from app.schemas.dashboard import DashboardSummaryResponse
 from app.services.dashboard_service import (
     TREND_DELTA_THRESHOLD,
@@ -24,7 +25,6 @@ from app.services.dashboard_service import (
     weighted_window_avg,
 )
 from app.services.insight_engine import confidence_tier_for_sample
-from app.models.user_preference import UserPreference
 from tests.conftest import make_user
 
 

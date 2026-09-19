@@ -6,6 +6,8 @@
 import type { InsightResponse } from '$lib/api/insights';
 import type { EventMarker } from '$lib/components/trends/EventMarkerLayer.svelte';
 
+type TranslateFn = (key: string, opts?: { values?: Record<string, string | number> }) => string;
+
 function asString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
@@ -39,7 +41,7 @@ export function changepointSeries(insight: InsightResponse): ChangepointSeries |
 /** Localized Layer-1 statement from payload (avoids raw English backend string). */
 export function formatChangepointStatement(
   insight: InsightResponse,
-  t: (key: string, opts?: { values?: Record<string, unknown> }) => string
+  t: TranslateFn
 ): string | null {
   if (!isChangepointInsight(insight)) return null;
   const payload = insight.payload ?? {};
@@ -64,7 +66,7 @@ export function formatChangepointStatement(
 
 export function changepointInsightsToMarkers(
   insights: readonly InsightResponse[],
-  t: (key: string, opts?: { values?: Record<string, unknown> }) => string,
+  t: TranslateFn,
   options: { axisStart?: string; axisEnd?: string } = {}
 ): EventMarker[] {
   const { axisStart, axisEnd } = options;

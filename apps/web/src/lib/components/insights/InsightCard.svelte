@@ -407,7 +407,7 @@
     {/if}
 
     {#if withWithoutView}
-      <p class="insight-card__freq" data-testid="insight-card-freq">
+      <p class="insight-card__freq" data-testid="insight-card-with-without-freq">
         {$_('insights.card.with_without_freq', {
           values: {
             withGood: withWithoutView.withGood,
@@ -672,15 +672,15 @@
     border-style: dashed;
   }
   .insight-card--null {
-    border-left-color: var(--color-success, #2f6f4e);
+    border-left-color: var(--color-success);
   }
   .insight-card__null-badge {
     margin: 0;
     align-self: flex-start;
     padding: 0.15rem 0.5rem;
     border-radius: var(--radius-sm, 0.35rem);
-    border: 1px solid color-mix(in srgb, var(--color-success, #2f6f4e) 45%, var(--color-border));
-    color: var(--color-success, #2f6f4e);
+    border: 1px solid color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+    color: var(--color-success);
     font-size: var(--text-xs, 0.75rem);
     font-weight: 600;
   }

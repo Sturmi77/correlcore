@@ -96,9 +96,7 @@ async def create_entry_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> EntryResponse:
     try:
-        entry = await create_entry(
-            db, user_id=user.id, payload=payload, client_timezone=tz
-        )
+        entry = await create_entry(db, user_id=user.id, payload=payload, client_timezone=tz)
     except EntryDateOutOfRangeError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -251,9 +249,6 @@ async def get_symptom_heatmap_endpoint(
         start_date=start_date,
         end_date=end_date,
     )
-
-
-
 
 
 @router.get(

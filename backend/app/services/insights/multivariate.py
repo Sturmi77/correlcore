@@ -215,8 +215,7 @@ def _lag_candidates(
                             "good_threshold": finding.good_threshold,
                             "feature_split": "median",
                         }
-                        if finding.high_feature_n is not None
-                        and finding.low_feature_n is not None
+                        if finding.high_feature_n is not None and finding.low_feature_n is not None
                         else {}
                     ),
                 },

@@ -12,6 +12,7 @@ import pytest
 from app.core.config import settings
 from app.models.entry import WorkContext
 from app.models.insight import InsightTier, InsightType
+from app.models.user_preference import UserPreference
 from app.services.insight_engine import (
     AnalyticsEntry,
     InsightLockTimeoutError,
@@ -50,6 +51,20 @@ def _row_result(values: list[tuple[object, ...]]) -> MagicMock:
 def _scalar_result_single(value: object) -> MagicMock:
     result = MagicMock()
     result.scalar.return_value = value
+    return result
+
+
+def _preferences_result(
+    *,
+    analytics_enabled: bool = True,
+    belastung_overlay_enabled: bool = False,
+) -> MagicMock:
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = UserPreference(
+        user_id=uuid.uuid4(),
+        analytics_enabled=analytics_enabled,
+        belastung_overlay_enabled=belastung_overlay_enabled,
+    )
     return result
 
 
@@ -711,6 +726,7 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
             _scalar_result(entries),
             _row_result(tag_rows),
             _row_result([]),
+            _preferences_result(),
             MagicMock(),  # delete prior insights for the day
         ]
     )
@@ -719,13 +735,13 @@ async def test_generate_and_store_insights_replaces_rows_for_day() -> None:
     stored = await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
 
     assert stored
-    assert db.execute.await_count == 5
+    assert db.execute.await_count == 6
     lock_stmt = db.execute.await_args_list[0].args[0]
     assert "pg_try_advisory_xact_lock" in str(lock_stmt)
     load_stmt = db.execute.await_args_list[1].args[0]
     assert "entries.entry_date < :entry_date_1" in str(load_stmt.whereclause)
     assert "ORDER BY entries.entry_date ASC" in str(load_stmt)
-    delete_stmt = db.execute.await_args_list[4].args[0]
+    delete_stmt = db.execute.await_args_list[5].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert db.add.call_count == len(stored)
     assert db.flush.await_count == 1
@@ -984,6 +1000,7 @@ async def test_generate_and_store_insights_survives_undecryptable_note() -> None
             _scalar_result(poison),
             _row_result(tag_rows),
             _row_result([]),
+            _preferences_result(),
             MagicMock(),
         ]
     )

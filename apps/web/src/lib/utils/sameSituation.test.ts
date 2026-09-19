@@ -5,8 +5,9 @@ import { parseSameSituationView } from './sameSituation';
 function baseInsight(payload: Record<string, unknown> = {}): InsightResponse {
   return {
     id: 'i1',
+    user_id: 'u1',
     insight_type: 'pointbiserial',
-    tier: 'provisional',
+    tier: 'developing',
     metric: 'mood_score',
     subject_type: 'tag',
     subject_id: 't1',
@@ -28,7 +29,9 @@ function baseInsight(payload: Record<string, unknown> = {}): InsightResponse {
       ...payload,
     },
     generated_for_date: '2026-05-01',
+    generated_at: '2026-05-01T00:00:00Z',
     created_at: '2026-05-01T00:00:00Z',
+    updated_at: '2026-05-01T00:00:00Z',
   };
 }
 

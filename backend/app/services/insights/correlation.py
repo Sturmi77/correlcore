@@ -45,6 +45,8 @@ from app.services.insights.shared import (
     is_work_context_biased,
 )
 from app.services.weekday_confounder import (
+    MetricAdjustmentResult,
+    SameSituationFrequencies,
     evaluate_metric_association_calendar_context,
     evaluate_metric_association_weekday,
     is_continuous_association_calendar_context_confounded,
@@ -268,6 +270,9 @@ def _pointbiserial_candidates(
             bool,
             bool,
             bool,
+            MetricAdjustmentResult,
+            MetricAdjustmentResult,
+            SameSituationFrequencies,
         ]
     ] = []
     null_raw: list[
@@ -296,9 +301,7 @@ def _pointbiserial_candidates(
             entry.mood_score for entry, present in zip(entries, binary, strict=True) if present
         ]
         untagged_moods = [
-            entry.mood_score
-            for entry, present in zip(entries, binary, strict=True)
-            if not present
+            entry.mood_score for entry, present in zip(entries, binary, strict=True) if not present
         ]
         result = pointbiserialr(binary, mood_values)
         coefficient = _finite_float(result.statistic)
@@ -481,8 +484,7 @@ def _pointbiserial_candidates(
         untagged_moods,
     ) in null_raw[:MAX_NULL_ASSOCIATIONS]:
         statement = (
-            f"Days tagged {tag.label} currently look similar to other days "
-            f"for mood in your data."
+            f"Days tagged {tag.label} currently look similar to other days for mood in your data."
         )
         candidates.append(
             InsightCandidate(

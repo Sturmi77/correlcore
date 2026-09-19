@@ -128,6 +128,7 @@
   }
   .scatter__tick {
     fill: var(--color-text-faint);
+    /* token-exempt: axis micro-label needs px precision at this size (F-10). */
     font-size: 9px;
     text-anchor: end;
   }

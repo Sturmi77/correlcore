@@ -108,7 +108,7 @@
     {
       key: 'sleep_minutes_avg',
       label: 'trends.metric.sleep_minutes',
-      mapper: new StripCellMapper({ midpoint: 3, span: 4 }),
+      mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
     },
   ];
 

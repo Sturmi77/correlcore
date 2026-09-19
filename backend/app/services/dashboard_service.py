@@ -21,10 +21,10 @@ from app.schemas.dashboard import (
     WeekdayTopSignal,
     WorkContextSummaryItem,
 )
+from app.schemas.user_preferences import TREND_WINDOW_DAYS_DEFAULT, TREND_WINDOW_DAYS_VALUES
 from app.services.insight_engine import MIN_WEEKDAY_ENTRIES, confidence_tier_for_sample
 from app.services.tag_service import analytics_tag_predicate, canonicalize_tags_by_slug
 from app.services.user_preferences_service import get_or_create_user_preferences
-from app.schemas.user_preferences import TREND_WINDOW_DAYS_DEFAULT, TREND_WINDOW_DAYS_VALUES
 
 #: A weekday only gets a top signal once it is more than a one-off.
 MIN_TOP_SIGNAL_COUNT = 2
@@ -486,9 +486,7 @@ async def get_dashboard_summary(
         .order_by(func.count(func.distinct(Entry.entry_date)).desc(), Entry.work_context)
     )
     work_context_rows = work_context_result.all()
-    context_trends = await _work_context_trends(
-        db, user_id=user_id, as_of=as_of, days=window_days
-    )
+    context_trends = await _work_context_trends(db, user_id=user_id, as_of=as_of, days=window_days)
     weekday_mood_trend, weekday_trends = await _weekday_mood_trends(
         db, user_id=user_id, as_of=as_of, days=window_days
     )

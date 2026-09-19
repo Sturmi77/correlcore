@@ -52,7 +52,7 @@ describe('exportMatrixPdf', () => {
       }
       return document.createElementNS('http://www.w3.org/1999/xhtml', tag);
     });
-    const createObjectURL = vi.fn(() => 'blob:pdf');
+    const createObjectURL = vi.fn((_blob: Blob) => 'blob:pdf');
     const revokeObjectURL = vi.fn();
     vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
     const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
@@ -65,8 +65,8 @@ describe('exportMatrixPdf', () => {
     });
 
     expect(createObjectURL).toHaveBeenCalled();
-    const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
-    expect(blob.type).toBe('application/pdf');
+    const blob = createObjectURL.mock.calls[0]?.[0];
+    expect(blob?.type).toBe('application/pdf');
     expect(click).toHaveBeenCalled();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:pdf');
 

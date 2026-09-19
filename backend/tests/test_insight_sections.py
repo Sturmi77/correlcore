@@ -13,9 +13,10 @@ from app.services.insight_sections import (
 def test_merge_insight_sections_returns_slim_default_when_null() -> None:
     assert merge_insight_sections(None) == DEFAULT_INSIGHT_SECTIONS
     assert DEFAULT_INSIGHT_SECTIONS[0]["key"] == "stage_header"
-    assert next(s for s in DEFAULT_INSIGHT_SECTIONS if s["key"] == "correlation_matrix")[
-        "enabled"
-    ] is False
+    assert (
+        next(s for s in DEFAULT_INSIGHT_SECTIONS if s["key"] == "correlation_matrix")["enabled"]
+        is False
+    )
 
 
 def test_merge_insight_sections_returns_default_when_empty() -> None:

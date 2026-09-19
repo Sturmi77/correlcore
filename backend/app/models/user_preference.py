@@ -11,7 +11,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 
-
 #: Allowed analysis-window lengths (#867). Mirrored in the Pydantic schema.
 TREND_WINDOW_DAYS_ALLOWED: tuple[int, ...] = (14, 28, 90)
 TREND_WINDOW_DAYS_DEFAULT = 28

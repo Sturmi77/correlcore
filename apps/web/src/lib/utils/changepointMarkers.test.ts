@@ -34,7 +34,9 @@ function changepoint(overrides: Partial<InsightResponse> = {}): InsightResponse 
       after_avg: 4.0,
     },
     generated_for_date: '2026-05-01',
+    generated_at: '2026-05-01T00:00:00Z',
     created_at: '2026-05-01T00:00:00Z',
+    updated_at: '2026-05-01T00:00:00Z',
     ...overrides,
   };
 }

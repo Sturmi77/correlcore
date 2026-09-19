@@ -158,12 +158,14 @@
   .signal-lag__bar {
     width: 60%;
     max-width: 14px;
-    border-radius: 2px 2px 0 0;
+    /* token-exempt: 2px micro-bar cap; sm is the closest token */
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     background: var(--color-primary);
   }
 
   .signal-lag__half--neg .signal-lag__bar {
-    border-radius: 0 0 2px 2px;
+    /* token-exempt: 2px micro-bar cap; sm is the closest token */
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   }
 
   .signal-lag__tick {

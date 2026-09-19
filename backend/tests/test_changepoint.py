@@ -57,7 +57,9 @@ def test_changepoint_candidates_emit_mood_stress_energy_independently(
         mood = 2 if offset < 40 else 5
         stress = 2 if offset < 40 else 5
         energy = 3
-        entries.append(_entry(start + timedelta(days=offset), mood=mood, energy=energy, stress=stress))
+        entries.append(
+            _entry(start + timedelta(days=offset), mood=mood, energy=energy, stress=stress)
+        )
 
     candidates = _changepoint_candidates(
         entries,
@@ -112,8 +114,7 @@ def test_changepoint_candidates_empty_when_below_min_entries(
     monkeypatch.setattr(settings, "ANALYTICS_MIN_ENTRIES_CHANGEPOINT", 60)
     start = date(2026, 1, 1)
     entries = [
-        _entry(start + timedelta(days=offset), mood=2 if offset < 20 else 5)
-        for offset in range(40)
+        _entry(start + timedelta(days=offset), mood=2 if offset < 20 else 5) for offset in range(40)
     ]
     assert (
         _changepoint_candidates(

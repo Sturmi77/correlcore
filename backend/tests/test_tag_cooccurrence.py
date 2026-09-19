@@ -51,7 +51,9 @@ def _lifted_pair_fixture(user, *, days: int = 40, co_days: int = 10):
     sport = make_tag(user=None, is_default=True, slug="sport", name="Sport")
     focus = make_tag(user, slug="focus", name="Focus", category=TagCategory.WORK)
     start = date(2026, 1, 1)
-    entries = [make_entry(user, entry_date=start + timedelta(days=offset)) for offset in range(days)]
+    entries = [
+        make_entry(user, entry_date=start + timedelta(days=offset)) for offset in range(days)
+    ]
     tag_rows: list[tuple[object, object]] = []
     for offset, entry in enumerate(entries):
         if offset < co_days or co_days <= offset < co_days + 5:

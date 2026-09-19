@@ -105,8 +105,8 @@
   }
 
   onMount(() => {
-    if (!$auth.user) {
-      void goto('/auth/login');
+    if ($auth.status !== 'authenticated') {
+      void goto(`/auth/login?next=${encodeURIComponent($page.url.pathname)}`);
       return;
     }
     void load();
@@ -131,7 +131,7 @@
   {#if loading}
     <p class="signal-page__status">{$_('insights.signal.loading')}</p>
   {:else if error}
-    <InlineAlert variant="error">{error}</InlineAlert>
+    <InlineAlert variant="error" message={error} />
   {:else if insight}
     <section class="signal-page__card" data-testid="signal-statement">
       <p class="signal-page__statement">

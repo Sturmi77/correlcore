@@ -104,4 +104,6 @@ def test_belastung_candidates_require_opt_in_and_pattern() -> None:
     assert candidate.flags.get("heuristic") is True
     assert candidate.payload["fatigue_days_recent"] == 14
     assert candidate.payload["recovery_days_prior"] >= 1
-    assert "heuristic" in candidate.statement.lower() or "not a medical" in candidate.statement.lower()
+    assert (
+        "heuristic" in candidate.statement.lower() or "not a medical" in candidate.statement.lower()
+    )

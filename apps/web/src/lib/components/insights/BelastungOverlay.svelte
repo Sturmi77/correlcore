@@ -143,7 +143,7 @@
   .belastung__disclaimer,
   .belastung__note {
     margin: 0;
-    font-size: 0.7rem;
+    font-size: var(--text-2xs);
     line-height: 1.5;
     color: var(--color-text-faint);
   }

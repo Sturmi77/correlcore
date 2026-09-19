@@ -17,7 +17,6 @@
   import { buildIsoDateRange, compareDailyAxisLayout, type MetricKey } from '$lib/utils/charts';
   import {
     buildAxisBuckets,
-    clampZoomStage,
     clampZoomStageForWindow,
     findBucketForDate,
     formatBucketRangeLabel,
