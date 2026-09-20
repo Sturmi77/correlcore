@@ -13,8 +13,6 @@
     habitStatusI18nKey,
     isHabitAdherenceInsufficient,
   } from '$lib/utils/habitMetrics';
-  import { confidenceLabelKey } from '$lib/utils/confidenceLabel';
-  import InsightEvidence from '$lib/components/insights/InsightEvidence.svelte';
 
   export let selected: { habit: HabitStatsResponse; tag: TagResponse };
   export let detailHeatmap: TagHeatmapResponse | null = null;
@@ -128,24 +126,28 @@
 
     {#if selected.habit.correlation_score !== null}
       <section class="habit-detail__correlation" data-testid="habit-correlation">
+        <!--
+          The habit payload carries the correlation coefficient and the number of
+          tracked days — it carries neither a confidence nor the insight's
+          sample_n. Feeding |r| into the confidence meter and days_tracked into
+          its sample line therefore labelled an effect as a confidence and a
+          coverage number as a sample size: a large effect on thin data read as
+          a "strong finding" (#955). Until the endpoint supplies confidence and
+          sample_n, state the effect as an effect.
+        -->
         <p>
           {$_('habits.correlation_predictor', {
             values: {
               name: selected.tag.name,
               metric: metricLabel(selected.habit.correlation_metric),
-              label: $_(
-                `insights.confidence_label.${confidenceLabelKey(Math.abs(selected.habit.correlation_score))}`
-              ),
+              r: selected.habit.correlation_score.toFixed(2),
               n: selected.habit.days_tracked,
             },
           })}
         </p>
-        <InsightEvidence
-          confidenceScore={Math.abs(selected.habit.correlation_score)}
-          entryCount={selected.habit.days_tracked}
-          showSample
-          showMaturityBadge={false}
-        />
+        <p class="habit-detail__correlation-note">
+          {$_('habits.correlation_not_confidence')}
+        </p>
       </section>
     {/if}
   {/if}
@@ -230,6 +232,12 @@
 
   .habit-detail__stats div,
   .habit-detail__summary div,
+  .habit-detail__correlation-note {
+    margin: var(--space-1) 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
   .habit-detail__correlation {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);

@@ -430,3 +430,29 @@ def test_symptom_associations_carry_real_metric_values() -> None:
     # Real values, not placeholders: the present group logged 2, the absent one 5.
     assert set(finding.symptom_metric_values) == {2.0}
     assert set(finding.comparison_metric_values) == {5.0}
+
+
+def test_symptom_stress_distribution_counts_calm_days_as_good() -> None:
+    """#955: the G2 payload must read stress on its own scale.
+
+    #954 populated real distributions for symptom cards (they previously showed
+    a fabricated "good on 0 of N days"). That fix routed every metric target
+    through a helper with a fixed `>= 4`, so the stress variant inherited the
+    inversion defect — a symptom occurring on the most stressful days was
+    reported as occurring on good ones.
+    """
+    from app.services.insights.shared import _with_without_distribution_payload
+
+    stressed = [5, 5, 4, 5]
+    calm = [1, 2, 1, 2]
+
+    stress_payload = _with_without_distribution_payload(stressed, calm, metric="stress")
+    assert stress_payload["with_good_count"] == 0
+    assert stress_payload["without_good_count"] == 4
+    assert stress_payload["good_direction"] == "lte"
+    assert stress_payload["good_threshold"] == 2
+
+    mood_payload = _with_without_distribution_payload(stressed, calm, metric="mood_score")
+    assert mood_payload["with_good_count"] == 4
+    assert mood_payload["without_good_count"] == 0
+    assert mood_payload["good_direction"] == "gte"

@@ -146,6 +146,7 @@ def _symptom_metric_candidates(
             [entry.work_context.value for entry in daily],
             binary,
             metric_values,
+            metric=finding.metric,
         )
         candidates.append(
             InsightCandidate(
@@ -191,6 +192,7 @@ def _symptom_metric_candidates(
                     **_with_without_distribution_payload(
                         finding.symptom_metric_values,
                         finding.comparison_metric_values,
+                        metric=finding.metric,
                     ),
                     "confounder": primary,
                     "confounders": confounders,
@@ -199,6 +201,7 @@ def _symptom_metric_candidates(
                         calendar=calendar_adj,
                         situation=situation,
                         primary_confounder=primary,
+                        metric=finding.metric,
                     ),
                 },
                 generated_for_date=generated_for_date,

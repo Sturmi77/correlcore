@@ -22,6 +22,7 @@ from app.services.insights.shared import (
     _direction,
     _metric_value,
 )
+from app.services.metric_semantics import metric_semantics
 
 # (series key, insight metric id, English noun for statement)
 _CHANGEPOINT_SERIES: tuple[tuple[MetricName, str, str], ...] = (
@@ -61,7 +62,12 @@ def _candidate_for_series(
     before_avg = sum(before) / len(before)
     after_avg = sum(after) / len(after)
     delta = after_avg - before_avg
-    direction = _direction(delta, "higher", "lower")
+    # Describe the move the reader actually sees. Stress is plotted on an
+    # inverted scale, so a rising raw stress average is a *falling* line — saying
+    # "higher" there put the sentence at odds with its own chart (#955).
+    semantics = metric_semantics(series)
+    display_delta = -delta if semantics.invert else delta
+    direction = _direction(display_delta, "higher", "lower")
     changepoint_date = entries[index].entry_date
     shift_date = entries[index + 1].entry_date
     changepoint_dates = [
@@ -96,6 +102,9 @@ def _candidate_for_series(
             "changepoint_dates": changepoint_dates,
             "before_avg": round(before_avg, 2),
             "after_avg": round(after_avg, 2),
+            # Raw averages above; this says how to read them, so the client does
+            # not have to rediscover that stress runs the other way.
+            "metric_invert": semantics.invert,
             "changepoints": list(changepoints),
         },
         generated_for_date=generated_for_date,

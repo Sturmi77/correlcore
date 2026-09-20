@@ -4,6 +4,8 @@
    * Behind progressive disclosure on /insights/signal/[id].
    */
   import { _ } from 'svelte-i18n';
+  import { displayMetricValue } from '$lib/utils/metrics';
+  import type { EntryMetricField } from '$lib/config/metrics';
 
   export let points: { date: string; value: number; present: boolean }[] = [];
   export let withMean: number | null = null;
@@ -12,6 +14,28 @@
   export let withoutSe: number | null = null;
   export let subjectLabel = '';
   export let showUncertainty = true;
+  /**
+   * Which metric the values belong to. Verification returns raw values, and
+   * stress runs the other way round — plotting 5 at the top for every metric
+   * put this chart at odds with Trends and with every other metric display in
+   * the app (#955).
+   */
+  export let metric: EntryMetricField = 'mood_score';
+
+  /** Raw → the 1–5 goodness scale the rest of the app plots. */
+  const toDisplay = (raw: number): number => displayMetricValue(metric, raw);
+
+  /**
+   * Band geometry from the two raw bounds. On an inverted metric `mean + se`
+   * plots *below* `mean - se`, so subtracting the two in a fixed order yields a
+   * negative height and the band collapses to its minimum.
+   */
+  function bandFor(mean: number, se: number): { y: number; height: number } {
+    const a = yFor(mean + se);
+    const b = yFor(mean - se);
+    const top = Math.min(a, b);
+    return { y: top, height: Math.max(2, Math.abs(b - a)) };
+  }
 
   const width = 320;
   const height = 180;
@@ -20,7 +44,7 @@
   const plotH = height - pad.top - pad.bottom;
 
   function yFor(value: number): number {
-    return pad.top + (1 - (value - 1) / 4) * plotH;
+    return pad.top + (1 - (toDisplay(value) - 1) / 4) * plotH;
   }
 
   function xFor(present: boolean, index: number, total: number): number {
@@ -60,9 +84,9 @@
   {#if showUncertainty && withMean != null && withSe != null}
     <rect
       x={pad.left + plotW * 0.18}
-      y={yFor(withMean + withSe)}
+      y={bandFor(withMean, withSe).y}
       width={plotW * 0.28}
-      height={Math.max(2, yFor(withMean - withSe) - yFor(withMean + withSe))}
+      height={bandFor(withMean, withSe).height}
       class="scatter__band scatter__band--with"
       data-testid="signal-scatter-band-with"
     />
@@ -70,9 +94,9 @@
   {#if showUncertainty && withoutMean != null && withoutSe != null}
     <rect
       x={pad.left + plotW * 0.54}
-      y={yFor(withoutMean + withoutSe)}
+      y={bandFor(withoutMean, withoutSe).y}
       width={plotW * 0.28}
-      height={Math.max(2, yFor(withoutMean - withoutSe) - yFor(withoutMean + withoutSe))}
+      height={bandFor(withoutMean, withoutSe).height}
       class="scatter__band scatter__band--without"
       data-testid="signal-scatter-band-without"
     />

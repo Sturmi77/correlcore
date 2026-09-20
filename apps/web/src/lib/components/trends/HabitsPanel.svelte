@@ -17,7 +17,6 @@
     habitTypeGlyph,
     groupHabitsByType,
   } from '$lib/utils/habitMetrics';
-  import { confidenceLabelKey } from '$lib/utils/confidenceLabel';
   import { ICON_SIZE_SM } from '$lib/constants/iconSizes';
   import Minus from '@lucide/svelte/icons/minus';
   import TrendingDown from '@lucide/svelte/icons/trending-down';
@@ -83,11 +82,11 @@
     if (habit.correlation_score === null) {
       return $_('habits.correlation_pending');
     }
+    // Same rule as the detail body: `correlation_score` is an effect, so it must
+    // not be rendered through the confidence vocabulary (#955).
     return $_('habits.correlation_brief', {
       values: {
-        label: $_(
-          `insights.confidence_label.${confidenceLabelKey(Math.abs(habit.correlation_score))}`
-        ),
+        r: habit.correlation_score.toFixed(2),
         metric: metricLabel(habit.correlation_metric),
         n: habit.days_tracked,
       },

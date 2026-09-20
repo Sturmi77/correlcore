@@ -3,6 +3,7 @@ import type { InsightResponse } from '$lib/api/insights';
 import type { SymptomHeatmapResponse, TagHeatmapResponse } from '$lib/api/stats';
 import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
 import type { MetricKey } from '$lib/utils/charts';
+import type { EntryMetricField } from '$lib/contracts/apiContract';
 
 /** #488: lag insights align on the feature (antecedent), not the subject. */
 export function lagFeatureKind(insight: InsightResponse): 'tag' | 'symptom' | null {
@@ -25,6 +26,19 @@ export function isExploreEventsSubject(insight: InsightResponse): boolean {
     return lagFeatureKind(insight) !== null;
   }
   return insight.subject_type === 'tag' || insight.subject_type === 'symptom';
+}
+
+/**
+ * Insight metric → the entry-metric key whose scale rules apply (#955).
+ *
+ * Separate from `insightMetricToChartKey`: that one names a timeseries series,
+ * this one names the metric whose `invert` flag decides which end of the scale
+ * is the good one.
+ */
+export function insightMetricToEntryField(metric: string | null | undefined): EntryMetricField {
+  if (metric === 'energy' || metric === 'energy_avg') return 'energy';
+  if (metric === 'stress' || metric === 'stress_avg') return 'stress';
+  return 'mood_score';
 }
 
 export function insightMetricToChartKey(metric: string | null | undefined): MetricKey {

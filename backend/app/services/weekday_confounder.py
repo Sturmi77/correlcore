@@ -12,11 +12,18 @@ from typing import Any
 import numpy as np
 import statsmodels.api as sm
 
+from app.services.metric_semantics import (
+    GOOD_METRIC_THRESHOLD,
+    is_good_metric_value,
+    metric_semantics,
+)
+
 DEFAULT_ALPHA = 0.10
 DEFAULT_MIN_EFFECT = 0.25
 MIN_OLS_ROWS = 10
 MIN_CONTEXT_OLS_ROWS = 30
-DEFAULT_GOOD_THRESHOLD = 4
+# Kept for importers; the per-metric rules live in app.services.metric_semantics (#955).
+DEFAULT_GOOD_THRESHOLD = GOOD_METRIC_THRESHOLD
 
 
 @dataclass(frozen=True)
@@ -97,9 +104,14 @@ def same_work_context_metric_frequencies(
     binary_signal: Sequence[int],
     metric_values: Sequence[float | int],
     *,
-    good_threshold: int = DEFAULT_GOOD_THRESHOLD,
+    metric: str,
 ) -> SameSituationFrequencies:
-    """Count good days with/without the signal inside the modal work context of signal days."""
+    """Count good days with/without the signal inside the modal work context of signal days.
+
+    ``metric`` decides what a good day is. It is required: this helper is reached
+    from the symptom family, which iterates every metric target, and a fixed
+    ``>= 4`` there counted the *most stressful* days as good ones (#955).
+    """
 
     empty = SameSituationFrequencies(
         context=None, with_n=0, without_n=0, with_good=0, without_good=0
@@ -117,10 +129,10 @@ def same_work_context_metric_frequencies(
     context, _ = Counter(signal_contexts).most_common(1)[0]
 
     with_n = without_n = with_good = without_good = 0
-    for ctx, present, metric in zip(work_contexts, binary_signal, metric_values, strict=True):
+    for ctx, present, metric_value in zip(work_contexts, binary_signal, metric_values, strict=True):
         if ctx != context:
             continue
-        good = float(metric) >= good_threshold
+        good = is_good_metric_value(metric, metric_value)
         if present:
             with_n += 1
             if good:
@@ -318,9 +330,11 @@ def situation_adjustment_payload(
     calendar: MetricAdjustmentResult,
     situation: SameSituationFrequencies,
     primary_confounder: str | None,
+    metric: str,
 ) -> dict[str, object]:
     """Additive Layer-2 payload keys — natural frequencies first, coefficients optional."""
 
+    semantics = metric_semantics(metric)
     survives = True
     if primary_confounder in {"weekday", "calendar_context", "work_context"}:
         if primary_confounder == "weekday":
@@ -343,6 +357,10 @@ def situation_adjustment_payload(
                 "same_work_context_without_n": situation.without_n,
                 "same_work_context_with_good": situation.with_good,
                 "same_work_context_without_good": situation.without_good,
+                # Good-day counts never travel without the rule that produced
+                # them — "good" is `<= 2` on stress and `>= 4` elsewhere (#955).
+                "same_work_context_good_threshold": semantics.good_threshold,
+                "same_work_context_good_direction": semantics.good_direction,
             }
         )
     return payload
