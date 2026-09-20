@@ -324,6 +324,39 @@ def is_metric_association_calendar_context_confounded(
     ).confounded
 
 
+def _survives_adjustment(
+    weekday: MetricAdjustmentResult,
+    calendar: MetricAdjustmentResult,
+    primary_confounder: str | None,
+) -> bool | None:
+    """Did the effect hold once the situation was held constant?
+
+    ``None`` means *not determinable*, and that is the whole point of this
+    helper. The evaluators return ``confounded=False`` from several early exits
+    — fewer than ``MIN_OLS_ROWS`` rows, a single distinct context, a
+    ``LinAlgError`` — where no regression ever ran. Reading that as "not
+    confounded" made the signal page assert the association survives adjustment
+    on the strength of an adjustment that never happened (#956).
+
+    A fitted model leaves ``adjusted_coefficient`` set, so that is what
+    separates a verdict from a shrug.
+    """
+
+    relevant: tuple[MetricAdjustmentResult, ...]
+    if primary_confounder == "weekday":
+        relevant = (weekday,)
+    elif primary_confounder in {"calendar_context", "work_context"}:
+        relevant = (calendar,)
+    else:
+        relevant = (weekday, calendar)
+
+    if any(result.confounded for result in relevant):
+        return False
+    if any(result.adjusted_coefficient is not None for result in relevant):
+        return True
+    return None
+
+
 def situation_adjustment_payload(
     *,
     weekday: MetricAdjustmentResult,
@@ -335,12 +368,7 @@ def situation_adjustment_payload(
     """Additive Layer-2 payload keys — natural frequencies first, coefficients optional."""
 
     semantics = metric_semantics(metric)
-    survives = True
-    if primary_confounder in {"weekday", "calendar_context", "work_context"}:
-        if primary_confounder == "weekday":
-            survives = not weekday.confounded
-        else:
-            survives = not calendar.confounded
+    survives = _survives_adjustment(weekday, calendar, primary_confounder)
 
     payload: dict[str, object] = {
         "situation_effect_survives": survives,

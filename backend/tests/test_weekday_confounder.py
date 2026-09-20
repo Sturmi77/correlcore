@@ -12,12 +12,15 @@ from app.services.symptom_analytics import (
 )
 from app.services.symptom_analytics import SymptomRef as AnalyticsSymptomRef
 from app.services.weekday_confounder import (
+    MetricAdjustmentResult,
+    SameSituationFrequencies,
     evaluate_metric_association_weekday,
     is_metric_association_calendar_context_confounded,
     is_metric_association_weekday_confounded,
     is_pair_cooccurrence_calendar_context_confounded,
     is_pair_cooccurrence_weekday_confounded,
     same_work_context_metric_frequencies,
+    situation_adjustment_payload,
 )
 
 
@@ -322,3 +325,68 @@ def test_same_work_context_frequencies_read_stress_on_its_own_scale() -> None:
     mood = same_work_context_metric_frequencies(contexts, binary, metrics, metric="mood_score")
     assert mood.with_good == 8
     assert mood.without_good == 0
+
+
+def test_survives_is_none_when_no_adjustment_ran() -> None:
+    """#956: `confounded=False` from an early exit is "could not tell", not "held".
+
+    `evaluate_metric_association_*` returns that shape when the row count is
+    below MIN_OLS_ROWS, when there is a single distinct context, and on a
+    LinAlgError — cases where no regression ever ran. Reading it as a verdict
+    made the signal page assert the association survives an adjustment that
+    never happened.
+    """
+    not_run = MetricAdjustmentResult(False, None, None, 8)
+
+    payload = situation_adjustment_payload(
+        weekday=not_run,
+        calendar=not_run,
+        situation=SameSituationFrequencies(
+            context=None, with_n=0, without_n=0, with_good=0, without_good=0
+        ),
+        primary_confounder=None,
+        metric="mood_score",
+    )
+    assert payload["situation_effect_survives"] is None
+
+
+def test_survives_is_true_only_with_a_fit_behind_it() -> None:
+    fitted = MetricAdjustmentResult(False, 0.31, 0.01, 40)
+    not_run = MetricAdjustmentResult(False, None, None, 8)
+
+    held = situation_adjustment_payload(
+        weekday=fitted,
+        calendar=not_run,
+        situation=SameSituationFrequencies(
+            context=None, with_n=0, without_n=0, with_good=0, without_good=0
+        ),
+        primary_confounder="weekday",
+        metric="mood_score",
+    )
+    assert held["situation_effect_survives"] is True
+
+    # Same fit, but the primary confounder points at the arm that never ran.
+    undetermined = situation_adjustment_payload(
+        weekday=fitted,
+        calendar=not_run,
+        situation=SameSituationFrequencies(
+            context=None, with_n=0, without_n=0, with_good=0, without_good=0
+        ),
+        primary_confounder="work_context",
+        metric="mood_score",
+    )
+    assert undetermined["situation_effect_survives"] is None
+
+
+def test_survives_is_false_when_the_adjustment_says_confounded() -> None:
+    confounded = MetricAdjustmentResult(True, None, None, 40)
+    payload = situation_adjustment_payload(
+        weekday=confounded,
+        calendar=MetricAdjustmentResult(False, 0.3, 0.02, 40),
+        situation=SameSituationFrequencies(
+            context=None, with_n=0, without_n=0, with_good=0, without_good=0
+        ),
+        primary_confounder="weekday",
+        metric="mood_score",
+    )
+    assert payload["situation_effect_survives"] is False

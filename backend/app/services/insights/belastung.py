@@ -102,6 +102,14 @@ def _belastung_candidates(
     prior = _window(entries, end=prior_end, days=WINDOW_DAYS)
     if len(recent) < MIN_WINDOW_ENTRIES:
         return []
+    # Every predicate below is comparative, and the statement says "than in the
+    # two weeks before". With an empty prior window the `is None` escapes made
+    # all three fire at once, so a user with seven entries and nothing before
+    # them was told their load had risen against a window that did not exist
+    # (#956). There is no absolute reference for "elevated" here, so the honest
+    # answer to a missing comparison window is no finding — not a reworded one.
+    if len(prior) < MIN_WINDOW_ENTRIES:
+        return []
 
     fatigue_id = _fatigue_id(symptoms)
     work_intense_id = _tag_id(tags, WORK_INTENSE_SLUG)
@@ -131,6 +139,8 @@ def _belastung_candidates(
     energy_prior = _mean(prior_energy)
     if stress_recent is None or energy_recent is None:
         return []
+    if stress_prior is None or energy_prior is None:
+        return []
 
     fatigue_recent = fatigue_count(recent)
     fatigue_prior = fatigue_count(prior)
@@ -138,11 +148,11 @@ def _belastung_candidates(
     recovery_prior = recovery_count(prior)
     after_hours_recent = after_hours_count(recent)
 
-    stress_up = stress_prior is None or stress_recent >= (stress_prior + 0.25)
-    energy_down = energy_prior is None or energy_recent <= (energy_prior - 0.25)
-    fatigue_up = fatigue_recent / max(len(recent), 1) > (
-        fatigue_prior / max(len(prior), 1) if prior else 0
-    )
+    # Both windows are populated by the guards above, so every comparison has a
+    # real baseline behind it.
+    stress_up = stress_recent >= (stress_prior + 0.25)
+    energy_down = energy_recent <= (energy_prior - 0.25)
+    fatigue_up = (fatigue_recent / len(recent)) > (fatigue_prior / len(prior))
     if not (stress_up or energy_down or fatigue_up):
         return []
 
