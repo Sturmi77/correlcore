@@ -128,7 +128,16 @@ describe('InsightCard', () => {
 
   it('renders title as "metric <-> subject" format', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
-    expect(screen.getByTestId('insight-card-title').textContent).toContain('mood ↔ sport');
+    expect(screen.getByTestId('insight-card-title').textContent).toContain('Mood ↔ sport');
+  });
+
+  it('leaves an unknown metric key untouched in the fallback title', () => {
+    render(InsightCard, {
+      props: { insight: { ...INSIGHT, metric: 'unknown_metric' } },
+    });
+    expect(screen.getByTestId('insight-card-title').textContent).toContain(
+      'unknown_metric ↔ sport'
+    );
   });
 
   it('renders human-readable labels for sleep spearman insights (#625 review)', () => {

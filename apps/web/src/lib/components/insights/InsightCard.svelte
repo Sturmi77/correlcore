@@ -318,7 +318,10 @@
       // first, and the lag card next to it does (#928 D2).
       return `${metricLabel(sleepKey)} ${RELATION_SYMMETRIC} ${metricLabel('mood')} (${$_('insights.signal.same_day_badge')})`;
     }
-    const a = ins.metric ?? '?';
+    // metricLabel returns the key unchanged for anything it does not know, so
+    // routing the fallback through it labels the core metrics and leaves the
+    // rest exactly as they were.
+    const a = ins.metric ? metricLabel(ins.metric) : '?';
     const b = ins.subject_label ?? null;
     return b ? `${a} ${RELATION_SYMMETRIC} ${b}` : a;
   }
