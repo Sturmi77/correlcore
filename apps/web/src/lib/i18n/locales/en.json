@@ -1484,6 +1484,7 @@
       "weak_note": "These associations are below the reliability threshold and may still change as more data arrives."
     },
     "cooccurrence": {
+      "window_too_short": "This range holds too few logged days to compute pairs. Pick a longer range.",
       "heading": "Patterns",
       "subtitle": "How often tags appear together on the same entry.",
       "range_label": "Co-occurrence range",

@@ -35,6 +35,7 @@ from app.schemas.stats import (
     TimeseriesResponse,
 )
 from app.services.symptom_analytics import (
+    MIN_SYMPTOM_ANALYTICS_ENTRIES,
     DailySymptomEntry,
     SymptomRef,
     TagRef,
@@ -529,6 +530,11 @@ async def get_tag_cooccurrence(
             for entry in sorted(entries, key=lambda item: (item.entry_date, item.slot.value))
         ]
     )
+    # The analysis needs MIN_SYMPTOM_ANALYTICS_ENTRIES logged days before Fisher
+    # says anything. A 7-day range cannot reach that floor, so it used to return
+    # an empty panel indistinguishable from "no pairs found" (#966). Say which.
+    window_too_short = len(daily_entries) < MIN_SYMPTOM_ANALYTICS_ENTRIES
+
     associations = heatmap_tag_tag_associations(
         daily_entries,
         {
@@ -557,6 +563,7 @@ async def get_tag_cooccurrence(
         end_date=end_date,
         min_count=min_count,
         pairs=pairs,
+        window_too_short=window_too_short,
     )
 
 

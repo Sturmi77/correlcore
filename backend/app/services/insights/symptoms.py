@@ -37,6 +37,8 @@ from app.services.symptom_analytics import (
     compute_symptom_tag_associations,
 )
 from app.services.weekday_confounder import (
+    DEFAULT_ALPHA,
+    DEFAULT_MIN_EFFECT,
     evaluate_metric_association_calendar_context,
     evaluate_metric_association_weekday,
     same_work_context_metric_frequencies,
@@ -129,8 +131,8 @@ def _symptom_metric_candidates(
             binary,
             raw_coefficient=finding.coefficient,
             raw_p_value=finding.p_value,
-            min_effect=0.25,
-            alpha=0.10,
+            min_effect=DEFAULT_MIN_EFFECT,
+            alpha=DEFAULT_ALPHA,
         )
         calendar_adj = evaluate_metric_association_calendar_context(
             [entry.entry_date for entry in daily],
@@ -139,8 +141,8 @@ def _symptom_metric_candidates(
             binary,
             raw_coefficient=finding.coefficient,
             raw_p_value=finding.p_value,
-            min_effect=0.25,
-            alpha=0.10,
+            min_effect=DEFAULT_MIN_EFFECT,
+            alpha=DEFAULT_ALPHA,
         )
         situation = same_work_context_metric_frequencies(
             [entry.work_context.value for entry in daily],

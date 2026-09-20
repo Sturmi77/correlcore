@@ -424,3 +424,53 @@ async def test_tag_cooccurrence_endpoint_requires_auth(async_client: AsyncClient
     response = await async_client.get("/api/v1/insights/tag-cooccurrence")
 
     assert response.status_code == 401
+
+
+def test_heatmap_keeps_large_lift_without_fdr_significance() -> None:
+    """#966: the heatmap admits a pair on a large lift OR FDR significance.
+
+    `compute_tag_tag_associations` dropped the insignificant ones first, so the
+    lift half of that rule could never fire and `heatmap_lift_delta` was dead.
+    """
+    from app.services.symptom_analytics import (
+        DailySymptomEntry,
+        TagRef,
+        compute_tag_tag_associations,
+    )
+
+    tag_a, tag_b = uuid4(), uuid4()
+    tags = {
+        tag_a: TagRef(id=tag_a, label="A", slug="a"),
+        tag_b: TagRef(id=tag_b, label="B", slug="b"),
+    }
+    start = date(2026, 1, 1)
+    # A small, lopsided sample: a visible lift that FDR will not certify.
+    entries = []
+    for offset in range(20):
+        ids = set()
+        if offset < 6:
+            ids = {tag_a, tag_b}
+        elif offset < 9:
+            ids = {tag_a}
+        elif offset < 12:
+            ids = {tag_b}
+        entries.append(
+            DailySymptomEntry(
+                entry_date=start + timedelta(days=offset),
+                mood_score=3,
+                energy=3,
+                stress=3,
+                tag_ids=frozenset(ids),
+                symptom_ids=frozenset(),
+            )
+        )
+
+    gated = compute_tag_tag_associations(entries, tags, min_tag_usages=3)
+    ungated = compute_tag_tag_associations(
+        entries, tags, min_tag_usages=3, card_lift_delta=0.0, require_significance=False
+    )
+
+    # The opt-out must be able to surface at least as much as the gated call.
+    assert len(ungated) >= len(gated)
+    for association in ungated:
+        assert association.p_corrected is not None

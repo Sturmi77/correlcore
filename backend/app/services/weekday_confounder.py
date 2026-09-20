@@ -142,14 +142,7 @@ def same_work_context_metric_frequencies(
             if good:
                 without_good += 1
 
-    if with_n == 0 or without_n == 0:
-        return SameSituationFrequencies(
-            context=context,
-            with_n=with_n,
-            without_n=without_n,
-            with_good=with_good,
-            without_good=without_good,
-        )
+    # (The early return that used to sit here returned exactly these values.)
     return SameSituationFrequencies(
         context=context,
         with_n=with_n,

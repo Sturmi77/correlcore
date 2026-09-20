@@ -448,6 +448,16 @@
       {/each}
       <span>{$_('insights.cooccurrence.more')}</span>
     </div>
+  {:else if !loading && data?.window_too_short}
+    <!--
+      Distinct from "nothing found": the window holds fewer logged days than the
+      analysis needs, so no pair could have been computed. A 7-day range never
+      reaches the floor, and the panel used to render as if the data were simply
+      unremarkable (#966).
+    -->
+    <div class="cooccurrence__empty" data-testid="cooccurrence-window-too-short">
+      <p>{$_('insights.cooccurrence.window_too_short')}</p>
+    </div>
   {:else if !loading}
     <div class="cooccurrence__empty">
       <p>{$_('insights.cooccurrence.empty')}</p>
