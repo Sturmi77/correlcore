@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 import pytest
 
@@ -34,6 +35,11 @@ def test_unknown_but_well_shaped_name_is_logged_verbatim(
         "Europe/Vienna\r\nWARNING injected",
         "Europe/Vienna line-separator",
         "A" * 200,
+        # py/polynomial-redos: the earlier fullmatch guard backtracked on these
+        # because its segment class contained '+'. The whitelist test cannot.
+        "+" * 60,
+        "Europe/" + "+" * 50 + "!",
+        "a/b/c/d/e/f",
     ],
 )
 def test_log_injection_payloads_never_reach_the_log(
@@ -51,3 +57,15 @@ def test_log_injection_payloads_never_reach_the_log(
     logged = caplog.records[-1].timezone  # type: ignore[attr-defined]
     assert logged == "<invalid>"
     assert "\n" not in logged and "\r" not in logged
+
+
+def test_log_safe_tz_is_linear_on_adversarial_repetition() -> None:
+    """No regex, so a pathological string cannot burn CPU in the log path."""
+    payload = "+" * 5_000 + "!"
+    started = time.perf_counter()
+    assert _log_safe_tz(payload) == "<invalid>"
+    assert time.perf_counter() - started < 0.1
+
+
+def test_well_shaped_three_segment_name_survives() -> None:
+    assert _log_safe_tz("America/Argentina/Buenos_Aires") == "America/Argentina/Buenos_Aires"
