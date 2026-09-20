@@ -35,6 +35,7 @@
     energy_avg: true,
     stress_avg: true,
     sleep_quality_avg: true,
+    sleep_minutes_avg: false,
   };
   export let loading = false;
   export let axisDates: string[] = [];
@@ -72,6 +73,7 @@
     { key: 'energy_avg', label: 'trends.metric.energy' },
     { key: 'stress_avg', label: 'trends.metric.stress' },
     { key: 'sleep_quality_avg', label: 'trends.metric.sleep_quality' },
+    { key: 'sleep_minutes_avg', label: 'trends.metric.sleep_minutes' },
   ];
 
   $: noteDateSet = new Set(noteDates);

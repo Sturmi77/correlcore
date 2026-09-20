@@ -248,6 +248,7 @@ async def create_entry(
     *,
     user_id: uuid.UUID,
     payload: EntryCreate,
+    client_timezone: str | None = None,
 ) -> Entry:
     """Create a new entry for ``user_id``.
 
@@ -262,6 +263,10 @@ async def create_entry(
             f"entry_date must be within the last {BACKDATE_DAYS_LIMIT} days"
         )
 
+    from app.services.entry_write_time import derive_write_time_covariates
+
+    logged_hour, inferred = derive_write_time_covariates(client_timezone=client_timezone)
+
     entry = Entry(
         user_id=user_id,
         entry_date=payload.entry_date,
@@ -275,6 +280,8 @@ async def create_entry(
         sleep_quality=payload.sleep_quality,
         source=payload.source,
         work_context=payload.work_context,
+        logged_local_hour=logged_hour,
+        inferred_period=inferred,
         note_enc=payload.note,
         note_visibility=NoteVisibility(payload.note_visibility.value),
     )

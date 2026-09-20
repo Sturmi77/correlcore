@@ -11,7 +11,9 @@ Design notes
 - ``mood_score`` / ``energy`` / ``stress`` are 1..5 integers with a
   CHECK constraint. The slider in the UI maps directly onto this range.
 - ``work_context`` is an enum: ``homeoffice | office | vacation | sick |
-  weekend | travel`` (DESIGN_DOCUMENT.md §2.7).
+  weekend | travel | other`` (DESIGN_DOCUMENT.md §2.7; ``other`` from Phase 8).
+- ``logged_local_hour`` / ``inferred_period`` are write-time covariates from
+  the first local create (#892 Option 3). ``slot`` stays ``day``.
 - ``note_enc`` holds the user's freeform note as Fernet ciphertext under
   the request-bound per-user DEK (ADR-0005 / Issue #26). The
   ``EncryptedString`` TypeDecorator keeps service and schema code working
@@ -88,6 +90,16 @@ class WorkContext(StrEnum):
     SICK = "sick"
     WEEKEND = "weekend"
     TRAVEL = "travel"
+    OTHER = "other"
+
+
+class InferredPeriod(StrEnum):
+    """First local write-time bucket (#892 Option 3). Not stored in ``slot``."""
+
+    MORNING = "morning"
+    DAYTIME = "daytime"
+    EVENING = "evening"
+    AFTER_HOURS = "after_hours"
 
 
 class BleedingLevel(StrEnum):
@@ -168,6 +180,16 @@ class Entry(Base):
     work_context: Mapped[WorkContext] = mapped_column(
         Enum(WorkContext, name="work_context", values_callable=lambda x: [e.value for e in x]),
         nullable=False,
+    )
+    # #892 Option 3: first local write covariates. Never written into ``slot``.
+    logged_local_hour: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    inferred_period: Mapped[InferredPeriod | None] = mapped_column(
+        Enum(
+            InferredPeriod,
+            name="inferred_period",
+            values_callable=lambda x: [e.value for e in x],
+        ),
+        nullable=True,
     )
     # note_enc holds the user's freeform note. It is stored as a Fernet token
     # (BYTEA) under the user's per-user DEK; the EncryptedString TypeDecorator

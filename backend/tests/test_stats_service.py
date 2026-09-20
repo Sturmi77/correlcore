@@ -10,7 +10,6 @@ import pytest
 
 from app.models.tag import TagCategory
 from app.services.stats_service import (
-    get_entry_streak,
     get_symptom_heatmap,
     get_tag_heatmap,
     get_timeseries,
@@ -49,6 +48,25 @@ async def test_timeseries_week_fills_missing_days() -> None:
     assert out.points[-1].period_start == as_of
     assert out.points[-1].mood_avg == 2
     assert out.points[0].entry_count == 0
+
+
+@pytest.mark.asyncio
+async def test_timeseries_averages_only_logged_sleep_minutes() -> None:
+    # Sleep duration is optional: average only days with minutes; None when absent.
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    entries = [
+        make_entry(user, entry_date=as_of - timedelta(days=1), sleep_minutes=420),
+        make_entry(user, entry_date=as_of, sleep_minutes=360),
+    ]
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result(entries))
+
+    out = await get_timeseries(db, user_id=user.id, range_="week", as_of=as_of)
+
+    assert out.points[-1].sleep_minutes_avg == 360
+    assert out.points[-2].sleep_minutes_avg == 420
+    assert out.points[0].sleep_minutes_avg is None
 
 
 @pytest.mark.asyncio
@@ -98,51 +116,6 @@ async def test_timeseries_year_returns_365_daily_points() -> None:
     assert len(out.points) == 365
     assert out.points[0].period_start == as_of - timedelta(days=364)
     assert out.points[-1].period_start == as_of
-
-
-@pytest.mark.asyncio
-async def test_entry_streak_breaks_on_missing_as_of_day() -> None:
-    user = make_user()
-    as_of = date(2026, 5, 9)
-    db = MagicMock()
-    db.execute = AsyncMock(
-        return_value=_row_result(
-            [
-                (date(2026, 5, 5),),
-                (date(2026, 5, 6),),
-                (date(2026, 5, 8),),
-            ]
-        )
-    )
-
-    out = await get_entry_streak(db, user_id=user.id, as_of=as_of)
-
-    assert out.current_streak == 0
-    assert out.longest_streak == 2
-    assert out.total_entry_days == 3
-    assert out.last_entry_date == date(2026, 5, 8)
-
-
-@pytest.mark.asyncio
-async def test_entry_streak_counts_back_from_as_of() -> None:
-    user = make_user()
-    as_of = date(2026, 5, 9)
-    db = MagicMock()
-    db.execute = AsyncMock(
-        return_value=_row_result(
-            [
-                (date(2026, 5, 6),),
-                (date(2026, 5, 7),),
-                (date(2026, 5, 8),),
-                (date(2026, 5, 9),),
-            ]
-        )
-    )
-
-    out = await get_entry_streak(db, user_id=user.id, as_of=as_of)
-
-    assert out.current_streak == 4
-    assert out.longest_streak == 4
 
 
 @pytest.mark.asyncio
@@ -309,3 +282,37 @@ async def test_symptom_heatmap_scopes_visible_symptoms_to_user() -> None:
     assert "entry_symptoms.user_id" in whereclause
     assert "entries.user_id" in whereclause
     assert "symptoms.is_default IS true" in whereclause
+
+
+@pytest.mark.asyncio
+async def test_timeseries_days_returns_the_exact_window() -> None:
+    """#867: the shared analysis window must not be rounded to a legacy enum.
+
+    `range` only offers 7/30/90/365, so 14 resolved to `week` (7 days) and 28 to
+    `month` (30). Trends and Home then plotted a different population than the
+    label promised.
+    """
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result([]))
+
+    for days in (14, 28, 90):
+        out = await get_timeseries(db, user_id=user.id, range_="month", as_of=as_of, days=days)
+        assert len(out.points) == days, f"expected {days} buckets, got {len(out.points)}"
+        assert out.days == days
+        assert out.points[-1].period_start == as_of
+        assert (out.points[-1].period_start - out.points[0].period_start).days == days - 1
+
+
+@pytest.mark.asyncio
+async def test_timeseries_without_days_keeps_the_legacy_range() -> None:
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result([]))
+
+    out = await get_timeseries(db, user_id=user.id, range_="week", as_of=as_of)
+
+    assert len(out.points) == 7
+    assert out.days == 7

@@ -14,5 +14,6 @@ export function defaultWorkContextForDate(
   if (dow === 0 || dow === 6) return 'weekend';
   if (typical === 'office') return 'office';
   if (typical === 'remote') return 'homeoffice';
+  if (typical === 'other') return 'other';
   return 'homeoffice';
 }

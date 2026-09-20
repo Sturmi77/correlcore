@@ -30,11 +30,17 @@ class TimeseriesPoint(BaseModel):
     energy_avg: float | None = None
     stress_avg: float | None = None
     sleep_quality_avg: float | None = None
+    # Phase 14 / L8: duration for Compare Zeitversatz vs next-day mood/energy.
+    sleep_minutes_avg: float | None = None
 
 
 class TimeseriesResponse(BaseModel):
     range: TimeseriesRange
     points: list[TimeseriesPoint]
+    # Number of day buckets actually returned. The `range` enum cannot express
+    # the shared analysis window (14 | 28 | 90), so clients that request an
+    # exact `days` window read this back rather than inferring it (#867).
+    days: int | None = None
 
 
 class TagHeatmapDay(BaseModel):
@@ -75,14 +81,6 @@ class SymptomHeatmapResponse(BaseModel):
     start_date: date_type
     end_date: date_type
     symptoms: list[SymptomHeatmapSymptom] = Field(default_factory=list)
-
-
-class EntryStreakResponse(BaseModel):
-    current_streak: int
-    longest_streak: int
-    total_entry_days: int
-    last_entry_date: date_type | None = None
-    as_of: date_type
 
 
 # ---------------------------------------------------------------------------

@@ -90,6 +90,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import load_only
 
 from app.core.crypto import (
     CryptoError,
@@ -521,8 +522,37 @@ async def _convert_marker_tags_for_user(
 
         # Bump updated_at + emit the entry revision so offline clients pull the
         # new links (link inserts alone don't fire the entries updated_at trigger).
+        # Migration 049 calls this against revision 049's schema, so the SELECT
+        # must not emit columns a later revision adds (#892's logged_local_hour
+        # / inferred_period were the first to strand installs still on 048).
+        # load_only is a whitelist, so future entries columns stay out by
+        # construction — list exactly what the updated_at touch and the
+        # revision-log payload read. raiseload=True makes that structural: an
+        # unlisted attribute raises here instead of silently lazy-loading the
+        # column and reintroducing the UndefinedColumn against revision 049.
         entry = (
-            await db.execute(select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id))
+            await db.execute(
+                select(Entry)
+                .where(Entry.id == entry_id, Entry.user_id == user_id)
+                .options(
+                    load_only(
+                        Entry.user_id,
+                        Entry.entry_date,
+                        Entry.slot,
+                        Entry.mood_score,
+                        Entry.energy,
+                        Entry.stress,
+                        Entry.cycle_day,
+                        Entry.cycle_bleeding_level,
+                        Entry.sleep_minutes,
+                        Entry.sleep_quality,
+                        Entry.work_context,
+                        Entry.note_visibility,
+                        Entry.updated_at,
+                        raiseload=True,
+                    )
+                )
+            )
         ).scalar_one()
         entry.updated_at = datetime.now(UTC)
         await db.flush()

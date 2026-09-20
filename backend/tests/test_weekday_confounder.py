@@ -12,10 +12,12 @@ from app.services.symptom_analytics import (
 )
 from app.services.symptom_analytics import SymptomRef as AnalyticsSymptomRef
 from app.services.weekday_confounder import (
+    evaluate_metric_association_weekday,
     is_metric_association_calendar_context_confounded,
     is_metric_association_weekday_confounded,
     is_pair_cooccurrence_calendar_context_confounded,
     is_pair_cooccurrence_weekday_confounded,
+    same_work_context_metric_frequencies,
 )
 
 
@@ -255,3 +257,46 @@ def test_symptom_work_context_bias_uses_available_context_day_baseline() -> None
 
     assert is_work_context_biased_signal(entries, tag_id, kind="tag") is False
     assert is_work_context_biased_signal(entries, symptom_id, kind="symptom") is False
+
+
+def test_evaluate_metric_association_weekday_exposes_held_coefficient() -> None:
+    import uuid
+
+    symptom_id = uuid.uuid4()
+    start = date(2026, 1, 1)
+    entries = [
+        DailySymptomEntry(
+            entry_date=start + timedelta(days=offset),
+            mood_score=5 if offset % 2 == 0 else 2,
+            energy=3,
+            stress=3,
+            tag_ids=frozenset(),
+            symptom_ids=frozenset({symptom_id}) if offset % 2 == 0 else frozenset(),
+            work_context=WorkContext.HOMEOFFICE,
+        )
+        for offset in range(28)
+    ]
+    metric_values = [float(entry.mood_score) for entry in entries]
+    binary = [1 if symptom_id in entry.symptom_ids else 0 for entry in entries]
+    result = evaluate_metric_association_weekday(
+        [entry.entry_date for entry in entries],
+        metric_values,
+        binary,
+        raw_coefficient=0.7,
+        raw_p_value=0.001,
+    )
+    assert result.adjusted_coefficient is not None
+    assert result.adjusted_p is not None
+    assert result.confounded is False
+
+
+def test_same_work_context_metric_frequencies_uses_modal_signal_context() -> None:
+    contexts = ["office"] * 8 + ["homeoffice"] * 4 + ["office"] * 8
+    binary = [1] * 8 + [1] * 4 + [0] * 8
+    metrics = [5] * 8 + [3] * 4 + [2] * 8
+    freqs = same_work_context_metric_frequencies(contexts, binary, metrics)
+    assert freqs.context == "office"
+    assert freqs.with_n == 8
+    assert freqs.without_n == 8
+    assert freqs.with_good == 8
+    assert freqs.without_good == 0

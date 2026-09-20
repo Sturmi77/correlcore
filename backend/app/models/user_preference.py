@@ -5,11 +5,15 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, func, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+
+#: Allowed analysis-window lengths (#867). Mirrored in the Pydantic schema.
+TREND_WINDOW_DAYS_ALLOWED: tuple[int, ...] = (14, 28, 90)
+TREND_WINDOW_DAYS_DEFAULT = 28
 
 
 class UserPreference(Base):
@@ -62,6 +66,13 @@ class UserPreference(Base):
         default=True,
         server_default="true",
     )
+    # Phase 8 / #875: opt-in Belastung & Erholung overlay (default off).
+    belastung_overlay_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
     # #868: per-weekday (W2) trend caret on Home. Default on; Settings can hide
     # it because day-level windows are noisy (~4 values per weekday at N=28).
     home_weekday_day_trend_enabled: Mapped[bool] = mapped_column(
@@ -69,6 +80,13 @@ class UserPreference(Base):
         nullable=False,
         default=True,
         server_default="true",
+    )
+    # #867: shared analysis window for Home / Trends / Insights (14 | 28 | 90).
+    trend_window_days: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=TREND_WINDOW_DAYS_DEFAULT,
+        server_default="28",
     )
     # M8 Sprint 4 (#172): per-field toggle for Health Connect sleep sync.
     health_connect_sync_sleep_enabled: Mapped[bool] = mapped_column(
@@ -108,6 +126,13 @@ class UserPreference(Base):
     insight_sections: Mapped[list[dict[str, object]] | None] = mapped_column(
         JSONB,
         nullable=True,
+    )
+    # Phase 6 / D5: layout generation for insight_sections (1 = legacy, 2 = slim).
+    insight_sections_version: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=2,
+        server_default="2",
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

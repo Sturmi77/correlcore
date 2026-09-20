@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   clampAxisRangeToData,
   compareDailyAxisLayoutFromRoot,
+  habitDailyAxisLayout,
   trendsDayAxisMetrics,
   trendsDayCenterX,
   trendsPlotWidth,
@@ -30,6 +31,27 @@ describe('trendsDateAxis', () => {
     const layout = compareDailyAxisLayoutFromRoot(20);
     expect(layout.dayWidth).toBeCloseTo(0.82 * 20);
     expect(layout.labelWidth).toBeCloseTo(7 * 20);
+  });
+
+  it('habitDailyAxisLayout defaults to the compare day pitch (Phase 11 / O3)', () => {
+    expect(habitDailyAxisLayout()).toEqual(compareDailyAxisLayoutFromRoot(16));
+  });
+
+  it('habitDailyAxisLayout preserves compact and coarse densities', () => {
+    expect(habitDailyAxisLayout({ compact: true })).toEqual({
+      labelWidth: 4.5 * 16,
+      dayWidth: 0.65 * 16,
+      dayGap: 0.15 * 16,
+      rightPadding: 0,
+    });
+    expect(habitDailyAxisLayout({ coarsePointer: true })).toEqual({
+      labelWidth: 7 * 16,
+      dayWidth: 2.75 * 16,
+      dayGap: 0.25 * 16,
+      rightPadding: 0,
+    });
+    // Compact wins over coarse when both are set (Habits detail sheet).
+    expect(habitDailyAxisLayout({ compact: true, coarsePointer: true }).dayWidth).toBe(0.65 * 16);
   });
 
   describe('clampAxisRangeToData (#676)', () => {

@@ -33,6 +33,7 @@ from app.models.entry import Entry
 from app.models.insight import Insight, InsightTier
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag
+from app.services.insights.belastung import _belastung_candidates
 from app.services.insights.changepoint import _changepoint_candidates
 from app.services.insights.correlation import (
     _pointbiserial_candidates,
@@ -122,6 +123,7 @@ async def _generate_insight_candidates_in_thread(
     symptoms: list[SymptomSnapshot],
     *,
     as_of: date_type,
+    belastung_overlay_enabled: bool = False,
 ) -> list[InsightCandidate]:
     """Run pure, potentially expensive statistics outside the event loop.
 
@@ -138,6 +140,7 @@ async def _generate_insight_candidates_in_thread(
         tags,
         symptoms,
         as_of=as_of,
+        belastung_overlay_enabled=belastung_overlay_enabled,
     )
 
 
@@ -174,6 +177,7 @@ def generate_insight_candidates(
     symptoms: Iterable[SymptomSnapshot] = (),
     *,
     as_of: date_type | None = None,
+    belastung_overlay_enabled: bool = False,
 ) -> list[InsightCandidate]:
     """Generate deterministic insight candidates from user-owned data."""
 
@@ -236,6 +240,14 @@ def generate_insight_candidates(
             daily_entries,
             tier=tier,
             generated_for_date=generated_for_date,
+        ),
+        *_belastung_candidates(
+            daily_entries,
+            canonical_tags,
+            symptom_list,
+            tier=tier,
+            generated_for_date=generated_for_date,
+            enabled=belastung_overlay_enabled,
         ),
     ]
     return sorted(
@@ -342,6 +354,8 @@ async def _load_analytics_inputs(
                     symptom_ids=frozenset(symptom_ids_by_entry.get(entry.id, set())),
                     sleep_minutes=entry.sleep_minutes,
                     sleep_quality=entry.sleep_quality,
+                    logged_local_hour=entry.logged_local_hour,
+                    inferred_period=entry.inferred_period,
                 )
             )
         except (ValueError, TypeError, LookupError, DecryptionError) as exc:
@@ -424,11 +438,16 @@ async def generate_and_store_insights(
         user_id=user_id,
         as_of=generated_for_date,
     )
+    from app.services.user_preferences_service import get_or_create_user_preferences
+
+    preferences = await get_or_create_user_preferences(db, user_id=user_id)
     candidates = await _generate_insight_candidates_in_thread(
         entries,
         tags,
         symptoms,
         as_of=generated_for_date,
+        belastung_overlay_enabled=preferences.belastung_overlay_enabled
+        and preferences.analytics_enabled,
     )
 
     if settings.INSIGHTS_LLM_ENABLED:

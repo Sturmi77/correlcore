@@ -263,6 +263,15 @@ def test_lag_analysis_sleep_predictor_keeps_gappy_pairwise_pairs() -> None:
     assert sleep_to_mood, "gappy sleep must still produce sleep→mood lag findings"
     assert sleep_to_mood[0].lag_days == 1
     assert sleep_to_mood[0].sample_n == fixed_n
+    # Phase 14: median-split frequencies for Layer-2 two denominators.
+    assert sleep_to_mood[0].high_feature_n is not None
+    assert sleep_to_mood[0].low_feature_n is not None
+    assert sleep_to_mood[0].high_feature_good_count is not None
+    assert sleep_to_mood[0].low_feature_good_count is not None
+    assert (
+        sleep_to_mood[0].high_feature_n + sleep_to_mood[0].low_feature_n
+        == sleep_to_mood[0].sample_n
+    )
 
 
 def test_lag_analysis_never_targets_sleep_and_uses_pairwise_deletion() -> None:
@@ -461,3 +470,83 @@ def test_lag_analysis_emits_one_finding_per_pair() -> None:
     # Secondary lags are retained in the profile, not emitted as separate cards.
     assert len(tag_symptom.profile) >= 2
     assert 5 in {point.lag_days for point in tag_symptom.profile}
+
+
+def test_lag_frequencies_share_the_finding_denominator_on_gappy_calendars() -> None:
+    """Phase 14 / L8: the median split must reuse the finding's own lagged frame.
+
+    Non-sleep pairs are measured on the joint complete-case matrix, which keeps a
+    day only when that day *and* its whole lag window were logged. A private
+    rebuild would pairwise-delete instead and count days the correlation never
+    saw, so ``high_feature_n + low_feature_n`` would exceed the ``sample_n``
+    printed on the same card — two denominators contradicting each other.
+    """
+    start = date(2026, 1, 1)
+    entries = []
+    for offset in range(MIN_ML_ENTRIES + 40):
+        # Calendar holes: build_lagged_frame reindexes to full days, so a missing
+        # day NaNs out the whole joint row and its seven successors' lag columns.
+        if offset % 5 == 4:
+            continue
+        energy = 1 + (offset % 5)
+        prior_energy = 1 + ((offset - 1) % 5)
+        entries.append(
+            _entry(
+                start + timedelta(days=offset),
+                mood=max(1, min(5, prior_energy)),
+                energy=energy,
+                stress=max(1, min(5, 6 - prior_energy)),
+            )
+        )
+
+    frame, feature_meta = build_design_matrix(entries)
+    # max_lag_days=2 keeps the joint frame non-empty: at lag 7 a surviving row
+    # would need eight consecutive logged days, which this calendar never has.
+    findings = run_lag_analysis(
+        frame, feature_meta, max_lag_days=2, min_observations=10, min_abs_correlation=0.1
+    )
+
+    enriched = [
+        finding
+        for finding in findings
+        if finding.target.kind == "metric" and finding.high_feature_n is not None
+    ]
+    assert enriched, "gappy metric pairs must still carry median-split frequencies"
+    for finding in enriched:
+        assert finding.low_feature_n is not None
+        assert finding.high_feature_n is not None
+        assert finding.high_feature_n + finding.low_feature_n == finding.sample_n, (
+            f"{finding.feature.key}->{finding.target.key} split "
+            f"{finding.high_feature_n}+{finding.low_feature_n} != n={finding.sample_n}"
+        )
+        # Counts are bounded by their own denominator on both sides.
+        assert 0 <= (finding.high_feature_good_count or 0) <= finding.high_feature_n
+        assert 0 <= (finding.low_feature_good_count or 0) <= finding.low_feature_n
+
+
+def test_lag_frequencies_report_the_comparator_per_target() -> None:
+    """ "Good day" is >= 4 on mood/energy but <= 2 on stress — the payload says which."""
+    start = date(2026, 1, 1)
+    entries = [
+        _entry(
+            start + timedelta(days=offset),
+            mood=max(1, min(5, 1 + ((offset - 1) % 5))),
+            energy=1 + (offset % 5),
+            stress=max(1, min(5, 6 - (1 + ((offset - 1) % 5)))),
+        )
+        for offset in range(MIN_ML_ENTRIES + 20)
+    ]
+    frame, feature_meta = build_design_matrix(entries)
+    findings = run_lag_analysis(frame, feature_meta, min_observations=10, min_abs_correlation=0.1)
+
+    by_target = {
+        finding.target.key: finding for finding in findings if finding.good_direction is not None
+    }
+    assert by_target, "expected at least one metric target to carry a split"
+    for target_key, finding in by_target.items():
+        if target_key == "stress":
+            assert finding.good_direction == "lte"
+            assert finding.good_threshold == 2
+        else:
+            assert finding.good_direction == "gte"
+            assert finding.good_threshold == 4

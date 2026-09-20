@@ -600,6 +600,7 @@
     'sick',
     'weekend',
     'travel',
+    'other',
   ];
   /**
    * #630: hide Morning/Noon/Evening until slot analytics give the chips a job.

@@ -13,6 +13,8 @@
     habitStatusI18nKey,
     isHabitAdherenceInsufficient,
   } from '$lib/utils/habitMetrics';
+  import { confidenceLabelKey } from '$lib/utils/confidenceLabel';
+  import InsightEvidence from '$lib/components/insights/InsightEvidence.svelte';
 
   export let selected: { habit: HabitStatsResponse; tag: TagResponse };
   export let detailHeatmap: TagHeatmapResponse | null = null;
@@ -125,16 +127,25 @@
     </dl>
 
     {#if selected.habit.correlation_score !== null}
-      <section class="habit-detail__correlation">
+      <section class="habit-detail__correlation" data-testid="habit-correlation">
         <p>
           {$_('habits.correlation_predictor', {
             values: {
               name: selected.tag.name,
               metric: metricLabel(selected.habit.correlation_metric),
-              score: selected.habit.correlation_score.toFixed(2),
+              label: $_(
+                `insights.confidence_label.${confidenceLabelKey(Math.abs(selected.habit.correlation_score))}`
+              ),
+              n: selected.habit.days_tracked,
             },
           })}
         </p>
+        <InsightEvidence
+          confidenceScore={Math.abs(selected.habit.correlation_score)}
+          entryCount={selected.habit.days_tracked}
+          showSample
+          showMaturityBadge={false}
+        />
       </section>
     {/if}
   {/if}

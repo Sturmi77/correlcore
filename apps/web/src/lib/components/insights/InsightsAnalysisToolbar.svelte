@@ -4,25 +4,24 @@
   import SegmentedControl, {
     type SegmentedControlOption,
   } from '$lib/components/common/SegmentedControl.svelte';
-  import type { TimeseriesRange } from '$lib/api/stats';
+  import type { TrendWindowDays } from '$lib/utils/trendWindowDays';
 
-  export let analysisRange: TimeseriesRange;
+  export let analysisRange: TrendWindowDays | number;
   export let analysisRangeOptions: SegmentedControlOption[] = [];
 
   const dispatch = createEventDispatcher<{
-    rangeChange: { value: TimeseriesRange };
+    rangeChange: { value: string };
   }>();
 </script>
 
 <div class="insights-toolbar" data-testid="insights-analysis-toolbar">
   <div class="insights-toolbar__row" data-testid="insights-sticky-toolbar">
     <SegmentedControl
-      value={analysisRange}
+      value={String(analysisRange)}
       options={analysisRangeOptions}
       ariaLabel={$_('insights.page.analysis_range_label')}
       testId="insights-range-control"
-      on:change={(event) =>
-        dispatch('rangeChange', { value: event.detail.value as TimeseriesRange })}
+      on:change={(event) => dispatch('rangeChange', { value: event.detail.value })}
     />
   </div>
 </div>

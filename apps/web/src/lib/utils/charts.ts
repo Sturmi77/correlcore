@@ -2,7 +2,11 @@ import type { TimeseriesPoint } from '$lib/api/stats';
 import { meanBucketMetric, type AxisBucket } from '$lib/utils/compareAxisZoom';
 import { displayTimeseriesValue } from '$lib/utils/metrics';
 
-export type MetricKey = 'mood_avg' | 'energy_avg' | 'stress_avg' | 'sleep_quality_avg';
+/** Chart-space ceiling for sleep duration (12h → top of 1–5 plot). Raw minutes stay in API. */
+export const SLEEP_MINUTES_CHART_MAX = 720;
+
+export type MetricKey =
+  'mood_avg' | 'energy_avg' | 'stress_avg' | 'sleep_quality_avg' | 'sleep_minutes_avg';
 export type TimeseriesRange = 'week' | 'month' | 'quarter' | 'year';
 export type PointShape = 'circle' | 'diamond' | 'triangle' | 'square';
 
@@ -64,6 +68,11 @@ export const metricStyles: Record<MetricKey, MetricStyle> = {
     dasharray: '1 4',
     shape: 'square',
   },
+  sleep_minutes_avg: {
+    color: 'var(--color-metric-sleep)',
+    dasharray: '4 3',
+    shape: 'square',
+  },
 };
 
 export function formatTimeseriesTick(range: TimeseriesRange, isoDate: string): string {
@@ -71,6 +80,15 @@ export function formatTimeseriesTick(range: TimeseriesRange, isoDate: string): s
   if (!year || !month || !day) return isoDate;
   if (range === 'year') return `${year}-${month}`;
   return `${month}-${day}`;
+}
+
+/** Map raw timeseries values into the shared 1–5 chart vertical domain. */
+export function chartNormalizeTimeseriesValue(metric: MetricKey, raw: number): number {
+  if (metric === 'sleep_minutes_avg') {
+    const clamped = Math.max(0, Math.min(SLEEP_MINUTES_CHART_MAX, raw));
+    return 1 + (clamped / SLEEP_MINUTES_CHART_MAX) * 4;
+  }
+  return displayTimeseriesValue(metric, raw);
 }
 
 export function buildLinePoints(
@@ -83,10 +101,11 @@ export function buildLinePoints(
   const step = points.length > 1 ? width / (points.length - 1) : width;
   return points.flatMap((point, index) => {
     const raw = usable[index];
-    if (raw === null) return [];
-    const value = displayTimeseriesValue(metric, raw);
+    if (raw == null) return [];
+    const chartValue = chartNormalizeTimeseriesValue(metric, raw);
     const x = points.length > 1 ? index * step : width / 2;
-    const y = height - ((value - 1) / 4) * height;
+    const y = height - ((chartValue - 1) / 4) * height;
+    const value = metric === 'sleep_minutes_avg' ? raw : displayTimeseriesValue(metric, raw);
     return [{ x, y, value, label: point.period_start, index }];
   });
 }
@@ -175,10 +194,11 @@ export function buildDailyAxisLinePoints(
     const point = byDate.get(date);
     if (!point) return [];
     const raw = point[metric];
-    if (raw === null) return [];
-    const value = displayTimeseriesValue(metric, raw);
+    if (raw == null) return [];
+    const chartValue = chartNormalizeTimeseriesValue(metric, raw);
     const x = dailyAxisXForIndex(index, layout);
-    const y = height - ((value - 1) / 4) * height;
+    const y = height - ((chartValue - 1) / 4) * height;
+    const value = metric === 'sleep_minutes_avg' ? raw : displayTimeseriesValue(metric, raw);
     return [{ x, y, value, label: point.period_start, index }];
   });
 }
@@ -198,10 +218,11 @@ export function buildBucketAxisLinePoints(
       if (!point || point.entry_count <= 0) return null;
       return point[metric];
     }, bucket);
-    if (raw === null) return [];
-    const value = displayTimeseriesValue(metric, raw);
+    if (raw == null) return [];
+    const chartValue = chartNormalizeTimeseriesValue(metric, raw);
     const x = dailyAxisXForIndex(index, layout);
-    const y = height - ((value - 1) / 4) * height;
+    const y = height - ((chartValue - 1) / 4) * height;
+    const value = metric === 'sleep_minutes_avg' ? raw : displayTimeseriesValue(metric, raw);
     return [{ x, y, value, label: bucket.start, index }];
   });
 }

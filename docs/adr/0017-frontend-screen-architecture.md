@@ -165,8 +165,10 @@ Two items in this ADR are affected:
 - The Consequences item "the `InsightMatrix.svelte` component … should be evaluated
   against the new `InsightFeed` + `InsightCard` pattern … and removed or repurposed if
   redundant" is **retired**. The component is not redundant, it is misplaced: it moves to
-  layer 4 as a report table. Note that `exportPng()` lives inside it, so it must not be
-  dropped from the `/insights` default before the report surface exists.
+  layer 4 as a report table on `/insights/report` (Phase 5). Export controls live on that
+  report surface only (ADR-0043 §1).
 - The M5 amendment "the matrix remains a secondary drilldown inside `/insights`" is
-  confirmed in intent and made implementable — the section model has no
-  "present but not in the entry surface" state, so a drilldown needs a surface.
+  confirmed: after Phase 6 the matrix is off the Layer-1 default (versioned
+  `insight_sections` migration) and reachable via the report route / Settings tools.
+- See [ADR-0043](0043-insight-surface-layers.md) for the four-layer model and
+  [DESIGN_DOCUMENT.md](../DESIGN_DOCUMENT.md) §2.10 for the export status.

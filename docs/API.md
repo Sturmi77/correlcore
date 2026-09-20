@@ -1205,7 +1205,7 @@ Daten dieses Users.
 ```
 GET /api/v1/entries/stats/timeseries?range=week|month|year
 GET /api/v1/entries/stats/tags?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&category=work
-GET /api/v1/entries/stats/streak?as_of=YYYY-MM-DD
+GET /api/v1/entries/stats/health-context?as_of=YYYY-MM-DD
 ```
 
 `timeseries` liefert fuer `week` sieben Tagespunkte, fuer `month` 30 Tagespunkte,
@@ -1233,10 +1233,6 @@ aber nicht in neuen Heatmap- oder Insight-Berechnungen verwendet:
   ]
 }
 ```
-
-`streak` zaehlt nach ADR-0012 nur Eintrags-Streaks: aufeinanderfolgende Tage mit
-mindestens einem Entry. Es gibt keine Habit-Semantik und keine Toleranz fuer
-fehlende Tage.
 
 ---
 

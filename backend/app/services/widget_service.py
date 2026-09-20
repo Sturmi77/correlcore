@@ -7,13 +7,14 @@ import uuid
 from collections import Counter
 from datetime import UTC, datetime, time, timedelta
 from datetime import date as date_type
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry, EntrySlot
 from app.schemas.widget import WidgetSummaryResponse
+from app.services.timezone_utils import UTC_ZONE, resolve_zone
 
 logger = logging.getLogger(__name__)
 
@@ -31,26 +32,6 @@ _SLOT_DEFAULT_HOUR: dict[EntrySlot, int] = {
 }
 
 _DEFAULT_SUGGEST_HOUR = 19
-
-# Clients that send no timezone keep the pre-#445 behaviour.
-UTC_ZONE = ZoneInfo("UTC")
-
-
-def resolve_zone(tz: str | None) -> ZoneInfo:
-    """Resolve an IANA timezone name, falling back to UTC.
-
-    A widget must not break because a device reports a zone this server's
-    tzdata does not know, so an unusable name degrades to the previous
-    UTC behaviour instead of raising.
-    """
-
-    if not tz:
-        return UTC_ZONE
-    try:
-        return ZoneInfo(tz)
-    except (ZoneInfoNotFoundError, ValueError):
-        logger.info("widget.summary.unknown_timezone", extra={"timezone": tz})
-        return UTC_ZONE
 
 
 def _suggest_hour_from_history(

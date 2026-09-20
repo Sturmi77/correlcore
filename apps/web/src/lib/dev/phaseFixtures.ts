@@ -10,7 +10,6 @@ import type {
   TagCooccurrenceResponse,
 } from '$lib/api/insights';
 import type {
-  EntryStreakResponse,
   HealthContextResponse,
   SymptomHeatmapResponse,
   TagHeatmapResponse,
@@ -18,7 +17,7 @@ import type {
 } from '$lib/api/stats';
 import type { TagResponse } from '$lib/api/tags';
 import type { UserPreferencesResponse } from '$lib/api/preferences';
-import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
+import { localIsoDate, shiftIsoDate } from '$lib/utils/isoDate';
 import {
   PERSONA_SYMPTOMS,
   PERSONA_TAGS,
@@ -59,7 +58,6 @@ export interface DevPhaseFixture {
   timeseries: TimeseriesResponse;
   tagHeatmap: TagHeatmapResponse;
   symptomHeatmap: SymptomHeatmapResponse;
-  streak: EntryStreakResponse;
   healthContext: HealthContextResponse;
   habitStats: HabitStatsResponse[];
   habitTags: TagResponse[];
@@ -219,6 +217,7 @@ function makeTimeseries(entries: EntryResponse[]): TimeseriesResponse {
         energy_avg: entry.energy,
         stress_avg: entry.stress,
         sleep_quality_avg: entry.sleep_quality ?? null,
+        sleep_minutes_avg: entry.sleep_minutes ?? null,
       })),
   };
 }
@@ -229,16 +228,6 @@ function makeTagHeatmap(days: PersonaDay[], density: number): TagHeatmapResponse
 
 function makeSymptomHeatmap(days: PersonaDay[], density: number): SymptomHeatmapResponse {
   return symptomHeatmapFromDays(days, density);
-}
-
-function makeStreak(entries: EntryResponse[], entryCount: number): EntryStreakResponse {
-  return {
-    current_streak: Math.min(entryCount, 6),
-    longest_streak: Math.min(entryCount, 12),
-    total_entry_days: entryCount,
-    last_entry_date: entries[0]?.entry_date ?? null,
-    as_of: today,
-  };
 }
 
 // Mirrors the backend gate thresholds (health_context_service): symptom unlocks
@@ -960,7 +949,6 @@ export function getDevPhaseFixture(state: DevPhaseStateLike): DevPhaseFixture {
     timeseries: makeTimeseries(entries),
     tagHeatmap: makeTagHeatmap(days, insightEnabled ? (robustEnabled ? 7 : 4) : 0),
     symptomHeatmap: makeSymptomHeatmap(days, analyticsEnabled ? (robustEnabled ? 7 : 4) : 0),
-    streak: makeStreak(entries, entryCount),
     healthContext: makeHealthContext(
       state.presetId,
       entryCount,

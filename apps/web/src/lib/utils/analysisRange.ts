@@ -1,6 +1,6 @@
 import type { TagCooccurrenceRange } from '$lib/api/insights';
 import type { TimeseriesRange } from '$lib/api/stats';
-import { localIsoDate, shiftIsoDate } from '$lib/utils/streak';
+import { localIsoDate, shiftIsoDate } from '$lib/utils/isoDate';
 import { rangeToDays } from '$lib/utils/trendsRange';
 
 export const ANALYSIS_RANGE_OPTIONS: TimeseriesRange[] = ['week', 'month', 'quarter', 'year'];

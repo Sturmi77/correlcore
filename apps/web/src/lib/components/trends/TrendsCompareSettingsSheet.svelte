@@ -4,9 +4,18 @@
   import type { TagCategory } from '$lib/api/tags';
   import type { MetricKey } from '$lib/utils/charts';
   import type { CompareMode, CompareSortMode } from '$lib/utils/comparePanelSettings';
+  import {
+    maxZoomStageForWindow,
+    stageDays,
+    type CompareZoomStageIndex,
+  } from '$lib/utils/compareAxisZoom';
+  import type { TrendWindowDays } from '$lib/utils/trendWindowDays';
   import TrendsCompareFilters from './TrendsCompareFilters.svelte';
   import CompareOverlayControls from './CompareOverlayControls.svelte';
   import BottomSheet from '$lib/components/common/BottomSheet.svelte';
+  import SegmentedControl, {
+    type SegmentedControlOption,
+  } from '$lib/components/common/SegmentedControl.svelte';
   import {
     EMPTY_COMPARE_OVERLAY_AVAILABILITY,
     type CompareOverlayAvailability,
@@ -28,19 +37,37 @@
   export let lag1Highlight = false;
   export let overlayAvailability: CompareOverlayAvailability = EMPTY_COMPARE_OVERLAY_AVAILABILITY;
   export let overlayHintDismissed = false;
+  export let sleepZeitversatz = false;
+  /** #928 O7: focus chips — parent owns state. */
+  export let focusedClusterId: number | null = null;
+  export let tagClusterLabels: { cluster_id: number; label: string }[] = [];
+  /** #928 O7: zoom — parent owns state. */
+  export let zoomStage: CompareZoomStageIndex = 0;
+  export let windowDays: TrendWindowDays = 28;
+  export let rangeOptions: SegmentedControlOption[] = [];
 
   const dispatch = createEventDispatcher<{
     close: void;
     smoothingChange: { value: boolean };
     metricToggle: { metric: MetricKey };
     categoryChange: { category: TagCategory | 'all' };
+    sleepZeitversatzChange: { value: boolean };
     layerChange: { showTags: boolean; showSymptoms: boolean; showWorkContexts: boolean };
     modeChange: { value: CompareMode };
     sortChange: { value: CompareSortMode };
     coincidenceChange: { value: boolean };
     lag1Change: { value: boolean };
     overlayHintDismiss: void;
+    focusClusterChange: { clusterId: number | null };
+    zoomIn: void;
+    zoomOut: void;
+    rangeChange: { value: string };
   }>();
+
+  $: maxZoomStage = maxZoomStageForWindow(windowDays);
+  $: canZoomOut = zoomStage < maxZoomStage;
+  $: canZoomIn = zoomStage > 0;
+  $: zoomDays = stageDays(zoomStage);
 </script>
 
 <BottomSheet
@@ -67,13 +94,28 @@
   </header>
 
   <div class="compare-settings__body">
+    {#if rangeOptions.length > 0}
+      <div class="compare-settings__range" data-testid="trends-compare-settings-range">
+        <span class="compare-settings__label">{$_('trends.controls')}</span>
+        <SegmentedControl
+          value={String(windowDays)}
+          options={rangeOptions}
+          ariaLabel={$_('trends.controls')}
+          testId="trends-compare-settings-range-control"
+          on:change={(event) => dispatch('rangeChange', { value: event.detail.value })}
+        />
+      </div>
+    {/if}
+
     <TrendsCompareFilters
       {smoothing}
       {smoothingAvailable}
       {metrics}
       {selectedCategory}
+      {sleepZeitversatz}
       on:smoothingChange={(event) => dispatch('smoothingChange', event.detail)}
       on:metricToggle={(event) => dispatch('metricToggle', event.detail)}
+      on:sleepZeitversatzChange={(event) => dispatch('sleepZeitversatzChange', event.detail)}
       on:categoryChange={(event) => dispatch('categoryChange', event.detail)}
     />
 
@@ -119,6 +161,79 @@
         {$_('trends.compare.work_contexts')}
       </label>
     </fieldset>
+
+    {#if clustersAvailable && showTags && tagClusterLabels.length > 0}
+      <div
+        class="compare-settings__clusters"
+        role="group"
+        aria-label={$_('trends.compare.focus_label')}
+        data-testid="trends-compare-settings-focus"
+      >
+        <span class="compare-settings__label">{$_('trends.compare.focus_label')}</span>
+        <div class="compare-settings__cluster-chips">
+          <button
+            type="button"
+            class="compare-settings__chip"
+            class:compare-settings__chip--active={focusedClusterId === null}
+            aria-pressed={focusedClusterId === null}
+            on:click={() => dispatch('focusClusterChange', { clusterId: null })}
+          >
+            {$_('trends.compare.focus_all')}
+          </button>
+          {#each tagClusterLabels as cluster (cluster.cluster_id)}
+            <button
+              type="button"
+              class="compare-settings__chip"
+              class:compare-settings__chip--active={focusedClusterId === cluster.cluster_id}
+              aria-pressed={focusedClusterId === cluster.cluster_id}
+              data-testid="trends-compare-settings-focus-chip"
+              on:click={() =>
+                dispatch('focusClusterChange', {
+                  clusterId: focusedClusterId === cluster.cluster_id ? null : cluster.cluster_id,
+                })}
+            >
+              {cluster.label}
+            </button>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
+    <div class="compare-settings__zoom" data-testid="trends-compare-settings-zoom">
+      <span class="compare-settings__label">{$_('trends.compare.zoom.label')}</span>
+      <div
+        class="compare-settings__zoom-controls"
+        role="group"
+        aria-label={$_('trends.compare.zoom.label')}
+      >
+        <button
+          type="button"
+          class="compare-settings__zoom-btn"
+          data-testid="trends-compare-settings-zoom-decrease"
+          aria-label={$_('trends.compare.zoom.decrease_aria')}
+          disabled={!canZoomOut}
+          on:click={() => dispatch('zoomOut')}
+        >
+          −
+        </button>
+        <span
+          class="compare-settings__zoom-status"
+          data-testid="trends-compare-settings-zoom-status"
+        >
+          {$_('trends.compare.zoom.status', { values: { days: zoomDays } })}
+        </span>
+        <button
+          type="button"
+          class="compare-settings__zoom-btn"
+          data-testid="trends-compare-settings-zoom-increase"
+          aria-label={$_('trends.compare.zoom.increase_aria')}
+          disabled={!canZoomIn}
+          on:click={() => dispatch('zoomIn')}
+        >
+          +
+        </button>
+      </div>
+    </div>
 
     <fieldset class="compare-settings__overlays">
       <legend>{$_('trends.compare.overlay_group_label')}</legend>
@@ -210,6 +325,11 @@
     gap: var(--space-4);
   }
 
+  .compare-settings__range {
+    display: grid;
+    gap: var(--space-2);
+  }
+
   .compare-settings__layers {
     display: flex;
     flex-wrap: wrap;
@@ -233,6 +353,56 @@
     gap: var(--space-1);
     font-size: var(--text-sm);
     font-weight: 700;
+  }
+
+  .compare-settings__clusters {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .compare-settings__cluster-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .compare-settings__zoom {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .compare-settings__zoom-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .compare-settings__zoom-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--color-border, var(--color-border-chart));
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .compare-settings__zoom-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .compare-settings__zoom-status {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    min-width: 7rem;
+    text-align: center;
   }
 
   .compare-settings__overlays {

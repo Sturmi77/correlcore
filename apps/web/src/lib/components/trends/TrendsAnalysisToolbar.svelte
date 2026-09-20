@@ -5,19 +5,19 @@
     type SegmentedControlOption,
   } from '$lib/components/common/SegmentedControl.svelte';
   import TabBar, { type TabBarOption } from '$lib/components/common/TabBar.svelte';
-  import type { TimeseriesRange } from '$lib/api/stats';
+  import type { TrendWindowDays } from '$lib/utils/trendWindowDays';
 
-  export let analysisRange: TimeseriesRange;
+  export let analysisRange: TrendWindowDays | number;
   export let analysisRangeOptions: SegmentedControlOption[] = [];
   export let activeTab: string;
   export let tabOptions: TabBarOption[] = [];
   export let showCompareFilters = false;
   export let embedCompareFilters = true;
-  /** Compare uses a fixed 365d zoom axis — hide range chips there (CAZ-0). */
+  /** Shared 14 | 28 | 90 day window on Compare and Habits (#928 O5). */
   export let showRangeControl = true;
 
   const dispatch = createEventDispatcher<{
-    rangeChange: { value: TimeseriesRange };
+    rangeChange: { value: string };
     tabChange: { value: string };
   }>();
 </script>
@@ -26,12 +26,11 @@
   {#if showRangeControl}
     <div class="trends-toolbar__row trends-toolbar__row--range" data-testid="trends-sticky-toolbar">
       <SegmentedControl
-        value={analysisRange}
+        value={String(analysisRange)}
         options={analysisRangeOptions}
         ariaLabel={$_('trends.controls')}
         testId="trends-range-control"
-        on:change={(event) =>
-          dispatch('rangeChange', { value: event.detail.value as TimeseriesRange })}
+        on:change={(event) => dispatch('rangeChange', { value: event.detail.value })}
       />
     </div>
   {:else}

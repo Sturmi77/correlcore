@@ -4,7 +4,7 @@
   import { createEntryBatch, type EntryCreatePayload } from '$lib/api/entries';
   import { updateUserPreferences } from '$lib/api/preferences';
   import { localIsoDate } from '$lib/utils/home';
-  import { shiftIsoDate } from '$lib/utils/streak';
+  import { shiftIsoDate } from '$lib/utils/isoDate';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
 
   const today = localIsoDate(new Date());

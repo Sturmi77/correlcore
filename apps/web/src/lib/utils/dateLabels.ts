@@ -10,7 +10,7 @@
  * the date-math classifier so it stays unit-testable.
  */
 
-import { localIsoDate, shiftIsoDate } from './streak';
+import { localIsoDate, shiftIsoDate } from './isoDate';
 
 export type DateLabelKind =
   { kind: 'today' } | { kind: 'yesterday' } | { kind: 'weekday'; weekday: WeekdayKey };

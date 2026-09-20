@@ -34,6 +34,7 @@ from app.schemas.insight import (
     InsightRegenerateResponse,
     InsightResponse,
     InsightTriggerResponse,
+    InsightVerificationResponse,
     InsightWorkerRunSummary,
 )
 from app.schemas.stats import (
@@ -66,6 +67,8 @@ from app.services.insight_service import (
     InsightNotFoundError,
     get_insight_event_windows,
     get_insight_maturity,
+    get_insight_verification,
+    get_visible_insight_by_id,
     list_insight_history,
     list_insights,
     list_latest_insights,
@@ -280,7 +283,7 @@ async def list_insight_history_endpoint(
 @router.get(
     "/tag-cooccurrence",
     response_model=TagCooccurrenceResponse,
-    summary="Tag co-occurrence pairs for heatmap visualisation",
+    summary="Tag co-occurrence pairs gated by daily Lift/Fisher/FDR",
 )
 @limiter.limit("120/minute")
 async def get_tag_cooccurrence_endpoint(
@@ -527,6 +530,60 @@ async def trigger_insights_endpoint(
         failed_users=summary.failed_users,
         generated_insights=summary.generated_insights,
     )
+
+
+@router.get(
+    "/{insight_id}",
+    response_model=InsightResponse,
+    summary="Fetch a single insight by id",
+)
+@limiter.limit("120/minute")
+async def get_insight_endpoint(
+    request: Request,
+    insight_id: uuid.UUID,
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> InsightResponse:
+    try:
+        insight = await get_visible_insight_by_id(db, user_id=user.id, insight_id=insight_id)
+    except InsightNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Insight not found",
+        ) from exc
+    return InsightResponse.model_validate(insight)
+
+
+@router.get(
+    "/{insight_id}/verification",
+    response_model=InsightVerificationResponse,
+    summary="With/without day series for signal verification (Phase 7)",
+)
+@limiter.limit("120/minute")
+async def get_insight_verification_endpoint(
+    request: Request,
+    insight_id: uuid.UUID,
+    range: TagCooccurrenceRange = Depends(_cooccurrence_range_query),
+    user: User = Depends(get_current_verified_user),
+    db: AsyncSession = Depends(get_session),
+) -> InsightVerificationResponse:
+    try:
+        return await get_insight_verification(
+            db,
+            user_id=user.id,
+            insight_id=insight_id,
+            range_=range,
+        )
+    except InsightNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Insight not found",
+        ) from exc
+    except InsightEventWindowsUnsupportedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Verification series are only available for tag and symptom insights",
+        ) from exc
 
 
 @router.get(

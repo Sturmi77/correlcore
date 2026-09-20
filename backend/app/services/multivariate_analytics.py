@@ -114,6 +114,14 @@ class LagFinding:
     # #488 Phase 1b: r at every observed lag 1..MAX_LAG_DAYS for this pair, so
     # the UI can draw a small lag profile. Empty when no other lags were usable.
     profile: tuple[LagProfilePoint, ...] = ()
+    # Phase 14 / L8: natural frequencies with two denominators (median split of
+    # the lagged feature at the winning lag). Empty when not computable.
+    high_feature_n: int | None = None
+    high_feature_good_count: int | None = None
+    low_feature_n: int | None = None
+    low_feature_good_count: int | None = None
+    good_threshold: int | None = None
+    good_direction: Literal["lte", "gte"] | None = None
 
 
 def m7_time_series_split() -> TimeSeriesSplit:
@@ -380,6 +388,73 @@ def _lag_pairs(
     return raw
 
 
+@dataclass(frozen=True)
+class LagFrequencySplit:
+    """Median-split natural frequencies behind one lag finding (Phase 14 / L8)."""
+
+    high_feature_n: int
+    high_feature_good_count: int
+    low_feature_n: int
+    low_feature_good_count: int
+    good_threshold: int
+    # "lte" for stress (lower raw is better), "gte" for mood/energy. The UI must
+    # state the comparator: "good" is not the same rule on every target.
+    good_direction: Literal["lte", "gte"]
+
+
+def _lag_median_split_frequencies(
+    lagged: pd.DataFrame,
+    *,
+    target: str,
+    lag_column: str,
+) -> LagFrequencySplit | None:
+    """Natural frequencies with two denominators for lag Layer-2 (Phase 14 / L8).
+
+    Splits the lagged feature at its median and counts "good" outcome days
+    (mood/energy ≥ 4; stress ≤ 2 on the raw scale). Returns None when the split
+    is empty on either side.
+
+    ``lagged`` must be the *same* frame the finding's correlation came from, and
+    ``lag_column`` its winning lag column, so that the pairwise deletion here is
+    bit-for-bit the one :func:`_lag_pairs` applied. Rebuilding a private frame
+    instead would pairwise-delete where the joint matrix was complete-case, and
+    ``high_feature_n + low_feature_n`` would then exceed the ``sample_n`` shown
+    for the very same insight — two contradicting denominators on one card.
+    """
+
+    if target not in lagged.columns or lag_column not in lagged.columns:
+        return None
+    pair = lagged[[target, lag_column]].dropna()
+    if len(pair) < 4 or pair[lag_column].nunique() < 2:
+        return None
+
+    median = float(pair[lag_column].median())
+    high = pair[pair[lag_column] >= median]
+    low = pair[pair[lag_column] < median]
+    if len(high) == 0 or len(low) == 0:
+        return None
+
+    # Stress: lower raw is better → "good" when ≤ 2 (display ≥ 4 on inverted scale).
+    good_direction: Literal["lte", "gte"] = "lte" if target == "stress" else "gte"
+    if good_direction == "lte":
+        good_threshold = 2
+        high_good = int((high[target] <= good_threshold).sum())
+        low_good = int((low[target] <= good_threshold).sum())
+    else:
+        good_threshold = 4
+        high_good = int((high[target] >= good_threshold).sum())
+        low_good = int((low[target] >= good_threshold).sum())
+
+    return LagFrequencySplit(
+        high_feature_n=int(len(high)),
+        high_feature_good_count=high_good,
+        low_feature_n=int(len(low)),
+        low_feature_good_count=low_good,
+        good_threshold=good_threshold,
+        good_direction=good_direction,
+    )
+
+
 def run_lag_analysis(
     frame: pd.DataFrame,
     feature_meta: Mapping[str, FeatureMetadata],
@@ -412,6 +487,10 @@ def run_lag_analysis(
     ]
 
     raw: list[tuple[str, str, int, float, float, int]] = []
+    # The frame each (target, feature) pair's correlation was measured on, kept so
+    # the Phase 14 median split below can reuse it instead of rebuilding its own
+    # (which would produce a denominator that disagrees with the pair's sample_n).
+    pair_frames: dict[tuple[str, str], pd.DataFrame] = {}
     if len(base_columns) >= 2:
         # Slice to base_columns first: build_lagged_frame's final dropna() drops a
         # row if *any* column of the frame it's given is NaN, so passing the full
@@ -427,6 +506,9 @@ def run_lag_analysis(
                 min_observations=min_observations,
             )
         )
+        for target in target_columns:
+            for feature in base_columns:
+                pair_frames[(target, feature)] = lagged
 
     # Sleep is a predictor only (never a lag target, per the documented "prior sleep
     # explains mood/energy" direction) and each sleep column gets its own two-column
@@ -452,6 +534,7 @@ def run_lag_analysis(
                     min_observations=min_observations,
                 )
             )
+            pair_frames[(target, feature)] = pair_lagged
 
     if not raw:
         return []
@@ -513,6 +596,44 @@ def run_lag_analysis(
         ):
             best_by_pair[pair] = finding
     findings = list(best_by_pair.values())
+
+    # Phase 14: attach median-split frequencies for Layer-2 two denominators.
+    # Reuses the pair's own lagged frame, so high_feature_n + low_feature_n is
+    # exactly the finding's sample_n — and no second build_lagged_frame pass runs
+    # on the nightly insight path.
+    enriched: list[LagFinding] = []
+    for finding in findings:
+        split: LagFrequencySplit | None = None
+        if finding.target.kind == "metric":
+            pair_frame = pair_frames.get((finding.target.key, finding.feature.key))
+            if pair_frame is not None:
+                split = _lag_median_split_frequencies(
+                    pair_frame,
+                    target=finding.target.key,
+                    lag_column=f"{finding.feature.key}_lag{finding.lag_days}",
+                )
+        if split is None:
+            enriched.append(finding)
+            continue
+        enriched.append(
+            LagFinding(
+                target=finding.target,
+                feature=finding.feature,
+                lag_days=finding.lag_days,
+                correlation=finding.correlation,
+                p_value=finding.p_value,
+                p_corrected=finding.p_corrected,
+                sample_n=finding.sample_n,
+                profile=finding.profile,
+                high_feature_n=split.high_feature_n,
+                high_feature_good_count=split.high_feature_good_count,
+                low_feature_n=split.low_feature_n,
+                low_feature_good_count=split.low_feature_good_count,
+                good_threshold=split.good_threshold,
+                good_direction=split.good_direction,
+            )
+        )
+    findings = enriched
 
     findings.sort(
         key=lambda item: (

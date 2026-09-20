@@ -50,7 +50,6 @@
     "view_trends": "View trends",
     "secondary_nav": "More areas",
     "loading_today": "Loading today's status\u2026",
-    "streak_label": "tracking consistency",
     "brief": {
       "label": "Daily brief",
       "heading": "Today at a glance",
@@ -260,7 +259,8 @@
       "vacation": "Vacation",
       "sick": "Sick",
       "weekend": "Weekend",
-      "travel": "Travel"
+      "travel": "Travel",
+      "other": "Other"
     },
     "save_busy": "Saving\u2026",
     "saved_redirect": "Entry saved.",
@@ -486,6 +486,9 @@
     "empty": "No entries in the selected range yet.",
     "empty_cta": "Log an entry",
     "range": {
+      "d14": "14D",
+      "d28": "28D",
+      "d90": "90D",
       "week": "7D",
       "month": "30D",
       "quarter": "90D",
@@ -520,9 +523,6 @@
     "tabs": {
       "label": "Trend sections",
       "compare": "Compare",
-      "mood": "Mood",
-      "activities": "Activities",
-      "health": "Health",
       "habits": "Habits"
     },
     "metric": {
@@ -546,18 +546,6 @@
       "x_axis_label": "Date",
       "loading": "Loading time series",
       "empty": "No mood scores in this range yet."
-    },
-    "streak": {
-      "heading": "Tracking consistency",
-      "current": "Current continuity",
-      "longest": "Best continuity",
-      "total": "Logged days"
-    },
-    "consistency": {
-      "heading": "Tracking consistency",
-      "current": "Current continuity",
-      "longest": "Best continuity",
-      "total": "Logged days"
     },
     "health": {
       "heading": "Health readiness",
@@ -625,6 +613,8 @@
       "pin_aria": "Pin row to top",
       "unpin_aria": "Unpin row",
       "pin_limit_aria": "Pin limit reached (max {max})",
+      "check_question": "Check this question in Insights →",
+      "check_question_hint": "Open Insights and use Check association on a card — Layer 2 lives on the signal detail, not as a second ESM entry from Compare.",
       "coincidence": {
         "toggle": "Highlight coincidence",
         "toggle_aria": "Highlight days where pinned rows appear together",
@@ -638,21 +628,26 @@
         "and": "and"
       },
       "lag1": {
-        "toggle": "Highlight next-day sequence",
+        "toggle": "Highlight sequence",
         "toggle_aria": "Highlight days where a pinned row is followed by the next pinned row on the following day",
-        "need_pins": "Pin at least two rows to highlight next-day sequences.",
-        "empty": "Need at least {min} next-day sequences in the pinned order to highlight Lag-1.",
+        "need_pins": "Pin at least two rows to highlight sequences.",
+        "empty": "Need at least {min} next-day sequences in the pinned order to highlight sequence.",
         "legend": "Lines mark when one pinned row is followed by the next on the following day — an association in your entries, not a cause.",
         "cursor": "{from} then {to} (+1 day)",
         "marker": "Sequence: {from} → {to} (+1d)",
         "summary": "{from} then {to}: {forward} of {forwardTotal} · {to} then {from}: {reverse} of {reverseTotal}",
-        "swatch": "Lag-1 — dashed line"
+        "swatch": "Sequence — dashed line"
+      },
+      "sleep_zeitversatz": {
+        "toggle": "Time offset (+1 day on sleep)",
+        "hint": "Show last night’s sleep next to today’s mood/energy — not a sequence highlight."
       },
       "frequency_note": "Counts cover the selected period only.",
       "overlay_group_label": "Highlight",
       "overlay_hint_lead": "Two rows pinned.",
       "overlay_hint_body": "Highlight coincidence?",
       "overlay_hint_dismiss_aria": "Dismiss the highlight hint",
+      "check_question": "Check this pattern",
       "zoom": {
         "label": "Timeline zoom",
         "decrease_aria": "Zoom out to coarser columns",
@@ -742,10 +737,10 @@
     "days_tracked": "Tracked days",
     "target_days": "Target days",
     "target_frequency": "Weekly target",
-    "correlation": "Correlation contribution",
-    "correlation_brief": "r={score} {metric}",
-    "correlation_pending": "No correlation data yet",
-    "correlation_predictor": "{name} is a notable {metric} predictor (r={score})",
+    "correlation": "Association",
+    "correlation_brief": "{label} · {metric} · {n} days",
+    "correlation_pending": "No reliable association yet",
+    "correlation_predictor": "{name} and {metric}: {label} (over {n} days)",
     "adherence_meter": "Adherence rate",
     "adherence_meter_text": "{type}: {percent}; {goal}",
     "insufficient_data": "Not enough data yet. Keep tracking to see your adherence rate.",
@@ -908,6 +903,12 @@
       "delete_success": "Cycle data cleared from {count} entries.",
       "delete_error": "Could not delete cycle data."
     },
+    "belastung": {
+      "heading": "Load & recovery",
+      "body": "Optional Layer-1 summary of stress, energy and fatigue patterns. Off by default.",
+      "enabled": "Show load & recovery summary",
+      "hint": "Uses existing entries only — no new required fields. Analysis must stay enabled. This is a heuristic, not a medical assessment, and never for an employer."
+    },
     "vocabulary": {
       "heading": "Tracking vocabulary",
       "body": "Manage tags, symptoms, and habits used in entries and analysis.",
@@ -932,7 +933,12 @@
       "digest_enabled": "Weekly insight digest",
       "digest_hint": "Opt in for an in-app summary of your top insights from the past week. When enough insights exist, the first summary can appear right after you enable it; otherwise after the next weekly run (Sunday).",
       "digest_pending_hint": "Your first digest is not ready yet. Refresh insights above, or wait for the next weekly run (Sunday).",
-      "digest_preview_link": "Open digest preview"
+      "digest_preview_link": "Open digest preview",
+      "trend_window_heading": "Analysis window",
+      "trend_window_hint": "Applies to Home, Trends, and Insights. One window per claim.",
+      "trend_window_d14": "14 days",
+      "trend_window_d28": "28 days",
+      "trend_window_d90": "90 days"
     },
     "privacy": {
       "heading": "Privacy",
@@ -1140,8 +1146,8 @@
           "description": "Current analysis maturity phase with a progress bar and milestones."
         },
         "correlation_matrix": {
-          "label": "Correlation matrix",
-          "description": "Overview matrix of the strongest links between factors."
+          "label": "Associations",
+          "description": "Sorted table of the strongest links between factors."
         },
         "insight_feed": {
           "label": "Insight feed",
@@ -1325,7 +1331,42 @@
       "analytics_summary": "Deepen analysis",
       "analytics_hint": "Symptoms and shared tags",
       "analysis_range_label": "Analysis time window",
-      "history_link": "Insight timeline"
+      "history_link": "Insight timeline",
+      "report_link": "Report & export",
+      "tools_aria": "More insight tools",
+      "tools_heading": "More tools",
+      "tools_settings_link": "Show tools in Settings",
+      "dismissed_link": "Hidden insights ({count})"
+    },
+    "report": {
+      "title": "Report",
+      "subtitle": "Take associations into a conversation — descriptive patterns from your entries, not a diagnosis.",
+      "loading": "Loading report…",
+      "error": "Could not load the report.",
+      "empty": "No reliable associations to include yet. Keep logging; the report fills as patterns stabilize.",
+      "table_heading": "Associations in this window",
+      "table_subtitle": "Dense on purpose — a handout should be a table.",
+      "table_aria": "Association report table",
+      "selection_hint": "Deselect rows to exclude them from PNG/PDF",
+      "select_all": "Select all report rows",
+      "select_row": "Include \"{label}\" in the export",
+      "col_factor": "Factor",
+      "col_metric": "Affects",
+      "col_effect": "Difference",
+      "col_frequency": "Coverage",
+      "col_confidence": "Confidence",
+      "frequency_n": "Based on {n} entries",
+      "coverage": "{rows} rows · largest sample {n} entries",
+      "disclaimer": "Not a diagnosis. Patterns from self-reported entries only. Do not share with an employer.",
+      "export_aria": "Export report formats",
+      "export_pdf": "As PDF",
+      "export_png": "PNG",
+      "export_csv": "CSV",
+      "export_json": "JSON",
+      "export_busy": "Preparing…",
+      "export_empty": "Select at least one row for PNG or PDF.",
+      "export_error": "Export failed. Try again.",
+      "pdf_subtitle": "CorrelCore association report"
     },
     "history": {
       "title": "Insight timeline",
@@ -1423,19 +1464,23 @@
       }
     },
     "matrix": {
-      "heading": "Correlation Matrix",
-      "subtitle": "Tags, symptoms and habits sorted by effect size.",
+      "heading": "Associations",
+      "subtitle": "Tags, symptoms and habits sorted by effect size — with frequencies and one confidence scale.",
       "tag": "Tag",
-      "subject": "Subject",
+      "subject": "Factor",
       "metric": "Metric",
       "effect": "Effect",
+      "frequency": "Frequencies",
+      "freq_split": "{withN} with · {withoutN} without",
+      "freq_sample": "n={n}",
       "confidence": "Confidence",
       "export": "Export PNG",
+      "report_link": "Open report & export",
       "empty": "No sufficiently stable patterns yet.",
-      "empty_strong": "No reliable correlations right now. Weaker patterns are listed below.",
+      "empty_strong": "No reliable associations right now. Weaker patterns are listed below.",
       "updated": "Last updated: {date}",
-      "weak_toggle": "Show {count} weaker correlations",
-      "weak_note": "These correlations are below the reliability threshold and may still change as more data arrives."
+      "weak_toggle": "Show {count} weaker associations",
+      "weak_note": "These associations are below the reliability threshold and may still change as more data arrives."
     },
     "cooccurrence": {
       "heading": "Patterns",
@@ -1450,8 +1495,8 @@
       "legend": "Co-occurrence intensity",
       "less": "Less",
       "more": "More",
-      "cell_aria": "{tagA} and {tagB} together on {count} entries",
-      "cell_title": "{tagA} + {tagB}: {count} shared entries",
+      "cell_aria": "{tagA} and {tagB}: both on {count} of {aTotal} days with {tagA} · {count} of {bTotal} days with {tagB}",
+      "cell_title": "Both on {count} of {aTotal} days with {tagA} · {count} of {bTotal} days with {tagB}",
       "sort_clustered": "Cluster by similarity",
       "sort_alphabetical": "Sort A–Z",
       "focus_label": "Focus on a tag group",
@@ -1562,6 +1607,7 @@
       "dismiss_aria": "Hide insight \"{title}\"",
       "disclaimer_link": "What does this mean?",
       "sample_meta": "Based on {n} entries \u00b7 {days} days",
+      "freq_split": "avg {withAvg} on {withN} days with {tag} · avg {withoutAvg} on {withoutN} days without",
       "meta_r": "r (Pearson)",
       "meta_rho": "\u03c1 (Spearman)",
       "meta_p": "p-value",
@@ -1577,17 +1623,78 @@
       "inactive_tag_hint": "This tag is no longer used for new calculations.",
       "cluster_features": "Multiple factors",
       "lag_days_unit": "days",
-      "lag_profile_label": "Association by delay (days)",
-      "lag_profile_aria": "Association strength by delay; strongest at +{days} days ({direction})",
+      "lag_profile_label": "Association by time offset (days)",
+      "lag_profile_aria": "Association strength by time offset; strongest at +{days} days ({direction})",
+      "lag_profile_unmeasured": "+{days} days: too few day pairs — not measured",
       "lag_peak_marker": "Strongest at +{days} days ({direction})",
       "lag_profile_direction_positive": "same direction",
       "lag_profile_direction_negative": "opposite direction",
-      "lag_profile_direction_mixed": "mixed directions"
+      "lag_profile_direction_mixed": "mixed directions",
+      "null_badge": "No pattern",
+      "verify_action": "Check this association →",
+      "with_without_aria": "Distribution with and without {subject}",
+      "with_without_title": "With and without {subject}",
+      "with_without_subtitle": "How the days spread — not only the average",
+      "with_without_freq": "Good on {withGood} of {withN} days with {subject} · good on {withoutGood} of {withoutN} days without",
+      "with_label": "with {subject} · {n} days",
+      "without_label": "without · {n} days",
+      "overlap_low": "Overlap: low",
+      "overlap_high": "Overlap: high",
+      "overlap_unknown": "Overlap: not yet clear",
+      "mean_shift": "Shift: {shift} points"
+    },
+    "signal": {
+      "title_fallback": "Signal detail",
+      "subtitle": "One hypothesis · last 90 days",
+      "back": "Insights",
+      "loading": "Loading signal…",
+      "error": "This signal could not be loaded.",
+      "non_causal": "An association in your entries — not a cause.",
+      "zeitversatz_badge": "Time offset (not same calendar day)",
+      "same_day_badge": "Same calendar day",
+      "lag_heading": "Association by delay",
+      "lag_hint": "Bars show correlation strength for each delay in days. The highlighted bar is the selected peak — not a forecast.",
+      "lag_freq": "Days high in {feature}: good days on {highGood} of {highN} · days low in {feature}: {lowGood} of {lowN} (outcome +{days} days).",
+      "lag_good_rule_gte": "“Good” here means: {target} {threshold} or higher.",
+      "lag_good_rule_lte": "“Good” here means: {target} {threshold} or lower.",
+      "lag_unmeasured_note": "Empty columns: too few day pairs at that delay — not measured, not “no association”.",
+      "lag_feature_fallback": "feature",
+      "same_situation_show": "Same work situation ▾",
+      "same_situation_hide": "Same work situation ▴",
+      "same_work_context_freq": "Also on days with the same work situation ({context}): good on {withGood} of {withN} with {subject} · {withoutGood} of {withoutN} without",
+      "same_situation_stays": "The association still shows up inside that situation — still not a cause.",
+      "same_situation_gone": "Inside that situation the days look similar — a valid non-result for this check.",
+      "course_heading": "Course around these days",
+      "means": "Average with: {withMean} ({withN} days) · without: {withoutMean} ({withoutN} days)",
+      "scatter_show": "Show scatter plot ▾",
+      "scatter_hide": "Hide scatter plot ▴",
+      "scatter_aria": "Scatter of values with and without {subject}",
+      "scatter_with": "with",
+      "scatter_without": "without",
+      "scatter_privacy": "Individual days stay on this device account. Avoid sharing screenshots that show rare patterns.",
+      "pin_trends": "Open in Trends →",
+      "remember_report": "Remember for report",
+      "next_heading": "What next?",
+      "next_body": "No pattern is still an answer. You can keep logging, compare another window, or look at a different question.",
+      "next_log": "Log today",
+      "next_compare": "Compare in Trends",
+      "next_other": "Other insights"
+    },
+    "belastung": {
+      "aria": "Load and recovery summary",
+      "title": "Load pattern of the last 14 days",
+      "subtitle": "Optional area · enabled in Settings",
+      "heuristic_badge": "Hint, not a score",
+      "freq": "Fatigue on {fatigueRecent} of {recentN} days · before on {fatiguePrior} of {priorN}. Recovery days: {recoveryRecent} of {recentN} · before {recoveryPrior} of {priorN}.",
+      "cta_intensity": "Check work intensity →",
+      "cta_sleep": "Check sleep → next day →",
+      "disclaimer": "This is not a medical assessment or diagnosis. CorrelCore shows patterns in your own entries. If load keeps affecting you, talk to a clinician. These data stay with you — never with an employer.",
+      "analytics_off": "Turn analysis back on in Settings to refresh this summary."
     },
     "lag_heatmap": {
       "title": "Time-offset patterns",
-      "subtitle": "Association strength per pair and delay (1–7 days). Not a causal claim.",
-      "aria": "Time-offset association heatmap: rows are pairs, columns are days of delay",
+      "subtitle": "Association strength per pair and time offset (1–7 days). Not a causal claim.",
+      "aria": "Time-offset association heatmap: rows are pairs, columns are days of time offset",
       "row_summary": "{pair}: strongest at +{lag} days (r {r})",
       "legend_neg": "opposite",
       "legend_pos": "aligned"
@@ -1613,6 +1720,16 @@
     "weekday_confounded_note": "Note: this pattern occurs primarily on specific weekdays.",
     "work_context_confounded_note": "Note: this pattern may mainly reflect your work situation.",
     "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap.",
+    "changepoint": {
+      "series_mood_score": "mood",
+      "series_stress": "stress",
+      "series_energy": "energy",
+      "direction_higher": "higher",
+      "direction_lower": "lower",
+      "statement": "Level shift in {series} around {date}: average moved from {before} to {after} ({direction}). Not a forecast.",
+      "marker_label": "Level shift · {series}",
+      "marker_description": "{before} → {after} (around {date})"
+    },
     "note_evidence": {
       "soft_prompt": "Add notes to better understand patterns in your data.",
       "lead_signal": "On days with note signal \"{signal}\", your mood averaged {delta} points different from your note-day average.",
@@ -2052,7 +2169,7 @@
     "badge": "Self-hosted · v{version}",
     "badge_hosted": "Hosted · v{version}",
     "hero_title": "Understand why some days are good — and others aren't.",
-    "hero_subtitle": "Log 60 seconds a day. The analysis shows which factors actually relate to mood and energy — on your instance, with no third-party tracking.",
+    "hero_subtitle": "Log 60 seconds a day. The analysis shows which factors — sleep, stress, work situation — relate to mood and energy — on your instance, with no third-party tracking.",
     "hero_micro": "Associations are ranked by how confident they are, and at what delay they show up.",
     "cta_register": "Create account",
     "cta_login": "Log in",

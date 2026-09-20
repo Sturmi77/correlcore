@@ -21,15 +21,17 @@ from app.schemas.dashboard import (
     WeekdayTopSignal,
     WorkContextSummaryItem,
 )
+from app.schemas.user_preferences import TREND_WINDOW_DAYS_DEFAULT, TREND_WINDOW_DAYS_VALUES
 from app.services.insight_engine import MIN_WEEKDAY_ENTRIES, confidence_tier_for_sample
 from app.services.tag_service import analytics_tag_predicate, canonicalize_tags_by_slug
+from app.services.user_preferences_service import get_or_create_user_preferences
 
 #: A weekday only gets a top signal once it is more than a one-off.
 MIN_TOP_SIGNAL_COUNT = 2
 MIN_TOP_SIGNAL_SHARE = 0.3
 
-#: Home trend windows (#868). Current N days vs the N days before; V1 is fixed.
-TREND_WINDOW_DAYS = 28
+#: Home trend windows (#868 / #867). Default when preference is unset/invalid.
+TREND_WINDOW_DAYS = TREND_WINDOW_DAYS_DEFAULT
 #: |delta| on the 1–5 scale must reach this to count as up/down rather than flat.
 TREND_DELTA_THRESHOLD = 0.3
 #: Minimum observations per window for the aggregate weekday trend and work-context trends.
@@ -313,10 +315,11 @@ async def _work_context_trends(
     *,
     user_id: uuid.UUID,
     as_of: date_type,
+    days: int = TREND_WINDOW_DAYS,
 ) -> dict[WorkContext, tuple[MetricTrend, MetricTrend, MetricTrend]]:
     """Mood / energy / stress trends per work context over the two windows."""
 
-    previous_start, previous_end, current_start = trend_windows(as_of)
+    previous_start, previous_end, current_start = trend_windows(as_of, days=days)
     in_current = Entry.entry_date >= current_start
     in_previous = Entry.entry_date <= previous_end
 
@@ -374,6 +377,7 @@ async def _weekday_mood_trends(
     *,
     user_id: uuid.UUID,
     as_of: date_type,
+    days: int = TREND_WINDOW_DAYS,
 ) -> tuple[MetricTrend, dict[int, MetricTrend]]:
     """Aggregate weekday mood trend (W1) and per-weekday trends (W2).
 
@@ -381,7 +385,7 @@ async def _weekday_mood_trends(
     of those daily values — not the unweighted mean of seven weekday deltas.
     """
 
-    previous_start, previous_end, current_start = trend_windows(as_of)
+    previous_start, previous_end, current_start = trend_windows(as_of, days=days)
     daily_subq = (
         select(
             Entry.entry_date,
@@ -451,6 +455,12 @@ async def get_dashboard_summary(
     as_of: date_type | None = None,
 ) -> DashboardSummaryResponse:
     as_of = as_of or datetime.now(UTC).date()
+    preferences = await get_or_create_user_preferences(db, user_id=user_id)
+    window_days = (
+        preferences.trend_window_days
+        if preferences.trend_window_days in TREND_WINDOW_DAYS_VALUES
+        else TREND_WINDOW_DAYS_DEFAULT
+    )
     entry_count_result = await db.execute(
         select(func.count(func.distinct(Entry.entry_date))).where(
             Entry.user_id == user_id,
@@ -476,9 +486,9 @@ async def get_dashboard_summary(
         .order_by(func.count(func.distinct(Entry.entry_date)).desc(), Entry.work_context)
     )
     work_context_rows = work_context_result.all()
-    context_trends = await _work_context_trends(db, user_id=user_id, as_of=as_of)
+    context_trends = await _work_context_trends(db, user_id=user_id, as_of=as_of, days=window_days)
     weekday_mood_trend, weekday_trends = await _weekday_mood_trends(
-        db, user_id=user_id, as_of=as_of
+        db, user_id=user_id, as_of=as_of, days=window_days
     )
 
     work_context_summary: list[WorkContextSummaryItem] = []
@@ -551,6 +561,6 @@ async def get_dashboard_summary(
         confidence_score=insight_confidence_score(entry_count),
         work_context_summary=work_context_summary,
         weekday_summary=weekday_summary,
-        trend_window_days=TREND_WINDOW_DAYS,
+        trend_window_days=window_days,
         weekday_mood_trend=weekday_mood_trend,
     )

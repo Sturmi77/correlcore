@@ -55,7 +55,7 @@ describe('createEntryBatch', () => {
 });
 
 describe('createEntry', () => {
-  it('POSTs to /entries with the payload', async () => {
+  it('POSTs to /entries with the payload and the device timezone', async () => {
     vi.mocked(api.post).mockResolvedValueOnce({ id: 'e1' });
     await createEntry({
       entry_date: '2026-05-04',
@@ -65,8 +65,10 @@ describe('createEntry', () => {
       work_context: 'homeoffice',
       note: 'hi',
     });
+    // Phase 8: the server stamps logged_local_hour / inferred_period from this tz.
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     expect(api.post).toHaveBeenCalledWith(
-      '/entries',
+      `/entries?tz=${encodeURIComponent(tz)}`,
       expect.objectContaining({
         entry_date: '2026-05-04',
         mood_score: 4,

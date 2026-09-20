@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import math
+from collections import Counter
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date as date_type
 from typing import Any
 
@@ -14,6 +16,28 @@ DEFAULT_ALPHA = 0.10
 DEFAULT_MIN_EFFECT = 0.25
 MIN_OLS_ROWS = 10
 MIN_CONTEXT_OLS_ROWS = 30
+DEFAULT_GOOD_THRESHOLD = 4
+
+
+@dataclass(frozen=True)
+class MetricAdjustmentResult:
+    """OLS signal coefficient after holding weekday / calendar context (Phase 12 / L5)."""
+
+    confounded: bool
+    adjusted_coefficient: float | None
+    adjusted_p: float | None
+    n: int
+
+
+@dataclass(frozen=True)
+class SameSituationFrequencies:
+    """Natural frequencies on the modal work situation of signal days (Phase 12 / L5)."""
+
+    context: str | None
+    with_n: int
+    without_n: int
+    with_good: int
+    without_good: int
 
 
 def _finite_float(value: Any) -> float | None:
@@ -56,7 +80,74 @@ def _hac_maxlags(sample_n: int) -> int:
     return max(1, min(7, sample_n // 5))
 
 
-def is_metric_association_weekday_confounded(
+def _confounded_from_adjusted(
+    adjusted_coef: float | None,
+    adjusted_p: float | None,
+    *,
+    min_effect: float,
+    alpha: float,
+) -> bool:
+    if adjusted_coef is None or adjusted_p is None:
+        return False
+    return adjusted_p >= alpha or abs(adjusted_coef) < min_effect
+
+
+def same_work_context_metric_frequencies(
+    work_contexts: Sequence[str],
+    binary_signal: Sequence[int],
+    metric_values: Sequence[float | int],
+    *,
+    good_threshold: int = DEFAULT_GOOD_THRESHOLD,
+) -> SameSituationFrequencies:
+    """Count good days with/without the signal inside the modal work context of signal days."""
+
+    empty = SameSituationFrequencies(
+        context=None, with_n=0, without_n=0, with_good=0, without_good=0
+    )
+    if not (
+        len(work_contexts) == len(binary_signal) == len(metric_values) and len(work_contexts) > 0
+    ):
+        return empty
+
+    signal_contexts = [
+        context for context, present in zip(work_contexts, binary_signal, strict=True) if present
+    ]
+    if not signal_contexts:
+        return empty
+    context, _ = Counter(signal_contexts).most_common(1)[0]
+
+    with_n = without_n = with_good = without_good = 0
+    for ctx, present, metric in zip(work_contexts, binary_signal, metric_values, strict=True):
+        if ctx != context:
+            continue
+        good = float(metric) >= good_threshold
+        if present:
+            with_n += 1
+            if good:
+                with_good += 1
+        else:
+            without_n += 1
+            if good:
+                without_good += 1
+
+    if with_n == 0 or without_n == 0:
+        return SameSituationFrequencies(
+            context=context,
+            with_n=with_n,
+            without_n=without_n,
+            with_good=with_good,
+            without_good=without_good,
+        )
+    return SameSituationFrequencies(
+        context=context,
+        with_n=with_n,
+        without_n=without_n,
+        with_good=with_good,
+        without_good=without_good,
+    )
+
+
+def evaluate_metric_association_weekday(
     entry_dates: Sequence[date_type],
     metric_values: Sequence[float],
     binary_signal: Sequence[int],
@@ -65,22 +156,23 @@ def is_metric_association_weekday_confounded(
     raw_p_value: float,
     min_effect: float = DEFAULT_MIN_EFFECT,
     alpha: float = DEFAULT_ALPHA,
-) -> bool:
-    """Return True when a raw association is explained by weekday effects after OLS adjustment."""
+) -> MetricAdjustmentResult:
+    """OLS signal coefficient after weekday dummies; also used as the confounded gate."""
 
+    n = len(entry_dates)
     if raw_p_value >= alpha or abs(raw_coefficient) < min_effect:
-        return False
-    if len(entry_dates) < MIN_OLS_ROWS:
-        return False
+        return MetricAdjustmentResult(False, None, None, n)
+    if n < MIN_OLS_ROWS:
+        return MetricAdjustmentResult(False, None, None, n)
     if len(set(metric_values)) < 2 or len(set(binary_signal)) < 2:
-        return False
+        return MetricAdjustmentResult(False, None, None, n)
 
     weekdays = [entry_date.weekday() for entry_date in entry_dates]
     signal_weekdays = {
         weekday for weekday, present in zip(weekdays, binary_signal, strict=True) if present
     }
     if len(signal_weekdays) <= 1:
-        return True
+        return MetricAdjustmentResult(True, None, None, n)
 
     y = np.asarray(metric_values, dtype=float)
     signal = np.asarray(binary_signal, dtype=float)
@@ -93,16 +185,44 @@ def is_metric_association_weekday_confounded(
             cov_kwds={"maxlags": _hac_maxlags(len(y))},
         )
     except (ValueError, np.linalg.LinAlgError):
-        return False
+        return MetricAdjustmentResult(False, None, None, n)
 
     adjusted_coef = _finite_float(result.params[1])
     adjusted_p = _finite_float(result.pvalues[1])
-    if adjusted_coef is None or adjusted_p is None:
-        return False
-    return adjusted_p >= alpha or abs(adjusted_coef) < min_effect
+    return MetricAdjustmentResult(
+        confounded=_confounded_from_adjusted(
+            adjusted_coef, adjusted_p, min_effect=min_effect, alpha=alpha
+        ),
+        adjusted_coefficient=round(adjusted_coef, 4) if adjusted_coef is not None else None,
+        adjusted_p=round(adjusted_p, 6) if adjusted_p is not None else None,
+        n=n,
+    )
 
 
-def is_metric_association_calendar_context_confounded(
+def is_metric_association_weekday_confounded(
+    entry_dates: Sequence[date_type],
+    metric_values: Sequence[float],
+    binary_signal: Sequence[int],
+    *,
+    raw_coefficient: float,
+    raw_p_value: float,
+    min_effect: float = DEFAULT_MIN_EFFECT,
+    alpha: float = DEFAULT_ALPHA,
+) -> bool:
+    """Return True when a raw association is explained by weekday effects after OLS adjustment."""
+
+    return evaluate_metric_association_weekday(
+        entry_dates,
+        metric_values,
+        binary_signal,
+        raw_coefficient=raw_coefficient,
+        raw_p_value=raw_p_value,
+        min_effect=min_effect,
+        alpha=alpha,
+    ).confounded
+
+
+def evaluate_metric_association_calendar_context(
     entry_dates: Sequence[date_type],
     work_contexts: Sequence[str],
     metric_values: Sequence[float],
@@ -112,25 +232,26 @@ def is_metric_association_calendar_context_confounded(
     raw_p_value: float,
     min_effect: float = DEFAULT_MIN_EFFECT,
     alpha: float = DEFAULT_ALPHA,
-) -> bool:
-    """Return True when weekday/work-context controls explain a raw metric association."""
+) -> MetricAdjustmentResult:
+    """OLS signal coefficient after weekday + work-context dummies."""
 
+    n = len(entry_dates)
     if raw_p_value >= alpha or abs(raw_coefficient) < min_effect:
-        return False
-    if len(entry_dates) < MIN_CONTEXT_OLS_ROWS:
-        return False
+        return MetricAdjustmentResult(False, None, None, n)
+    if n < MIN_CONTEXT_OLS_ROWS:
+        return MetricAdjustmentResult(False, None, None, n)
     if len(entry_dates) != len(work_contexts):
-        return False
+        return MetricAdjustmentResult(False, None, None, n)
     if len(set(metric_values)) < 2 or len(set(binary_signal)) < 2:
-        return False
+        return MetricAdjustmentResult(False, None, None, n)
     if len(set(work_contexts)) < 2:
-        return False
+        return MetricAdjustmentResult(False, None, None, n)
 
     signal_contexts = {
         context for context, present in zip(work_contexts, binary_signal, strict=True) if present
     }
     if len(signal_contexts) <= 1:
-        return True
+        return MetricAdjustmentResult(True, None, None, n)
 
     y = np.asarray(metric_values, dtype=float)
     signal = np.asarray(binary_signal, dtype=float)
@@ -152,13 +273,79 @@ def is_metric_association_calendar_context_confounded(
             cov_kwds={"maxlags": _hac_maxlags(len(y))},
         )
     except (ValueError, np.linalg.LinAlgError):
-        return False
+        return MetricAdjustmentResult(False, None, None, n)
 
     adjusted_coef = _finite_float(result.params[1])
     adjusted_p = _finite_float(result.pvalues[1])
-    if adjusted_coef is None or adjusted_p is None:
-        return False
-    return adjusted_p >= alpha or abs(adjusted_coef) < min_effect
+    return MetricAdjustmentResult(
+        confounded=_confounded_from_adjusted(
+            adjusted_coef, adjusted_p, min_effect=min_effect, alpha=alpha
+        ),
+        adjusted_coefficient=round(adjusted_coef, 4) if adjusted_coef is not None else None,
+        adjusted_p=round(adjusted_p, 6) if adjusted_p is not None else None,
+        n=n,
+    )
+
+
+def is_metric_association_calendar_context_confounded(
+    entry_dates: Sequence[date_type],
+    work_contexts: Sequence[str],
+    metric_values: Sequence[float],
+    binary_signal: Sequence[int],
+    *,
+    raw_coefficient: float,
+    raw_p_value: float,
+    min_effect: float = DEFAULT_MIN_EFFECT,
+    alpha: float = DEFAULT_ALPHA,
+) -> bool:
+    """Return True when weekday/work-context controls explain a raw metric association."""
+
+    return evaluate_metric_association_calendar_context(
+        entry_dates,
+        work_contexts,
+        metric_values,
+        binary_signal,
+        raw_coefficient=raw_coefficient,
+        raw_p_value=raw_p_value,
+        min_effect=min_effect,
+        alpha=alpha,
+    ).confounded
+
+
+def situation_adjustment_payload(
+    *,
+    weekday: MetricAdjustmentResult,
+    calendar: MetricAdjustmentResult,
+    situation: SameSituationFrequencies,
+    primary_confounder: str | None,
+) -> dict[str, object]:
+    """Additive Layer-2 payload keys — natural frequencies first, coefficients optional."""
+
+    survives = True
+    if primary_confounder in {"weekday", "calendar_context", "work_context"}:
+        if primary_confounder == "weekday":
+            survives = not weekday.confounded
+        else:
+            survives = not calendar.confounded
+
+    payload: dict[str, object] = {
+        "situation_effect_survives": survives,
+        "weekday_held_coefficient": weekday.adjusted_coefficient,
+        "weekday_held_p": weekday.adjusted_p,
+        "calendar_held_coefficient": calendar.adjusted_coefficient,
+        "calendar_held_p": calendar.adjusted_p,
+    }
+    if situation.context and situation.with_n > 0 and situation.without_n > 0:
+        payload.update(
+            {
+                "same_work_context": situation.context,
+                "same_work_context_with_n": situation.with_n,
+                "same_work_context_without_n": situation.without_n,
+                "same_work_context_with_good": situation.with_good,
+                "same_work_context_without_good": situation.without_good,
+            }
+        )
+    return payload
 
 
 def _standardized(values: Sequence[float]) -> np.ndarray | None:

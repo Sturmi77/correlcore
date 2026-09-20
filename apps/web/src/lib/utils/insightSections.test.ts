@@ -1,17 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CURRENT_INSIGHT_SECTIONS_VERSION,
   DEFAULT_INSIGHT_SECTIONS,
   isInsightSectionLocked,
+  LEGACY_DEFAULT_INSIGHT_SECTIONS,
   mergeInsightSections,
+  migrateInsightSectionsToCurrent,
   normalizeInsightSectionsForSave,
   resolveEnabledInsightSections,
   type InsightSectionKey,
 } from './insightSections';
 
 describe('insightSections', () => {
-  it('returns defaults when stored is null or empty', () => {
+  it('returns slim defaults when stored is null or empty', () => {
     expect(mergeInsightSections(null)).toEqual(DEFAULT_INSIGHT_SECTIONS);
     expect(mergeInsightSections([])).toEqual(DEFAULT_INSIGHT_SECTIONS);
+    expect(DEFAULT_INSIGHT_SECTIONS.find((s) => s.key === 'correlation_matrix')?.enabled).toBe(
+      false
+    );
+    expect(DEFAULT_INSIGHT_SECTIONS.find((s) => s.key === 'insight_feed')?.enabled).toBe(true);
   });
 
   it('preserves user order and merges missing keys', () => {
@@ -25,7 +32,6 @@ describe('insightSections', () => {
       'correlation_matrix',
     ]);
     expect(merged[1]?.enabled).toBe(false);
-    // Missing keys are appended so the feed is never lost.
     expect(merged.some((section) => section.key === 'insight_feed')).toBe(true);
   });
 
@@ -49,7 +55,6 @@ describe('insightSections', () => {
   it('has stage_header as a default, non-locked section (#823)', () => {
     expect(DEFAULT_INSIGHT_SECTIONS[0]?.key).toBe('stage_header');
     expect(isInsightSectionLocked('stage_header')).toBe(false);
-    // Unlike insight_feed, it may be hidden.
     const normalized = normalizeInsightSectionsForSave([{ key: 'stage_header', enabled: false }]);
     expect(normalized).toEqual([{ key: 'stage_header', enabled: false }]);
     const merged = mergeInsightSections([{ key: 'stage_header', enabled: false }]);
@@ -77,5 +82,50 @@ describe('insightSections', () => {
       { key: 'lag_heatmap', enabled: true },
       { key: 'insight_feed', enabled: true },
     ]);
+  });
+});
+
+describe('migrateInsightSectionsToCurrent (Phase 6)', () => {
+  it('is a no-op when already on the current version', () => {
+    const result = migrateInsightSectionsToCurrent(LEGACY_DEFAULT_INSIGHT_SECTIONS, 2);
+    expect(result.dirty).toBe(false);
+    expect(result.version).toBe(2);
+  });
+
+  it('replaces exact legacy defaults with the slim layout', () => {
+    const result = migrateInsightSectionsToCurrent(LEGACY_DEFAULT_INSIGHT_SECTIONS, 1);
+    expect(result.dirty).toBe(true);
+    expect(result.version).toBe(CURRENT_INSIGHT_SECTIONS_VERSION);
+    expect(result.sections).toEqual(DEFAULT_INSIGHT_SECTIONS);
+  });
+
+  it('shrinks inherited ons but keeps an explicit off', () => {
+    const result = migrateInsightSectionsToCurrent(
+      [
+        { key: 'stage_header', enabled: true },
+        { key: 'correlation_matrix', enabled: true },
+        { key: 'insight_feed', enabled: true },
+        { key: 'lag_heatmap', enabled: false },
+        { key: 'dismissed', enabled: true },
+        { key: 'symptom_analytics', enabled: true },
+        { key: 'tag_groups', enabled: true },
+        { key: 'tag_cooccurrence', enabled: true },
+      ],
+      1
+    );
+    expect(result.dirty).toBe(true);
+    const byKey = new Map(result.sections?.map((section) => [section.key, section.enabled]));
+    expect(byKey.get('lag_heatmap')).toBe(false);
+    expect(byKey.get('correlation_matrix')).toBe(false);
+    expect(byKey.get('insight_feed')).toBe(true);
+  });
+
+  it('only bumps version when stored is empty', () => {
+    const result = migrateInsightSectionsToCurrent(null, 1);
+    expect(result).toEqual({
+      sections: null,
+      version: CURRENT_INSIGHT_SECTIONS_VERSION,
+      dirty: true,
+    });
   });
 });

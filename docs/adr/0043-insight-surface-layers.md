@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-09-18)
+Accepted (2026-09-19)
 
 Amends and supersedes parts of [ADR-0017](0017-frontend-screen-architecture.md)
 (see "Relationship to ADR-0017" below). Context: analysis issues
@@ -152,10 +152,20 @@ flip.
 
 ## Open questions
 
-- Whether strain/recovery becomes a category anchor (#930 G3) is explicitly **not** decided
-  here. It is gated behind layers 1–2 shipping and requires a neutral `work_context` value,
-  which the enum currently lacks (#875, #930).
+- ~~Whether strain/recovery becomes a category anchor (#930 G3)~~ **Decided (Phase 9):**
+  not a category pivot. Activate the
+  [Arbeitsmuster-Vokabular](../features/arbeitsmuster-vokabular.md) copy register for
+  store/marketing and Layer-1 load/recovery copy. Clinical vocabulary never. Mood/Habit
+  stay everyday jobs; `work_context` stays a differentiation field (`other` shipped in
+  Phase 8). Listing (#720) and Data Safety (#721) follow the register.
+- ~~Whether adjusted (OLS confounder) effects are shown (#928 Q4 / L5)~~ **Decided YES
+  (Phase 12):** serialize raw association plus same-situation natural frequencies and
+  held coefficients into insight payloads; surface **only** on Layer 2
+  (`/insights/signal/[id]`) behind disclosure. Copy uses “same work situation” /
+  “auch an Tagen mit derselben Arbeitssituation” — never “bereinigt” / “cleaned”.
+  Non-survival of the association inside the situation is a valid result (aligns D2).
+  Layer-1 notes and dashed heatmap borders stay as today.
 - Exact route names for layers 2 and 4 are set in the implementation issues; this ADR fixes
   only that they are secondary surfaces inside the insights route.
-- The interview validation asked for in #930 H.4 remains a gate for the layer-2 build. This
-  ADR records the structural decision, not the user research.
+- The interview validation asked for in #930 H.4 remains outside this ADR (product research,
+  not a structural blocker for layers 1–2, which have shipped).

@@ -37,7 +37,7 @@
   import { findLocalEntryByDateSlot, localEntryToEntryResponse } from '$lib/stores/entriesOffline';
   import { isCalendarContextInsight } from '$lib/utils/insightConfounder';
   import { selectNewestWeekdayPattern } from '$lib/utils/homeWeekdayOverview';
-  import { shiftIsoDate } from '$lib/utils/streak';
+  import { shiftIsoDate } from '$lib/utils/isoDate';
   import Button from '$lib/components/common/Button.svelte';
   import FirstWeekInsightBanner from '$lib/components/home/FirstWeekInsightBanner.svelte';
   import HomeTodayContext from '$lib/components/home/HomeTodayContext.svelte';
@@ -269,7 +269,13 @@
     }
   }
 
-  /** Nearest named timeseries range for a day-count window (#877). */
+  /**
+   * Nearest named timeseries range for a day-count window (#877).
+   *
+   * Only a coarse hint now — the exact window travels as `days`. On its own
+   * this rounded a 14-day preference up to the 30-day `month` bucket, so Home
+   * summarised a month while the UI said two weeks (#867).
+   */
   function rangeForWindow(days: number): TimeseriesRange {
     if (days <= 7) return 'week';
     if (days <= 30) return 'month';
@@ -283,7 +289,7 @@
     try {
       const start = shiftIsoDate(todayIso, -(Math.max(1, windowDays) - 1));
       const [timeseries, tags, symptoms] = await Promise.allSettled([
-        fetchTimeseries(rangeForWindow(windowDays)),
+        fetchTimeseries(rangeForWindow(windowDays), windowDays),
         fetchTagHeatmap({ start_date: start, end_date: todayIso }),
         fetchSymptomHeatmap({ start_date: start, end_date: todayIso }),
       ]);

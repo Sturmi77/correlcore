@@ -26,10 +26,18 @@
   } from '$lib/utils/insightConfounder';
   import InsightEvidence from './InsightEvidence.svelte';
   import NoteInsightEvidence from './NoteInsightEvidence.svelte';
+  import WithWithoutDistribution from './WithWithoutDistribution.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import { isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
+  import {
+    isNullAssociation,
+    isWithWithoutInsight,
+    parseWithWithoutView,
+  } from '$lib/utils/withWithoutDistribution';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
+  import { formatChangepointStatement } from '$lib/utils/changepointMarkers';
+  import { lagProfileBars, type LagProfileBar } from '$lib/utils/lagInsight';
 
   export let insight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
@@ -70,6 +78,30 @@
 
   $: noteEvidence = payloadRecord(insight?.payload?.evidence);
   $: hasNoteEvidence = Boolean(noteEvidence && typeof noteEvidence.signal === 'string');
+  $: withWithoutView = insight ? parseWithWithoutView(insight) : null;
+  $: isNullResult = insight ? isNullAssociation(insight) : false;
+  $: changepointStatement = insight ? formatChangepointStatement(insight, $_) : null;
+  $: displayStatement =
+    changepointStatement ||
+    (insight
+      ? stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')
+      : '');
+  $: canVerifySignal = Boolean(insight && isWithWithoutInsight(insight));
+
+  $: freqSplit =
+    insight?.insight_type === 'pointbiserial' &&
+    typeof insight.payload?.tagged_count === 'number' &&
+    typeof insight.payload?.untagged_count === 'number' &&
+    typeof insight.payload?.tagged_mood_avg === 'number' &&
+    typeof insight.payload?.untagged_mood_avg === 'number'
+      ? {
+          tag: insight.subject_label ?? '',
+          withN: insight.payload.tagged_count,
+          withoutN: insight.payload.untagged_count,
+          withAvg: insight.payload.tagged_mood_avg,
+          withoutAvg: insight.payload.untagged_mood_avg,
+        }
+      : null;
 
   let expanded = false;
 
@@ -102,38 +134,15 @@
   // #488 Phase 1b / #912: lag profile (r at each day 1..7). Non-causal —
   // signed bars around a zero line so direction stays visible (ADR-0035:
   // geometry encodes sign, not traffic-light colour).
-  const LAG_PROFILE_MAX_DAYS = 7;
-
-  type LagProfileBar = { lag: number; r: number; active: boolean };
   type LagProfileDirection = 'positive' | 'negative' | 'mixed' | 'none';
 
-  function lagProfileBars(ins: InsightResponse): LagProfileBar[] | null {
-    const payload = ins.payload as Record<string, unknown> | undefined;
-    if (!payload || payload.method !== 'lag') return null;
-    const raw = payload.lag_profile;
-    if (!Array.isArray(raw) || raw.length < 2) return null;
-    const chosen = payloadNumber(ins, 'lag_days');
-    const byLag = new Map<number, number>();
-    for (const point of raw) {
-      if (
-        point &&
-        typeof point === 'object' &&
-        typeof (point as { lag?: unknown }).lag === 'number' &&
-        typeof (point as { r?: unknown }).r === 'number'
-      ) {
-        byLag.set((point as { lag: number }).lag, (point as { r: number }).r);
-      }
-    }
-    if (byLag.size < 2) return null;
-    const bars: LagProfileBar[] = [];
-    for (let lag = 1; lag <= LAG_PROFILE_MAX_DAYS; lag += 1) {
-      bars.push({ lag, r: byLag.get(lag) ?? 0, active: lag === chosen });
-    }
-    return bars;
-  }
-
   function lagProfileDirection(bars: readonly LagProfileBar[]): LagProfileDirection {
-    const signs = new Set(bars.filter((bar) => bar.r !== 0).map((bar) => (bar.r > 0 ? 1 : -1)));
+    // Unmeasured lags (r === null) carry no sign and must not vote here.
+    const signs = new Set(
+      bars
+        .filter((bar) => bar.r !== null && bar.r !== 0)
+        .map((bar) => ((bar.r as number) > 0 ? 1 : -1))
+    );
     if (signs.size === 0) return 'none';
     if (signs.size > 1) return 'mixed';
     return signs.has(1) ? 'positive' : 'negative';
@@ -150,7 +159,7 @@
   $: lagProfile = insight ? lagProfileBars(insight) : null;
   $: activeLagBar = lagProfile?.find((bar) => bar.active) ?? null;
   $: lagProfileMaxAbs = lagProfile
-    ? Math.max(...lagProfile.map((bar) => Math.abs(bar.r)), 0.0001)
+    ? Math.max(...lagProfile.map((bar) => (bar.r === null ? 0 : Math.abs(bar.r))), 0.0001)
     : 1;
   $: lagDirection = lagProfile ? lagProfileDirection(lagProfile) : 'none';
   $: lagDirectionLabel =
@@ -265,7 +274,18 @@
         return `${featureText} → ${target}`;
       }
       if (method === 'lag') {
-        const feature = payloadFeatureLabel(ins.payload?.feature) ?? ins.subject_label ?? 'Feature';
+        const featureRaw =
+          payloadFeatureLabel(ins.payload?.feature) ?? ins.subject_label ?? 'Feature';
+        const featureKey =
+          typeof ins.payload?.feature === 'object' && ins.payload?.feature
+            ? String((ins.payload.feature as { key?: string }).key ?? '')
+            : '';
+        const feature =
+          featureKey === 'sleep_minutes'
+            ? $_('trends.metric.sleep_minutes')
+            : featureKey === 'sleep_quality'
+              ? $_('trends.metric.sleep_quality')
+              : featureRaw;
         const lagDays = payloadNumber(ins, 'lag_days');
         const lagSuffix =
           lagDays !== null ? ` (+${lagDays} ${$_('insights.card.lag_days_unit')})` : '';
@@ -274,7 +294,11 @@
     }
     if (ins.metric === 'mood_sleep_minutes' || ins.metric === 'mood_sleep_quality') {
       const sleepKey = ins.metric === 'mood_sleep_minutes' ? 'sleep_minutes' : 'sleep_quality';
-      return `${metricLabel('mood')} → ${metricLabel(sleepKey)}`;
+      // Sleep first, like the lag title above. The pair is a symmetric Spearman,
+      // so the arrow is a reading order, not a direction — but printing it as
+      // mood → sleep here and sleep → mood on the lag card made the same pair
+      // look like two contradicting claims (#928 D4).
+      return `${metricLabel(sleepKey)} → ${metricLabel('mood')} (${$_('insights.signal.same_day_badge')})`;
     }
     const a = ins.metric ?? '?';
     const b = ins.subject_label ?? null;
@@ -329,10 +353,12 @@
     class="insight-card"
     class:insight-card--featured={featured}
     class:insight-card--confounded={isConfounded}
+    class:insight-card--null={isNullResult}
     data-testid="insight-card"
     data-expanded={expanded ? 'true' : 'false'}
     data-direction={dirClass}
     data-featured={featured ? 'true' : 'false'}
+    data-null-result={isNullResult ? 'true' : 'false'}
     style="--insight-accent: {accentColor}"
   >
     <header class="insight-card__header">
@@ -342,7 +368,7 @@
         data-testid="insight-card-direction">{glyph}</span
       >
       <p class="insight-card__statement" data-testid="insight-card-statement">
-        {stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')}
+        {displayStatement}
       </p>
       {#if dismissable}
         <button
@@ -355,6 +381,26 @@
         </button>
       {/if}
     </header>
+
+    {#if isNullResult}
+      <p class="insight-card__null-badge" data-testid="insight-card-null-badge">
+        {$_('insights.card.null_badge')}
+      </p>
+    {/if}
+
+    {#if withWithoutView}
+      <p class="insight-card__freq" data-testid="insight-card-with-without-freq">
+        {$_('insights.card.with_without_freq', {
+          values: {
+            withGood: withWithoutView.withGood,
+            withN: withWithoutView.withN,
+            withoutGood: withWithoutView.withoutGood,
+            withoutN: withWithoutView.withoutN,
+            subject: withWithoutView.subjectLabel,
+          },
+        })}
+      </p>
+    {/if}
 
     <p class="insight-card__caption" data-testid="insight-card-title">
       {title}
@@ -375,15 +421,29 @@
     {/if}
 
     <p class="insight-card__meta" data-testid="insight-card-meta">
-      {$_('insights.card.sample_meta', {
-        values: {
-          n: insight.sample_n ?? 0,
-          days:
-            typeof insight.payload?.time_window_days === 'number'
-              ? insight.payload.time_window_days
-              : 90,
-        },
-      })}
+      {#if freqSplit}
+        <span data-testid="insight-card-freq">
+          {$_('insights.card.freq_split', {
+            values: {
+              tag: freqSplit.tag,
+              withN: freqSplit.withN,
+              withoutN: freqSplit.withoutN,
+              withAvg: freqSplit.withAvg,
+              withoutAvg: freqSplit.withoutAvg,
+            },
+          })}
+        </span>
+      {:else}
+        {$_('insights.card.sample_meta', {
+          values: {
+            n: insight.sample_n ?? 0,
+            days:
+              typeof insight.payload?.time_window_days === 'number'
+                ? insight.payload.time_window_days
+                : 90,
+          },
+        })}
+      {/if}
       {#if isInactiveTag}
         <span class="insight-card__inactive-hint">{$_('insights.card.inactive_tag_hint')}</span>
       {/if}
@@ -451,30 +511,47 @@
             })}
           >
             {#each lagProfile as bar (bar.lag)}
-              {@const sign = bar.r > 0 ? 'pos' : bar.r < 0 ? 'neg' : 'zero'}
-              <div class="insight-card__lag-col" class:insight-card__lag-col--active={bar.active}>
+              {@const sign =
+                bar.r === null ? 'none' : bar.r > 0 ? 'pos' : bar.r < 0 ? 'neg' : 'zero'}
+              <div
+                class="insight-card__lag-col"
+                class:insight-card__lag-col--active={bar.active}
+                class:insight-card__lag-col--unmeasured={bar.r === null}
+              >
                 <div class="insight-card__lag-bar-track" data-sign={sign}>
-                  <div class="insight-card__lag-half insight-card__lag-half--pos">
-                    {#if bar.r > 0}
-                      <div
-                        class="insight-card__lag-bar insight-card__lag-bar--pos"
-                        data-testid="insight-card-lag-bar"
-                        style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
-                        title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
-                      ></div>
-                    {/if}
-                  </div>
-                  <div class="insight-card__lag-zero" aria-hidden="true"></div>
-                  <div class="insight-card__lag-half insight-card__lag-half--neg">
-                    {#if bar.r < 0}
-                      <div
-                        class="insight-card__lag-bar insight-card__lag-bar--neg"
-                        data-testid="insight-card-lag-bar"
-                        style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
-                        title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
-                      ></div>
-                    {/if}
-                  </div>
+                  {#if bar.r === null}
+                    <!-- Lag without paired observations: an empty slot, not a zero
+                         bar. "Not measured" is a different claim from "no link". -->
+                    <div
+                      class="insight-card__lag-empty"
+                      data-testid="insight-card-lag-unmeasured"
+                      title={$_('insights.card.lag_profile_unmeasured', {
+                        values: { days: bar.lag },
+                      })}
+                    ></div>
+                  {:else}
+                    <div class="insight-card__lag-half insight-card__lag-half--pos">
+                      {#if bar.r > 0}
+                        <div
+                          class="insight-card__lag-bar insight-card__lag-bar--pos"
+                          data-testid="insight-card-lag-bar"
+                          style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
+                          title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                        ></div>
+                      {/if}
+                    </div>
+                    <div class="insight-card__lag-zero" aria-hidden="true"></div>
+                    <div class="insight-card__lag-half insight-card__lag-half--neg">
+                      {#if bar.r < 0}
+                        <div
+                          class="insight-card__lag-bar insight-card__lag-bar--neg"
+                          data-testid="insight-card-lag-bar"
+                          style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
+                          title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                        ></div>
+                      {/if}
+                    </div>
+                  {/if}
                 </div>
                 <span class="insight-card__lag-tick">{bar.lag}</span>
               </div>
@@ -482,6 +559,16 @@
           </div>
         {/if}
       </div>
+    {/if}
+
+    {#if canVerifySignal}
+      <a
+        class="insight-card__verify"
+        href={`/insights/signal/${insight.id}`}
+        data-testid="insight-card-verify"
+      >
+        {$_('insights.card.verify_action')}
+      </a>
     {/if}
 
     {#if canExploreEvents}
@@ -513,6 +600,10 @@
         class="insight-card__level2"
         data-testid="insight-card-level2"
       >
+        {#if withWithoutView}
+          <WithWithoutDistribution view={withWithoutView} compact />
+        {/if}
+
         <InsightEvidence
           confidenceScore={insight.confidence ?? 0}
           currentTier={insight.tier}
@@ -578,6 +669,40 @@
   .insight-card--confounded {
     opacity: 0.88;
     border-style: dashed;
+  }
+  .insight-card--null {
+    border-left-color: var(--color-success);
+  }
+  .insight-card__null-badge {
+    margin: 0;
+    align-self: flex-start;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm, 0.35rem);
+    border: 1px solid color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+    color: var(--color-success);
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 600;
+  }
+  .insight-card__freq {
+    margin: 0;
+    font-size: var(--text-sm, 0.875rem);
+    line-height: 1.4;
+    color: var(--color-text-muted);
+  }
+  .insight-card__verify {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-md, 0.5rem);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+    color: var(--color-primary);
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .insight-card__verify:hover {
+    background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
   }
   .insight-card__confounder {
     margin: 0;

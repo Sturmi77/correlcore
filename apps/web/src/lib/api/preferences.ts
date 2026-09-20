@@ -31,10 +31,14 @@ export interface UserPreferencesResponse {
   onboarding_profile_completed: boolean;
   onboarding_maturity_intro_seen: boolean;
   cycle_tracking_enabled: boolean;
+  /** Phase 8 / #875: opt-in Belastung & Erholung overlay. Default false. */
+  belastung_overlay_enabled?: boolean;
   // Additive (M8 Sprint 4): older mocks/fallbacks may omit it — treat as true.
   health_connect_sync_sleep_enabled?: boolean;
   // Additive (#868): per-weekday Home trend caret. Default on; omit → true.
   home_weekday_day_trend_enabled?: boolean;
+  // Additive (#867): shared analysis window. Default 28; omit → 28.
+  trend_window_days?: 14 | 28 | 90;
   dismissed_insight_keys: string[];
   reached_milestone_keys: string[];
   last_seen_insight_at: string | null;
@@ -42,6 +46,8 @@ export interface UserPreferencesResponse {
   last_seen_digest_at?: string | null;
   home_sections?: HomeSectionPreference[] | null;
   insight_sections?: InsightSectionPreference[] | null;
+  /** Phase 6: 1 = legacy all-on layout, 2 = slim hub. */
+  insight_sections_version?: number;
   created_at: string;
   updated_at: string;
 }
@@ -53,14 +59,17 @@ export interface UserPreferencesUpdate {
   onboarding_profile_completed?: boolean;
   onboarding_maturity_intro_seen?: boolean;
   cycle_tracking_enabled?: boolean;
+  belastung_overlay_enabled?: boolean;
   health_connect_sync_sleep_enabled?: boolean;
   home_weekday_day_trend_enabled?: boolean;
+  trend_window_days?: 14 | 28 | 90;
   dismissed_insight_keys?: string[];
   reached_milestone_keys?: string[];
   last_seen_insight_at?: string | null;
   last_seen_digest_at?: string | null;
   home_sections?: HomeSectionPreference[];
   insight_sections?: InsightSectionPreference[];
+  insight_sections_version?: number;
 }
 
 export async function fetchUserPreferences(): Promise<UserPreferencesResponse> {

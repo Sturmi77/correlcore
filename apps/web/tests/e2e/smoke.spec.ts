@@ -157,16 +157,6 @@ async function installSmokeApi(page: Page, options: { authenticated: boolean }) 
       });
     }
 
-    if (path === '/entries/stats/streak' && method === 'GET') {
-      return json(200, {
-        current_streak: 3,
-        longest_streak: 5,
-        total_entry_days: 12,
-        last_entry_date: '2026-05-22',
-        as_of: '2026-05-22',
-      });
-    }
-
     if (path === '/entries/stats/health-context' && method === 'GET') {
       return json(200, {
         as_of: '2026-05-22',

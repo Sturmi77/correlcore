@@ -11,6 +11,7 @@ from app.api.v1.deps.auth import get_current_verified_user
 from app.main import app
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.user import User
+from app.models.user_preference import UserPreference
 from app.services.insight_service import insight_subject_key, list_insight_history
 from tests.conftest import make_entry, make_tag, make_user
 
@@ -207,6 +208,15 @@ async def test_generate_delete_targets_only_same_generated_for_date() -> None:
         result.all.return_value = values
         return result
 
+    def _preferences_result() -> MagicMock:
+        result = MagicMock()
+        result.scalar_one_or_none.return_value = UserPreference(
+            user_id=user.id,
+            analytics_enabled=True,
+            belastung_overlay_enabled=False,
+        )
+        return result
+
     db = MagicMock()
     db.execute = AsyncMock(
         side_effect=[
@@ -214,6 +224,7 @@ async def test_generate_delete_targets_only_same_generated_for_date() -> None:
             _load_result(entries),
             _pair_result(tag_rows),
             _pair_result([]),
+            _preferences_result(),
             MagicMock(),
         ]
     )
@@ -221,7 +232,7 @@ async def test_generate_delete_targets_only_same_generated_for_date() -> None:
 
     await generate_and_store_insights(db, user_id=user.id, as_of=date(2026, 5, 1))
 
-    delete_stmt = db.execute.await_args_list[4].args[0]
+    delete_stmt = db.execute.await_args_list[5].args[0]
     assert "DELETE FROM insights" in str(delete_stmt)
     assert "generated_for_date" in str(delete_stmt)
 

@@ -50,7 +50,6 @@
     "view_trends": "Trends ansehen",
     "secondary_nav": "Weitere Bereiche",
     "loading_today": "Lade Heute-Status\u2026",
-    "streak_label": "Tracking-Konsistenz",
     "brief": {
       "label": "Daily Brief",
       "heading": "Heute auf einen Blick",
@@ -260,7 +259,8 @@
       "vacation": "Urlaub",
       "sick": "Krank",
       "weekend": "Wochenende",
-      "travel": "Unterwegs"
+      "travel": "Unterwegs",
+      "other": "Sonstiges"
     },
     "save_busy": "Speichere\u2026",
     "saved_redirect": "Eintrag gespeichert.",
@@ -486,6 +486,9 @@
     "empty": "Noch keine Eintr\u00e4ge im gew\u00e4hlten Zeitraum.",
     "empty_cta": "Eintrag erfassen",
     "range": {
+      "d14": "14T",
+      "d28": "28T",
+      "d90": "90T",
       "week": "7T",
       "month": "30T",
       "quarter": "90T",
@@ -520,9 +523,6 @@
     "tabs": {
       "label": "Trend-Bereiche",
       "compare": "Vergleichen",
-      "mood": "Stimmung",
-      "activities": "Aktivitaeten",
-      "health": "Gesundheit",
       "habits": "Gewohnheiten"
     },
     "metric": {
@@ -546,18 +546,6 @@
       "x_axis_label": "Datum",
       "loading": "Lade Zeitreihe",
       "empty": "Noch keine Scores in diesem Zeitraum."
-    },
-    "streak": {
-      "heading": "Tracking-Konsistenz",
-      "current": "Aktuelle Kontinuit\u00e4t",
-      "longest": "Beste Kontinuit\u00e4t",
-      "total": "Erfasste Tage"
-    },
-    "consistency": {
-      "heading": "Tracking-Konsistenz",
-      "current": "Aktuelle Kontinuit\u00e4t",
-      "longest": "Beste Kontinuit\u00e4t",
-      "total": "Erfasste Tage"
     },
     "health": {
       "heading": "Gesundheitsbereitschaft",
@@ -625,6 +613,8 @@
       "pin_aria": "Zeile oben anpinnen",
       "unpin_aria": "Pin entfernen",
       "pin_limit_aria": "Pin-Limit erreicht (max. {max})",
+      "check_question": "Diese Frage in Erkenntnissen pruefen →",
+      "check_question_hint": "Oeffne Erkenntnisse und nutze Zusammenhang pruefen auf einer Karte — Ebene 2 liegt im Signal-Detail, nicht als zweiter ESM-Einstieg aus Compare.",
       "coincidence": {
         "toggle": "Koinzidenz hervorheben",
         "toggle_aria": "Tage hervorheben, an denen angepinnte Zeilen gemeinsam aktiv sind",
@@ -638,21 +628,26 @@
         "and": "und"
       },
       "lag1": {
-        "toggle": "Naechster-Tag-Sequenz hervorheben",
+        "toggle": "Abfolge hervorheben",
         "toggle_aria": "Tage hervorheben, an denen eine angepinnte Zeile am Folgetag von der naechsten gefolgt wird",
-        "need_pins": "Pinnen Sie mindestens zwei Zeilen, um Folgetag-Sequenzen hervorzuheben.",
-        "empty": "Mindestens {min} Folgetag-Sequenzen in der Pin-Reihenfolge noetig, um Lag-1 hervorzuheben.",
+        "need_pins": "Pinnen Sie mindestens zwei Zeilen, um Abfolgen hervorzuheben.",
+        "empty": "Mindestens {min} Folgetag-Abfolgen in der Pin-Reihenfolge noetig, um Abfolge hervorzuheben.",
         "legend": "Linien markieren, wann eine angepinnte Zeile am Folgetag von der naechsten gefolgt wird — ein Zusammenhang in deinen Eintraegen, keine Ursache.",
         "cursor": "{from} dann {to} (+1 Tag)",
-        "marker": "Sequenz: {from} → {to} (+1d)",
+        "marker": "Abfolge: {from} → {to} (+1d)",
         "summary": "{from} dann {to}: {forward} von {forwardTotal} · {to} dann {from}: {reverse} von {reverseTotal}",
-        "swatch": "Lag-1 — gestrichelte Linie"
+        "swatch": "Abfolge — gestrichelte Linie"
+      },
+      "sleep_zeitversatz": {
+        "toggle": "Zeitversatz (+1 Tag bei Schlaf)",
+        "hint": "Zeigt den Schlaf der vorherigen Nacht neben Stimmung/Energie von heute — kein Sequenz-Highlight."
       },
       "frequency_note": "Zahlen gelten nur fuer den gewaehlten Zeitraum.",
       "overlay_group_label": "Hervorheben",
       "overlay_hint_lead": "Zwei Zeilen gepinnt.",
       "overlay_hint_body": "Koinzidenz hervorheben?",
       "overlay_hint_dismiss_aria": "Hinweis zur Hervorhebung schliessen",
+      "check_question": "diese Frage prüfen",
       "zoom": {
         "label": "Zeitachsen-Zoom",
         "decrease_aria": "Herauszoomen (groebere Spalten)",
@@ -742,10 +737,10 @@
     "days_tracked": "Erfasste Tage",
     "target_days": "Zieltage",
     "target_frequency": "Wochenziel",
-    "correlation": "Korrelationsbeitrag",
-    "correlation_brief": "r={score} {metric}",
-    "correlation_pending": "Noch keine Korrelationsdaten",
-    "correlation_predictor": "{name} ist ein relevanter {metric}-Prädiktor (r={score})",
+    "correlation": "Zusammenhang",
+    "correlation_brief": "{label} · {metric} · {n} Tage",
+    "correlation_pending": "Noch kein belastbarer Zusammenhang",
+    "correlation_predictor": "{name} und {metric}: {label} (an {n} Tagen)",
     "adherence_meter": "Adherence-Rate",
     "adherence_meter_text": "{type}: {percent}; {goal}",
     "insufficient_data": "Noch nicht genug Daten. Tracke weiter, um deine Adherence-Rate zu sehen.",
@@ -908,6 +903,12 @@
       "delete_success": "Zyklusdaten aus {count} Eintraegen entfernt.",
       "delete_error": "Zyklusdaten konnten nicht geloescht werden."
     },
+    "belastung": {
+      "heading": "Belastung & Erholung",
+      "body": "Optionaler Ebene-1-Zusammenfassung zu Stress, Energie und Erschoepfung. Standardmaessig aus.",
+      "enabled": "Belastungs-Zusammenfassung anzeigen",
+      "hint": "Nutzt nur bestehende Eintraege — keine neuen Pflichtfelder. Analyse muss aktiv bleiben. Heuristik, keine medizinische Einschaetzung, niemals fuer einen Arbeitgeber."
+    },
     "vocabulary": {
       "heading": "Tracking-Vokabular",
       "body": "Verwalte Tags, Symptome und Gewohnheiten fuer Eintraege und Analysen.",
@@ -932,7 +933,12 @@
       "digest_enabled": "Woechentliche Erkenntnis-Zusammenfassung",
       "digest_hint": "Opt-in fuer eine In-App-Zusammenfassung deiner staerksten Erkenntnisse der letzten Woche. Bei genug Erkenntnissen erscheint die erste Zusammenfassung direkt nach dem Aktivieren, sonst nach dem naechsten Wochenlauf (Sonntag).",
       "digest_pending_hint": "Dein erster Digest ist noch nicht bereit. Aktualisiere oben die Erkenntnisse oder warte auf den naechsten Wochenlauf (Sonntag).",
-      "digest_preview_link": "Digest-Vorschau oeffnen"
+      "digest_preview_link": "Digest-Vorschau oeffnen",
+      "trend_window_heading": "Analysefenster",
+      "trend_window_hint": "Gilt fuer Home, Trends und Erkenntnisse. Ein Fenster pro Aussage.",
+      "trend_window_d14": "14 Tage",
+      "trend_window_d28": "28 Tage",
+      "trend_window_d90": "90 Tage"
     },
     "privacy": {
       "heading": "Datenschutz",
@@ -1140,8 +1146,8 @@
           "description": "Aktuelle Analyse-Reifephase mit Fortschrittsbalken und Meilensteinen."
         },
         "correlation_matrix": {
-          "label": "Korrelationsmatrix",
-          "description": "\u00dcbersichts-Matrix der st\u00e4rksten Zusammenh\u00e4nge zwischen Faktoren."
+          "label": "Zusammenhänge",
+          "description": "Sortierte Tabelle der staerksten Zusammenhaenge zwischen Faktoren."
         },
         "insight_feed": {
           "label": "Erkenntnis-Feed",
@@ -1325,7 +1331,42 @@
       "analytics_summary": "Analyse vertiefen",
       "analytics_hint": "Symptome und gemeinsame Tags",
       "analysis_range_label": "Analysezeitraum",
-      "history_link": "Erkenntnis-Verlauf"
+      "history_link": "Erkenntnis-Verlauf",
+      "report_link": "Bericht & Export",
+      "tools_aria": "Weitere Erkenntnis-Werkzeuge",
+      "tools_heading": "Weitere Werkzeuge",
+      "tools_settings_link": "Werkzeuge in den Einstellungen einblenden",
+      "dismissed_link": "Ausgeblendete Erkenntnisse ({count})"
+    },
+    "report": {
+      "title": "Bericht",
+      "subtitle": "Zusammenhaenge zum Mitnehmen — Muster aus deinen Eintraegen, keine Diagnose.",
+      "loading": "Bericht wird geladen…",
+      "error": "Bericht konnte nicht geladen werden.",
+      "empty": "Noch keine belastbaren Zusammenhaenge fuer den Bericht. Weiter tracken — die Tabelle fuellt sich mit stabileren Mustern.",
+      "table_heading": "Zusammenhaenge im Zeitraum",
+      "table_subtitle": "Dichte ist hier gewollt — ein Ausdruck soll eine Tabelle sein.",
+      "table_aria": "Berichtstabelle der Zusammenhaenge",
+      "selection_hint": "Zeilen abwaehlen, um sie aus PNG/PDF auszuschliessen",
+      "select_all": "Alle Berichtszeilen auswaehlen",
+      "select_row": "\"{label}\" in den Export aufnehmen",
+      "col_factor": "Faktor",
+      "col_metric": "wirkt auf",
+      "col_effect": "Unterschied",
+      "col_frequency": "Abdeckung",
+      "col_confidence": "Konfidenz",
+      "frequency_n": "Basierend auf {n} Eintraegen",
+      "coverage": "{rows} Zeilen · groesste Stichprobe {n} Eintraege",
+      "disclaimer": "Keine Diagnose. Muster aus Selbstauskunft. Nicht mit einem Arbeitgeber teilen.",
+      "export_aria": "Bericht exportieren",
+      "export_pdf": "Als PDF",
+      "export_png": "PNG",
+      "export_csv": "CSV",
+      "export_json": "JSON",
+      "export_busy": "Wird vorbereitet…",
+      "export_empty": "Waehle mindestens eine Zeile fuer PNG oder PDF.",
+      "export_error": "Export fehlgeschlagen. Bitte erneut versuchen.",
+      "pdf_subtitle": "CorrelCore Zusammenhaenge-Bericht"
     },
     "history": {
       "title": "Erkenntnis-Verlauf",
@@ -1423,14 +1464,18 @@
       }
     },
     "matrix": {
-      "heading": "Korrelations-Matrix",
-      "subtitle": "Tags, Symptome und Habits nach Effektstaerke sortiert.",
+      "heading": "Zusammenhänge",
+      "subtitle": "Tags, Symptome und Habits nach Effektstaerke sortiert — mit Häufigkeiten und einer Konfidenzskala.",
       "tag": "Tag",
       "subject": "Faktor",
       "metric": "Metrik",
       "effect": "Effekt",
+      "frequency": "Häufigkeiten",
+      "freq_split": "{withN} mit · {withoutN} ohne",
+      "freq_sample": "n={n}",
       "confidence": "Konfidenz",
       "export": "PNG exportieren",
+      "report_link": "Bericht & Export oeffnen",
       "empty": "Noch keine ausreichend stabilen Muster vorhanden.",
       "empty_strong": "Aktuell keine belastbaren Zusammenhänge. Schwächere Muster findest du unten.",
       "updated": "Zuletzt aktualisiert: {date}",
@@ -1450,8 +1495,8 @@
       "legend": "Co-Occurrence-Intensitaet",
       "less": "Weniger",
       "more": "Mehr",
-      "cell_aria": "{tagA} und {tagB} gemeinsam auf {count} Entries",
-      "cell_title": "{tagA} + {tagB}: {count} gemeinsame Entries",
+      "cell_aria": "{tagA} und {tagB}: beide an {count} von {aTotal} Tagen mit {tagA} · {count} von {bTotal} Tagen mit {tagB}",
+      "cell_title": "Beide an {count} von {aTotal} Tagen mit {tagA} · {count} von {bTotal} Tagen mit {tagB}",
       "sort_clustered": "Nach Aehnlichkeit clustern",
       "sort_alphabetical": "Alphabetisch sortieren",
       "focus_label": "Auf Tag-Gruppe fokussieren",
@@ -1562,6 +1607,7 @@
       "dismiss_aria": "Erkenntnis \"{title}\" ausblenden",
       "disclaimer_link": "Was bedeutet das?",
       "sample_meta": "Basierend auf {n} Eintraegen \u00b7 {days} Tage",
+      "freq_split": "Ø {withAvg} an {withN} Tagen mit {tag} · Ø {withoutAvg} an {withoutN} Tagen ohne",
       "meta_r": "r (Pearson)",
       "meta_rho": "\u03c1 (Spearman)",
       "meta_p": "p-Wert",
@@ -1577,17 +1623,78 @@
       "inactive_tag_hint": "Dieser Tag wird fuer neue Berechnungen nicht mehr verwendet.",
       "cluster_features": "Mehrere Faktoren",
       "lag_days_unit": "Tage",
-      "lag_profile_label": "Zusammenhang je Verzoegerung (Tage)",
-      "lag_profile_aria": "Zusammenhangsstaerke je Verzoegerung; am staerksten bei +{days} Tagen ({direction})",
+      "lag_profile_label": "Zusammenhang je Zeitversatz (Tage)",
+      "lag_profile_aria": "Zusammenhangsstaerke je Zeitversatz; am staerksten bei +{days} Tagen ({direction})",
+      "lag_profile_unmeasured": "+{days} Tage: zu wenige Tagespaare — nicht gemessen",
       "lag_peak_marker": "Am staerksten bei +{days} Tagen ({direction})",
       "lag_profile_direction_positive": "gleichlaeufig",
       "lag_profile_direction_negative": "gegenlaeufig",
-      "lag_profile_direction_mixed": "gemischte Richtungen"
+      "lag_profile_direction_mixed": "gemischte Richtungen",
+      "null_badge": "Kein Muster",
+      "verify_action": "Zusammenhang pruefen →",
+      "with_without_aria": "Verteilung mit und ohne {subject}",
+      "with_without_title": "Mit und ohne {subject}",
+      "with_without_subtitle": "Wie sich die Tage verteilen — nicht nur der Mittelwert",
+      "with_without_freq": "Gut an {withGood} von {withN} Tagen mit {subject} · gut an {withoutGood} von {withoutN} Tagen ohne",
+      "with_label": "mit {subject} · {n} Tage",
+      "without_label": "ohne · {n} Tage",
+      "overlap_low": "Ueberlappung: gering",
+      "overlap_high": "Ueberlappung: hoch",
+      "overlap_unknown": "Ueberlappung: noch unklar",
+      "mean_shift": "Verschiebung: {shift} Punkte"
+    },
+    "signal": {
+      "title_fallback": "Signal-Detail",
+      "subtitle": "Eine Hypothese · letzte 90 Tage",
+      "back": "Erkenntnisse",
+      "loading": "Signal wird geladen…",
+      "error": "Dieses Signal konnte nicht geladen werden.",
+      "non_causal": "Ein Zusammenhang in deinen Eintraegen — keine Ursache.",
+      "zeitversatz_badge": "Zeitversatz (nicht derselbe Kalendertag)",
+      "same_day_badge": "Derselbe Kalendertag",
+      "lag_heading": "Zusammenhang nach Verzoegerung",
+      "lag_hint": "Balken zeigen die Korrelationsstaerke je Verzoegerung in Tagen. Der hervorgehobene Balken ist der gewaehlte Peak — keine Prognose.",
+      "lag_freq": "Tage mit viel {feature}: gute Tage an {highGood} von {highN} · Tage mit wenig {feature}: {lowGood} von {lowN} (Ergebnis +{days} Tage).",
+      "lag_good_rule_gte": "„Gut“ heißt hier: {target} {threshold} oder höher.",
+      "lag_good_rule_lte": "„Gut“ heißt hier: {target} {threshold} oder niedriger.",
+      "lag_unmeasured_note": "Leere Spalten: für diese Verzögerung lagen zu wenige Tagespaare vor — nicht gemessen, nicht „kein Zusammenhang“.",
+      "lag_feature_fallback": "Merkmal",
+      "same_situation_show": "Gleiche Arbeitssituation ▾",
+      "same_situation_hide": "Gleiche Arbeitssituation ▴",
+      "same_work_context_freq": "Auch an Tagen mit derselben Arbeitssituation ({context}): gut an {withGood} von {withN} mit {subject} · {withoutGood} von {withoutN} ohne",
+      "same_situation_stays": "Der Zusammenhang zeigt sich auch in dieser Situation — weiterhin keine Ursache.",
+      "same_situation_gone": "In dieser Situation sehen die Tage aehnlich aus — ein gueltiges Nicht-Ergebnis fuer diesen Check.",
+      "course_heading": "Verlauf um diese Tage",
+      "means": "Mittelwert mit: {withMean} ({withN} Tage) · ohne: {withoutMean} ({withoutN} Tage)",
+      "scatter_show": "Punktwolke anzeigen ▾",
+      "scatter_hide": "Punktwolke ausblenden ▴",
+      "scatter_aria": "Punktwolke der Werte mit und ohne {subject}",
+      "scatter_with": "mit",
+      "scatter_without": "ohne",
+      "scatter_privacy": "Einzeltage bleiben bei diesem Account. Vermeide Screenshots mit seltenen Mustern.",
+      "pin_trends": "In Trends oeffnen →",
+      "remember_report": "Fuer Bericht merken",
+      "next_heading": "Was als Naechstes?",
+      "next_body": "Kein Muster ist trotzdem eine Antwort. Du kannst weiter eintragen, ein anderes Fenster vergleichen oder eine andere Frage stellen.",
+      "next_log": "Heute eintragen",
+      "next_compare": "In Trends vergleichen",
+      "next_other": "Andere Erkenntnisse"
+    },
+    "belastung": {
+      "aria": "Belastung und Erholung",
+      "title": "Belastungsmuster der letzten 14 Tage",
+      "subtitle": "Optionaler Bereich · in Einstellungen aktiviert",
+      "heuristic_badge": "Hinweis, keine Bewertung",
+      "freq": "Erschoepfung an {fatigueRecent} von {recentN} Tagen · davor an {fatiguePrior} von {priorN}. Erholungstage: {recoveryRecent} von {recentN} · davor {recoveryPrior} von {priorN}.",
+      "cta_intensity": "Arbeitsintensitaet pruefen →",
+      "cta_sleep": "Schlaf → Folgetag pruefen →",
+      "disclaimer": "Dies ist keine medizinische Einschaetzung und keine Diagnose. CorrelCore zeigt Muster in deinen eigenen Eintraegen. Wenn dich deine Belastung anhaltend beeintraechtigt, sprich mit einer Aerztin oder Therapeutin. Diese Daten liegen ausschliesslich bei dir — niemals bei einem Arbeitgeber.",
+      "analytics_off": "Schalte die Analyse in den Einstellungen wieder ein, um diese Zusammenfassung zu aktualisieren."
     },
     "lag_heatmap": {
       "title": "Zeitversatz-Muster",
-      "subtitle": "Zusammenhangsstaerke je Paar und Verzoegerung (1–7 Tage). Kein Kausalnachweis.",
-      "aria": "Heatmap der Zeitversatz-Zusammenhaenge: Zeilen sind Paare, Spalten sind Tage Verzoegerung",
+      "subtitle": "Zusammenhangsstaerke je Paar und Zeitversatz (1–7 Tage). Kein Kausalnachweis.",
+      "aria": "Heatmap der Zeitversatz-Zusammenhaenge: Zeilen sind Paare, Spalten sind Tage Zeitversatz",
       "row_summary": "{pair}: am staerksten bei +{lag} Tagen (r {r})",
       "legend_neg": "gegenlaeufig",
       "legend_pos": "gleichlaeufig"
@@ -1613,6 +1720,16 @@
     "weekday_confounded_note": "Hinweis: Dieses Muster tritt vorwiegend an bestimmten Wochentagen auf.",
     "work_context_confounded_note": "Hinweis: Dieses Muster kann vor allem mit deiner Arbeitssituation zusammenhaengen.",
     "calendar_context_confounded_note": "Hinweis: Dieses Muster kann vor allem Kalender- oder Arbeitskontext-Ueberlappungen zeigen.",
+    "changepoint": {
+      "series_mood_score": "Stimmung",
+      "series_stress": "Stress",
+      "series_energy": "Energie",
+      "direction_higher": "hoeher",
+      "direction_lower": "niedriger",
+      "statement": "Niveauwechsel bei {series} um {date}: Mittelwert von {before} auf {after} ({direction}). Keine Prognose.",
+      "marker_label": "Niveauwechsel · {series}",
+      "marker_description": "{before} → {after} (um {date})"
+    },
     "note_evidence": {
       "soft_prompt": "Fuege Notizen hinzu, um Zusammenhaenge besser zu verstehen.",
       "lead_signal": "An Tagen mit Signal \"{signal}\" lag dein Mood im Schnitt {delta} Punkte von deinem Notiz-Tagesmittel entfernt.",
@@ -2052,7 +2169,7 @@
     "badge": "Selbst gehostet · v{version}",
     "badge_hosted": "Gehostet · v{version}",
     "hero_title": "Verstehe, warum manche Tage gut sind – und andere nicht.",
-    "hero_subtitle": "60 Sekunden am Tag eintragen. Die Auswertung zeigt, welche Faktoren wirklich mit Stimmung und Energie zusammenhängen – auf deiner Instanz, ohne Tracking durch Dritte.",
+    "hero_subtitle": "60 Sekunden am Tag eintragen. Die Auswertung zeigt, welche Faktoren — Schlaf, Stress, Arbeitssituation — wirklich mit Stimmung und Energie zusammenhaengen – auf deiner Instanz, ohne Tracking durch Dritte.",
     "hero_micro": "Zusammenhänge werden nach Sicherheit gestuft und mit zeitlicher Verzögerung betrachtet.",
     "cta_register": "Registrieren",
     "cta_login": "Anmelden",

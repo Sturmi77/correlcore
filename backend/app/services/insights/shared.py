@@ -21,7 +21,7 @@ from scipy.stats import chisquare
 from statsmodels.stats.multitest import multipletests
 
 from app.core.config import settings
-from app.models.entry import WorkContext
+from app.models.entry import InferredPeriod, WorkContext
 from app.models.insight import InsightTier, InsightType
 
 EARLY_ENTRY_COUNT = 3
@@ -36,6 +36,12 @@ MIN_WEEKDAY_DELTA = 0.5
 MIN_CONTEXT_GROUP_SIZE = 2
 MIN_CONTEXT_DELTA = 0.5
 FDR_ALPHA = 0.05
+# Phase 7 / D2: cap null (non-result) associations so the feed stays readable.
+MAX_NULL_ASSOCIATIONS = 3
+# Natural-frequency "good day" threshold on the 1–5 metric scales (ADR-0043 §4).
+GOOD_METRIC_THRESHOLD = 4
+METRIC_SCALE_MIN = 1
+METRIC_SCALE_MAX = 5
 
 MetricName = Literal["mood_score", "energy", "stress"]
 
@@ -61,6 +67,7 @@ _WORK_CONTEXT_LABELS: dict[WorkContext, str] = {
     WorkContext.VACATION: "Vacation",
     WorkContext.SICK: "Sick leave",
     WorkContext.WEEKEND: "Weekend",
+    WorkContext.OTHER: "Other",
 }
 
 
@@ -80,6 +87,9 @@ class AnalyticsEntry:
     # sleep record — sleep↔mood correlations use pairwise deletion on these.
     sleep_minutes: int | None = None
     sleep_quality: int | None = None
+    # #892 Option 3: first local write covariates (may be null on legacy rows).
+    logged_local_hour: int | None = None
+    inferred_period: InferredPeriod | None = None
 
 
 @dataclass(frozen=True)
@@ -202,6 +212,47 @@ def _direction(effect_size: float | None, positive: str, negative: str) -> str:
 
 def _mean(values: Sequence[int]) -> float:
     return sum(values) / len(values)
+
+
+def _metric_level_counts(
+    values: Sequence[float | int],
+    *,
+    scale_min: int = METRIC_SCALE_MIN,
+    scale_max: int = METRIC_SCALE_MAX,
+) -> list[int]:
+    """Histogram counts for integer metric levels (1–5 by default)."""
+
+    counts = [0] * (scale_max - scale_min + 1)
+    for value in values:
+        level = int(round(float(value)))
+        if scale_min <= level <= scale_max:
+            counts[level - scale_min] += 1
+    return counts
+
+
+def _good_metric_count(
+    values: Sequence[float | int],
+    *,
+    threshold: int = GOOD_METRIC_THRESHOLD,
+) -> int:
+    return sum(1 for value in values if float(value) >= threshold)
+
+
+def _with_without_distribution_payload(
+    with_values: Sequence[float | int],
+    without_values: Sequence[float | int],
+) -> dict[str, object]:
+    """Shared G2 payload fields for pointbiserial-style associations."""
+
+    return {
+        "with_distribution": _metric_level_counts(with_values),
+        "without_distribution": _metric_level_counts(without_values),
+        "with_good_count": _good_metric_count(with_values),
+        "without_good_count": _good_metric_count(without_values),
+        "good_threshold": GOOD_METRIC_THRESHOLD,
+        "scale_min": METRIC_SCALE_MIN,
+        "scale_max": METRIC_SCALE_MAX,
+    }
 
 
 def _base_flags(
@@ -359,6 +410,13 @@ def _dedupe_daily_entries(entries: Sequence[AnalyticsEntry]) -> list[AnalyticsEn
                 symptom_ids=frozenset(symptom_id for row in rows for symptom_id in row.symptom_ids),
                 sleep_minutes=_optional_mean_round([row.sleep_minutes for row in rows]),
                 sleep_quality=_optional_mean_round([row.sleep_quality for row in rows]),
+                # Write-time covariates follow the day's first entry, like
+                # work_context above. Dropping them here silently disabled every
+                # downstream consumer: candidate generation runs through this
+                # helper, so inferred_period was always None by the time
+                # _belastung_candidates read it (#875 / #892).
+                logged_local_hour=first.logged_local_hour,
+                inferred_period=first.inferred_period,
             )
         )
     return daily
@@ -404,6 +462,8 @@ def _canonicalize_tag_aliases(
             symptom_ids=entry.symptom_ids,
             sleep_minutes=entry.sleep_minutes,
             sleep_quality=entry.sleep_quality,
+            logged_local_hour=entry.logged_local_hour,
+            inferred_period=entry.inferred_period,
         )
         for entry in entries
     ]

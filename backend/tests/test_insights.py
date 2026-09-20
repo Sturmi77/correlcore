@@ -12,11 +12,13 @@ from app.main import app
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.user import User
 from app.services.insight_service import (
+    InsightNotFoundError,
     _lag_onset_feature,
     _parse_uuid,
     calculate_insight_maturity,
     get_insight_event_windows,
     get_insight_maturity,
+    get_visible_insight_by_id,
     insight_subject_key,
     list_insights,
     list_latest_insights,
@@ -1112,6 +1114,12 @@ async def test_get_insight_event_windows_collapses_contiguous_days_to_episodes()
             "app.services.insight_service._analytics_enabled",
             AsyncMock(return_value=True),
         ),
+        # The lookup now runs the analytics-exclusion filter (#928), so this
+        # mock has to answer it too; nothing is excluded in this scenario.
+        patch(
+            "app.services.insight_service._analytics_excluded_tag_keys",
+            AsyncMock(return_value=(set(), set())),
+        ),
         patch(
             "app.services.insight_service._resolve_tag_slug",
             AsyncMock(return_value="sport"),
@@ -1253,3 +1261,59 @@ async def test_get_insight_event_windows_lag_respects_analytics_exclusion() -> N
     assert response.events == []
     assert response.lag_days == 2
     presence.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_get_visible_insight_by_id_hides_analytics_excluded_tags() -> None:
+    """#928: a read by id must honour include_in_analytics, like list/latest/history.
+
+    The detail lookup filtered only on owner, so a tag the user had deliberately
+    excluded from analysis stayed retrievable through an old URL — statement and
+    all — and its day-level verification series with it.
+    """
+    user = make_user()
+    excluded = _make_insight(
+        user,
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_label="Medication",
+        payload={"tag_slug": "medication"},
+    )
+
+    with (
+        patch(
+            "app.services.insight_service.get_insight_by_id",
+            AsyncMock(return_value=excluded),
+        ),
+        patch(
+            "app.services.insight_service._analytics_excluded_tag_keys",
+            AsyncMock(return_value=(set(), {"medication"})),
+        ),
+        pytest.raises(InsightNotFoundError),
+    ):
+        await get_visible_insight_by_id(AsyncMock(), user_id=user.id, insight_id=excluded.id)
+
+
+@pytest.mark.asyncio
+async def test_get_visible_insight_by_id_returns_included_tags() -> None:
+    user = make_user()
+    insight = _make_insight(
+        user,
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_label="Cycling",
+        payload={"tag_slug": "cycling"},
+    )
+
+    with (
+        patch(
+            "app.services.insight_service.get_insight_by_id",
+            AsyncMock(return_value=insight),
+        ),
+        patch(
+            "app.services.insight_service._analytics_excluded_tag_keys",
+            AsyncMock(return_value=(set(), {"medication"})),
+        ),
+    ):
+        found = await get_visible_insight_by_id(AsyncMock(), user_id=user.id, insight_id=insight.id)
+    assert found is insight
