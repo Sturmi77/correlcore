@@ -67,6 +67,10 @@ class UserPreferencesUpdate(BaseModel):
     last_seen_digest_at: datetime | None = None
     home_sections: list[HomeSectionPreference] | None = Field(default=None, max_length=16)
     insight_sections: list[InsightSectionPreference] | None = Field(default=None, max_length=16)
+    # Upper bound is generous on purpose — a newer client may legitimately send a
+    # version this server does not know yet. The service clamps it to the version
+    # it can actually honour (#957); accepting it here and silently pinning the
+    # row beyond CURRENT is what disabled future migrations.
     insight_sections_version: int | None = Field(default=None, ge=1, le=32)
 
     @field_validator("trend_window_days")
