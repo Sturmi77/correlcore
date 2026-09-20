@@ -210,3 +210,132 @@ describe('UnifiedStripChart', () => {
     expect(zoomInBucket).not.toHaveBeenCalled();
   });
 });
+
+describe('UnifiedStripChart sleep-duration scale (#928 D3)', () => {
+  const sleepEnabled = { ...enabled, sleep_minutes_avg: true };
+
+  function sleepPoints(minutes: readonly (number | null)[]) {
+    return minutes.map((value, index) => ({
+      period_start: `2026-05-${String(index + 1).padStart(2, '0')}`,
+      period_end: `2026-05-${String(index + 1).padStart(2, '0')}`,
+      entry_count: 1,
+      mood_avg: 3,
+      energy_avg: 3,
+      stress_avg: 3,
+      sleep_quality_avg: null,
+      sleep_minutes_avg: value,
+    }));
+  }
+
+  function sleepCells(container: HTMLElement) {
+    return Array.from(container.querySelectorAll('[data-metric="sleep_minutes_avg"] .strip__cell'));
+  }
+
+  it("reads a short sleeper's usual night as neutral, not as a deficit", () => {
+    // Fourteen 5 h nights and one 8 h night. The scale this replaced fixed its
+    // neutral point at 360 min, so every 5 h night was drawn on the negative
+    // side — a recommendation rendered as data.
+    const minutes = [...Array.from({ length: 14 }, () => 300), 480];
+    const { container } = render(UnifiedStripChart, {
+      props: {
+        axisDates: sleepPoints(minutes).map((point) => point.period_start),
+        enabled: sleepEnabled,
+        points: sleepPoints(minutes),
+      },
+    });
+
+    const cells = sleepCells(container);
+    expect(cells).toHaveLength(15);
+    expect(cells.slice(0, 14).map((cell) => cell.getAttribute('data-sign'))).toEqual(
+      Array.from({ length: 14 }, () => 'mid')
+    );
+    expect(cells[14]?.getAttribute('data-sign')).toBe('pos');
+  });
+
+  it('marks nights on both sides of the personal median', () => {
+    const minutes = [
+      ...Array.from({ length: 7 }, () => 300),
+      ...Array.from({ length: 7 }, () => 540),
+    ];
+    const { container } = render(UnifiedStripChart, {
+      props: {
+        axisDates: sleepPoints(minutes).map((point) => point.period_start),
+        enabled: sleepEnabled,
+        points: sleepPoints(minutes),
+      },
+    });
+
+    const signs = sleepCells(container).map((cell) => cell.getAttribute('data-sign'));
+    expect(new Set(signs)).toEqual(new Set(['neg', 'pos']));
+  });
+
+  it('states what the shading is based on', () => {
+    const minutes = Array.from({ length: 14 }, () => 420);
+    const { getByTestId } = render(UnifiedStripChart, {
+      props: {
+        axisDates: sleepPoints(minutes).map((point) => point.period_start),
+        enabled: sleepEnabled,
+        points: sleepPoints(minutes),
+      },
+    });
+
+    expect(getByTestId('strip-sleep-basis').textContent).toContain('trends.sleep_scale.baseline');
+  });
+
+  it('encodes length only, and says so, while the history is too thin', () => {
+    const minutes = [300, 420, 540];
+    const { container, getByTestId } = render(UnifiedStripChart, {
+      props: {
+        axisDates: sleepPoints(minutes).map((point) => point.period_start),
+        enabled: sleepEnabled,
+        points: sleepPoints(minutes),
+      },
+    });
+
+    const cells = sleepCells(container);
+    expect(cells.map((cell) => cell.getAttribute('data-sign'))).toEqual(['seq', 'seq', 'seq']);
+    expect(Number(cells[0]?.getAttribute('opacity'))).toBeLessThan(
+      Number(cells[2]?.getAttribute('opacity'))
+    );
+    expect(getByTestId('strip-sleep-basis').textContent).toContain(
+      'trends.sleep_scale.no_baseline'
+    );
+  });
+
+  it('keeps nights longer than 12 h distinct instead of clamping them together', () => {
+    // The shared 1–5 sleep domain tops out at SLEEP_MINUTES_CHART_MAX (720),
+    // but the entry schema accepts up to 24 h. Encoding through it made a 13 h
+    // and a 16 h night identical, and labelled both "12 h" (#972 review).
+    const minutes = [...Array.from({ length: 14 }, () => 420), 780, 960];
+    const { container } = render(UnifiedStripChart, {
+      props: {
+        axisDates: sleepPoints(minutes).map((point) => point.period_start),
+        enabled: sleepEnabled,
+        points: sleepPoints(minutes),
+      },
+    });
+
+    const cells = sleepCells(container);
+    const thirteen = cells[14];
+    const sixteen = cells[15];
+
+    expect(thirteen?.getAttribute('aria-label')).toContain('13 h');
+    expect(sixteen?.getAttribute('aria-label')).toContain('16 h');
+    expect(Number(sixteen?.getAttribute('opacity'))).toBeGreaterThan(
+      Number(thirteen?.getAttribute('opacity'))
+    );
+  });
+
+  it('labels a sleep cell with the duration it stands for, not a 1–5 position', () => {
+    const minutes = [430];
+    const { container } = render(UnifiedStripChart, {
+      props: {
+        axisDates: ['2026-05-01'],
+        enabled: sleepEnabled,
+        points: sleepPoints(minutes),
+      },
+    });
+
+    expect(sleepCells(container)[0]?.getAttribute('aria-label')).toContain('7 h 10 min');
+  });
+});

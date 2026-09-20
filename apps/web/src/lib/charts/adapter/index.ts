@@ -24,7 +24,11 @@
  * outside this folder. See docs/adr/0035-temporal-correspondence-pattern.md.
  */
 
-export type DivergentSign = 'neg' | 'mid' | 'pos';
+/**
+ * `seq` marks a cell encoded on a sequential ramp rather than a divergent one:
+ * it carries magnitude only, with no side of a neutral point (#928 D3).
+ */
+export type DivergentSign = 'neg' | 'mid' | 'pos' | 'seq';
 
 export interface DivergentEncoding {
   /** Resolved CSS variable reference, ready to drop into a style attribute. */
@@ -84,6 +88,41 @@ export class StripCellMapper {
     }
     const normalised = (value - this.config.midpoint) / (this.config.range / 2);
     return resolveDivergentToken(normalised);
+  }
+}
+
+export interface SequentialCellMapperConfig {
+  /** Lowest observed value; encoded at the faintest step of the ramp. */
+  min: number;
+  /** Highest observed value; encoded at full strength. */
+  max: number;
+  /** Theme token the ramp is drawn in. Never a literal hue (ADR-0035). */
+  token: string;
+}
+
+/**
+ * Sequential mapper — one hue, opacity carrying magnitude (#928 D3).
+ *
+ * Use this where the data has no defensible neutral point. A divergent scale
+ * has to answer "neutral compared to what", and inventing that answer (a fixed
+ * 6 h night, say) states a norm the app has no business stating. A sequential
+ * ramp says only "more" and "less", which is what was measured.
+ */
+export class SequentialCellMapper {
+  constructor(private readonly config: SequentialCellMapperConfig) {}
+
+  encode(value: number | null | undefined): DivergentEncoding {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+      return { color: 'var(--color-divergent-mid)', opacity: 0, sign: 'mid' };
+    }
+    const { min, max, token } = this.config;
+    // A flat series has no spread to encode — render every cell alike rather
+    // than magnifying rounding noise into a visible gradient.
+    if (!(max > min)) {
+      return { color: token, opacity: 0.6, sign: 'seq' };
+    }
+    const ratio = Math.max(0, Math.min(1, (value - min) / (max - min)));
+    return { color: token, opacity: 0.25 + 0.75 * ratio, sign: 'seq' };
   }
 }
 

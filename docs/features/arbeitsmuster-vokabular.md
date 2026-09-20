@@ -46,6 +46,21 @@ recovery, and situation — never clinical inventories or employer framing.
 | “Arbeit” / “Work” as **category title**    | `work_context` is a differentiation field only   |
 | Replacing Mood/Habit with Arbeitssituation | W3/W7 remain the daily jobs                      |
 
+### Causal verbs (#928 D4)
+
+An insight is a correlation, so its copy may not name a cause. Use the
+Preferred row above — `Zusammenhang mit` / `Associated with` — wherever a
+finding relates two things.
+
+| Do not write (as a finding)                                 | Write instead                         |
+| ----------------------------------------------------------- | ------------------------------------- |
+| wirkt auf · beeinflusst · verursacht · führt zu · sorgt für | Zusammenhang mit · hängt zusammen mit |
+| Affects · influences · causes · leads to · results in       | Associated with · linked to           |
+
+Negated disclaimers (“eine Korrelation bedeutet nicht, dass …”, “an
+association in your entries, not a cause”) are the point of the surface and
+stay required.
+
 ## Never (forbidden in UI + store copy)
 
 | Term                                                  | Notes                                                                 |
@@ -78,7 +93,10 @@ recovery, and situation — never clinical inventories or employer framing.
 
 ## Lint
 
-UI locales are guarded by
-[`apps/web/src/lib/i18n/noClinicalProductCopy.test.ts`](../../apps/web/src/lib/i18n/noClinicalProductCopy.test.ts)
-(burnout / MBI / CBI as product framing). Negated diagnosis disclaimers remain
-allowed.
+UI locales are guarded by two tests, both of which allow negated disclaimers:
+
+- [`noClinicalProductCopy.test.ts`](../../apps/web/src/lib/i18n/noClinicalProductCopy.test.ts)
+  — burnout / MBI / CBI as product framing.
+- [`noCausalInsightCopy.test.ts`](../../apps/web/src/lib/i18n/noCausalInsightCopy.test.ts)
+  — affirmative causal verbs (#928 D4). It reports the offending locale path,
+  so a new string that claims a cause names itself in the failure.

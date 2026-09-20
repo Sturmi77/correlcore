@@ -27,7 +27,13 @@
     type MetricKey,
   } from '$lib/utils/charts';
   import { timelineCursor, timelineCursorDate } from '$lib/stores/timelineCursor';
-  import { StripCellMapper } from '$lib/charts/adapter';
+  import { SequentialCellMapper, StripCellMapper, type DivergentSign } from '$lib/charts/adapter';
+  import {
+    formatSleepMinutes,
+    sleepDurationScale,
+    SLEEP_BASELINE_MIN_DAYS,
+    type SleepDurationScale,
+  } from '$lib/utils/sleepDurationScale';
   import {
     meanBucketMetric,
     formatBucketRangeLabel,
@@ -81,38 +87,66 @@
   type StripMetric = {
     key: MetricKey;
     label: string;
-    mapper: StripCellMapper;
+    mapper: StripCellMapper | SequentialCellMapper;
   };
 
-  const metrics: StripMetric[] = [
-    {
-      key: 'mood_avg',
-      label: 'trends.metric.mood',
-      mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-    },
-    {
-      key: 'energy_avg',
-      label: 'trends.metric.energy',
-      mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-    },
-    {
-      key: 'stress_avg',
-      label: 'trends.metric.stress',
-      mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-    },
-    {
-      key: 'sleep_quality_avg',
-      label: 'trends.metric.sleep_quality',
-      mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-    },
-    {
-      key: 'sleep_minutes_avg',
-      label: 'trends.metric.sleep_minutes',
-      mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
-    },
+  /**
+   * The four 1–5 metrics diverge around 3 because 3 is the middle of the scale
+   * the user was asked — the midpoint is part of the question, not a norm.
+   */
+  const ratingMetrics: readonly Omit<StripMetric, 'mapper'>[] = [
+    { key: 'mood_avg', label: 'trends.metric.mood' },
+    { key: 'energy_avg', label: 'trends.metric.energy' },
+    { key: 'stress_avg', label: 'trends.metric.stress' },
+    { key: 'sleep_quality_avg', label: 'trends.metric.sleep_quality' },
   ];
 
+  /**
+   * Sleep duration has no such midpoint (#928 D3). It is shaded against the
+   * user's own median night once there is enough history for one, and by
+   * length alone before that — never against a fixed "healthy" number.
+   */
+  $: sleepScale = sleepDurationScale(points.map((point) => point.sleep_minutes_avg));
+  $: sleepMapper =
+    sleepScale.mode === 'divergent'
+      ? new StripCellMapper({
+          midpoint: sleepScale.medianMinutes,
+          range: 2 * sleepScale.spreadMinutes,
+        })
+      : new SequentialCellMapper({
+          min: sleepScale.minMinutes,
+          max: sleepScale.maxMinutes,
+          token: 'var(--color-metric-sleep)',
+        });
+
+  $: metrics = [
+    ...ratingMetrics.map((metric) => ({
+      ...metric,
+      mapper: new StripCellMapper({ midpoint: 3, range: 4 }),
+    })),
+    {
+      key: 'sleep_minutes_avg' as MetricKey,
+      label: 'trends.metric.sleep_minutes',
+      mapper: sleepMapper,
+    },
+  ] satisfies StripMetric[];
+
   $: visibleMetrics = metrics.filter((m) => enabled[m.key]);
+  $: sleepRowVisible = enabled.sleep_minutes_avg;
+
+  /** What the sleep row's shading is actually based on, stated in the caption. */
+  function sleepBasisCopy(scale: SleepDurationScale): string {
+    return scale.mode === 'divergent'
+      ? $_('trends.sleep_scale.baseline', {
+          values: {
+            median: formatSleepMinutes(scale.medianMinutes),
+            days: scale.loggedDays,
+          },
+        })
+      : $_('trends.sleep_scale.no_baseline', {
+          values: { days: scale.loggedDays, needed: SLEEP_BASELINE_MIN_DAYS },
+        });
+  }
   $: hasData = points.some((point) => point.entry_count > 0);
   $: showSkeleton = loading && points.length === 0;
   $: plotLayout = {
@@ -143,18 +177,32 @@
     opacity: number;
     rawValue: number | null;
     displayValue: number | null;
-    sign: 'neg' | 'mid' | 'pos';
+    sign: DivergentSign;
   };
+
+  /**
+   * The value a cell encodes and reports. Ratings go through the shared 1–5
+   * normalisation; sleep stays in raw minutes, because that normalisation
+   * clamps at SLEEP_MINUTES_CHART_MAX (12 h) and the entry schema accepts up
+   * to 24 h — a 13 h and a 16 h night would otherwise land on the same colour
+   * and both read "12 h" (#972 review).
+   */
+  function cellValue(key: MetricKey, raw: number): number {
+    return key === 'sleep_minutes_avg' ? raw : chartNormalizeTimeseriesValue(key, raw);
+  }
 
   /** Mean of a metric's logged (display-space) values across a bucket's days. */
   function bucketDisplayMean(metric: StripMetric, bucket: AxisBucket): number | null {
     return meanBucketMetric((date) => {
       const point = byDate.get(date);
       const raw = point ? point[metric.key] : null;
-      return raw === null || raw === undefined
-        ? null
-        : chartNormalizeTimeseriesValue(metric.key, raw);
+      return raw === null || raw === undefined ? null : cellValue(metric.key, raw);
     }, bucket);
+  }
+
+  /** A rating reads as a 1–5 position; a night reads as a duration (#928 D3). */
+  function cellValueLabel(key: MetricKey, displayValue: number): string {
+    return key === 'sleep_minutes_avg' ? formatSleepMinutes(displayValue) : displayValue.toFixed(1);
   }
 
   function buildRow(metric: StripMetric): Cell[] {
@@ -173,10 +221,7 @@
       } else {
         const point = byDate.get(key) ?? null;
         const value = point ? point[metric.key] : null;
-        display =
-          value === null || value === undefined
-            ? null
-            : chartNormalizeTimeseriesValue(metric.key, value);
+        display = value === null || value === undefined ? null : cellValue(metric.key, value);
         raw = value ?? null;
       }
       const encoded = metric.mapper.encode(display ?? NaN);
@@ -395,7 +440,7 @@
                   tabindex="-1"
                   aria-label={cell.displayValue === null
                     ? `${$_(row.label)} — ${cell.label}`
-                    : `${$_(row.label)} — ${cell.label}: ${cell.displayValue.toFixed(1)}`}
+                    : `${$_(row.label)} — ${cell.label}: ${cellValueLabel(row.key, cell.displayValue)}`}
                 />
               {/each}
             </g>
@@ -420,6 +465,9 @@
         </svg>
       </div>
     </div>
+    {#if sleepRowVisible}
+      <p class="strip__note" data-testid="strip-sleep-basis">{sleepBasisCopy(sleepScale)}</p>
+    {/if}
   {/if}
 </figure>
 
@@ -434,6 +482,12 @@
     display: flex;
     align-items: stretch;
     min-width: max-content;
+  }
+
+  .strip__note {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
   }
 
   .strip__gutter {
