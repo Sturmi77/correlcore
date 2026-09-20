@@ -25,7 +25,7 @@
   import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
   import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
-  import { insightStore, loadInsights } from '$lib/stores/insights';
+  import { insightStore, loadInsights, rankedInsights } from '$lib/stores/insights';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/isoDate';
@@ -455,7 +455,10 @@
     };
   })();
   $: topInsight = $insightStore.latest;
-  $: changepointMarkers = changepointInsightsToMarkers($insightStore.insights, $_, {
+  // The dismissed-filtered view, not the raw list: a changepoint removed from the
+  // feed kept drawing its Compare marker, because dismissals live in a separate
+  // field of the store and only the derived value applies them (#964).
+  $: changepointMarkers = changepointInsightsToMarkers($rankedInsights, $_, {
     axisStart: displayTimeseries?.points?.[0]?.period_start,
     axisEnd: displayTimeseries?.points?.[displayTimeseries.points.length - 1]?.period_start,
   }) satisfies EventMarker[];

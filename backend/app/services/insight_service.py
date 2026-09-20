@@ -254,7 +254,13 @@ async def list_insights(
 
 
 def _latest_metric_key(insight: Insight) -> str:
-    if insight.insight_type == "pointbiserial" and insight.subject_type == "tag":
+    # `null_association` shares a latest-result slot with `pointbiserial`
+    # (see _LATEST_FAMILY_ALIASES), so it has to normalise its metric the same
+    # way — otherwise the two halves of one family still land on different keys.
+    if (
+        insight.insight_type in {"pointbiserial", "null_association"}
+        and insight.subject_type == "tag"
+    ):
         if insight.metric in {"mood", "mood_score", "mood_avg"}:
             return "mood_score"
     return insight.metric
@@ -309,6 +315,15 @@ def _latest_subject_key(
         if method == "lasso":
             return ("symptom_cluster", "lasso", _payload_key(insight.payload.get("target")))
 
+    if insight.subject_type == "changepoint":
+        # Key on the series, never the label. The label used to be `entry_<index>`
+        # and is now the ISO date, so a label-based key made every stored row a
+        # different subject after the rename: the old and the new row both
+        # survived dedupe, and an existing dismissal stopped matching (#964).
+        # One changepoint per series is what the generator emits anyway.
+        series = insight.payload.get("series") if isinstance(insight.payload, dict) else None
+        return ("changepoint", str(series) if series else insight.metric)
+
     if insight.subject_type == "tag":
         tag_slug = insight.payload.get("tag_slug") if isinstance(insight.payload, dict) else None
         if isinstance(tag_slug, str) and tag_slug:
@@ -361,6 +376,24 @@ def _jsonable_subject_part(value: object) -> object:
     return value
 
 
+#: Insight types that answer the *same* question about the same subject and so
+#: must share one latest-result slot. A tag that drops below the effect
+#: threshold produces a ``null_association``; generation only deletes rows for
+#: the current date, so without this the stale positive row and the fresh
+#: "no pattern" row carried different keys, survived dedupe together, and stood
+#: side by side in the feed — while a dismissal on one left the other visible
+#: (#964).
+_LATEST_FAMILY_ALIASES: dict[str, str] = {
+    "null_association": "pointbiserial",
+}
+
+
+def _latest_family_key(insight_type: str) -> str:
+    """Collapse insight types that compete for the same latest-result slot."""
+
+    return _LATEST_FAMILY_ALIASES.get(insight_type, insight_type)
+
+
 def insight_subject_key(
     insight: Insight,
     *,
@@ -379,7 +412,7 @@ def insight_subject_key(
         else str(insight.insight_type)
     )
     payload = {
-        "insight_type": insight_type,
+        "insight_type": _latest_family_key(insight_type),
         "metric": _latest_metric_key(insight),
         "subject_type": insight.subject_type,
         "subject": _jsonable_subject_part(_latest_subject_key(insight, tag_slugs_by_id=slugs)),
@@ -511,8 +544,18 @@ async def list_latest_insights(
         subject_key = insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
         if subject_key in dismissed_subject_keys:
             continue
+        # The family key, not the raw type: `null_association` and
+        # `pointbiserial` answer the same question about the same subject, and
+        # generation only deletes rows for the current date. Keying on the raw
+        # type let a stale positive row and a fresh "no pattern" row both survive
+        # and sit next to each other (#964). Rows arrive newest-first, so the
+        # current generation wins the slot.
         key = (
-            insight.insight_type,
+            _latest_family_key(
+                insight.insight_type.value
+                if isinstance(insight.insight_type, InsightType)
+                else str(insight.insight_type)
+            ),
             _latest_metric_key(insight),
             insight.subject_type,
             _latest_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id),
