@@ -23,8 +23,6 @@
     compareDailyAxisLayout,
     dailyAxisXForIndex,
     dailyPlotContentWidth,
-    sleepMinutesFromChartValue,
-    SLEEP_MINUTES_PER_CHART_UNIT,
     type DailyAxisLayout,
     type MetricKey,
   } from '$lib/utils/charts';
@@ -112,12 +110,12 @@
   $: sleepMapper =
     sleepScale.mode === 'divergent'
       ? new StripCellMapper({
-          midpoint: chartNormalizeTimeseriesValue('sleep_minutes_avg', sleepScale.medianMinutes),
-          range: (2 * sleepScale.spreadMinutes) / SLEEP_MINUTES_PER_CHART_UNIT,
+          midpoint: sleepScale.medianMinutes,
+          range: 2 * sleepScale.spreadMinutes,
         })
       : new SequentialCellMapper({
-          min: chartNormalizeTimeseriesValue('sleep_minutes_avg', sleepScale.minMinutes),
-          max: chartNormalizeTimeseriesValue('sleep_minutes_avg', sleepScale.maxMinutes),
+          min: sleepScale.minMinutes,
+          max: sleepScale.maxMinutes,
           token: 'var(--color-metric-sleep)',
         });
 
@@ -182,25 +180,29 @@
     sign: DivergentSign;
   };
 
+  /**
+   * The value a cell encodes and reports. Ratings go through the shared 1–5
+   * normalisation; sleep stays in raw minutes, because that normalisation
+   * clamps at SLEEP_MINUTES_CHART_MAX (12 h) and the entry schema accepts up
+   * to 24 h — a 13 h and a 16 h night would otherwise land on the same colour
+   * and both read "12 h" (#972 review).
+   */
+  function cellValue(key: MetricKey, raw: number): number {
+    return key === 'sleep_minutes_avg' ? raw : chartNormalizeTimeseriesValue(key, raw);
+  }
+
   /** Mean of a metric's logged (display-space) values across a bucket's days. */
   function bucketDisplayMean(metric: StripMetric, bucket: AxisBucket): number | null {
     return meanBucketMetric((date) => {
       const point = byDate.get(date);
       const raw = point ? point[metric.key] : null;
-      return raw === null || raw === undefined
-        ? null
-        : chartNormalizeTimeseriesValue(metric.key, raw);
+      return raw === null || raw === undefined ? null : cellValue(metric.key, raw);
     }, bucket);
   }
 
-  /**
-   * The sleep row's chart value is a normalised 1–5 position, which means
-   * nothing to a reader. Report the duration it stands for instead (#928 D3).
-   */
+  /** A rating reads as a 1–5 position; a night reads as a duration (#928 D3). */
   function cellValueLabel(key: MetricKey, displayValue: number): string {
-    return key === 'sleep_minutes_avg'
-      ? formatSleepMinutes(sleepMinutesFromChartValue(displayValue))
-      : displayValue.toFixed(1);
+    return key === 'sleep_minutes_avg' ? formatSleepMinutes(displayValue) : displayValue.toFixed(1);
   }
 
   function buildRow(metric: StripMetric): Cell[] {
@@ -219,10 +221,7 @@
       } else {
         const point = byDate.get(key) ?? null;
         const value = point ? point[metric.key] : null;
-        display =
-          value === null || value === undefined
-            ? null
-            : chartNormalizeTimeseriesValue(metric.key, value);
+        display = value === null || value === undefined ? null : cellValue(metric.key, value);
         raw = value ?? null;
       }
       const encoded = metric.mapper.encode(display ?? NaN);

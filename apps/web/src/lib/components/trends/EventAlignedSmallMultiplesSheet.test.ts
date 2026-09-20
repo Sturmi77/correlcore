@@ -737,6 +737,51 @@ describe('EventAlignedSmallMultiplesSheet sleep duration (#928 D3)', () => {
     expect(screen.queryByTestId('esm-sleep-basis')).toBeNull();
   });
 
+  it('ramps the sequential legend by opacity so it is not a solid bar', () => {
+    // SequentialCellMapper returns the same token for every stop and carries
+    // magnitude in opacity, so a gradient built from colour alone rendered a
+    // flat bar under a "Shorter → Longer" label (#972 review).
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points: sleepPoints([300, 420, 540]),
+        metric: 'sleep_minutes_avg',
+        lagOffset: null,
+      },
+    });
+
+    const gradient = container.querySelector('.esm__legend-scale')?.getAttribute('style') ?? '';
+    const percents = gradient.match(/\d+%/g) ?? [];
+
+    expect(gradient).toContain('var(--color-metric-sleep)');
+    expect(percents).toHaveLength(3);
+    expect(new Set(percents).size).toBe(3);
+  });
+
+  it('keeps nights longer than 12 h distinct instead of clamping them together', () => {
+    // The two long nights must fall inside the ±7-day window around the onset.
+    const minutes = [...Array.from({ length: 13 }, () => 420), 780, 960];
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points: sleepPoints(minutes),
+        metric: 'sleep_minutes_avg',
+        lagOffset: null,
+      },
+    });
+
+    const labels = Array.from(container.querySelectorAll('.esm__cell:not(.esm__cell--median)')).map(
+      (cell) => cell.getAttribute('aria-label') ?? ''
+    );
+
+    expect(labels.some((label) => label.includes('13 h'))).toBe(true);
+    expect(labels.some((label) => label.includes('16 h'))).toBe(true);
+  });
+
   it('reports a cell as a duration, not as a chart position', () => {
     const minutes = Array.from({ length: 14 }, () => 430);
     const { container } = render(EventAlignedSmallMultiplesSheet, {

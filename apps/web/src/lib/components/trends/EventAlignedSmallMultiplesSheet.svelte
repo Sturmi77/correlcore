@@ -39,12 +39,7 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { InsightMaturityPhase } from '$lib/api/insights';
-  import {
-    chartNormalizeTimeseriesValue,
-    sleepMinutesFromChartValue,
-    SLEEP_MINUTES_PER_CHART_UNIT,
-    type MetricKey,
-  } from '$lib/utils/charts';
+  import { chartNormalizeTimeseriesValue, type MetricKey } from '$lib/utils/charts';
   import { buildMedianTrajectory, type MedianTrajectoryCell } from '$lib/utils/medianTrajectory';
   import {
     buildSplitMedianTrajectories,
@@ -138,12 +133,12 @@
     ? new StripCellMapper({ midpoint: 3, range: 4 })
     : sleepScale.mode === 'divergent'
       ? new StripCellMapper({
-          midpoint: chartNormalizeTimeseriesValue('sleep_minutes_avg', sleepScale.medianMinutes),
-          range: (2 * sleepScale.spreadMinutes) / SLEEP_MINUTES_PER_CHART_UNIT,
+          midpoint: sleepScale.medianMinutes,
+          range: 2 * sleepScale.spreadMinutes,
         })
       : new SequentialCellMapper({
-          min: chartNormalizeTimeseriesValue('sleep_minutes_avg', sleepScale.minMinutes),
-          max: chartNormalizeTimeseriesValue('sleep_minutes_avg', sleepScale.maxMinutes),
+          min: sleepScale.minMinutes,
+          max: sleepScale.maxMinutes,
           token: 'var(--color-metric-sleep)',
         });
 
@@ -155,15 +150,27 @@
           sleepScale.medianMinutes - sleepScale.spreadMinutes,
           sleepScale.medianMinutes,
           sleepScale.medianMinutes + sleepScale.spreadMinutes,
-        ].map((minutes) => chartNormalizeTimeseriesValue('sleep_minutes_avg', minutes))
+        ]
       : [
           sleepScale.minMinutes,
           (sleepScale.minMinutes + sleepScale.maxMinutes) / 2,
           sleepScale.maxMinutes,
-        ].map((minutes) => chartNormalizeTimeseriesValue('sleep_minutes_avg', minutes));
-  $: legendGradient = `linear-gradient(to right, ${legendStops
-    .map((stop) => mapper.encode(stop).color)
-    .join(', ')})`;
+        ];
+
+  /**
+   * The sequential ramp returns one token at varying opacity, so a gradient
+   * built from colour alone renders a solid bar under a "Shorter → Longer"
+   * label (#972 review). The divergent tokens already differ by colour and
+   * keep their own mid tone, so they are used as-is.
+   */
+  function legendStopColor(stop: number): string {
+    const { color, opacity, sign } = mapper.encode(stop);
+    return sign === 'seq'
+      ? `color-mix(in oklch, ${color} ${Math.round(opacity * 100)}%, transparent)`
+      : color;
+  }
+
+  $: legendGradient = `linear-gradient(to right, ${legendStops.map(legendStopColor).join(', ')})`;
 
   /** What the sleep row is shaded against — stated, not left to the colours. */
   $: sleepBasis = !isSleepDuration
@@ -181,9 +188,7 @@
 
   /** Sleep cells stand for a duration; a 1–5 chart position would say nothing. */
   function formatCellValue(value: number): string {
-    return isSleepDuration
-      ? formatSleepMinutes(sleepMinutesFromChartValue(value))
-      : value.toFixed(1);
+    return isSleepDuration ? formatSleepMinutes(value) : value.toFixed(1);
   }
   $: partnerPresenceSet = new Set(partnerPresenceDates);
   $: showPartnerOverlay = partner !== null;
@@ -233,8 +238,14 @@
       const date = isoOffset(evt.onset, offset);
       const point = byDate.get(date) ?? null;
       const raw = point ? point[metric] : null;
+      // Sleep stays in raw minutes: the 1–5 normalisation clamps at 12 h, and
+      // the entry schema accepts up to 24 h (#972 review).
       const display =
-        raw === null || raw === undefined ? null : chartNormalizeTimeseriesValue(metric, raw);
+        raw === null || raw === undefined
+          ? null
+          : isSleepDuration
+            ? raw
+            : chartNormalizeTimeseriesValue(metric, raw);
       const encoded = mapper.encode(display ?? Number.NaN);
       cells.push({
         date,

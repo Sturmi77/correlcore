@@ -302,6 +302,30 @@ describe('UnifiedStripChart sleep-duration scale (#928 D3)', () => {
     );
   });
 
+  it('keeps nights longer than 12 h distinct instead of clamping them together', () => {
+    // The shared 1–5 sleep domain tops out at SLEEP_MINUTES_CHART_MAX (720),
+    // but the entry schema accepts up to 24 h. Encoding through it made a 13 h
+    // and a 16 h night identical, and labelled both "12 h" (#972 review).
+    const minutes = [...Array.from({ length: 14 }, () => 420), 780, 960];
+    const { container } = render(UnifiedStripChart, {
+      props: {
+        axisDates: sleepPoints(minutes).map((point) => point.period_start),
+        enabled: sleepEnabled,
+        points: sleepPoints(minutes),
+      },
+    });
+
+    const cells = sleepCells(container);
+    const thirteen = cells[14];
+    const sixteen = cells[15];
+
+    expect(thirteen?.getAttribute('aria-label')).toContain('13 h');
+    expect(sixteen?.getAttribute('aria-label')).toContain('16 h');
+    expect(Number(sixteen?.getAttribute('opacity'))).toBeGreaterThan(
+      Number(thirteen?.getAttribute('opacity'))
+    );
+  });
+
   it('labels a sleep cell with the duration it stands for, not a 1–5 position', () => {
     const minutes = [430];
     const { container } = render(UnifiedStripChart, {
