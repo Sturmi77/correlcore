@@ -12,10 +12,11 @@
     type InsightMaturity,
     type InsightResponse,
   } from '$lib/api/insights';
-  import { downloadExport, exportFilename, saveBlob, type ExportKind } from '$lib/api/export';
   import {
     exportMatrixPdf,
     exportMatrixPng,
+    exportReportCsv,
+    exportReportJson,
     reportExportFilename,
   } from '$lib/utils/insightMatrixExport';
   import { buildMatrixDisplayRows, matrixCoverageStats } from '$lib/utils/insightMatrixRows';
@@ -108,12 +109,27 @@
     }
   }
 
-  async function handleDataExport(kind: Extract<ExportKind, 'csv' | 'json'>): Promise<void> {
+  /**
+   * Export the *report* as data.
+   *
+   * Previously this called `/export/csv` and `/export/json`, which serialise the
+   * whole account — notes, exact dates, identity, every entry. On a surface
+   * presented as a shareable handout that silently disclosed far more than the
+   * aggregated report (#928). Now it writes the selected rows only.
+   */
+  function handleDataExport(kind: 'csv' | 'json'): void {
     exportError = null;
     exportBusy = kind;
     try {
-      const blob = await downloadExport(kind);
-      saveBlob(blob, exportFilename(kind));
+      if (selectedRows.length === 0) {
+        exportError = $_('insights.report.export_empty');
+        return;
+      }
+      if (kind === 'csv') {
+        exportReportCsv(selectedRows, reportExportFilename('csv'));
+      } else {
+        exportReportJson(selectedRows, reportExportFilename('json'));
+      }
     } catch (err) {
       exportError = err instanceof Error ? err.message : $_('insights.report.export_error');
     } finally {

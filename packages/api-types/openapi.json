@@ -5658,6 +5658,17 @@
       },
       "TimeseriesResponse": {
         "properties": {
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
           "points": {
             "items": {
               "$ref": "#/components/schemas/TimeseriesPoint"
@@ -9362,6 +9373,26 @@
               ],
               "title": "Range",
               "type": "string"
+            }
+          },
+          {
+            "description": "Exact window length in days. Takes precedence over `range`, which can only express 7/30/90/365 and therefore cannot carry the shared analysis window (14 | 28 | 90).",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact window length in days. Takes precedence over `range`, which can only express 7/30/90/365 and therefore cannot carry the shared analysis window (14 | 28 | 90).",
+              "title": "Days"
             }
           },
           {

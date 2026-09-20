@@ -282,3 +282,37 @@ async def test_symptom_heatmap_scopes_visible_symptoms_to_user() -> None:
     assert "entry_symptoms.user_id" in whereclause
     assert "entries.user_id" in whereclause
     assert "symptoms.is_default IS true" in whereclause
+
+
+@pytest.mark.asyncio
+async def test_timeseries_days_returns_the_exact_window() -> None:
+    """#867: the shared analysis window must not be rounded to a legacy enum.
+
+    `range` only offers 7/30/90/365, so 14 resolved to `week` (7 days) and 28 to
+    `month` (30). Trends and Home then plotted a different population than the
+    label promised.
+    """
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result([]))
+
+    for days in (14, 28, 90):
+        out = await get_timeseries(db, user_id=user.id, range_="month", as_of=as_of, days=days)
+        assert len(out.points) == days, f"expected {days} buckets, got {len(out.points)}"
+        assert out.days == days
+        assert out.points[-1].period_start == as_of
+        assert (out.points[-1].period_start - out.points[0].period_start).days == days - 1
+
+
+@pytest.mark.asyncio
+async def test_timeseries_without_days_keeps_the_legacy_range() -> None:
+    user = make_user()
+    as_of = date(2026, 5, 9)
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=_scalar_result([]))
+
+    out = await get_timeseries(db, user_id=user.id, range_="week", as_of=as_of)
+
+    assert len(out.points) == 7
+    assert out.days == 7

@@ -79,6 +79,11 @@ class SymptomMetricAssociation:
     work_context_confounded: bool
     calendar_context_confounded: bool
     sample_n: int
+    # The raw metric values behind each group, so the insight payload can carry
+    # real G2 distributions. Without them the UI had group sizes but no
+    # histograms and synthesised zeros, rendering "good on 0 of N days" (#928 L2).
+    symptom_metric_values: tuple[float, ...] = ()
+    comparison_metric_values: tuple[float, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -226,7 +231,22 @@ def compute_symptom_metric_associations(
 
     associations: list[SymptomMetricAssociation] = []
     for metric in METRIC_TARGETS:
-        raw: list[tuple[SymptomRef, float, float, int, int, float, float, bool, bool, bool]] = []
+        raw: list[
+            tuple[
+                SymptomRef,
+                float,
+                float,
+                int,
+                int,
+                float,
+                float,
+                bool,
+                bool,
+                bool,
+                tuple[float, ...],
+                tuple[float, ...],
+            ]
+        ] = []
         metric_values = [_metric_value(entry, metric) for entry in entries]
         if len(set(metric_values)) < 2:
             continue
@@ -244,6 +264,16 @@ def compute_symptom_metric_associations(
             if coefficient is None or p_value is None or abs(coefficient) < min_abs_effect_size:
                 continue
 
+            symptom_values = tuple(
+                float(value)
+                for value, present in zip(metric_values, binary, strict=True)
+                if present
+            )
+            comparison_values = tuple(
+                float(value)
+                for value, present in zip(metric_values, binary, strict=True)
+                if not present
+            )
             symptom_avg = (
                 sum(value for value, present in zip(metric_values, binary, strict=True) if present)
                 / symptom_count
@@ -298,6 +328,8 @@ def compute_symptom_metric_associations(
                     weekday_confounded,
                     work_context_confounded,
                     calendar_context_confounded,
+                    symptom_values,
+                    comparison_values,
                 )
             )
 
@@ -312,6 +344,8 @@ def compute_symptom_metric_associations(
             weekday_confounded,
             work_context_confounded,
             calendar_context_confounded,
+            symptom_values,
+            comparison_values,
         ), (significant, p_corrected) in zip(
             raw,
             _fdr_correct([item[2] for item in raw]),
@@ -334,6 +368,8 @@ def compute_symptom_metric_associations(
                     work_context_confounded=work_context_confounded,
                     calendar_context_confounded=calendar_context_confounded,
                     sample_n=len(entries),
+                    symptom_metric_values=symptom_values,
+                    comparison_metric_values=comparison_values,
                 )
             )
 

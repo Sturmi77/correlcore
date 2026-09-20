@@ -86,6 +86,13 @@ class _Period:
     end: date_type
 
 
+def _daily_periods(days: int, as_of: date_type) -> list[_Period]:
+    """Exactly ``days`` single-day periods ending on ``as_of`` (inclusive)."""
+
+    start = as_of - timedelta(days=days - 1)
+    return [_Period(start + timedelta(days=i), start + timedelta(days=i)) for i in range(days)]
+
+
 def _periods_for_range(range_: TimeseriesRange, as_of: date_type) -> list[_Period]:
     if range_ == "week":
         start = as_of - timedelta(days=6)
@@ -106,9 +113,19 @@ async def get_timeseries(
     user_id: uuid.UUID,
     range_: TimeseriesRange,
     as_of: date_type | None = None,
+    days: int | None = None,
 ) -> TimeseriesResponse:
+    """Daily aggregates for the requested window.
+
+    ``days`` selects an exact window and takes precedence over ``range_``. The
+    legacy enum only offers 7/30/90/365, so the shared analysis preference
+    (14 | 28 | 90 days, #867) could not be expressed through it: 14 resolved to
+    the 7-day ``week`` and 28 to the 30-day ``month``, and Trends then plotted a
+    different population than the label promised.
+    """
+
     as_of = as_of or _today()
-    periods = _periods_for_range(range_, as_of)
+    periods = _daily_periods(days, as_of) if days else _periods_for_range(range_, as_of)
     start = periods[0].start
 
     result = await db.execute(
@@ -142,7 +159,7 @@ async def get_timeseries(
                 ),
             )
         )
-    return TimeseriesResponse(range=range_, points=points)
+    return TimeseriesResponse(range=range_, points=points, days=len(periods))
 
 
 async def get_tag_heatmap(

@@ -65,10 +65,10 @@ from app.services.insight_service import (
     MAX_LATEST_INSIGHT_LIMIT,
     InsightEventWindowsUnsupportedError,
     InsightNotFoundError,
-    get_insight_by_id,
     get_insight_event_windows,
     get_insight_maturity,
     get_insight_verification,
+    get_visible_insight_by_id,
     list_insight_history,
     list_insights,
     list_latest_insights,
@@ -545,7 +545,7 @@ async def get_insight_endpoint(
     db: AsyncSession = Depends(get_session),
 ) -> InsightResponse:
     try:
-        insight = await get_insight_by_id(db, user_id=user.id, insight_id=insight_id)
+        insight = await get_visible_insight_by_id(db, user_id=user.id, insight_id=insight_id)
     except InsightNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

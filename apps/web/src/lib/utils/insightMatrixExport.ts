@@ -117,7 +117,88 @@ export function exportMatrixPdf(
   URL.revokeObjectURL(url);
 }
 
-export function reportExportFilename(kind: 'png' | 'pdf', date = new Date()): string {
+function csvCell(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  const text = String(value);
+  return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+/** The report's own rows, as data — never the account-wide export (#928 §Datenschutz). */
+function reportRecords(rows: readonly InsightResponse[]): Record<string, unknown>[] {
+  return rows.map((row) => ({
+    subject: row.subject_label ?? '',
+    subject_type: row.subject_type ?? '',
+    metric: row.metric,
+    insight_type: row.insight_type,
+    effect_size: row.effect_size ?? null,
+    confidence: row.confidence ?? null,
+    confidence_percent: matrixConfidencePercent(row.confidence),
+    sample_n: row.sample_n ?? null,
+    tier: row.tier ?? null,
+    generated_for_date: row.generated_for_date ?? null,
+    statement: row.statement ?? '',
+  }));
+}
+
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Export the selected report rows as CSV.
+ *
+ * Deliberately not `/export/csv`: that endpoint serialises the whole account,
+ * including note text and exact dates. On a page framed as a handout for a
+ * medical conversation, that button disclosed far more than the aggregated
+ * report it appeared to offer (#928 L1 / Datenschutz-Impact).
+ */
+export function exportReportCsv(rows: readonly InsightResponse[], filename: string): void {
+  const records = reportRecords(rows);
+  const headers = [
+    'subject',
+    'subject_type',
+    'metric',
+    'insight_type',
+    'effect_size',
+    'confidence',
+    'confidence_percent',
+    'sample_n',
+    'tier',
+    'generated_for_date',
+    'statement',
+  ];
+  const lines = [
+    headers.join(','),
+    ...records.map((record) => headers.map((key) => csvCell(record[key] as string)).join(',')),
+  ];
+  downloadBlob(new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' }), filename);
+}
+
+/** Export the selected report rows as JSON — the report only, not the account. */
+export function exportReportJson(rows: readonly InsightResponse[], filename: string): void {
+  const payload = {
+    kind: 'correlcore-insight-report',
+    generated_at: new Date().toISOString(),
+    row_count: rows.length,
+    rows: reportRecords(rows),
+  };
+  downloadBlob(
+    new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }),
+    filename
+  );
+}
+
+export function reportExportFilename(
+  kind: 'png' | 'pdf' | 'csv' | 'json',
+  date = new Date()
+): string {
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');

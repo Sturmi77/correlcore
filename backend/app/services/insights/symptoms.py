@@ -24,6 +24,7 @@ from app.services.insights.shared import (
     _context_confounded_statement,
     _direction,
     _primary_confounder,
+    _with_without_distribution_payload,
 )
 from app.services.symptom_analytics import (
     DailySymptomEntry,
@@ -183,6 +184,14 @@ def _symptom_metric_candidates(
                     "comparison_n": finding.comparison_count,
                     "symptom_metric_avg": finding.symptom_metric_avg,
                     "comparison_metric_avg": finding.comparison_metric_avg,
+                    # Real G2 distributions. The UI's with/without parser accepts
+                    # this family on the strength of symptom_n/comparison_n; when
+                    # the histograms were missing it substituted zero arrays and
+                    # claimed "good on 0 of N days" on every symptom card (#928 L2).
+                    **_with_without_distribution_payload(
+                        finding.symptom_metric_values,
+                        finding.comparison_metric_values,
+                    ),
                     "confounder": primary,
                     "confounders": confounders,
                     **situation_adjustment_payload(

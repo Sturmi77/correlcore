@@ -658,6 +658,13 @@ async def get_insight_by_id(
     user_id: uuid.UUID,
     insight_id: uuid.UUID,
 ) -> Insight:
+    """Owner-scoped lookup, without the analytics-exclusion filter.
+
+    Use :func:`get_visible_insight_by_id` for anything that returns the
+    insight's content to the user; this raw lookup exists for bookkeeping paths
+    (dismissals) that must keep working on rows the user has since excluded.
+    """
+
     result = await db.execute(
         select(Insight).where(Insight.id == insight_id, Insight.user_id == user_id)
     )
@@ -665,6 +672,28 @@ async def get_insight_by_id(
     if insight is None:
         raise InsightNotFoundError(insight_id)
     return insight
+
+
+async def get_visible_insight_by_id(
+    db: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    insight_id: uuid.UUID,
+) -> Insight:
+    """Owner-scoped lookup that also honours ``include_in_analytics=False``.
+
+    The list, latest and history surfaces drop insights whose tag subject the
+    user excluded from analysis. A read by id bypassed that, so an excluded
+    tag's stored statement — and its day-level verification series — stayed
+    retrievable through an old URL. Excluded rows are reported as not found so
+    the response cannot confirm the row exists either.
+    """
+
+    insight = await get_insight_by_id(db, user_id=user_id, insight_id=insight_id)
+    visible = await _filter_analytics_excluded_insights(db, user_id=user_id, insights=[insight])
+    if not visible:
+        raise InsightNotFoundError(insight_id)
+    return visible[0]
 
 
 async def _resolve_tag_slug(db: AsyncSession, insight: Insight) -> str | None:
@@ -735,7 +764,7 @@ async def get_insight_event_windows(
     insight_id: uuid.UUID,
     range_: TagCooccurrenceRange,
 ) -> InsightEventWindowsResponse:
-    insight = await get_insight_by_id(db, user_id=user_id, insight_id=insight_id)
+    insight = await get_visible_insight_by_id(db, user_id=user_id, insight_id=insight_id)
 
     # Lag insights align on the feature (antecedent); everything else on the subject.
     lag = _lag_onset_feature(insight)
@@ -859,7 +888,7 @@ async def get_insight_verification(
 ) -> InsightVerificationResponse:
     """Day-level with/without series for Layer-2 scatter and uncertainty (Phase 7)."""
 
-    insight = await get_insight_by_id(db, user_id=user_id, insight_id=insight_id)
+    insight = await get_visible_insight_by_id(db, user_id=user_id, insight_id=insight_id)
     if insight.subject_type not in {"tag", "symptom"}:
         raise InsightEventWindowsUnsupportedError(str(insight.subject_type))
 

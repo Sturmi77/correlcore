@@ -390,3 +390,43 @@ async def test_symptom_tag_cooccurrence_endpoint_returns_cells(
     assert response.status_code == 200
     service.assert_awaited_once()
     assert response.json()["range"] == "90d"
+
+
+def test_symptom_associations_carry_real_metric_values() -> None:
+    """#928 L2: the insight payload needs real G2 distributions, not synthesized ones.
+
+    The UI accepts this family on the strength of symptom_n/comparison_n. With
+    the histograms missing it substituted zero arrays, so every symptom card
+    claimed "good on 0 of N days" — a fabricated count shown as evidence.
+    """
+    from app.services.symptom_analytics import (
+        DailySymptomEntry,
+        SymptomRef,
+        compute_symptom_metric_associations,
+    )
+
+    symptom_id = uuid.uuid4()
+    symptom = SymptomRef(id=symptom_id, label="Headache", slug="headache")
+    start = date(2026, 1, 1)
+    entries = [
+        DailySymptomEntry(
+            entry_date=start + timedelta(days=offset),
+            mood_score=2 if offset % 2 == 0 else 5,
+            energy=3,
+            stress=3,
+            tag_ids=frozenset(),
+            symptom_ids=frozenset({symptom_id}) if offset % 2 == 0 else frozenset(),
+        )
+        for offset in range(40)
+    ]
+
+    associations = compute_symptom_metric_associations(entries, {symptom_id: symptom})
+    mood = [item for item in associations if item.metric == "mood_score"]
+    assert mood, "expected a mood association for the seeded pattern"
+    finding = mood[0]
+
+    assert len(finding.symptom_metric_values) == finding.symptom_count
+    assert len(finding.comparison_metric_values) == finding.comparison_count
+    # Real values, not placeholders: the present group logged 2, the absent one 5.
+    assert set(finding.symptom_metric_values) == {2.0}
+    assert set(finding.comparison_metric_values) == {5.0}

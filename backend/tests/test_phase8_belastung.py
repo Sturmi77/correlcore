@@ -107,3 +107,42 @@ def test_belastung_candidates_require_opt_in_and_pattern() -> None:
     assert (
         "heuristic" in candidate.statement.lower() or "not a medical" in candidate.statement.lower()
     )
+
+
+def test_write_time_covariates_survive_daily_normalization() -> None:
+    """#875 / #892: both normalization helpers must carry the write-time fields.
+
+    Candidate generation always runs entries through `_dedupe_daily_entries` and
+    `_canonicalize_tag_aliases`. Both rebuilt `AnalyticsEntry` without copying
+    `logged_local_hour` / `inferred_period`, so `inferred_period` was always None
+    by the time `_belastung_candidates` read it and `after_hours_days_recent` was
+    permanently zero — the after-hours signal could never fire in production.
+    """
+    from app.services.insights.shared import (
+        _canonicalize_tag_aliases,
+        _dedupe_daily_entries,
+    )
+
+    day = date(2026, 3, 2)
+    entries = [
+        AnalyticsEntry(
+            id=uuid.uuid4(),
+            entry_date=day,
+            mood_score=3,
+            energy=3,
+            stress=3,
+            work_context=WorkContext.OFFICE,
+            tag_ids=frozenset(),
+            symptom_ids=frozenset(),
+            logged_local_hour=23,
+            inferred_period=InferredPeriod.AFTER_HOURS,
+        )
+    ]
+
+    deduped = _dedupe_daily_entries(entries)
+    assert deduped[0].inferred_period is InferredPeriod.AFTER_HOURS
+    assert deduped[0].logged_local_hour == 23
+
+    canonical, _ = _canonicalize_tag_aliases(deduped, [])
+    assert canonical[0].inferred_period is InferredPeriod.AFTER_HOURS
+    assert canonical[0].logged_local_hour == 23

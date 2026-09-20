@@ -18,6 +18,8 @@ export interface TimeseriesPoint {
 export interface TimeseriesResponse {
   range: TimeseriesRange;
   points: TimeseriesPoint[];
+  /** Day buckets actually returned; set when an exact `days` window was requested. */
+  days?: number | null;
 }
 
 export interface TagHeatmapDay {
@@ -109,8 +111,21 @@ export interface HealthContextResponse {
   health_connect: HealthConnectStatus | null;
 }
 
-export async function fetchTimeseries(range: TimeseriesRange): Promise<TimeseriesResponse> {
-  return api.get<TimeseriesResponse>(`/entries/stats/timeseries?range=${range}`);
+/**
+ * Daily aggregates for the analysis window.
+ *
+ * Pass `days` for the shared analysis window (14 | 28 | 90). The `range` enum
+ * resolves to 7/30/90/365 server-side, so requesting 14 through it returned
+ * seven days and 28 returned thirty — the chart then showed a different
+ * population than its label claimed (#867). `range` stays for callers that
+ * genuinely want a legacy bucket.
+ */
+export async function fetchTimeseries(
+  range: TimeseriesRange,
+  days?: number
+): Promise<TimeseriesResponse> {
+  const query = days ? `range=${range}&days=${days}` : `range=${range}`;
+  return api.get<TimeseriesResponse>(`/entries/stats/timeseries?${query}`);
 }
 
 export async function fetchTagHeatmap(

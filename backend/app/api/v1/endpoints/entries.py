@@ -188,10 +188,22 @@ async def create_entry_batch_endpoint(
 async def get_timeseries_endpoint(
     request: Request,
     range: TimeseriesRange = Query(default="week"),
+    days: Annotated[
+        int | None,
+        Query(
+            ge=1,
+            le=365,
+            description=(
+                "Exact window length in days. Takes precedence over `range`, which "
+                "can only express 7/30/90/365 and therefore cannot carry the shared "
+                "analysis window (14 | 28 | 90)."
+            ),
+        ),
+    ] = None,
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> TimeseriesResponse:
-    return await get_timeseries(db, user_id=user.id, range_=range)
+    return await get_timeseries(db, user_id=user.id, range_=range, days=days)
 
 
 @router.get(

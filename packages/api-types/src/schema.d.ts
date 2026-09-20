@@ -3897,6 +3897,8 @@ export interface components {
         };
         /** TimeseriesResponse */
         TimeseriesResponse: {
+            /** Days */
+            days?: number | null;
             /** Points */
             points: components["schemas"]["TimeseriesPoint"][];
             /**
@@ -5557,6 +5559,8 @@ export interface operations {
         parameters: {
             query?: {
                 range?: "week" | "month" | "quarter" | "year";
+                /** @description Exact window length in days. Takes precedence over `range`, which can only express 7/30/90/365 and therefore cannot carry the shared analysis window (14 | 28 | 90). */
+                days?: number | null;
             };
             header?: {
                 authorization?: string | null;

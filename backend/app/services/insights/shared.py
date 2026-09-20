@@ -410,6 +410,13 @@ def _dedupe_daily_entries(entries: Sequence[AnalyticsEntry]) -> list[AnalyticsEn
                 symptom_ids=frozenset(symptom_id for row in rows for symptom_id in row.symptom_ids),
                 sleep_minutes=_optional_mean_round([row.sleep_minutes for row in rows]),
                 sleep_quality=_optional_mean_round([row.sleep_quality for row in rows]),
+                # Write-time covariates follow the day's first entry, like
+                # work_context above. Dropping them here silently disabled every
+                # downstream consumer: candidate generation runs through this
+                # helper, so inferred_period was always None by the time
+                # _belastung_candidates read it (#875 / #892).
+                logged_local_hour=first.logged_local_hour,
+                inferred_period=first.inferred_period,
             )
         )
     return daily
@@ -455,6 +462,8 @@ def _canonicalize_tag_aliases(
             symptom_ids=entry.symptom_ids,
             sleep_minutes=entry.sleep_minutes,
             sleep_quality=entry.sleep_quality,
+            logged_local_hour=entry.logged_local_hour,
+            inferred_period=entry.inferred_period,
         )
         for entry in entries
     ]

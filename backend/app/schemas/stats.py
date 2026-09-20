@@ -37,6 +37,10 @@ class TimeseriesPoint(BaseModel):
 class TimeseriesResponse(BaseModel):
     range: TimeseriesRange
     points: list[TimeseriesPoint]
+    # Number of day buckets actually returned. The `range` enum cannot express
+    # the shared analysis window (14 | 28 | 90), so clients that request an
+    # exact `days` window read this back rather than inferring it (#867).
+    days: int | None = None
 
 
 class TagHeatmapDay(BaseModel):

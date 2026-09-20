@@ -67,20 +67,29 @@ export function parseWithWithoutView(insight: InsightResponse): WithWithoutView 
   const scaleMin = asNumber(payload.scale_min) ?? 1;
   const scaleMax = asNumber(payload.scale_max) ?? 5;
   const levels = Math.max(1, Math.round(scaleMax - scaleMin) + 1);
-  const withDistribution =
-    asIntList(payload.with_distribution, levels) ?? Array.from({ length: levels }, () => 0);
-  const withoutDistribution =
-    asIntList(payload.without_distribution, levels) ?? Array.from({ length: levels }, () => 0);
+  // A missing histogram is not an all-zero histogram. Substituting zeros made
+  // every card whose payload lacked distributions claim "good on 0 of N days" —
+  // a fabricated count presented as evidence (#928 L2). Absent distributions and
+  // absent good-counts together mean there is nothing honest to render.
+  const withDistribution = asIntList(payload.with_distribution, levels);
+  const withoutDistribution = asIntList(payload.without_distribution, levels);
+  const hasExplicitGoodCounts =
+    asNumber(payload.with_good_count) != null && asNumber(payload.without_good_count) != null;
+  if ((withDistribution == null || withoutDistribution == null) && !hasExplicitGoodCounts) {
+    return null;
+  }
+  const withLevels = withDistribution ?? Array.from({ length: levels }, () => 0);
+  const withoutLevels = withoutDistribution ?? Array.from({ length: levels }, () => 0);
 
   const goodThreshold = asNumber(payload.good_threshold) ?? 4;
   const withGood =
     asNumber(payload.with_good_count) ??
-    withDistribution
+    withLevels
       .slice(Math.max(0, Math.round(goodThreshold - scaleMin)))
       .reduce((sum, n) => sum + n, 0);
   const withoutGood =
     asNumber(payload.without_good_count) ??
-    withoutDistribution
+    withoutLevels
       .slice(Math.max(0, Math.round(goodThreshold - scaleMin)))
       .reduce((sum, n) => sum + n, 0);
 
@@ -120,8 +129,8 @@ export function parseWithWithoutView(insight: InsightResponse): WithWithoutView 
     withoutGood,
     withAvg,
     withoutAvg,
-    withDistribution,
-    withoutDistribution,
+    withDistribution: withLevels,
+    withoutDistribution: withoutLevels,
     goodThreshold,
     scaleMin,
     scaleMax,

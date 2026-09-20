@@ -238,7 +238,9 @@
         habitResult,
         tagsResult,
       ] = await Promise.allSettled([
-        fetchTimeseries(activeRange),
+        // Exact window: the enum alone would fetch 7 days for a 14-day
+        // selection and 30 for a 28-day one (#867).
+        fetchTimeseries(activeRange, activeWindowDays),
         fetchTagHeatmap({
           start_date,
           end_date,
@@ -391,7 +393,9 @@
   $: if (
     $auth.status === 'authenticated' &&
     timeseries &&
-    timeseries.range !== trendWindowDaysToTimeseriesRange($analysisRange) &&
+    // Compare the exact window, not the coarse enum: 14 and 28 both used to
+    // land on distinct enums by luck, but `days` is what was actually fetched.
+    (timeseries.days ?? null) !== $analysisRange &&
     !loading
   ) {
     void loadTrends($analysisRange);
