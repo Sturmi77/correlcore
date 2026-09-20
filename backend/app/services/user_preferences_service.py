@@ -200,10 +200,16 @@ async def update_user_preferences(
                 preferences.insight_sections_version = CURRENT_INSIGHT_SECTIONS_VERSION
             continue
         if key == "insight_sections_version":
-            # Clients must not write an older version over a migrated row.
-            if value < preferences.insight_sections_version:
+            # Clients must not write an older version over a migrated row, and
+            # must not leapfrog past the server either. `migrate_insight_sections`
+            # skips a row whose version is already >= CURRENT, so a client that
+            # wrote the schema's upper bound (32) permanently opted itself out of
+            # every future v3..v32 migration (#957). Clamping keeps the marker
+            # meaningful in both directions.
+            capped = min(int(value), CURRENT_INSIGHT_SECTIONS_VERSION)
+            if capped < preferences.insight_sections_version:
                 continue
-            preferences.insight_sections_version = value
+            preferences.insight_sections_version = capped
             continue
         if key == "last_seen_digest_at":
             # High-water mark (#739): never move it backward. A stale client

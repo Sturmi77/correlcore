@@ -745,7 +745,14 @@
   $: showTagCooccurrencePanel =
     canShowTagCooccurrence(insightMaturity?.phase ?? null) &&
     (cooccurrenceLoading || hasTagCooccurrenceData(cooccurrence));
-  $: filteredRankedInsights = rankInsights(insights);
+  /**
+   * The Belastung composite has its own opt-in overlay, so it must not also ride
+   * the ordinary feed: enabled users saw it twice, and users who switched the
+   * opt-in back off kept seeing the stored rows as a regular insight, because
+   * disabling a preference does not delete what the worker already wrote (#957).
+   */
+  $: rankableInsights = insights.filter((insight) => insight.insight_type !== 'belastung_pattern');
+  $: filteredRankedInsights = rankInsights(rankableInsights);
   $: primaryMobileInsight = filteredRankedInsights[0] ?? null;
   $: remainingMobileInsights = filteredRankedInsights.slice(1);
   $: feedInsights =
@@ -785,19 +792,43 @@
     userPreferences?.analytics_enabled !== false &&
     Boolean(belastungInsight);
 
+  /**
+   * Load only what the hub is actually going to render.
+   *
+   * This used to fire all three requests for every user in an advanced maturity
+   * phase, regardless of which sections were enabled. After the Phase 6 shrink
+   * the optional tools are off by default, so the common case paid for
+   * co-occurrence, tag-cluster and symptom-co-occurrence queries whose
+   * components never mounted — exactly the cost that shrink set out to remove
+   * (#957). Each load now follows its own section.
+   */
   function ensureAnalyticsLoaded(): void {
-    if (!cooccurrenceRequested && !cooccurrenceLoading) {
+    if (
+      enabledSectionSet.has('tag_cooccurrence') &&
+      !cooccurrenceRequested &&
+      !cooccurrenceLoading
+    ) {
       void loadCooccurrence();
     }
-    if (!tagClusters && !tagClustersLoading) {
+    if (enabledSectionSet.has('tag_groups') && !tagClusters && !tagClustersLoading) {
       void loadTagClusters();
     }
-    if (!symptomCooccurrenceRequested && !symptomCooccurrenceLoading) {
+    if (
+      enabledSectionSet.has('symptom_analytics') &&
+      !symptomCooccurrenceRequested &&
+      !symptomCooccurrenceLoading
+    ) {
       void loadSymptomCooccurrence();
     }
   }
 
-  $: if (showAdvancedAnalytics && $auth.status === 'authenticated' && insightsLoaded) {
+  // Re-runs when a section is switched on, so enabling a tool still loads it.
+  $: if (
+    showAdvancedAnalytics &&
+    $auth.status === 'authenticated' &&
+    insightsLoaded &&
+    enabledSectionSet
+  ) {
     ensureAnalyticsLoaded();
   }
 

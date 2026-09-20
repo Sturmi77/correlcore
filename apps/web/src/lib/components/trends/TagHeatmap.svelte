@@ -72,7 +72,17 @@
   }
 </script>
 
-<section class="heatmap" class:heatmap--compact={compact} data-loading={loading ? 'true' : 'false'}>
+<!--
+  `gridStyle` also sits on the section, not only on `.heatmap__grid`. The legend
+  is a sibling of the grid, and CSS variables only reach descendants — so its
+  swatches resolved `var(--axis-day-width)` to nothing and collapsed to 0x0 (#957).
+-->
+<section
+  class="heatmap"
+  class:heatmap--compact={compact}
+  style={gridStyle}
+  data-loading={loading ? 'true' : 'false'}
+>
   <div class="heatmap__head">
     <h2>{$_('trends.heatmap.heading')}</h2>
     {#if heatmap}

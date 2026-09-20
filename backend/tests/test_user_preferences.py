@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -551,3 +552,63 @@ async def test_profile_endpoint_returns_profile_state(
 
     assert response.status_code == 200
     assert response.json()["work_context_typical"] == "office"
+
+
+@pytest.mark.asyncio
+async def test_insight_sections_version_cannot_leapfrog_the_server() -> None:
+    """#957: a client pinning a future version opted out of every later migration.
+
+    `migrate_insight_sections_to_current` skips a row whose stored version is
+    already >= CURRENT, so writing the schema's upper bound (32) silently
+    disabled v3..v32 for that user — permanently and invisibly.
+    """
+    from app.services.insight_sections import CURRENT_INSIGHT_SECTIONS_VERSION
+    from app.services.user_preferences_service import update_user_preferences
+
+    preferences = SimpleNamespace(
+        insight_sections_version=CURRENT_INSIGHT_SECTIONS_VERSION,
+        insight_sections=None,
+        digest_enabled=False,
+    )
+    db = MagicMock()
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    with patch(
+        "app.services.user_preferences_service.get_or_create_user_preferences",
+        AsyncMock(return_value=preferences),
+    ):
+        await update_user_preferences(
+            db,
+            user_id=uuid.uuid4(),
+            payload=UserPreferencesUpdate(insight_sections_version=32),
+        )
+
+    assert preferences.insight_sections_version == CURRENT_INSIGHT_SECTIONS_VERSION
+
+
+@pytest.mark.asyncio
+async def test_insight_sections_version_still_refuses_to_move_backward() -> None:
+    from app.services.insight_sections import CURRENT_INSIGHT_SECTIONS_VERSION
+    from app.services.user_preferences_service import update_user_preferences
+
+    preferences = SimpleNamespace(
+        insight_sections_version=CURRENT_INSIGHT_SECTIONS_VERSION,
+        insight_sections=None,
+        digest_enabled=False,
+    )
+    db = MagicMock()
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+
+    with patch(
+        "app.services.user_preferences_service.get_or_create_user_preferences",
+        AsyncMock(return_value=preferences),
+    ):
+        await update_user_preferences(
+            db,
+            user_id=uuid.uuid4(),
+            payload=UserPreferencesUpdate(insight_sections_version=1),
+        )
+
+    assert preferences.insight_sections_version == CURRENT_INSIGHT_SECTIONS_VERSION

@@ -330,6 +330,11 @@ def render_export_csv(envelope: ExportEnvelope) -> bytes:
             "energy_scale",
             "stress_scale",
             "work_context",
+            # Write-time covariates (#892). The JSON envelope has carried these
+            # since Phase 8; leaving them out here meant choosing CSV silently
+            # dropped them, against the promise that exports include both (#957).
+            "logged_local_hour",
+            "inferred_period",
             "note",
             "tags",
             "symptoms",
@@ -358,6 +363,10 @@ def render_export_csv(envelope: ExportEnvelope) -> bytes:
                 "energy_scale": CSV_SCORE_LEGENDS["energy"],
                 "stress_scale": CSV_SCORE_LEGENDS["stress"],
                 "work_context": entry["work_context"],
+                "logged_local_hour": entry.get("logged_local_hour")
+                if entry.get("logged_local_hour") is not None
+                else "",
+                "inferred_period": entry.get("inferred_period") or "",
                 "note": entry["note"] or "",
                 "tags": ", ".join(tag["name"] for tag in entry["tags"]),
                 "symptoms": ", ".join(

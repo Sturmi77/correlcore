@@ -292,3 +292,59 @@ async def test_export_csv_and_zip_render() -> None:
         assert data["score_legend"]["energy"]["max_label"] == "full of energy"
         assert data["entries"][0]["date"] == entry.entry_date.isoformat()
         assert "insight_dismissals" in data
+
+
+@pytest.mark.asyncio
+async def test_csv_export_carries_write_time_covariates() -> None:
+    """#957: the JSON envelope had these since Phase 8; CSV silently dropped them.
+
+    The columns were never added to `fieldnames`, so choosing CSV lost
+    `logged_local_hour` and `inferred_period` — against the feature's promise
+    that exports include both.
+    """
+    user = make_user()
+    entry = make_entry(user, mood_score=4)
+
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_result([entry]),
+            _scalar_optional_result(None),
+            _row_result([]),
+            _row_result([]),
+            _scalar_result([]),
+            _prefs_keys_result([]),
+            _scalar_result([]),
+        ]
+    )
+
+    envelope = await build_export_envelope(db, user=user)
+    envelope.entries = [
+        {
+            "date": entry.entry_date.isoformat(),
+            "slot": entry.slot.value,
+            "mood_score": 4,
+            "energy": 3,
+            "stress": 3,
+            "work_context": entry.work_context.value,
+            "logged_local_hour": 23,
+            "inferred_period": "after_hours",
+            "cycle_day": None,
+            "cycle_bleeding_level": None,
+            "sleep_minutes": None,
+            "sleep_quality": None,
+            "note": None,
+            "tags": [],
+            "symptoms": [],
+            "created_at": "2026-03-01T08:00:00Z",
+            "updated_at": "2026-03-01T08:00:00Z",
+            "source": entry.source.value,
+        }
+    ]
+
+    csv_text = render_export_csv(envelope).decode("utf-8-sig")
+    header = csv_text.splitlines()[0]
+    assert "logged_local_hour" in header
+    assert "inferred_period" in header
+    assert "23" in csv_text
+    assert "after_hours" in csv_text
