@@ -668,6 +668,10 @@
       "caption": "Divergente Streifen-Darstellung von Stimmung, Energie und Stress auf der gemeinsamen Zeitachse",
       "aria": "Stimmung, Energie und Stress als divergente Streifen"
     },
+    "sleep_scale": {
+      "baseline": "Die Schlafdauer ist gegen deine eigene übliche Nacht eingefärbt ({median}, Median aus {days} erfassten Nächten) \u2014 nicht gegen eine empfohlene Dauer.",
+      "no_baseline": "Die Schlafdauer ist nur nach Länge eingefärbt: {days} erfasste Nächte liegen unter den {needed}, die für deine übliche Nacht nötig sind."
+    },
     "esm": {
       "eyebrow": "Ereignis-Ausrichtung",
       "title": "Tage rund um jeden Onset",
@@ -676,6 +680,8 @@
       "axis_caption": "Tage relativ zum Ereignis (T0 = Onset)",
       "legend_worse": "Schlechter",
       "legend_better": "Besser",
+      "legend_sleep_shorter": "Kürzer",
+      "legend_sleep_longer": "Länger",
       "legend_aria": "Farbskala für {metric}",
       "aria": "Ereignis-ausgerichtete Klein-Multiples",
       "close_aria": "Ereignis-Ansicht schliessen",
@@ -1353,7 +1359,7 @@
       "select_all": "Alle Berichtszeilen auswaehlen",
       "select_row": "\"{label}\" in den Export aufnehmen",
       "col_factor": "Faktor",
-      "col_metric": "wirkt auf",
+      "col_metric": "Zusammenhang mit",
       "col_effect": "Effekt (r)",
       "col_frequency": "Abdeckung",
       "col_confidence": "Konfidenz",

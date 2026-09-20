@@ -668,6 +668,10 @@
       "caption": "Divergent strip view of mood, energy and stress on the shared timeline",
       "aria": "Mood, energy and stress as divergent strips"
     },
+    "sleep_scale": {
+      "baseline": "Sleep duration is shaded against your own usual night ({median}, the median of {days} logged nights) \u2014 not against a recommended amount.",
+      "no_baseline": "Sleep duration is shaded by length only: {days} logged nights is below the {needed} needed to know your usual night."
+    },
     "esm": {
       "eyebrow": "Event-aligned view",
       "title": "Aligned around each onset",
@@ -676,6 +680,8 @@
       "axis_caption": "Days relative to the event (T0 = onset)",
       "legend_worse": "Worse",
       "legend_better": "Better",
+      "legend_sleep_shorter": "Shorter",
+      "legend_sleep_longer": "Longer",
       "legend_aria": "Colour scale for {metric}",
       "aria": "Event-aligned small multiples",
       "close_aria": "Close event-aligned view",
@@ -1353,7 +1359,7 @@
       "select_all": "Select all report rows",
       "select_row": "Include \"{label}\" in the export",
       "col_factor": "Factor",
-      "col_metric": "Affects",
+      "col_metric": "Associated with",
       "col_effect": "Effect (r)",
       "col_frequency": "Coverage",
       "col_confidence": "Confidence",

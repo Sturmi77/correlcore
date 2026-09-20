@@ -109,10 +109,28 @@
     expanded = !expanded;
   }
 
+  /**
+   * #928 D2 — the arrow between the two sides of a title is a claim, so it may
+   * only be drawn where the finding actually has a temporal order. A lag
+   * finding compares a feature logged N days *before* the target, so
+   * "feature → target" is exactly what was measured. Every other family is
+   * same-day: the metric pair is a symmetric Spearman, the symptom and context
+   * families are group comparisons, and Lasso regresses same-day features. For
+   * those, `↔` says "these two go together" without naming a direction that
+   * was never computed.
+   */
+  const RELATION_TEMPORAL = '→';
+  const RELATION_SYMMETRIC = '↔';
+
+  /**
+   * The effect-size glyph answers "which way does the metric move", not "which
+   * side came first". Neutral used to print `→`, which put a third meaning on
+   * the same character the titles use — so a flat effect now reads `≈` (#928 D2).
+   */
   function directionGlyph(effectSize: number): string {
     if (effectSize > 0.05) return '↗';
     if (effectSize < -0.05) return '↘';
-    return '→';
+    return '≈';
   }
 
   function directionClass(effectSize: number): string {
@@ -242,7 +260,7 @@
   function buildTitle(ins: InsightResponse): string {
     if (ins.insight_type === 'symptom_mood_association') {
       const symptom = payloadString(ins, 'symptom_name') ?? ins.subject_label ?? 'Symptoms';
-      return `${symptom} → ${ins.metric}`;
+      return `${symptom} ${RELATION_SYMMETRIC} ${metricLabel(ins.metric)}`;
     }
     if (ins.insight_type === 'symptom_tag_cooccurrence') {
       const symptom = payloadString(ins, 'symptom_name') ?? 'Symptoms';
@@ -251,12 +269,12 @@
     }
     if (ins.insight_type === 'work_context_pattern') {
       const context = workContextLabel(ins) ?? ins.subject_label ?? $_('insights.context.fallback');
-      return `${metricLabel(ins.metric)} -> ${context}`;
+      return `${metricLabel(ins.metric)} ${RELATION_SYMMETRIC} ${context}`;
     }
     if (ins.insight_type === 'weekday_context_pattern') {
       const weekday = weekdayLabel(ins) ?? ins.subject_label ?? $_('insights.context.weekday');
       const context = workContextLabel(ins) ?? $_('insights.context.work_context');
-      return `${metricLabel(ins.metric)} -> ${weekday} + ${context}`;
+      return `${metricLabel(ins.metric)} ${RELATION_SYMMETRIC} ${weekday} + ${context}`;
     }
     if (ins.insight_type === 'symptom_cluster') {
       const method = payloadString(ins, 'method');
@@ -271,7 +289,7 @@
           : [];
         const featureText =
           labels.length > 0 ? labels.slice(0, 3).join(', ') : $_('insights.card.cluster_features');
-        return `${featureText} → ${target}`;
+        return `${featureText} ${RELATION_SYMMETRIC} ${target}`;
       }
       if (method === 'lag') {
         const featureRaw =
@@ -289,20 +307,20 @@
         const lagDays = payloadNumber(ins, 'lag_days');
         const lagSuffix =
           lagDays !== null ? ` (+${lagDays} ${$_('insights.card.lag_days_unit')})` : '';
-        return `${feature} → ${target}${lagSuffix}`;
+        return `${feature} ${RELATION_TEMPORAL} ${target}${lagSuffix}`;
       }
     }
     if (ins.metric === 'mood_sleep_minutes' || ins.metric === 'mood_sleep_quality') {
       const sleepKey = ins.metric === 'mood_sleep_minutes' ? 'sleep_minutes' : 'sleep_quality';
-      // Sleep first, like the lag title above. The pair is a symmetric Spearman,
-      // so the arrow is a reading order, not a direction — but printing it as
-      // mood → sleep here and sleep → mood on the lag card made the same pair
-      // look like two contradicting claims (#928 D4).
-      return `${metricLabel(sleepKey)} → ${metricLabel('mood')} (${$_('insights.signal.same_day_badge')})`;
+      // Sleep first, like the lag title above, so the same pair reads the same
+      // way on both cards. The relation itself is a symmetric same-day
+      // Spearman, so it gets `↔`: nothing here establishes which side came
+      // first, and the lag card next to it does (#928 D2).
+      return `${metricLabel(sleepKey)} ${RELATION_SYMMETRIC} ${metricLabel('mood')} (${$_('insights.signal.same_day_badge')})`;
     }
     const a = ins.metric ?? '?';
     const b = ins.subject_label ?? null;
-    return b ? `${a} → ${b}` : a;
+    return b ? `${a} ${RELATION_SYMMETRIC} ${b}` : a;
   }
 
   function confounderNoteKey(confounder: InsightConfounder | null): string {
@@ -316,7 +334,7 @@
   $: primaryConfounder = insight ? primaryInsightConfounder(insight) : null;
   $: isContextInsight = insight ? isCalendarContextInsight(insight) : false;
   $: title = insight ? buildTitle(insight) : '';
-  $: glyph = insight ? directionGlyph(insight.effect_size ?? 0) : '→';
+  $: glyph = insight ? directionGlyph(insight.effect_size ?? 0) : '≈';
   $: dirClass = insight ? directionClass(insight.effect_size ?? 0) : 'neutral';
   $: expandLabel = expanded ? $_('insights.card.collapse_aria') : $_('insights.card.expand_aria');
   $: isInactiveTag =

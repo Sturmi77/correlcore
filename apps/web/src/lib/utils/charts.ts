@@ -91,6 +91,18 @@ export function chartNormalizeTimeseriesValue(metric: MetricKey, raw: number): n
   return displayTimeseriesValue(metric, raw);
 }
 
+/** Minutes covered by one unit of the shared 1–5 domain (#928 D3). */
+export const SLEEP_MINUTES_PER_CHART_UNIT = SLEEP_MINUTES_CHART_MAX / 4;
+
+/**
+ * Inverse of the sleep branch above. Cells that aggregate a bucket only carry
+ * the chart value, so reporting the duration they stand for means converting
+ * back. Lossy above SLEEP_MINUTES_CHART_MAX, where the forward map clamps.
+ */
+export function sleepMinutesFromChartValue(value: number): number {
+  return Math.max(0, Math.min(SLEEP_MINUTES_CHART_MAX, (value - 1) * SLEEP_MINUTES_PER_CHART_UNIT));
+}
+
 export function buildLinePoints(
   points: readonly TimeseriesPoint[],
   metric: MetricKey,

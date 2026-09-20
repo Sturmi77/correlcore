@@ -106,6 +106,12 @@ describe('InsightCard', () => {
     expect(dir.textContent?.trim()).toBe('↘');
   });
 
+  it('renders a flat effect as ≈, never as the arrow the titles use (#928 D2)', () => {
+    render(InsightCard, { props: { insight: { ...INSIGHT, effect_size: 0.01 } } });
+    const dir = screen.getByTestId('insight-card-direction');
+    expect(dir.textContent?.trim()).toBe('≈');
+  });
+
   it('accents the card by the metric via --insight-accent (ISP-5)', () => {
     render(InsightCard, { props: { insight: { ...INSIGHT, metric: 'mood' } } });
     expect(screen.getByTestId('insight-card').getAttribute('style')).toContain(
@@ -120,9 +126,9 @@ describe('InsightCard', () => {
     );
   });
 
-  it('renders title as "metric -> subject" format', () => {
+  it('renders title as "metric <-> subject" format', () => {
     render(InsightCard, { props: { insight: INSIGHT } });
-    expect(screen.getByTestId('insight-card-title').textContent).toContain('mood → sport');
+    expect(screen.getByTestId('insight-card-title').textContent).toContain('mood ↔ sport');
   });
 
   it('renders human-readable labels for sleep spearman insights (#625 review)', () => {
@@ -137,10 +143,10 @@ describe('InsightCard', () => {
         },
       },
     });
-    // Sleep first, matching the lag card. The pair is a symmetric Spearman, so
-    // the arrow is reading order — printing it both ways made one pair look like
-    // two contradicting claims (#928 D4).
-    expect(screen.getByTestId('insight-card-title').textContent).toContain('Sleep duration → Mood');
+    // Sleep first, matching the lag card, so one pair reads the same way on
+    // both. The relation is a symmetric same-day Spearman, so it carries `↔`:
+    // only the lag card may claim which side came first (#928 D2).
+    expect(screen.getByTestId('insight-card-title').textContent).toContain('Sleep duration ↔ Mood');
   });
 
   it('interpolates both entry count and time window in metadata', () => {
@@ -357,7 +363,7 @@ describe('InsightCard', () => {
       },
     });
 
-    expect(screen.getByTestId('insight-card-title').textContent).toContain('Mood -> Office');
+    expect(screen.getByTestId('insight-card-title').textContent).toContain('Mood ↔ Office');
     expect(screen.getByTestId('insight-card-context-badge')).toBeTruthy();
   });
 
@@ -374,6 +380,73 @@ describe('InsightCard', () => {
     expect(screen.getByTestId('insight-card-confounder').textContent).toContain(
       'insights.work_context_confounded_note'
     );
+  });
+});
+
+describe('InsightCard relation glyph (#928 D2)', () => {
+  // The arrow is only earned by a finding that compared two different days.
+  // Everything else is same-day and gets the symmetric glyph, so a reader can
+  // tell a temporal claim from a co-occurrence at a glance.
+  const CLUSTER: InsightResponse = {
+    ...INSIGHT,
+    insight_type: 'symptom_cluster',
+    subject_label: 'Sport',
+  };
+
+  it('keeps → for a lag finding, which measured feature-before-target', () => {
+    render(InsightCard, {
+      props: {
+        insight: {
+          ...CLUSTER,
+          id: 'rel-lag',
+          payload: {
+            method: 'lag',
+            target: { kind: 'metric', key: 'mood_score', name: 'Mood' },
+            feature: { kind: 'tag', key: 'tag:sport', name: 'Sport' },
+            lag_days: 2,
+          },
+        },
+      },
+    });
+    const title = screen.getByTestId('insight-card-title').textContent ?? '';
+    expect(title).toContain('Sport → Mood');
+    expect(title).not.toContain('↔');
+  });
+
+  it('uses ↔ for same-day Lasso, which regresses features measured the same day', () => {
+    render(InsightCard, {
+      props: {
+        insight: {
+          ...CLUSTER,
+          id: 'rel-lasso',
+          payload: {
+            method: 'lasso',
+            target: { kind: 'metric', key: 'mood_score', name: 'Mood' },
+            features: [{ kind: 'tag', key: 'tag:sport', name: 'Sport' }],
+          },
+        },
+      },
+    });
+    const title = screen.getByTestId('insight-card-title').textContent ?? '';
+    expect(title).toContain('Sport ↔ Mood');
+    expect(title).not.toContain('→');
+  });
+
+  it('uses ↔ for a symptom association and names the metric, not its key', () => {
+    render(InsightCard, {
+      props: {
+        insight: {
+          ...INSIGHT,
+          id: 'rel-symptom',
+          insight_type: 'symptom_mood_association',
+          metric: 'energy',
+          payload: { symptom_name: 'Headache' },
+        },
+      },
+    });
+    const title = screen.getByTestId('insight-card-title').textContent ?? '';
+    expect(title).toContain('Headache ↔ Energy');
+    expect(title).not.toContain('→');
   });
 });
 

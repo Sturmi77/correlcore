@@ -651,3 +651,110 @@ describe('EventAlignedSmallMultiplesSheet partner coverage (#918)', () => {
     expect(screen.queryByTestId('esm-partner-summary')).toBeNull();
   });
 });
+
+describe('EventAlignedSmallMultiplesSheet sleep duration (#928 D3)', () => {
+  // Sleep is logged in minutes, but the sheet fed those minutes straight into
+  // a mapper built for a 1–5 rating scale: every night normalised far past +1,
+  // so the whole row rendered identical and told the reader nothing.
+  const events = [{ onset: '2026-05-08', label: 'Cycling' }];
+
+  function sleepPoints(minutes: readonly number[]) {
+    return minutes.map((value, index) => ({
+      period_start: `2026-05-${String(index + 1).padStart(2, '0')}`,
+      period_end: `2026-05-${String(index + 1).padStart(2, '0')}`,
+      entry_count: 1,
+      mood_avg: 3,
+      energy_avg: 3,
+      stress_avg: 3,
+      sleep_quality_avg: null,
+      sleep_minutes_avg: value,
+    }));
+  }
+
+  function loggedCells(container: HTMLElement) {
+    return Array.from(container.querySelectorAll('.esm__cell:not(.esm__cell--median)')).filter(
+      (cell) => Number(cell.getAttribute('opacity')) > 0
+    );
+  }
+
+  it('separates short from long nights instead of saturating every cell', () => {
+    const minutes = [
+      ...Array.from({ length: 7 }, () => 300),
+      ...Array.from({ length: 7 }, () => 540),
+    ];
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points: sleepPoints(minutes),
+        metric: 'sleep_minutes_avg',
+        lagOffset: null,
+      },
+    });
+
+    const signs = new Set(loggedCells(container).map((cell) => cell.getAttribute('data-sign')));
+    expect(signs.size).toBeGreaterThan(1);
+    expect(signs.has('pos')).toBe(true);
+    expect(signs.has('neg')).toBe(true);
+  });
+
+  it('names the reference point rather than labelling durations better or worse', () => {
+    const minutes = Array.from({ length: 14 }, () => 420);
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points: sleepPoints(minutes),
+        metric: 'sleep_minutes_avg',
+        lagOffset: null,
+      },
+    });
+
+    const legend = screen.getByTestId('esm-legend').textContent ?? '';
+    expect(legend).toContain('trends.esm.legend_sleep_shorter');
+    expect(legend).toContain('trends.esm.legend_sleep_longer');
+    expect(legend).not.toContain('trends.esm.legend_better');
+    expect(screen.getByTestId('esm-sleep-basis').textContent).toContain(
+      'trends.sleep_scale.baseline'
+    );
+  });
+
+  it('keeps the well-being legend for the 1–5 metrics', () => {
+    render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points: sleepPoints([420, 420, 420]),
+        metric: 'mood_avg',
+        lagOffset: null,
+      },
+    });
+
+    expect(screen.getByTestId('esm-legend').textContent).toContain('trends.esm.legend_better');
+    expect(screen.queryByTestId('esm-sleep-basis')).toBeNull();
+  });
+
+  it('reports a cell as a duration, not as a chart position', () => {
+    const minutes = Array.from({ length: 14 }, () => 430);
+    const { container } = render(EventAlignedSmallMultiplesSheet, {
+      props: {
+        open: true,
+        phase: 'provisional',
+        events,
+        points: sleepPoints(minutes),
+        metric: 'sleep_minutes_avg',
+        lagOffset: null,
+      },
+    });
+
+    // Every night is the same length here, so the divergent encoding leaves the
+    // cells transparent — the label still has to say what they stand for.
+    const labels = Array.from(container.querySelectorAll('.esm__cell:not(.esm__cell--median)')).map(
+      (cell) => cell.getAttribute('aria-label') ?? ''
+    );
+    expect(labels.some((label) => label.includes('7 h 10 min'))).toBe(true);
+  });
+});

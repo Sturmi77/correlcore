@@ -176,6 +176,29 @@ in both OKLCH and HSL hue space; the OKLCH measurement is authoritative.
 Documented in ADR-0035 §10; enforced by the ESLint custom rule
 `correlcore/no-traffic-light-divergent` (M3.8 Sprint 0).
 
+**When a divergent scale may be used at all (#928 D3):**
+
+A divergent scale needs a neutral point, and drawing one asserts that the
+neutral point is meaningful. That is fine for the 1–5 metrics: a 3 is the
+middle of the question the user answered, so the midpoint comes from the
+scale, not from us.
+
+It is **not** fine for a measured quantity with no such middle. Sleep
+duration had `midpoint: 3` on the normalised axis — exactly 360 minutes —
+so every night under six hours was drawn on the negative pole. That is a
+health norm, shipped as an axis constant.
+
+For a quantity like this:
+
+- Derive the neutral point from the user's **own** data (their median), and
+  say so in the surface — see `$lib/utils/sleepDurationScale.ts` and the
+  `trends.sleep_scale.*` copy.
+- Until there is enough history for that (`SLEEP_BASELINE_MIN_DAYS`), use
+  `SequentialCellMapper` instead: one token, opacity carrying magnitude, no
+  poles.
+- Never label the ends "better" / "worse" for a quantity that has no better
+  end. The event-aligned sheet says "Shorter" / "Longer" for duration.
+
 ---
 
 ## 3. Evaluated Alternatives

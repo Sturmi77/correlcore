@@ -39,14 +39,23 @@
   import { createEventDispatcher } from 'svelte';
   import { _ } from 'svelte-i18n';
   import type { InsightMaturityPhase } from '$lib/api/insights';
-  import type { MetricKey } from '$lib/utils/charts';
-  import { displayTimeseriesValue } from '$lib/utils/metrics';
+  import {
+    chartNormalizeTimeseriesValue,
+    sleepMinutesFromChartValue,
+    SLEEP_MINUTES_PER_CHART_UNIT,
+    type MetricKey,
+  } from '$lib/utils/charts';
   import { buildMedianTrajectory, type MedianTrajectoryCell } from '$lib/utils/medianTrajectory';
   import {
     buildSplitMedianTrajectories,
     truncatePartnerForRowLabel,
   } from '$lib/utils/esmSplitMedian';
-  import { StripCellMapper } from '$lib/charts/adapter';
+  import { SequentialCellMapper, StripCellMapper } from '$lib/charts/adapter';
+  import {
+    formatSleepMinutes,
+    sleepDurationScale,
+    SLEEP_BASELINE_MIN_DAYS,
+  } from '$lib/utils/sleepDurationScale';
   import {
     hasEnoughOccurrences,
     isSmallMultiplesUnlocked,
@@ -94,7 +103,6 @@
     partnerChange: { partnerId: string | null };
   }>();
 
-  const mapper = new StripCellMapper({ midpoint: 3, range: 4 });
   const radius = SMALL_MULTIPLES_RADIUS;
   const cellSize = 22;
   const cellGap = 4;
@@ -112,9 +120,71 @@
 
   $: gateOpen = isSmallMultiplesUnlocked(phase);
   $: metricLabel = $_(metricI18nKey[metric] ?? 'trends.metric.mood');
-  $: legendGradient = `linear-gradient(to right, ${mapper.encode(1).color}, ${
-    mapper.encode(3).color
-  }, ${mapper.encode(5).color})`;
+
+  $: isSleepDuration = metric === 'sleep_minutes_avg';
+
+  /**
+   * #928 D3: sleep duration has no scale midpoint to diverge around, so it is
+   * read against the user's own median — or, before there is enough history
+   * for one, by length alone. Every other metric is a 1–5 rating whose middle
+   * is part of the question the user answered.
+   *
+   * This also repairs the row outright: the sheet used to feed raw minutes
+   * into a mapper configured for a 1–5 scale, so every logged night normalised
+   * far past +1 and the whole row rendered at identical full strength.
+   */
+  $: sleepScale = sleepDurationScale(points.map((point) => point.sleep_minutes_avg));
+  $: mapper = !isSleepDuration
+    ? new StripCellMapper({ midpoint: 3, range: 4 })
+    : sleepScale.mode === 'divergent'
+      ? new StripCellMapper({
+          midpoint: chartNormalizeTimeseriesValue('sleep_minutes_avg', sleepScale.medianMinutes),
+          range: (2 * sleepScale.spreadMinutes) / SLEEP_MINUTES_PER_CHART_UNIT,
+        })
+      : new SequentialCellMapper({
+          min: chartNormalizeTimeseriesValue('sleep_minutes_avg', sleepScale.minMinutes),
+          max: chartNormalizeTimeseriesValue('sleep_minutes_avg', sleepScale.maxMinutes),
+          token: 'var(--color-metric-sleep)',
+        });
+
+  /** Legend ramp drawn from the scale actually in use, not a fixed 1–5 one. */
+  $: legendStops = !isSleepDuration
+    ? [1, 3, 5]
+    : sleepScale.mode === 'divergent'
+      ? [
+          sleepScale.medianMinutes - sleepScale.spreadMinutes,
+          sleepScale.medianMinutes,
+          sleepScale.medianMinutes + sleepScale.spreadMinutes,
+        ].map((minutes) => chartNormalizeTimeseriesValue('sleep_minutes_avg', minutes))
+      : [
+          sleepScale.minMinutes,
+          (sleepScale.minMinutes + sleepScale.maxMinutes) / 2,
+          sleepScale.maxMinutes,
+        ].map((minutes) => chartNormalizeTimeseriesValue('sleep_minutes_avg', minutes));
+  $: legendGradient = `linear-gradient(to right, ${legendStops
+    .map((stop) => mapper.encode(stop).color)
+    .join(', ')})`;
+
+  /** What the sleep row is shaded against — stated, not left to the colours. */
+  $: sleepBasis = !isSleepDuration
+    ? ''
+    : sleepScale.mode === 'divergent'
+      ? $_('trends.sleep_scale.baseline', {
+          values: {
+            median: formatSleepMinutes(sleepScale.medianMinutes),
+            days: sleepScale.loggedDays,
+          },
+        })
+      : $_('trends.sleep_scale.no_baseline', {
+          values: { days: sleepScale.loggedDays, needed: SLEEP_BASELINE_MIN_DAYS },
+        });
+
+  /** Sleep cells stand for a duration; a 1–5 chart position would say nothing. */
+  function formatCellValue(value: number): string {
+    return isSleepDuration
+      ? formatSleepMinutes(sleepMinutesFromChartValue(value))
+      : value.toFixed(1);
+  }
   $: partnerPresenceSet = new Set(partnerPresenceDates);
   $: showPartnerOverlay = partner !== null;
   $: canChoosePartner = partnerCandidates.length > 0;
@@ -140,7 +210,7 @@
   type EncodedMedianCell = MedianTrajectoryCell & {
     fill: string;
     opacity: number;
-    sign: 'neg' | 'mid' | 'pos';
+    sign: 'neg' | 'mid' | 'pos' | 'seq';
   };
 
   type WindowRow = {
@@ -151,7 +221,7 @@
       offset: number;
       fill: string;
       opacity: number;
-      sign: 'neg' | 'mid' | 'pos';
+      sign: 'neg' | 'mid' | 'pos' | 'seq';
       displayValue: number | null;
     }[];
   };
@@ -164,7 +234,7 @@
       const point = byDate.get(date) ?? null;
       const raw = point ? point[metric] : null;
       const display =
-        raw === null || raw === undefined ? null : displayTimeseriesValue(metric, raw);
+        raw === null || raw === undefined ? null : chartNormalizeTimeseriesValue(metric, raw);
       const encoded = mapper.encode(display ?? Number.NaN);
       cells.push({
         date,
@@ -491,17 +561,17 @@
                 data-sign={cell.sign}
                 aria-label={cell.median === null
                   ? `${medianLabel} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: —`
-                  : `${medianLabel} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${cell.median.toFixed(1)}${
+                  : `${medianLabel} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${formatCellValue(cell.median)}${
                       cell.q1 != null && cell.q3 != null
-                        ? ` (IQR ${cell.q1.toFixed(1)}–${cell.q3.toFixed(1)})`
+                        ? ` (IQR ${formatCellValue(cell.q1)}–${formatCellValue(cell.q3)})`
                         : ''
                     }`}
               >
                 <title>
                   {cell.median !== null
-                    ? `median ${cell.median.toFixed(1)}${
+                    ? `median ${formatCellValue(cell.median)}${
                         cell.q1 != null && cell.q3 != null
-                          ? ` · IQR ${cell.q1.toFixed(1)}–${cell.q3.toFixed(1)}`
+                          ? ` · IQR ${formatCellValue(cell.q1)}–${formatCellValue(cell.q3)}`
                           : ''
                       }`
                     : '—'}
@@ -548,7 +618,7 @@
                         ? ` · ${$_('trends.esm.partner_on_day', { values: { partner: partner.label } })}`
                         : ''
                     }`
-                  : `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${cell.displayValue.toFixed(1)}${
+                  : `${row.label} ${cell.offset >= 0 ? '+' : ''}${cell.offset}: ${formatCellValue(cell.displayValue)}${
                       partnerHit && partner
                         ? ` · ${$_('trends.esm.partner_on_day', { values: { partner: partner.label } })}`
                         : ''
@@ -556,7 +626,7 @@
               >
                 <title>
                   {cell.date}{cell.displayValue !== null
-                    ? ` — ${cell.displayValue.toFixed(1)}`
+                    ? ` — ${formatCellValue(cell.displayValue)}`
                     : ''}{partnerHit && partner
                     ? ` · ${$_('trends.esm.partner_on_day', { values: { partner: partner.label } })}`
                     : ''}
@@ -589,10 +659,23 @@
       data-testid="esm-legend"
       aria-label={$_('trends.esm.legend_aria', { values: { metric: metricLabel } })}
     >
-      <span>{$_('trends.esm.legend_worse')}</span>
+      <span
+        >{isSleepDuration
+          ? $_('trends.esm.legend_sleep_shorter')
+          : $_('trends.esm.legend_worse')}</span
+      >
       <span class="esm__legend-scale" style={`background: ${legendGradient}`}></span>
-      <span>{$_('trends.esm.legend_better')}</span>
+      <span
+        >{isSleepDuration
+          ? $_('trends.esm.legend_sleep_longer')
+          : $_('trends.esm.legend_better')}</span
+      >
     </p>
+    {#if isSleepDuration}
+      <!-- A duration has no "better" end, so the scale has to name its own
+           reference point rather than let the colours imply one (#928 D3). -->
+      <p class="esm__sleep-basis" data-testid="esm-sleep-basis">{sleepBasis}</p>
+    {/if}
   {/if}
 </BottomSheet>
 
@@ -690,6 +773,12 @@
 
   .esm__need-more {
     color: var(--color-cursor);
+  }
+
+  .esm__sleep-basis {
+    margin: var(--space-1) 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
   }
 
   .esm__legend {
