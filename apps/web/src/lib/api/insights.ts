@@ -125,6 +125,12 @@ export interface TagCooccurrenceResponse {
   end_date: string;
   min_count: number;
   pairs: TagCooccurrencePair[];
+  /**
+   * The window holds fewer logged days than the analysis needs. An empty
+   * `pairs` then means "cannot be computed here", not "nothing found" — a 7-day
+   * range can never reach the floor (#966).
+   */
+  window_too_short?: boolean;
 }
 
 export interface TagCooccurrenceQuery {

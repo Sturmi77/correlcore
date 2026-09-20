@@ -592,8 +592,16 @@ def compute_tag_tag_associations(
     min_entries: int = MIN_SYMPTOM_ANALYTICS_ENTRIES,
     min_tag_usages: int = MIN_TAG_USAGES_FOR_TAG_COOCCURRENCE,
     card_lift_delta: float = MIN_CARD_LIFT_DELTA,
+    require_significance: bool = True,
 ) -> list[TagTagAssociation]:
-    """Compute tag×tag associations with Fisher exact + BH-FDR (α=0.10)."""
+    """Compute tag×tag associations with Fisher exact + BH-FDR (α=0.10).
+
+    ``require_significance=False`` keeps FDR-insignificant pairs in the result so
+    a caller can apply its own gate. The heatmap needs that: it admits a pair on
+    *either* a large lift or FDR significance, but this function dropped the
+    insignificant ones first, so the lift half of that rule could never fire
+    (#966). ``p_corrected`` rides along either way.
+    """
 
     if len(entries) < min_entries:
         return []
@@ -683,7 +691,9 @@ def compute_tag_tag_associations(
         _fdr_correct([item[9] for item in raw]),
         strict=True,
     ):
-        if not significant or abs(lift - 1.0) <= card_lift_delta:
+        if require_significance and not significant:
+            continue
+        if abs(lift - 1.0) <= card_lift_delta:
             continue
         associations.append(
             TagTagAssociation(
@@ -727,6 +737,9 @@ def heatmap_tag_tag_associations(
         min_entries=min_entries,
         min_tag_usages=min_tag_usages,
         card_lift_delta=0.0,
+        # The gate below admits a pair on a large lift *or* FDR significance;
+        # dropping the insignificant ones here would decide that in advance.
+        require_significance=False,
     )
     return [
         association

@@ -3681,6 +3681,11 @@ export interface components {
              * Format: date
              */
             start_date: string;
+            /**
+             * Window Too Short
+             * @default false
+             */
+            window_too_short: boolean;
         };
         /** TagCooccurrenceTagRef */
         TagCooccurrenceTagRef: {

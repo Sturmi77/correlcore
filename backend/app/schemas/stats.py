@@ -179,6 +179,11 @@ class TagCooccurrenceResponse(BaseModel):
     end_date: date_type
     min_count: int = Field(ge=1)
     pairs: list[TagCooccurrencePair] = Field(default_factory=list)
+    # True when the window holds fewer logged days than the analysis needs, so
+    # an empty `pairs` means "cannot be computed here", not "nothing found".
+    # A 7-day range can never reach the floor, so it returned an empty panel
+    # with no explanation (#966).
+    window_too_short: bool = False
 
 
 class SymptomTagCooccurrenceSymptomRef(BaseModel):

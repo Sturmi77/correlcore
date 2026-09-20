@@ -5028,6 +5028,11 @@
             "format": "date",
             "title": "Start Date",
             "type": "string"
+          },
+          "window_too_short": {
+            "default": false,
+            "title": "Window Too Short",
+            "type": "boolean"
           }
         },
         "required": [
