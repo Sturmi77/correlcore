@@ -16,11 +16,15 @@
     : 1;
   $: peak = bars?.find((bar) => bar.active) ?? null;
   $: hasUnmeasured = bars?.some((bar) => bar.r === null) ?? false;
-  $: goodRule = freq
-    ? $_(`insights.signal.lag_good_rule_${freq.goodDirection}`, {
-        values: { target: freq.targetLabel ?? '', threshold: freq.goodThreshold },
-      })
-    : '';
+  // Stays empty when the comparator is unknown (pre-`good_direction` payload
+  // with an unrecognised target): better to say nothing than to state the rule
+  // backwards.
+  $: goodRule =
+    freq && freq.goodDirection
+      ? $_(`insights.signal.lag_good_rule_${freq.goodDirection}`, {
+          values: { target: freq.targetLabel ?? '', threshold: freq.goodThreshold },
+        })
+      : '';
   $: featureName =
     freq?.featureKey === 'sleep_minutes'
       ? $_('trends.metric.sleep_minutes')
@@ -107,7 +111,9 @@
             lowN: freq.lowN,
           },
         })}
-        <span class="signal-lag__good-rule" data-testid="signal-lag-good-rule">{goodRule}</span>
+        {#if goodRule}
+          <span class="signal-lag__good-rule" data-testid="signal-lag-good-rule">{goodRule}</span>
+        {/if}
       </p>
     {/if}
   </section>

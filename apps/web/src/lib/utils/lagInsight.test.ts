@@ -117,4 +117,50 @@ describe('lagInsight', () => {
     expect(stress?.goodDirection).toBe('lte');
     expect(stress?.goodThreshold).toBe(2);
   });
+
+  it('never flips a legacy stress rule when good_direction is absent', () => {
+    // Insights generated before `good_direction` existed still carry
+    // `good_threshold: 2`. Defaulting the comparator to 'gte' would render
+    // "stress 2 or higher" — the rule backwards.
+    const legacyStress = parseLagFrequencyView(
+      lagInsight({
+        payload: {
+          method: 'lag',
+          lag_days: 1,
+          target: { kind: 'metric', key: 'stress', name: 'stress' },
+          lag_profile: [
+            { lag: 1, r: -0.4 },
+            { lag: 2, r: -0.2 },
+          ],
+          high_feature_n: 20,
+          high_feature_good_count: 8,
+          low_feature_n: 20,
+          low_feature_good_count: 3,
+          good_threshold: 2,
+        },
+      })
+    );
+    expect(legacyStress?.goodDirection).toBe('lte');
+  });
+
+  it('stays silent rather than guessing when target and direction are both absent', () => {
+    const unknown = parseLagFrequencyView(
+      lagInsight({
+        payload: {
+          method: 'lag',
+          lag_days: 1,
+          lag_profile: [
+            { lag: 1, r: 0.4 },
+            { lag: 2, r: 0.2 },
+          ],
+          high_feature_n: 20,
+          high_feature_good_count: 8,
+          low_feature_n: 20,
+          low_feature_good_count: 3,
+          good_threshold: 4,
+        },
+      })
+    );
+    expect(unknown?.goodDirection).toBeNull();
+  });
 });

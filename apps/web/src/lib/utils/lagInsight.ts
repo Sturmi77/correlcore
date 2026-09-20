@@ -19,8 +19,12 @@ export type LagFrequencyView = {
   lowN: number;
   lowGood: number;
   goodThreshold: number;
-  /** '<=' on stress (lower raw is better), '>=' on mood/energy. */
-  goodDirection: 'lte' | 'gte';
+  /**
+   * '<=' on stress (lower raw is better), '>=' on mood/energy. Null when the
+   * payload predates `good_direction` and the target is not recognisable — the
+   * UI must then stay silent rather than assert a rule it cannot verify.
+   */
+  goodDirection: 'lte' | 'gte' | null;
   lagDays: number;
   featureKey: string | null;
   featureLabel: string | null;
@@ -35,6 +39,24 @@ function asNumber(value: unknown): number | null {
 
 function asString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+/** Targets whose raw scale runs the other way: a low value is the good day. */
+const INVERTED_TARGET_KEYS = new Set(['stress']);
+
+/**
+ * Resolve the good-day comparator.
+ *
+ * `good_direction` is authoritative, but insights generated before it existed
+ * do not carry it — and they *do* carry `good_threshold`, so defaulting to
+ * 'gte' would print "stress 2 or higher" for a legacy stress finding, which
+ * inverts the rule. Fall back to the target key, and to null when even that is
+ * missing.
+ */
+function resolveGoodDirection(explicit: unknown, targetKey: string | null): 'lte' | 'gte' | null {
+  if (explicit === 'lte' || explicit === 'gte') return explicit;
+  if (targetKey === null) return null;
+  return INVERTED_TARGET_KEYS.has(targetKey) ? 'lte' : 'gte';
 }
 
 export function isLagInsight(insight: InsightResponse): boolean {
@@ -108,13 +130,14 @@ export function parseLagFrequencyView(insight: InsightResponse): LagFrequencyVie
     payload.target && typeof payload.target === 'object'
       ? (payload.target as Record<string, unknown>)
       : null;
+  const targetKey = asString(target?.key) ?? asString(target?.slug);
   return {
     highN,
     highGood,
     lowN,
     lowGood,
     goodThreshold: asNumber(payload.good_threshold) ?? 4,
-    goodDirection: payload.good_direction === 'lte' ? 'lte' : 'gte',
+    goodDirection: resolveGoodDirection(payload.good_direction, targetKey),
     lagDays,
     featureKey: asString(feature?.key) ?? asString(feature?.slug),
     featureLabel: asString(feature?.name) ?? asString(feature?.label),
