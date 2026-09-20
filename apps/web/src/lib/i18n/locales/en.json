@@ -1727,7 +1727,7 @@
       "series_energy": "energy",
       "direction_higher": "higher",
       "direction_lower": "lower",
-      "statement": "Level shift in {series} around {date}: average moved from {before} to {after} ({direction}). Not a forecast.",
+      "statement": "Level shift in {series} between {date} and {shiftDate}: average moved from {before} to {after} ({direction}). Not a forecast.",
       "marker_label": "Level shift · {series}",
       "marker_description": "{before} → {after} (around {date})"
     },

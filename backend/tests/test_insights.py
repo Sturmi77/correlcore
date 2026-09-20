@@ -1317,3 +1317,82 @@ async def test_get_visible_insight_by_id_returns_included_tags() -> None:
     ):
         found = await get_visible_insight_by_id(AsyncMock(), user_id=user.id, insight_id=insight.id)
     assert found is insight
+
+
+def test_null_and_positive_association_share_one_latest_slot() -> None:
+    """#964: they answer the same question about the same subject.
+
+    Generation only deletes rows for the current date, so a tag that fell below
+    the effect threshold kept its stale `pointbiserial` row alongside the fresh
+    `null_association` one. Keying on the raw insight_type let both survive
+    dedupe, and a dismissal on one left the other standing.
+    """
+    user = make_user()
+    positive = _make_insight(
+        user,
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_label="Cycling",
+        metric="mood",
+        payload={"tag_slug": "cycling"},
+    )
+    null_row = _make_insight(
+        user,
+        insight_type=InsightType.NULL_ASSOCIATION,
+        subject_type="tag",
+        subject_label="Cycling",
+        metric="mood_score",
+        payload={"tag_slug": "cycling"},
+    )
+
+    assert insight_subject_key(positive) == insight_subject_key(null_row)
+
+
+def test_changepoint_identity_survives_the_label_rename() -> None:
+    """#964: the subject key must not depend on a label that changed shape.
+
+    Stored rows carry `entry_<index>`; new ones carry an ISO date. A label-based
+    key made them different subjects, so both survived and old dismissals
+    stopped matching.
+    """
+    user = make_user()
+    legacy = _make_insight(
+        user,
+        insight_type=InsightType.CHANGEPOINT,
+        subject_type="changepoint",
+        subject_label="entry_42",
+        metric="stress_changepoint",
+        payload={"series": "stress"},
+    )
+    dated = _make_insight(
+        user,
+        insight_type=InsightType.CHANGEPOINT,
+        subject_type="changepoint",
+        subject_label="2026-03-07",
+        metric="stress_changepoint",
+        payload={"series": "stress"},
+    )
+
+    assert insight_subject_key(legacy) == insight_subject_key(dated)
+
+
+def test_changepoints_of_different_series_stay_separate() -> None:
+    user = make_user()
+    stress = _make_insight(
+        user,
+        insight_type=InsightType.CHANGEPOINT,
+        subject_type="changepoint",
+        subject_label="2026-03-07",
+        metric="stress_changepoint",
+        payload={"series": "stress"},
+    )
+    mood = _make_insight(
+        user,
+        insight_type=InsightType.CHANGEPOINT,
+        subject_type="changepoint",
+        subject_label="2026-03-07",
+        metric="mood_changepoint",
+        payload={"series": "mood_score"},
+    )
+
+    assert insight_subject_key(stress) != insight_subject_key(mood)

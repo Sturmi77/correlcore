@@ -73,9 +73,13 @@ def _candidate_for_series(
     changepoint_dates = [
         _iso(entries[cp].entry_date) for cp in changepoints if 0 <= cp < len(entries)
     ]
+    # `changepoint_date` is the last day before the shift and `shift_date` the
+    # first day after it, so naming them "around X (shift from Y)" put the later
+    # date behind "from" and read as if the change began after the day it was
+    # detected around (#964). State them as the boundary they are.
     statement = (
-        f"Your {series_label} average shifted to {direction} levels around "
-        f"{_iso(changepoint_date)} (shift from {_iso(shift_date)})."
+        f"Your {series_label} average shifted to {direction} levels "
+        f"between {_iso(changepoint_date)} and {_iso(shift_date)}."
     )
     effect_size = round(delta, 4)
     return InsightCandidate(
