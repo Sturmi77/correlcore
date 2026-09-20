@@ -28,8 +28,32 @@
     return metric;
   }
 
+  function payloadCount(row: InsightResponse, ...keys: string[]): number | null {
+    const payload = row.payload as Record<string, unknown> | undefined;
+    for (const key of keys) {
+      const value = payload?.[key];
+      if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value;
+    }
+    return null;
+  }
+
+  /**
+   * Both group sizes where the payload has them, the total only as a fallback.
+   *
+   * Phase 7 added `tagged_count` / `untagged_count` for tag associations and
+   * `symptom_n` / `comparison_n` for symptom ones, but this kept showing the
+   * combined `sample_n`. An association built on 5 marked against 95 unmarked
+   * days then looked as well covered as a balanced 50-to-50 comparison — the
+   * one number that puts the coefficient in context was missing (#965).
+   */
   function frequencyLabel(row: InsightResponse): string {
-    // Dual denominators arrive with Phase 7 payload work; until then show sample_n.
+    const withN = payloadCount(row, 'tagged_count', 'symptom_n');
+    const withoutN = payloadCount(row, 'untagged_count', 'comparison_n');
+    if (withN !== null && withoutN !== null) {
+      return $_('insights.report.frequency_groups', {
+        values: { withN, withoutN },
+      });
+    }
     return $_('insights.report.frequency_n', { values: { n: row.sample_n } });
   }
 </script>
@@ -84,12 +108,18 @@
       </span>
       <span role="cell" class="report-table__freq">{frequencyLabel(row)}</span>
       <span role="cell" class="report-table__evidence">
+        <!--
+          The badge's label comes from the account-wide maturity phase, so its
+          number has to come from there too. The row's sample made it read
+          "Stable · 12 entries" off a phase reached from a different total — and
+          that same 12 already sits in the coverage column (#965).
+        -->
         <InsightEvidence
           {maturity}
           showMaturityBadge={Boolean(maturity)}
           confidenceScore={row.confidence ?? 0}
           currentTier={row.tier}
-          entryCount={row.sample_n}
+          entryCount={maturity?.current_entries ?? row.sample_n}
           showSample={false}
         />
         <span class="report-table__conf-pct">{matrixConfidencePercent(row.confidence)}</span>

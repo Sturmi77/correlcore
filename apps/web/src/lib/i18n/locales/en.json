@@ -1357,6 +1357,8 @@
       "col_frequency": "Coverage",
       "col_confidence": "Confidence",
       "frequency_n": "Based on {n} entries",
+      "frequency_groups": "{withN} with \u00b7 {withoutN} without",
+      "signal_not_reportable": "This signal cannot be added to the report \u2014 the report only lists association rows.",
       "coverage": "{rows} rows · largest sample {n} entries",
       "disclaimer": "Not a diagnosis. Patterns from self-reported entries only. Do not share with an employer.",
       "export_aria": "Export report formats",

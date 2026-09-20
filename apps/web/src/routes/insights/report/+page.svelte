@@ -4,6 +4,7 @@
    * Secondary route under Insights; export home for PNG/CSV/JSON/PDF.
    */
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
@@ -38,15 +39,34 @@
   $: selectedRows = reportRows.filter((row) => selectedIds.includes(row.id));
   $: coverage = matrixCoverageStats(selectedRows.length > 0 ? selectedRows : reportRows);
 
+  /**
+   * `?signal=<id>` preselects one row.
+   *
+   * "Remember for report" on the signal page used to be a bare link, so the
+   * chosen signal had no effect here at all — and for a null association it
+   * opened a report that filters that very signal out (#965).
+   */
+  $: requestedSignalId = $page.url.searchParams.get('signal');
+
   $: {
     const valid = new Set(reportRows.map((row) => row.id));
     const kept = selectedIds.filter((id) => valid.has(id));
-    const next =
-      kept.length === 0 && reportRows.length > 0 ? reportRows.map((row) => row.id) : kept;
+    let next = kept;
+    if (kept.length === 0 && reportRows.length > 0) {
+      next =
+        requestedSignalId && valid.has(requestedSignalId)
+          ? [requestedSignalId]
+          : reportRows.map((row) => row.id);
+    }
     const same =
       next.length === selectedIds.length && next.every((id, index) => id === selectedIds[index]);
     if (!same) selectedIds = next;
   }
+
+  /** True when a signal was requested but is not among the reportable rows. */
+  $: requestedSignalMissing = Boolean(
+    requestedSignalId && !loading && !reportRows.some((row) => row.id === requestedSignalId)
+  );
 
   async function loadReport(): Promise<void> {
     loading = true;
@@ -199,6 +219,18 @@
     </button>
   </div>
 
+  {#if requestedSignalMissing}
+    <!--
+      A null association, or any signal outside the report families, is not a
+      reportable row. Silently falling back to "everything selected" would make
+      the action look like it had worked (#965).
+    -->
+    <InlineAlert
+      variant="info"
+      message={$_('insights.report.signal_not_reportable')}
+      testId="report-signal-missing"
+    />
+  {/if}
   {#if exportError}
     <InlineAlert variant="error" message={exportError} />
   {/if}

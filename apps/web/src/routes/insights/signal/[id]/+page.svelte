@@ -250,7 +250,11 @@
         <a class="signal-page__chip" href="/trends" data-testid="signal-pin-trends">
           {$_('insights.signal.pin_trends')}
         </a>
-        <a class="signal-page__chip" href="/insights/report" data-testid="signal-report-link">
+        <a
+          class="signal-page__chip"
+          href={`/insights/report?signal=${encodeURIComponent(insight.id)}`}
+          data-testid="signal-report-link"
+        >
           {$_('insights.signal.remember_report')}
         </a>
       </div>
