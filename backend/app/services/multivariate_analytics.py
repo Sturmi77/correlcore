@@ -18,6 +18,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from statsmodels.stats.multitest import multipletests
 
+from app.services.metric_semantics import metric_semantics
+
 MetricName = Literal["mood_score", "energy", "stress"]
 FeatureKind = Literal["metric", "tag", "symptom"]
 
@@ -434,14 +436,15 @@ def _lag_median_split_frequencies(
     if len(high) == 0 or len(low) == 0:
         return None
 
-    # Stress: lower raw is better → "good" when ≤ 2 (display ≥ 4 on inverted scale).
-    good_direction: Literal["lte", "gte"] = "lte" if target == "stress" else "gte"
+    # The reading rules live in one place now (#955) — stress is "good" at <= 2,
+    # everything else at >= 4, and this no longer restates that locally.
+    semantics = metric_semantics(target)
+    good_direction = semantics.good_direction
+    good_threshold = semantics.good_threshold
     if good_direction == "lte":
-        good_threshold = 2
         high_good = int((high[target] <= good_threshold).sum())
         low_good = int((low[target] <= good_threshold).sum())
     else:
-        good_threshold = 4
         high_good = int((high[target] >= good_threshold).sum())
         low_good = int((low[target] >= good_threshold).sum())
 

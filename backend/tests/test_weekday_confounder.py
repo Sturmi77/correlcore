@@ -294,9 +294,31 @@ def test_same_work_context_metric_frequencies_uses_modal_signal_context() -> Non
     contexts = ["office"] * 8 + ["homeoffice"] * 4 + ["office"] * 8
     binary = [1] * 8 + [1] * 4 + [0] * 8
     metrics = [5] * 8 + [3] * 4 + [2] * 8
-    freqs = same_work_context_metric_frequencies(contexts, binary, metrics)
+    freqs = same_work_context_metric_frequencies(contexts, binary, metrics, metric="mood_score")
     assert freqs.context == "office"
     assert freqs.with_n == 8
     assert freqs.without_n == 8
     assert freqs.with_good == 8
     assert freqs.without_good == 0
+
+
+def test_same_work_context_frequencies_read_stress_on_its_own_scale() -> None:
+    """#955: `>= 4` on raw stress counted the most stressful days as the good ones.
+
+    The symptom family reaches this helper once per metric target, stress
+    included, so the fixed mood threshold reported a symptom that goes with high
+    stress as one that goes with good days.
+    """
+    contexts = ["office"] * 16
+    binary = [1] * 8 + [0] * 8
+    # Signal days are highly stressed (5); comparison days are calm (1).
+    metrics = [5] * 8 + [1] * 8
+
+    stress = same_work_context_metric_frequencies(contexts, binary, metrics, metric="stress")
+    assert stress.with_good == 0, "stress 5 is the worst day, never a good one"
+    assert stress.without_good == 8
+
+    # Same numbers on a normal scale mean the opposite.
+    mood = same_work_context_metric_frequencies(contexts, binary, metrics, metric="mood_score")
+    assert mood.with_good == 8
+    assert mood.without_good == 0

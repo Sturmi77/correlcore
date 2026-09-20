@@ -4,6 +4,7 @@
  */
 
 import type { InsightResponse } from '$lib/api/insights';
+import { displayMetricValue } from '$lib/utils/metrics';
 import type { EventMarker } from '$lib/components/trends/EventMarkerLayer.svelte';
 
 type TranslateFn = (key: string, opts?: { values?: Record<string, string | number> }) => string;
@@ -51,14 +52,21 @@ export function formatChangepointStatement(
   const after = asNumber(payload.after_avg);
   const series = changepointSeries(insight);
   if (!date || before == null || after == null || !series) return null;
-  const direction = after >= before ? 'higher' : 'lower';
+  // Raw averages arrive from the backend; stress is plotted on the inverted
+  // scale, so comparing and printing them raw made the sentence contradict its
+  // own chart — "2.1 → 4.0 (higher)" beside a line moving down (#955).
+  const beforeDisplay = displayMetricValue(series, before);
+  const afterDisplay = displayMetricValue(series, after);
+  const direction = afterDisplay >= beforeDisplay ? 'higher' : 'lower';
   return t('insights.changepoint.statement', {
     values: {
       series: t(`insights.changepoint.series_${series}`),
       date,
       shiftDate: shiftDate ?? date,
-      before: before.toFixed(1),
-      after: after.toFixed(1),
+      // Printed on the same scale the chart draws, so the numbers and the
+      // direction word agree with the line beside them.
+      before: beforeDisplay.toFixed(1),
+      after: afterDisplay.toFixed(1),
       direction: t(`insights.changepoint.direction_${direction}`),
     },
   });

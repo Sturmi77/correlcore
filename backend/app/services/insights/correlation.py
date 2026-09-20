@@ -358,6 +358,7 @@ def _pointbiserial_candidates(
             [entry.work_context.value for entry in entries],
             binary,
             mood_values,
+            metric="mood_score",
         )
 
         raw.append(
@@ -457,12 +458,15 @@ def _pointbiserial_candidates(
                     "p_corrected": round(p_corrected, 4),
                     "confounder": primary,
                     "confounders": confounders,
-                    **_with_without_distribution_payload(tagged_moods, untagged_moods),
+                    **_with_without_distribution_payload(
+                        tagged_moods, untagged_moods, metric="mood_score"
+                    ),
                     **situation_adjustment_payload(
                         weekday=weekday_adj,
                         calendar=calendar_adj,
                         situation=situation,
                         primary_confounder=primary,
+                        metric="mood_score",
                     ),
                 },
                 generated_for_date=generated_for_date,
@@ -514,7 +518,9 @@ def _pointbiserial_candidates(
                     "untagged_count": untagged_count,
                     "tagged_mood_avg": round(tagged_mood, 2),
                     "untagged_mood_avg": round(untagged_mood, 2),
-                    **_with_without_distribution_payload(tagged_moods, untagged_moods),
+                    **_with_without_distribution_payload(
+                        tagged_moods, untagged_moods, metric="mood_score"
+                    ),
                 },
                 generated_for_date=generated_for_date,
             )

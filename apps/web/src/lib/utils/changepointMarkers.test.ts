@@ -62,3 +62,33 @@ describe('changepointMarkers', () => {
     expect(markers[0].date).toBe('2026-04-01');
   });
 });
+
+describe('stress is read on the scale it is plotted on (#955)', () => {
+  const stressCp = (before: number, after: number) =>
+    changepoint({ payload: { series: 'stress', before_avg: before, after_avg: after } });
+
+  it('calls rising raw stress a move to lower levels', () => {
+    // Raw 2.1 -> 4.0 is more stress. The chart plots the inverted value, so the
+    // line moves down; the sentence has to say the same thing.
+    const out = formatChangepointStatement(stressCp(2.1, 4.0), t) ?? '';
+    expect(out).toContain('direction_lower');
+    expect(out).not.toContain('direction_higher');
+  });
+
+  it('prints the values on the plotted scale', () => {
+    const out = formatChangepointStatement(stressCp(2.1, 4.0), t) ?? '';
+    // 6 - 2.1 = 3.9 and 6 - 4.0 = 2.0
+    expect(out).toContain('"before":"3.9"');
+    expect(out).toContain('"after":"2.0"');
+  });
+
+  it('leaves a non-inverted metric alone', () => {
+    const mood = changepoint({
+      metric: 'mood_changepoint',
+      payload: { series: 'mood_score', before_avg: 2.0, after_avg: 4.0 },
+    });
+    const out = formatChangepointStatement(mood, t) ?? '';
+    expect(out).toContain('direction_higher');
+    expect(out).toContain('"after":"4.0"');
+  });
+});

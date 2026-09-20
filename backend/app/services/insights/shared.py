@@ -23,6 +23,19 @@ from statsmodels.stats.multitest import multipletests
 from app.core.config import settings
 from app.models.entry import InferredPeriod, WorkContext
 from app.models.insight import InsightTier, InsightType
+from app.services.metric_semantics import (
+    GOOD_METRIC_THRESHOLD as _GOOD_METRIC_THRESHOLD,
+)
+from app.services.metric_semantics import (
+    METRIC_SCALE_MAX as _METRIC_SCALE_MAX,
+)
+from app.services.metric_semantics import (
+    METRIC_SCALE_MIN as _METRIC_SCALE_MIN,
+)
+from app.services.metric_semantics import (
+    good_metric_count,
+    metric_semantics,
+)
 
 EARLY_ENTRY_COUNT = 3
 PRELIMINARY_ENTRY_COUNT = 8
@@ -39,9 +52,11 @@ FDR_ALPHA = 0.05
 # Phase 7 / D2: cap null (non-result) associations so the feed stays readable.
 MAX_NULL_ASSOCIATIONS = 3
 # Natural-frequency "good day" threshold on the 1–5 metric scales (ADR-0043 §4).
-GOOD_METRIC_THRESHOLD = 4
-METRIC_SCALE_MIN = 1
-METRIC_SCALE_MAX = 5
+# Re-exported from the central metric semantics (#955) so existing importers
+# keep working; the values themselves live in one place now.
+GOOD_METRIC_THRESHOLD = _GOOD_METRIC_THRESHOLD
+METRIC_SCALE_MIN = _METRIC_SCALE_MIN
+METRIC_SCALE_MAX = _METRIC_SCALE_MAX
 
 MetricName = Literal["mood_score", "energy", "stress"]
 
@@ -230,28 +245,31 @@ def _metric_level_counts(
     return counts
 
 
-def _good_metric_count(
-    values: Sequence[float | int],
-    *,
-    threshold: int = GOOD_METRIC_THRESHOLD,
-) -> int:
-    return sum(1 for value in values if float(value) >= threshold)
-
-
 def _with_without_distribution_payload(
     with_values: Sequence[float | int],
     without_values: Sequence[float | int],
+    *,
+    metric: str,
 ) -> dict[str, object]:
-    """Shared G2 payload fields for pointbiserial-style associations."""
+    """Shared G2 payload fields for pointbiserial-style associations.
 
+    ``metric`` decides what a good day is. It is required rather than defaulted:
+    this helper is reached from the tag family (mood only) *and* the symptom
+    family, which iterates every metric target — and a default of "mood" there
+    counted the worst stress days as good ones (#955).
+    """
+
+    semantics = metric_semantics(metric)
     return {
         "with_distribution": _metric_level_counts(with_values),
         "without_distribution": _metric_level_counts(without_values),
-        "with_good_count": _good_metric_count(with_values),
-        "without_good_count": _good_metric_count(without_values),
-        "good_threshold": GOOD_METRIC_THRESHOLD,
-        "scale_min": METRIC_SCALE_MIN,
-        "scale_max": METRIC_SCALE_MAX,
+        "with_good_count": good_metric_count(metric, with_values),
+        "without_good_count": good_metric_count(metric, without_values),
+        "good_threshold": semantics.good_threshold,
+        # The comparator travels with the counts so the UI never has to infer it.
+        "good_direction": semantics.good_direction,
+        "scale_min": semantics.scale_min,
+        "scale_max": semantics.scale_max,
     }
 
 

@@ -20,11 +20,18 @@ vi.mock('svelte-i18n', async () => {
     _: readable((key: string, options?: { values?: Record<string, unknown> }) => {
       const values = options?.values ?? {};
       if (key === 'habits.window_last') return `last ${values.n} days`;
+      // Mirrors the real templates. #955 replaced the confidence label here with
+      // the coefficient itself: `correlation_score` is an effect, and running it
+      // through the confidence vocabulary called a large effect on thin data a
+      // "strong finding".
       if (key === 'habits.correlation_brief')
-        return `${values.label} · ${values.metric} · ${values.n} days`;
+        return `r = ${values.r} · ${values.metric} · ${values.n} days`;
       if (key === 'habits.correlation_pending') return 'No correlation data yet';
       if (key === 'habits.correlation_predictor') {
-        return `${values.name} and ${values.metric}: ${values.label} (${values.n} days)`;
+        return `${values.name} and ${values.metric}: association r = ${values.r} (over ${values.n} tracked days)`;
+      }
+      if (key === 'habits.correlation_not_confidence') {
+        return 'r is how strong the association is, not how certain';
       }
       if (typeof key === 'string' && key.startsWith('insights.confidence_label.')) {
         return key.replace('insights.confidence_label.', '');
@@ -96,8 +103,10 @@ describe('HabitsPanel', () => {
     expect(screen.queryByText(/63%.*last 28 days/)).toBeNull();
     expect(screen.getAllByText('10 of 16 target days')).toHaveLength(2);
     expect(screen.getAllByText('+13 pp vs previous period')).toHaveLength(2);
-    expect(screen.getByText('strong_finding · mood · 10 days')).toBeTruthy();
-    expect(screen.getByText('Walk and mood: strong_finding (10 days)')).toBeTruthy();
+    expect(screen.getByText('r = 0.72 · mood · 10 days')).toBeTruthy();
+    expect(
+      screen.getByText('Walk and mood: association r = 0.72 (over 10 tracked days)')
+    ).toBeTruthy();
   });
 
   it('shows the active global range window label', () => {
@@ -182,6 +191,6 @@ describe('HabitsPanel', () => {
       },
     });
 
-    expect(screen.getByText('strong_finding · mood · 10 days')).toBeTruthy();
+    expect(screen.getByText('r = 0.72 · mood · 10 days')).toBeTruthy();
   });
 });

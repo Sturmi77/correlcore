@@ -25,7 +25,11 @@
   import EventAlignedSmallMultiplesSheet from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { TimeseriesPoint } from '$lib/api/stats';
-  import { insightMetricToChartKey, isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
+  import {
+    insightMetricToChartKey,
+    insightMetricToEntryField,
+    isExploreEventsSubject,
+  } from '$lib/utils/exploreEventWindows';
   import { isNullAssociation, parseWithWithoutView } from '$lib/utils/withWithoutDistribution';
   import { parseSameSituationView } from '$lib/utils/sameSituation';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
@@ -259,6 +263,7 @@
           withoutSe={verification.without_se}
           subjectLabel={insight.subject_label ?? ''}
           showUncertainty={showUncertaintyRibbon}
+          metric={insightMetricToEntryField(insight.metric)}
         />
         <p class="signal-page__privacy">{$_('insights.signal.scatter_privacy')}</p>
       {/if}
