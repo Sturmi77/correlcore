@@ -64,6 +64,7 @@
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
   import { changepointInsightsToMarkers } from '$lib/utils/changepointMarkers';
+  import type { EsmPartner } from '$lib/utils/esmPartner';
   import type { EventMarker } from '$lib/components/trends/EventMarkerLayer.svelte';
   import {
     readCompareMode,
@@ -164,6 +165,8 @@
   let compareTagClusterLabels: { cluster_id: number; label: string }[] = [];
   let compareEsmOpen = false;
   let compareEsmWindows: EventWindow[] = [];
+  let compareEsmPartner: EsmPartner | null = null;
+  let compareEsmPartnerDates: readonly string[] = [];
   let mobileMedia: MediaQueryList | null = null;
   let activeDevFixtureKey = '';
 
@@ -633,6 +636,8 @@
             on:layerChange={(event) => setCompareLayers(event.detail)}
             on:checkQuestion={(event) => {
               compareEsmWindows = event.detail.windows;
+              compareEsmPartner = event.detail.partner ?? null;
+              compareEsmPartnerDates = event.detail.partnerPresenceDates ?? [];
               compareEsmOpen = true;
             }}
           />
@@ -738,12 +743,16 @@
     <EventAlignedSmallMultiplesSheet
       open={compareEsmOpen}
       events={compareEsmWindows}
+      partner={compareEsmPartner}
+      partnerPresenceDates={compareEsmPartnerDates}
       points={displayTimeseries?.points ?? []}
       metric="mood_avg"
       phase={panelMaturity?.phase ?? null}
       on:close={() => {
         compareEsmOpen = false;
         compareEsmWindows = [];
+        compareEsmPartner = null;
+        compareEsmPartnerDates = [];
       }}
     />
   {/if}

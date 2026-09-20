@@ -10,6 +10,7 @@
    * InsightMatrix (M3.1 Step 4 / TODO-5) is rendered above the top insight
    * to show the unified correlation matrix for pointbiserial insights.
    */
+  import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import { get } from 'svelte/store';
@@ -702,6 +703,14 @@
   }
 
   onMount(() => {
+    // Read straight from the URL rather than the page store: this runs in unit
+    // tests too, where no SvelteKit runtime provides one.
+    if (browser) {
+      carriedSignalIds = (new URLSearchParams(window.location.search).get('signals') ?? '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+    }
     mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
     syncCompactInsights();
     mobileMedia?.addEventListener('change', syncCompactInsights);
@@ -755,6 +764,23 @@
   $: filteredRankedInsights = rankInsights(rankableInsights);
   $: primaryMobileInsight = filteredRankedInsights[0] ?? null;
   $: remainingMobileInsights = filteredRankedInsights.slice(1);
+  /**
+   * `?signals=a,b` carries the pinned pair from Compare's "check this question".
+   * Without it the link landed on the bare hub and the hypothesis had to be
+   * found again among unrelated insights (#967).
+   */
+  let carriedSignalIds: string[] = [];
+
+  /** Insights whose subject is one of the carried signals. */
+  $: carriedMatches = carriedSignalIds.length
+    ? insights.filter(
+        (insight) => insight.subject_id && carriedSignalIds.includes(insight.subject_id)
+      )
+    : [];
+
+  $: carriedSignalsUnmatched =
+    carriedSignalIds.length > 0 && insightsLoaded && carriedMatches.length === 0;
+
   $: feedInsights =
     compactInsights && primaryMobileInsight ? remainingMobileInsights : filteredRankedInsights;
   $: showInsightFeed =
@@ -1148,6 +1174,18 @@
 
           {#if !compactInsights && primaryMobileInsight}
             <AnalysisCrossLink insight={primaryMobileInsight} direction="to-trends" />
+          {/if}
+
+          {#if carriedSignalsUnmatched}
+            <!--
+              The pair came from Compare, but no generated insight covers it yet.
+              Saying so beats dropping the user into an unfiltered hub (#967).
+            -->
+            <InlineAlert
+              variant="info"
+              message={$_('insights.carried_signals_unmatched')}
+              testId="insights-carried-signals-unmatched"
+            />
           {/if}
 
           {#if showInsightFeed}
