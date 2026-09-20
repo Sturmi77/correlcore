@@ -111,6 +111,8 @@
   let activeTab: TrendTab = 'compare';
   let selectedCategory: TagCategory | 'all' = 'all';
   let timeseries: TimeseriesResponse | null = null;
+  /** Analysis window the current `timeseries` was loaded for. */
+  let loadedWindowDays: TrendWindowDays | null = null;
   let heatmap: TagHeatmapResponse | null = null;
   let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let healthContext: HealthContextResponse | null = null;
@@ -189,6 +191,12 @@
   async function loadTrends(rangeOverride?: TrendWindowDays): Promise<void> {
     if ($auth.status !== 'authenticated') return;
     const activeWindowDays: TrendWindowDays = rangeOverride ?? windowDays;
+    // Record the window this load is for *before* awaiting. The reload guard
+    // below compares against this, never against a field of the response: a
+    // response that omits it (older backend, cached service-worker entry, a
+    // test fixture) would otherwise never satisfy the guard and the reactive
+    // statement would re-enter loadTrends forever.
+    loadedWindowDays = activeWindowDays;
     const activeRange = trendWindowDaysToTimeseriesRange(activeWindowDays);
     const habitWindow = activeWindowDays as HabitWindow;
     loading = true;
@@ -393,9 +401,11 @@
   $: if (
     $auth.status === 'authenticated' &&
     timeseries &&
-    // Compare the exact window, not the coarse enum: 14 and 28 both used to
-    // land on distinct enums by luck, but `days` is what was actually fetched.
-    (timeseries.days ?? null) !== $analysisRange &&
+    // The window this data was loaded for, not a field of the response. The
+    // coarse enum could not tell 14 from 28 correctly, and reading `days` off
+    // the response makes the guard unsatisfiable whenever the field is absent.
+    loadedWindowDays !== null &&
+    loadedWindowDays !== $analysisRange &&
     !loading
   ) {
     void loadTrends($analysisRange);
