@@ -1321,6 +1321,7 @@
     }
   },
   "insights": {
+    "carried_signals_unmatched": "Zu diesem Paar gibt es noch keine Erkenntnis \u2014 sie entsteht, sobald genug gemeinsame Tage vorliegen.",
     "page": {
       "title": "Erkenntnisse",
       "subtitle": "Aktuelle Muster aus deinen eigenen Eintraegen, sachlich und ohne Diagnose.",
@@ -1653,6 +1654,7 @@
       "non_causal": "Ein Zusammenhang in deinen Eintraegen — keine Ursache.",
       "zeitversatz_badge": "Zeitversatz (nicht derselbe Kalendertag)",
       "same_day_badge": "Derselbe Kalendertag",
+      "verification_unsupported": "F\u00fcr diese zusammengesetzte Auswertung gibt es keine Tagesreihe \u2014 die Zahlen oben stammen direkt aus der Auswertung.",
       "lag_heading": "Zusammenhang nach Verzoegerung",
       "lag_hint": "Balken zeigen die Korrelationsstaerke je Verzoegerung in Tagen. Der hervorgehobene Balken ist der gewaehlte Peak — keine Prognose.",
       "lag_freq": "Tage mit viel {feature}: gute Tage an {highGood} von {highN} · Tage mit wenig {feature}: {lowGood} von {lowN} (Ergebnis +{days} Tage).",

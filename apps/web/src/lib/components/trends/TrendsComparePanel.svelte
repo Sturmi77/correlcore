@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { EsmPartner } from '$lib/utils/esmPartner';
   import { browser } from '$app/environment';
   import { createEventDispatcher, onDestroy, onMount } from 'svelte';
   import { tick } from 'svelte';
@@ -131,7 +132,13 @@
     coincidenceChange: { value: boolean };
     lag1Change: { value: boolean };
     overlayHintDismiss: void;
-    checkQuestion: { windows: EventWindow[]; label: string };
+    checkQuestion: {
+      windows: EventWindow[];
+      label: string;
+      /** The second pinned row — the other half of the question (#967). */
+      partner: EsmPartner | null;
+      partnerPresenceDates: string[];
+    };
   }>();
 
   // Sprint 1 (ADR-0035): the Compare panel owns the cursor lifecycle.
@@ -224,13 +231,28 @@
     return row.days.filter((day) => isRowActiveOnDay(row, day.date)).map((day) => day.date);
   }
 
+  $: checkQuestionHref =
+    pinned.length >= 2
+      ? `/insights?signals=${pinned.slice(0, 2).map(encodeURIComponent).join(',')}`
+      : '/insights';
+
   function openCheckQuestion(): void {
     if (pinned.length < 2) return;
     const firstRow = coincidenceRows.find((row) => row.id === pinned[0]);
     if (!firstRow) return;
+    // The second pin is the other half of the question being checked. Reading
+    // only pinned[0] meant changing it produced the identical sheet, so the
+    // action never examined the selected pair (#967).
+    const secondRow = coincidenceRows.find((row) => row.id === pinned[1]) ?? null;
+    const secondKind = secondRow ? (rowKindById.get(secondRow.id) ?? null) : null;
     dispatch('checkQuestion', {
       windows: datesToEventWindows(activeDatesForRow(firstRow), firstRow.label),
       label: firstRow.label,
+      partner:
+        secondRow && secondKind
+          ? { id: secondRow.id, label: secondRow.label, kind: secondKind }
+          : null,
+      partnerPresenceDates: secondRow ? activeDatesForRow(secondRow) : [],
     });
   }
 
@@ -423,6 +445,16 @@
       : '';
 
   /** #908: presence rows for coincidence — mirrors ComparisonHeatmap rawRows ids/labels. */
+  // `kind` is carried alongside the rows (not on CoincidenceRow, which is shared
+  // with the marker utilities) so the second pin can travel to the ESM as a
+  // partner — it used to be read and then dropped (#967).
+  $: rowKindById = new Map<string, 'tag' | 'symptom'>([
+    ...(tagHeatmap?.tags ?? []).map((tag) => [tag.tag_id, 'tag' as const] as const),
+    ...(symptomHeatmap?.symptoms ?? []).map(
+      (symptom) => [symptom.symptom_id, 'symptom' as const] as const
+    ),
+  ]);
+
   $: coincidenceRows = [
     ...(showTags
       ? (tagHeatmap?.tags ?? []).map((tag): CoincidenceRow => ({
@@ -654,7 +686,12 @@
 
   {#if pinned.length >= 2}
     <p class="compare__check" data-testid="trends-compare-check-question">
-      <a href="/insights">{$_('trends.compare.check_question')}</a>
+      <!--
+        Carry the pinned pair to the hub so the destination can find the
+        hypothesis this comparison represents. A bare /insights link discarded
+        it and left users hunting among unrelated insights (#967).
+      -->
+      <a href={checkQuestionHref}>{$_('trends.compare.check_question')}</a>
       <span class="compare__check-hint">{$_('trends.compare.check_question_hint')}</span>
     </p>
   {/if}

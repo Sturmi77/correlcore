@@ -1321,6 +1321,7 @@
     }
   },
   "insights": {
+    "carried_signals_unmatched": "No insight covers this pair yet \u2014 one appears once enough shared days are logged.",
     "page": {
       "title": "Insights",
       "subtitle": "Current patterns from your own entries, kept descriptive and non-diagnostic.",
@@ -1653,6 +1654,7 @@
       "non_causal": "An association in your entries — not a cause.",
       "zeitversatz_badge": "Time offset (not same calendar day)",
       "same_day_badge": "Same calendar day",
+      "verification_unsupported": "This composite analysis has no day-level series \u2014 the numbers above come straight from the analysis.",
       "lag_heading": "Association by delay",
       "lag_hint": "Bars show correlation strength for each delay in days. The highlighted bar is the selected peak — not a forecast.",
       "lag_freq": "Days high in {feature}: good days on {highGood} of {highN} · days low in {feature}: {lowGood} of {lowN} (outcome +{days} days).",

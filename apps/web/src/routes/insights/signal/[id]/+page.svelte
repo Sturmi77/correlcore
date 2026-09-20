@@ -3,6 +3,7 @@
    * /insights/signal/[id] — Ebene 2 verification surface (Phase 7 / ADR-0043).
    * Sentence → with/without (G2) → course/ESM → scatter (G1) behind disclosure.
    */
+  import { ApiError } from '$lib/api/client';
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import { page } from '$app/stores';
@@ -41,6 +42,16 @@
   let insight: InsightResponse | null = null;
   let maturity: InsightMaturity | null = null;
   let verification: InsightVerificationResponse | null = null;
+  /** True when this subject cannot carry a day-level series (composite, metric). */
+  let verificationUnsupported = false;
+
+  /** Raw enum values (`office`, `travel`) have translated labels — use them (#967). */
+  function workContextLabel(value: string | null): string {
+    if (!value) return '';
+    const key = `entry.work_context.${value}`;
+    const label = $_(key);
+    return label === key ? value : label;
+  }
   let loading = true;
   let error: string | null = null;
   let showScatter = false;
@@ -77,7 +88,14 @@
       ]);
       insight = detail;
       maturity = latest?.insight_maturity ?? null;
-      verification = await fetchInsightVerification(insightId, '90d').catch(() => null);
+      // Composite subjects (the Belastung overlay's own insight) have no
+      // day-level presence series, so the endpoint answers 422. Swallowing that
+      // left the section blank and made both Belastung CTAs look broken (#967).
+      verificationUnsupported = false;
+      verification = await fetchInsightVerification(insightId, '90d').catch((err) => {
+        if (err instanceof ApiError && err.status === 422) verificationUnsupported = true;
+        return null;
+      });
     } catch (err) {
       error = err instanceof Error ? err.message : $_('insights.signal.error');
       insight = null;
@@ -189,7 +207,7 @@
           <p class="signal-page__means" data-testid="signal-same-situation-freq">
             {$_('insights.signal.same_work_context_freq', {
               values: {
-                context: sameSituation.context,
+                context: workContextLabel(sameSituation.context),
                 withGood: sameSituation.withGood,
                 withN: sameSituation.withN,
                 withoutGood: sameSituation.withoutGood,
@@ -225,6 +243,13 @@
           </button>
         {/if}
       </div>
+      {#if verificationUnsupported}
+        <InlineAlert
+          variant="info"
+          message={$_('insights.signal.verification_unsupported')}
+          testId="signal-verification-unsupported"
+        />
+      {/if}
       {#if verification && verification.with_mean != null && verification.without_mean != null}
         <p class="signal-page__means" data-testid="signal-means">
           {$_('insights.signal.means', {
