@@ -1357,6 +1357,8 @@
       "col_frequency": "Abdeckung",
       "col_confidence": "Konfidenz",
       "frequency_n": "Basierend auf {n} Eintraegen",
+      "frequency_groups": "{withN} mit \u00b7 {withoutN} ohne",
+      "signal_not_reportable": "Dieses Signal l\u00e4sst sich nicht in den Report aufnehmen \u2014 der Report zeigt nur Zusammenhangs-Zeilen.",
       "coverage": "{rows} Zeilen · groesste Stichprobe {n} Eintraege",
       "disclaimer": "Keine Diagnose. Muster aus Selbstauskunft. Nicht mit einem Arbeitgeber teilen.",
       "export_aria": "Bericht exportieren",
