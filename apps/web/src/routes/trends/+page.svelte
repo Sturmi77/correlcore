@@ -196,6 +196,12 @@
     // response that omits it (older backend, cached service-worker entry, a
     // test fixture) would otherwise never satisfy the guard and the reactive
     // statement would re-enter loadTrends forever.
+    //
+    // Stamping before the await also means a *failed* load marks the window as
+    // attempted, so the guard does not retry it on its own. That is deliberate:
+    // the alternative — clearing it on error — turns a persistent failure into a
+    // retry storm, the same shape of bug in slower motion. The error is shown,
+    // and a range change or page refresh retries.
     loadedWindowDays = activeWindowDays;
     const activeRange = trendWindowDaysToTimeseriesRange(activeWindowDays);
     const habitWindow = activeWindowDays as HabitWindow;
