@@ -5,7 +5,13 @@
 
 import type { InsightResponse } from '$lib/api/insights';
 
-export type LagProfileBar = { lag: number; r: number; active: boolean };
+/**
+ * One column of the lag profile. `r` is null when that lag carries no
+ * measurement at all (too few paired observations, or a constant series) —
+ * which is not the same statement as a measured correlation of zero and must
+ * not be drawn as one.
+ */
+export type LagProfileBar = { lag: number; r: number | null; active: boolean };
 
 export type LagFrequencyView = {
   highN: number;
@@ -13,6 +19,8 @@ export type LagFrequencyView = {
   lowN: number;
   lowGood: number;
   goodThreshold: number;
+  /** '<=' on stress (lower raw is better), '>=' on mood/energy. */
+  goodDirection: 'lte' | 'gte';
   lagDays: number;
   featureKey: string | null;
   featureLabel: string | null;
@@ -61,7 +69,14 @@ export function lagProfileBars(insight: InsightResponse): LagProfileBar[] | null
   if (byLag.size < 2) return null;
   const bars: LagProfileBar[] = [];
   for (let lag = 1; lag <= LAG_PROFILE_MAX_DAYS; lag += 1) {
-    bars.push({ lag, r: byLag.get(lag) ?? 0, active: lag === chosen });
+    // Absent lag → null, never 0. The backend only emits lags it could actually
+    // measure; filling the gaps with zeros would render "not enough data" and
+    // "no association" as the same bar.
+    bars.push({
+      lag,
+      r: byLag.has(lag) ? (byLag.get(lag) as number) : null,
+      active: lag === chosen,
+    });
   }
   return bars;
 }
@@ -99,6 +114,7 @@ export function parseLagFrequencyView(insight: InsightResponse): LagFrequencyVie
     lowN,
     lowGood,
     goodThreshold: asNumber(payload.good_threshold) ?? 4,
+    goodDirection: payload.good_direction === 'lte' ? 'lte' : 'gte',
     lagDays,
     featureKey: asString(feature?.key) ?? asString(feature?.slug),
     featureLabel: asString(feature?.name) ?? asString(feature?.label),

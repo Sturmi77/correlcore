@@ -527,7 +527,9 @@ async def _convert_marker_tags_for_user(
         # / inferred_period were the first to strand installs still on 048).
         # load_only is a whitelist, so future entries columns stay out by
         # construction — list exactly what the updated_at touch and the
-        # revision-log payload read.
+        # revision-log payload read. raiseload=True makes that structural: an
+        # unlisted attribute raises here instead of silently lazy-loading the
+        # column and reintroducing the UndefinedColumn against revision 049.
         entry = (
             await db.execute(
                 select(Entry)
@@ -547,6 +549,7 @@ async def _convert_marker_tags_for_user(
                         Entry.work_context,
                         Entry.note_visibility,
                         Entry.updated_at,
+                        raiseload=True,
                     )
                 )
             )

@@ -213,6 +213,9 @@ def _lag_candidates(
                             "low_feature_n": finding.low_feature_n,
                             "low_feature_good_count": finding.low_feature_good_count,
                             "good_threshold": finding.good_threshold,
+                            # "lte" on stress, "gte" on mood/energy — the UI has to
+                            # say which, "good day" is not one rule across targets.
+                            "good_direction": finding.good_direction,
                             "feature_split": "median",
                         }
                         if finding.high_feature_n is not None and finding.low_feature_n is not None

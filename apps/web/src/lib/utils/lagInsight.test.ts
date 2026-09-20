@@ -68,4 +68,53 @@ describe('lagInsight', () => {
     expect(freq?.lowN).toBe(30);
     expect(freq?.lagDays).toBe(1);
   });
+
+  it('marks lags without a measurement as null, never as r = 0', () => {
+    // The payload carries lags 1 and 2 only. Lags 3..7 were not measurable, which
+    // is a different statement from "measured, and the correlation was zero".
+    const bars = lagProfileBars(lagInsight());
+    expect(bars?.map((bar) => bar.r)).toEqual([0.4, 0.2, null, null, null, null, null]);
+  });
+
+  it('keeps a genuine zero correlation distinct from an absent one', () => {
+    const bars = lagProfileBars(
+      lagInsight({
+        payload: {
+          method: 'lag',
+          lag_days: 1,
+          lag_profile: [
+            { lag: 1, r: 0.4 },
+            { lag: 2, r: 0 },
+          ],
+        },
+      })
+    );
+    expect(bars?.[1].r).toBe(0);
+    expect(bars?.[2].r).toBeNull();
+  });
+
+  it('reports the good-day comparator so "good" is never left undefined', () => {
+    expect(parseLagFrequencyView(lagInsight())?.goodDirection).toBe('gte');
+
+    const stress = parseLagFrequencyView(
+      lagInsight({
+        payload: {
+          method: 'lag',
+          lag_days: 1,
+          lag_profile: [
+            { lag: 1, r: -0.4 },
+            { lag: 2, r: -0.2 },
+          ],
+          high_feature_n: 20,
+          high_feature_good_count: 8,
+          low_feature_n: 20,
+          low_feature_good_count: 3,
+          good_threshold: 2,
+          good_direction: 'lte',
+        },
+      })
+    );
+    expect(stress?.goodDirection).toBe('lte');
+    expect(stress?.goodThreshold).toBe(2);
+  });
 });

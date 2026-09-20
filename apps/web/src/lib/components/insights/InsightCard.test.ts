@@ -137,7 +137,10 @@ describe('InsightCard', () => {
         },
       },
     });
-    expect(screen.getByTestId('insight-card-title').textContent).toContain('Mood → Sleep duration');
+    // Sleep first, matching the lag card. The pair is a symmetric Spearman, so
+    // the arrow is reading order — printing it both ways made one pair look like
+    // two contradicting claims (#928 D4).
+    expect(screen.getByTestId('insight-card-title').textContent).toContain('Sleep duration → Mood');
   });
 
   it('interpolates both entry count and time window in metadata', () => {
