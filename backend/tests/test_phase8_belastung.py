@@ -146,3 +146,41 @@ def test_write_time_covariates_survive_daily_normalization() -> None:
     canonical, _ = _canonicalize_tag_aliases(deduped, [])
     assert canonical[0].inferred_period is InferredPeriod.AFTER_HOURS
     assert canonical[0].logged_local_hour == 23
+
+
+def test_belastung_needs_a_populated_prior_window() -> None:
+    """#956: no comparison window means no comparative claim.
+
+    Every predicate is comparative and the statement says "than in the two weeks
+    before". The `is None` escapes made all three fire when the prior window was
+    empty, so a user with a week of entries and nothing before them was told
+    their load had risen against a window that did not exist — while the payload
+    reported `prior_n: 0`.
+    """
+    as_of = date(2026, 3, 20)
+    # Seven consecutive days ending at as_of, and nothing before them.
+    entries = [
+        AnalyticsEntry(
+            id=uuid.uuid4(),
+            entry_date=as_of - timedelta(days=offset),
+            mood_score=2,
+            energy=2,
+            stress=5,
+            work_context=WorkContext.OFFICE,
+            tag_ids=frozenset(),
+            symptom_ids=frozenset(),
+        )
+        for offset in range(7)
+    ]
+
+    assert (
+        _belastung_candidates(
+            entries,
+            tags=[],
+            symptoms=[],
+            tier=InsightTier.ROBUST,
+            generated_for_date=as_of,
+            enabled=True,
+        )
+        == []
+    )
