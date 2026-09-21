@@ -99,6 +99,14 @@ export interface InsightDigestResponse {
 
 export interface InsightListQuery {
   limit?: number;
+}
+
+/**
+ * `/insights/latest` only. The chronological `/insights` endpoint declares no
+ * family filter, so a shared query type would advertise — and silently drop —
+ * an option that endpoint ignores.
+ */
+export interface LatestInsightListQuery extends InsightListQuery {
   /**
    * Restrict to these insight families *before* the row cap applies. A surface
    * that renders one or two families otherwise loses valid rows to unrelated
@@ -225,6 +233,17 @@ export interface SymptomTagCooccurrenceResponse {
 function buildQuery(query: InsightListQuery): string {
   const params = new URLSearchParams();
   if (query.limit !== undefined) params.set('limit', String(query.limit));
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
+/**
+ * Separate builder rather than a branch in `buildQuery`: `/insights` physically
+ * cannot emit `insight_type` this way, instead of merely being typed not to.
+ */
+function buildLatestQuery(query: LatestInsightListQuery): string {
+  const params = new URLSearchParams();
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
   // Repeated `insight_type=` params — FastAPI reads them as a list.
   for (const type of query.insightTypes ?? []) params.append('insight_type', type);
   const qs = params.toString();
@@ -233,9 +252,9 @@ function buildQuery(query: InsightListQuery): string {
 
 /** GET /insights/latest - list latest generated insights by analytical subject. */
 export async function listLatestInsights(
-  query: InsightListQuery = {}
+  query: LatestInsightListQuery = {}
 ): Promise<InsightListResponse> {
-  return api.get<InsightListResponse>(`/insights/latest${buildQuery(query)}`);
+  return api.get<InsightListResponse>(`/insights/latest${buildLatestQuery(query)}`);
 }
 
 /** GET /insights - chronological insight history (newest-first, no subject dedupe). */

@@ -97,8 +97,11 @@
       seedSelection();
     } catch (err) {
       error = err instanceof Error ? err.message : $_('insights.report.error');
-      insights = [];
-      maturity = null;
+      // Keep the rows a previous load produced. Clearing them here let the
+      // pruning block drop every selected id on a transient refresh failure,
+      // and seeding is one-shot — so the next success left everything
+      // unchecked and every export reported `export_empty` (#959 review).
+      // On the very first load there is nothing to keep.
     } finally {
       loading = false;
     }

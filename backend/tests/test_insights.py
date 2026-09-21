@@ -12,10 +12,12 @@ from app.main import app
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.user import User
 from app.services.insight_service import (
+    MAX_INSIGHT_LIST_LIMIT,
     InsightNotFoundError,
     _lag_onset_feature,
     _parse_uuid,
     calculate_insight_maturity,
+    family_fetch_types,
     get_insight_event_windows,
     get_insight_maturity,
     get_visible_insight_by_id,
@@ -1526,3 +1528,99 @@ async def test_latest_insights_endpoint_rejects_unknown_family(
 
     assert response.status_code == 422
     assert "not_a_family" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_lets_a_null_association_retire_its_subject() -> None:
+    """#973 review: filtering before the winner is picked resurrects stale rows.
+
+    `null_association` and `pointbiserial` compete for one slot (#964). A report
+    asking only for `pointbiserial` must not get the older positive row back
+    once the newer row says there is no association — the subject drops out.
+    """
+    user = make_user()
+    tag_id = uuid.uuid4()
+    newer_null = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 13, tzinfo=UTC),
+        insight_type=InsightType.NULL_ASSOCIATION,
+        subject_type="tag",
+        subject_id=tag_id,
+        subject_label="Sport",
+    )
+    older_positive = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=tag_id,
+        subject_label="Sport",
+    )
+    other = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 11, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=uuid.uuid4(),
+        subject_label="Walk",
+    )
+
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([newer_null, older_positive, other]),
+            _rows_result([]),
+            _rows_result([]),
+        ]
+    )
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(
+            db,
+            user_id=user.id,
+            limit=10,
+            insight_types=["pointbiserial", "symptom_mood_association"],
+        )
+
+    assert out == [other]
+    assert older_positive not in out
+
+
+def test_family_fetch_types_widens_to_the_competing_alias() -> None:
+    """The fetch must carry `null_association`, or the test above cannot happen."""
+    assert family_fetch_types(["pointbiserial"]) == {"pointbiserial", "null_association"}
+    assert family_fetch_types(["null_association"]) == {"pointbiserial", "null_association"}
+    assert family_fetch_types(["weekday_pattern"]) == {"weekday_pattern"}
+
+
+def test_newest_insight_per_subject_stmt_filters_families_before_its_own_cap() -> None:
+    """#973 review: this statement caps at MAX_INSIGHT_LIST_LIMIT rows.
+
+    Filtering only in Python would leave an account whose newest subjects are
+    all unrelated families with no matching row fetched at all.
+    """
+    user_id = uuid.uuid4()
+    sql = str(
+        newest_insight_per_subject_stmt(
+            user_id, insight_types={"pointbiserial", "null_association"}
+        ).compile(compile_kwargs={"literal_binds": True})
+    )
+
+    assert "insights.insight_type IN" in sql
+    # The column stores enum *values* (values_callable), so the literals must be
+    # the lowercase storage strings, not the member names.
+    assert "'pointbiserial'" in sql
+    assert "'null_association'" in sql
+    assert f"LIMIT {MAX_INSIGHT_LIST_LIMIT}" in sql
+    # The predicate has to sit on both the ranked subquery and the outer select,
+    # so the cap acts on the filtered set.
+    assert sql.upper().count("INSIGHT_TYPE IN") == 2
+
+
+def test_newest_insight_per_subject_stmt_without_filter_is_unchanged() -> None:
+    sql = str(
+        newest_insight_per_subject_stmt(uuid.uuid4()).compile(
+            compile_kwargs={"literal_binds": True}
+        )
+    )
+
+    assert "insight_type IN" not in sql

@@ -133,6 +133,30 @@ describe('/insights/report selection (#959)', () => {
     expect(rowBoxes.every((box) => !box.checked)).toBe(true);
   });
 
+  it('keeps an untouched selection through a failed refresh', async () => {
+    // Clearing `insights` in the catch made the pruning block drop every
+    // selected id; seeding is one-shot, so the next success left the table
+    // unchecked and every export reported export_empty (#959 review).
+    const { container } = render(Page);
+
+    await waitFor(() => expect(screen.getByTestId('insight-report-select-all')).toBeTruthy());
+
+    vi.mocked(listLatestInsights).mockRejectedValueOnce(new Error('offline'));
+    refreshHandlers.forEach((handler) => handler());
+    await waitFor(() => expect(listLatestInsights).toHaveBeenCalledTimes(2));
+
+    refreshHandlers.forEach((handler) => handler());
+    await waitFor(() => expect(listLatestInsights).toHaveBeenCalledTimes(3));
+
+    await waitFor(() => {
+      const rowBoxes = Array.from(
+        container.querySelectorAll<HTMLInputElement>('[data-testid^="insight-report-row-"] input')
+      );
+      expect(rowBoxes.length).toBeGreaterThan(0);
+      expect(rowBoxes.every((box) => box.checked)).toBe(true);
+    });
+  });
+
   it('does not re-seed after a failed reload followed by a successful one', async () => {
     const { container } = render(Page);
 
