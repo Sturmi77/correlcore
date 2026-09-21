@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listLatestInsights, type InsightResponse } from '$lib/api/insights';
+import { exportMatrixPdf } from '$lib/utils/insightMatrixExport';
 import Page from './+page.svelte';
 
 vi.mock('svelte-i18n', async () => {
@@ -32,6 +33,14 @@ vi.mock('$lib/stores/auth', async () => {
 
 vi.mock('$lib/api/insights', () => ({
   listLatestInsights: vi.fn(),
+}));
+
+vi.mock('$lib/utils/insightMatrixExport', () => ({
+  exportMatrixPdf: vi.fn(),
+  exportMatrixPng: vi.fn(),
+  exportReportCsv: vi.fn(),
+  exportReportJson: vi.fn(),
+  reportExportFilename: (kind: string) => `correlcore-report.${kind}`,
 }));
 
 const refreshHandlers = vi.hoisted(() => [] as (() => void)[]);
@@ -155,6 +164,28 @@ describe('/insights/report selection (#959)', () => {
       expect(rowBoxes.length).toBeGreaterThan(0);
       expect(rowBoxes.every((box) => box.checked)).toBe(true);
     });
+  });
+
+  it('still exports the last loaded rows after a failed refresh, with the error shown', async () => {
+    // Keeping stale rows means an export can now run while the error alert is
+    // up. That is deliberate: the rows come from a load that succeeded, and a
+    // network blip should not cost the user the report they can see. The alert
+    // is what says the data may not be the newest.
+    const { container } = render(Page);
+
+    await waitFor(() => expect(screen.getByTestId('insight-report-select-all')).toBeTruthy());
+
+    vi.mocked(listLatestInsights).mockRejectedValueOnce(new Error('offline'));
+    refreshHandlers.forEach((handler) => handler());
+    await waitFor(() => expect(container.textContent).toContain('offline'));
+
+    screen
+      .getByTestId('insight-report-export-pdf')
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    await waitFor(() => expect(exportMatrixPdf).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(exportMatrixPdf).mock.calls[0]?.[0]).toHaveLength(2);
+    expect(container.textContent).not.toContain('insights.report.export_empty');
   });
 
   it('does not re-seed after a failed reload followed by a successful one', async () => {
