@@ -133,6 +133,33 @@ describe('/insights/report selection (#959)', () => {
     expect(rowBoxes.every((box) => !box.checked)).toBe(true);
   });
 
+  it('does not re-seed after a failed reload followed by a successful one', async () => {
+    const { container } = render(Page);
+
+    await waitFor(() => expect(screen.getByTestId('insight-report-select-all')).toBeTruthy());
+    const selectAll = screen.getByTestId('insight-report-select-all') as HTMLInputElement;
+    selectAll.checked = false;
+    selectAll.dispatchEvent(new Event('change', { bubbles: true }));
+    await waitFor(() => expect(selectAll.checked).toBe(false));
+
+    // The catch path clears `insights`, so the next success re-populates the
+    // rows from scratch. Seeding still must not fire a second time.
+    vi.mocked(listLatestInsights).mockRejectedValueOnce(new Error('offline'));
+    refreshHandlers.forEach((handler) => handler());
+    await waitFor(() => expect(listLatestInsights).toHaveBeenCalledTimes(2));
+
+    refreshHandlers.forEach((handler) => handler());
+    await waitFor(() => expect(listLatestInsights).toHaveBeenCalledTimes(3));
+
+    await waitFor(() => {
+      const rowBoxes = Array.from(
+        container.querySelectorAll<HTMLInputElement>('[data-testid^="insight-report-row-"] input')
+      );
+      expect(rowBoxes.length).toBeGreaterThan(0);
+      expect(rowBoxes.every((box) => !box.checked)).toBe(true);
+    });
+  });
+
   it('keeps a deliberately emptied selection empty and surfaces export_empty', async () => {
     const { container } = render(Page);
 
