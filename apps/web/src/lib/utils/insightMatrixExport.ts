@@ -51,6 +51,85 @@ export function exportMatrixPng(rows: readonly InsightResponse[], filename: stri
   link.click();
 }
 
+/**
+ * WinAnsi (CP1252) byte for the code points that are *not* simply the code
+ * point itself. 0x00–0x7F and 0xA0–0xFF map one to one; this table is the
+ * 0x80–0x9F block, where CP1252 puts typographic characters that Latin-1
+ * leaves undefined — including the German quotes and the dashes our copy uses.
+ */
+const WIN_ANSI_EXCEPTIONS = new Map<number, number>([
+  [0x20ac, 0x80],
+  [0x201a, 0x82],
+  [0x0192, 0x83],
+  [0x201e, 0x84],
+  [0x2026, 0x85],
+  [0x2020, 0x86],
+  [0x2021, 0x87],
+  [0x02c6, 0x88],
+  [0x2030, 0x89],
+  [0x0160, 0x8a],
+  [0x2039, 0x8b],
+  [0x0152, 0x8c],
+  [0x017d, 0x8e],
+  [0x2018, 0x91],
+  [0x2019, 0x92],
+  [0x201c, 0x93],
+  [0x201d, 0x94],
+  [0x2022, 0x95],
+  [0x2013, 0x96],
+  [0x2014, 0x97],
+  [0x02dc, 0x98],
+  [0x2122, 0x99],
+  [0x0161, 0x9a],
+  [0x203a, 0x9b],
+  [0x0153, 0x9c],
+  [0x017e, 0x9e],
+  [0x0178, 0x9f],
+]);
+
+/** Stand-in for a character WinAnsi has no byte for. */
+const UNMAPPABLE = '?';
+
+export type WinAnsiText = {
+  /** One character per byte — `.length` is the byte count, as PDF needs. */
+  text: string;
+  /** True when at least one character had to be replaced. */
+  lossy: boolean;
+};
+
+/**
+ * Encode to WinAnsi, the encoding the font object declares (#960 option B).
+ *
+ * The document used to write UTF-8 bytes under a Helvetica with no `/Encoding`
+ * at all, so the viewer fell back to StandardEncoding and every umlaut became
+ * two stray glyphs — `Frühstück` read `Frˆ…hstˆ…ck`. For a German product that
+ * is the normal case, and it hit exactly the user's own tag and symptom names.
+ *
+ * Switching the bytes alone is not enough: under StandardEncoding a Latin-1
+ * `·` still renders as `•`. The `/Encoding /WinAnsiEncoding` entry on the font
+ * is what makes the byte table match, so the two belong together.
+ *
+ * Returns a binary string (each char code is one byte) so that offsets and
+ * `/Length` stay plain string arithmetic, and so the caller can hand the bytes
+ * to a Blob without a UTF-8 round trip.
+ */
+export function toWinAnsi(text: string): WinAnsiText {
+  let out = '';
+  let lossy = false;
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    const mapped =
+      code < 0x80 || (code >= 0xa0 && code <= 0xff) ? code : WIN_ANSI_EXCEPTIONS.get(code);
+    if (mapped === undefined) {
+      out += UNMAPPABLE;
+      lossy = true;
+      continue;
+    }
+    out += String.fromCharCode(mapped);
+  }
+  return { text: out, lossy };
+}
+
 function pdfEscape(text: string): string {
   return text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 }
@@ -89,9 +168,9 @@ function paginate(lines: readonly string[]): string[][] {
  */
 export function buildMatrixPdfDocument(
   rows: readonly InsightResponse[],
-  options: { title: string; subtitle: string; disclaimer: string }
+  options: { title: string; subtitle: string; disclaimer: string; charsetNote?: string }
 ): string {
-  const lines: string[] = [
+  const sourceLines: string[] = [
     options.title,
     options.subtitle,
     '',
@@ -104,6 +183,16 @@ export function buildMatrixPdfDocument(
     options.disclaimer,
   ];
 
+  // Truncate first, encode second: the cut is about how much fits on a line,
+  // and WinAnsi never widens a string, so the order keeps the limit honest.
+  const encoded = sourceLines.map((line) => toWinAnsi(line.slice(0, 110)));
+  const lines = encoded.map((entry) => entry.text);
+  // A replaced character is visible as `?`, but only the document itself can
+  // say why — and where the full labels are still readable (#960).
+  if (encoded.some((entry) => entry.lossy) && options.charsetNote) {
+    lines.push('', toWinAnsi(options.charsetNote.slice(0, 110)).text);
+  }
+
   const pages = paginate(lines);
   // 1 catalog, 2 page tree, 3 font, then a page and a content object per page.
   const pageObjectIds = pages.map((_, index) => 4 + index * 2);
@@ -115,33 +204,37 @@ export function buildMatrixPdfDocument(
       .map((id) => `${id} 0 R`)
       .join(' ')}] /Count ${pages.length} >>endobj`
   );
-  objects.push('3 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj');
+  // Without this entry the viewer falls back to StandardEncoding, where the
+  // same bytes render as different glyphs — it is half of the fix, not a nicety.
+  objects.push(
+    '3 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>endobj'
+  );
   pages.forEach((pageLines, index) => {
     const pageId = pageObjectIds[index];
     const contentId = pageId + 1;
     const stream = pageLines
       .map((line, lineIndex) => {
         const y = PDF_TOP_BASELINE - lineIndex * PDF_LINE_HEIGHT;
-        return `BT /F1 10 Tf 40 ${y} Td (${pdfEscape(line.slice(0, 110))}) Tj ET`;
+        return `BT /F1 10 Tf 40 ${y} Td (${pdfEscape(line)}) Tj ET`;
       })
       .join('\n');
     objects.push(
       `${pageId} 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PDF_PAGE_WIDTH} ${PDF_PAGE_HEIGHT}] /Contents ${contentId} 0 R /Resources << /Font << /F1 3 0 R >> >> >>endobj`
     );
     objects.push(
-      `${contentId} 0 obj<< /Length ${
-        new TextEncoder().encode(stream).length
-      } >>stream\n${stream}\nendstream\nendobj`
+      `${contentId} 0 obj<< /Length ${stream.length} >>stream\n${stream}\nendstream\nendobj`
     );
   });
 
+  // Every char in `pdf` is one byte from here on, so `.length` is the byte
+  // offset the xref table needs; `exportMatrixPdf` widens it back to bytes.
   let pdf = '%PDF-1.4\n';
   const offsets: number[] = [0];
   for (const object of objects) {
-    offsets.push(new TextEncoder().encode(pdf).length);
+    offsets.push(pdf.length);
     pdf += `${object}\n`;
   }
-  const xrefStart = new TextEncoder().encode(pdf).length;
+  const xrefStart = pdf.length;
   pdf += `xref\n0 ${objects.length + 1}\n`;
   pdf += '0000000000 65535 f \n';
   for (let i = 1; i < offsets.length; i += 1) {
@@ -153,11 +246,20 @@ export function buildMatrixPdfDocument(
 
 export function exportMatrixPdf(
   rows: readonly InsightResponse[],
-  options: { title: string; subtitle: string; disclaimer: string; filename: string }
+  options: {
+    title: string;
+    subtitle: string;
+    disclaimer: string;
+    charsetNote?: string;
+    filename: string;
+  }
 ): void {
   const pdf = buildMatrixPdfDocument(rows, options);
+  // One char per byte. Handing the string straight to a Blob would UTF-8 it and
+  // turn every WinAnsi byte above 0x7F back into the two the fix removed.
+  const bytes = Uint8Array.from(pdf, (char) => char.charCodeAt(0) & 0xff);
 
-  const blob = new Blob([pdf], { type: 'application/pdf' });
+  const blob = new Blob([bytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

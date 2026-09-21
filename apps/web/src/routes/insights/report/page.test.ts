@@ -188,6 +188,22 @@ describe('/insights/report selection (#959)', () => {
     expect(container.textContent).not.toContain('insights.report.export_empty');
   });
 
+  it('hands the PDF export the charset note, so a lossy label can explain itself', async () => {
+    // The note only prints when a character was actually replaced, but the
+    // builder can only print what the page passes in (#960).
+    render(Page);
+
+    await waitFor(() => expect(screen.getByTestId('insight-report-export-pdf')).toBeTruthy());
+    screen
+      .getByTestId('insight-report-export-pdf')
+      .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    await waitFor(() => expect(exportMatrixPdf).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(exportMatrixPdf).mock.calls[0]?.[1]).toMatchObject({
+      charsetNote: 'insights.report.pdf_charset_note',
+    });
+  });
+
   it('does not re-seed after a failed reload followed by a successful one', async () => {
     const { container } = render(Page);
 

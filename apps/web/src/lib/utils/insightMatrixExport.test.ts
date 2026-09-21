@@ -5,6 +5,7 @@ import {
   exportMatrixPdf,
   PDF_LINES_PER_PAGE,
   reportExportFilename,
+  toWinAnsi,
 } from './insightMatrixExport';
 
 const row: InsightResponse = {
@@ -145,13 +146,12 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
     // Object numbering is now dynamic (one page + one content stream per page),
     // so an off-by-one in the offsets would produce a file readers reject.
     const pdf = buildMatrixPdfDocument(rows(120), options);
-    const bytes = new TextEncoder().encode(pdf);
     const offsets = [...pdf.matchAll(/^(\d{10}) 00000 n $/gm)].map((match) => Number(match[1]));
 
     expect(offsets.length).toBeGreaterThan(3);
     offsets.forEach((offset, index) => {
-      const head = new TextDecoder().decode(bytes.slice(offset, offset + 16));
-      expect(head.startsWith(`${index + 1} 0 obj`)).toBe(true);
+      // One char per byte, so a string index is the byte offset (#960).
+      expect(pdf.slice(offset, offset + 16).startsWith(`${index + 1} 0 obj`)).toBe(true);
     });
   });
 
@@ -163,7 +163,7 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
 
     expect(streams.length).toBeGreaterThan(1);
     for (const [, declared, body] of streams) {
-      expect(new TextEncoder().encode(body).length).toBe(Number(declared));
+      expect(body.length).toBe(Number(declared));
     }
   });
 
@@ -182,5 +182,107 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
 
     expect(pageCount(buildMatrixPdfDocument(rows(rowsThatFillOnePage), options))).toBe(1);
     expect(pageCount(buildMatrixPdfDocument(rows(rowsThatFillOnePage + 1), options))).toBe(2);
+  });
+});
+
+describe('toWinAnsi (#960)', () => {
+  it('maps German text to one byte per character', () => {
+    const { text, lossy } = toWinAnsi('Frühstück');
+
+    expect(lossy).toBe(false);
+    expect(text).toHaveLength('Frühstück'.length);
+    expect([...text].map((char) => char.charCodeAt(0))).toEqual([
+      0x46, 0x72, 0xfc, 0x68, 0x73, 0x74, 0xfc, 0x63, 0x6b,
+    ]);
+  });
+
+  it('maps the typographic characters our copy uses, which Latin-1 lacks', () => {
+    // German quotes, en/em dash and the ellipsis live in CP1252's 0x80–0x9F
+    // block. Encoding as plain Latin-1 would drop them.
+    expect([...toWinAnsi('„x" – y — z …').text].map((c) => c.charCodeAt(0))).toContain(0x84);
+    expect(toWinAnsi('—').text.charCodeAt(0)).toBe(0x97);
+    expect(toWinAnsi('…').text.charCodeAt(0)).toBe(0x85);
+    expect(toWinAnsi('—').lossy).toBe(false);
+  });
+
+  it('keeps the middle dot as itself, not as a bullet', () => {
+    // The byte is the same either way; what differs is the encoding the font
+    // declares. Pinned here because switching bytes alone looked like a fix.
+    expect(toWinAnsi('·').text.charCodeAt(0)).toBe(0xb7);
+  });
+
+  it('replaces what WinAnsi has no byte for, and says that it did', () => {
+    const cyrillic = toWinAnsi('Кофе');
+    expect(cyrillic.text).toBe('????');
+    expect(cyrillic.lossy).toBe(true);
+
+    const emoji = toWinAnsi('Sport 🧠');
+    expect(emoji.text).toBe('Sport ?');
+    expect(emoji.lossy).toBe(true);
+  });
+
+  it('counts an astral character once, not twice', () => {
+    // Iterating by code unit would emit two replacements for one emoji and
+    // desync the byte count from `/Length`.
+    expect(toWinAnsi('🧠').text).toHaveLength(1);
+  });
+});
+
+describe('buildMatrixPdfDocument character set (#960)', () => {
+  const options = {
+    title: 'Bericht',
+    subtitle: 'CorrelCore Zusammenhänge-Bericht',
+    disclaimer: 'Keine Diagnose.',
+    charsetNote: 'Hinweis: Einzelne Zeichen konnten nicht dargestellt werden.',
+  };
+
+  function umlautRow(label: string): InsightResponse {
+    return { ...row, subject_label: label };
+  }
+
+  it('declares WinAnsi on the font', () => {
+    const pdf = buildMatrixPdfDocument([umlautRow('Frühstück')], options);
+
+    expect(pdf).toContain('/BaseFont /Helvetica /Encoding /WinAnsiEncoding');
+  });
+
+  it('writes umlauts as single WinAnsi bytes, not as UTF-8 pairs', () => {
+    const pdf = buildMatrixPdfDocument([umlautRow('Frühstück')], options);
+
+    expect(pdf).toContain(`Fr\u00fchst\u00fcck`);
+    // The UTF-8 pair for ü — what the document used to contain.
+    expect(pdf).not.toContain(`\u00c3\u00bc`);
+  });
+
+  it('escapes PDF delimiters after encoding, not instead of it', () => {
+    // A tag like this mixes both concerns: the parentheses must be escaped so
+    // the string literal stays intact, and the umlauts must survive as bytes.
+    const pdf = buildMatrixPdfDocument([umlautRow('Büro (Großraum)')], options);
+
+    expect(pdf).toContain('B\u00fcro \\(Gro\u00dfraum\\)');
+  });
+
+  it('stays silent about the character set when nothing was replaced', () => {
+    const pdf = buildMatrixPdfDocument([umlautRow('Erkältung')], options);
+
+    expect(pdf).not.toContain('Hinweis');
+  });
+
+  it('adds the note once when a label lost a character', () => {
+    const pdf = buildMatrixPdfDocument([umlautRow('Кофе'), umlautRow('Erkältung')], options);
+
+    expect(pdf).toContain('????');
+    expect(pdf.match(/Hinweis/g)).toHaveLength(1);
+  });
+
+  it('leaves the note out when the caller supplies none', () => {
+    const pdf = buildMatrixPdfDocument([umlautRow('Кофе')], {
+      title: options.title,
+      subtitle: options.subtitle,
+      disclaimer: options.disclaimer,
+    });
+
+    expect(pdf).toContain('????');
+    expect(pdf).not.toContain('Hinweis');
   });
 });

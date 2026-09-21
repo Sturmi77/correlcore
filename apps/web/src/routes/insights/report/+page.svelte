@@ -145,6 +145,8 @@
         title: $_('insights.report.title'),
         subtitle: $_('insights.report.pdf_subtitle'),
         disclaimer: $_('insights.report.disclaimer'),
+        // Only printed when a label actually lost a character (#960).
+        charsetNote: $_('insights.report.pdf_charset_note'),
         filename: reportExportFilename('pdf'),
       });
     } finally {
