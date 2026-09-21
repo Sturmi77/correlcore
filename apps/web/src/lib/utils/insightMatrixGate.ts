@@ -9,11 +9,17 @@ export const MATRIX_STRONG_MIN_CONFIDENCE = 0.2;
  */
 export const MATRIX_WEAK_MIN_CONFIDENCE = 0.1;
 
-/** Insight families that populate the correlation matrix. */
+/**
+ * Insight families that populate the correlation matrix.
+ *
+ * Also sent to `/insights/latest` as the `insight_type` filter so the row cap
+ * applies within these families instead of across all of them (#959) — which
+ * is why the list lives here rather than inline in the predicate below.
+ */
+export const MATRIX_INSIGHT_TYPES = ['pointbiserial', 'symptom_mood_association'] as const;
+
 function isMatrixFamily(insight: InsightResponse): boolean {
-  return (
-    insight.insight_type === 'pointbiserial' || insight.insight_type === 'symptom_mood_association'
-  );
+  return (MATRIX_INSIGHT_TYPES as readonly string[]).includes(insight.insight_type);
 }
 
 /** Reliable matrix rows: matrix family with confidence at/above the strong floor. */

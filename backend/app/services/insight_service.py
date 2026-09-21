@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from datetime import date as date_type
 
@@ -485,11 +485,22 @@ def newest_insight_per_subject_stmt(user_id: uuid.UUID) -> Select[tuple[Insight]
     )
 
 
+def _insight_type_value(insight: Insight) -> str:
+    """The storage value of an insight's family, whether enum or raw string."""
+
+    return (
+        insight.insight_type.value
+        if isinstance(insight.insight_type, InsightType)
+        else str(insight.insight_type)
+    )
+
+
 async def list_latest_insights(
     db: AsyncSession,
     *,
     user_id: uuid.UUID,
     limit: int = DEFAULT_LATEST_INSIGHT_LIMIT,
+    insight_types: Collection[str] | None = None,
 ) -> list[Insight]:
     """Return the newest insight per analytical subject.
 
@@ -498,6 +509,12 @@ async def list_latest_insights(
     subject (see :func:`newest_insight_per_subject_stmt`) so no subject can be
     starved by the row cap; the Python pass below additionally merges cross-id
     slug/label variants that SQL cannot see.
+
+    ``insight_types`` narrows the result to those families *before* the row cap
+    applies. Callers that render one family — the report surface renders two —
+    otherwise lose valid rows to unrelated subjects that happen to occupy the
+    first ``limit`` slots, and can be served an empty list while matching rows
+    exist (#959).
     """
 
     limit = _clamp_limit(
@@ -538,7 +555,10 @@ async def list_latest_insights(
     # |r| only breaks ties inside the same ``generated_for_date`` (#853 review).
     chosen: dict[tuple[object, ...], Insight] = {}
     order: list[tuple[object, ...]] = []
+    wanted_types = set(insight_types) if insight_types is not None else None
     for insight in insights:
+        if wanted_types is not None and _insight_type_value(insight) not in wanted_types:
+            continue
         if str(insight.id) in dismissed_uuid_keys:
             continue
         subject_key = insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
@@ -551,11 +571,7 @@ async def list_latest_insights(
         # and sit next to each other (#964). Rows arrive newest-first, so the
         # current generation wins the slot.
         key = (
-            _latest_family_key(
-                insight.insight_type.value
-                if isinstance(insight.insight_type, InsightType)
-                else str(insight.insight_type)
-            ),
+            _latest_family_key(_insight_type_value(insight)),
             _latest_metric_key(insight),
             insight.subject_type,
             _latest_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id),

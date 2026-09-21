@@ -11025,6 +11025,27 @@
             }
           },
           {
+            "description": "Restrict to these insight families before the row cap applies. Repeat the parameter for several families.",
+            "in": "query",
+            "name": "insight_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict to these insight families before the row cap applies. Repeat the parameter for several families.",
+              "title": "Insight Type"
+            }
+          },
+          {
             "in": "header",
             "name": "authorization",
             "required": false,

@@ -5,6 +5,7 @@ import {
   countMatrixInsights,
   isMatrixInsight,
   isWeakMatrixInsight,
+  MATRIX_INSIGHT_TYPES,
   MATRIX_STRONG_MIN_CONFIDENCE,
   MATRIX_TAB_MIN_INSIGHTS,
   MATRIX_WEAK_MIN_CONFIDENCE,
@@ -74,5 +75,31 @@ describe('insightMatrixGate', () => {
     ];
     expect(countMatrixInsights(softened)).toBe(0);
     expect(countDisplayableMatrixInsights(softened)).toBe(2);
+  });
+});
+
+describe('MATRIX_INSIGHT_TYPES (#959)', () => {
+  // The report sends this list to /insights/latest as the `insight_type`
+  // filter. If it drifted from the predicate, the request would fetch families
+  // the matrix drops — or drop families it renders — and the row cap would
+  // silently cut the wrong rows.
+  const base = {
+    effect_size: 0.4,
+    confidence: 0.6,
+  } as Partial<InsightResponse>;
+
+  it('names exactly the families the matrix renders', () => {
+    for (const insightType of MATRIX_INSIGHT_TYPES) {
+      expect(isMatrixInsight({ ...base, insight_type: insightType } as InsightResponse)).toBe(true);
+    }
+  });
+
+  it('excludes families the matrix drops', () => {
+    for (const insightType of ['spearman', 'weekday_pattern', 'changepoint', 'symptom_cluster']) {
+      expect((MATRIX_INSIGHT_TYPES as readonly string[]).includes(insightType)).toBe(false);
+      expect(isMatrixInsight({ ...base, insight_type: insightType } as InsightResponse)).toBe(
+        false
+      );
+    }
   });
 });

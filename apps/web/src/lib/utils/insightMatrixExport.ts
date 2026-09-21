@@ -55,14 +55,42 @@ function pdfEscape(text: string): string {
   return text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 }
 
+/** Page box and text metrics of the generated PDF, in PDF user units. */
+const PDF_PAGE_WIDTH = 612;
+const PDF_PAGE_HEIGHT = 842;
+const PDF_TOP_BASELINE = 800;
+const PDF_LINE_HEIGHT = 16;
+const PDF_BOTTOM_MARGIN = 56;
+
 /**
- * Minimal single-page PDF (Helvetica) for the report table — no extra dependency.
- * Aggregated rows only; never writes per-day raw entries.
+ * Lines that fit between the first baseline and the bottom margin.
+ *
+ * The document used to be a single page with an unbounded downward cursor, so
+ * from roughly this many lines on, the remaining rows *and the disclaimer* were
+ * written outside the MediaBox and silently vanished — on a surface framed as a
+ * handout for a doctor's appointment (#959).
  */
-export function exportMatrixPdf(
+export const PDF_LINES_PER_PAGE =
+  Math.floor((PDF_TOP_BASELINE - PDF_BOTTOM_MARGIN) / PDF_LINE_HEIGHT) + 1;
+
+function paginate(lines: readonly string[]): string[][] {
+  const pages: string[][] = [];
+  for (let index = 0; index < lines.length; index += PDF_LINES_PER_PAGE) {
+    pages.push(lines.slice(index, index + PDF_LINES_PER_PAGE));
+  }
+  return pages.length > 0 ? pages : [[]];
+}
+
+/**
+ * Minimal multi-page PDF (Helvetica) for the report table — no extra dependency.
+ * Aggregated rows only; never writes per-day raw entries.
+ *
+ * Exported separately from the download so the document itself is testable.
+ */
+export function buildMatrixPdfDocument(
   rows: readonly InsightResponse[],
-  options: { title: string; subtitle: string; disclaimer: string; filename: string }
-): void {
+  options: { title: string; subtitle: string; disclaimer: string }
+): string {
   const lines: string[] = [
     options.title,
     options.subtitle,
@@ -76,21 +104,36 @@ export function exportMatrixPdf(
     options.disclaimer,
   ];
 
-  const contentLines = lines.map((line, index) => {
-    const y = 800 - index * 16;
-    return `BT /F1 10 Tf 40 ${y} Td (${pdfEscape(line.slice(0, 110))}) Tj ET`;
-  });
-  const stream = contentLines.join('\n');
-  const streamLength = new TextEncoder().encode(stream).length;
+  const pages = paginate(lines);
+  // 1 catalog, 2 page tree, 3 font, then a page and a content object per page.
+  const pageObjectIds = pages.map((_, index) => 4 + index * 2);
 
   const objects: string[] = [];
   objects.push('1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj');
-  objects.push('2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj');
   objects.push(
-    '3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>endobj'
+    `2 0 obj<< /Type /Pages /Kids [${pageObjectIds
+      .map((id) => `${id} 0 R`)
+      .join(' ')}] /Count ${pages.length} >>endobj`
   );
-  objects.push(`4 0 obj<< /Length ${streamLength} >>stream\n${stream}\nendstream\nendobj`);
-  objects.push('5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj');
+  objects.push('3 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj');
+  pages.forEach((pageLines, index) => {
+    const pageId = pageObjectIds[index];
+    const contentId = pageId + 1;
+    const stream = pageLines
+      .map((line, lineIndex) => {
+        const y = PDF_TOP_BASELINE - lineIndex * PDF_LINE_HEIGHT;
+        return `BT /F1 10 Tf 40 ${y} Td (${pdfEscape(line.slice(0, 110))}) Tj ET`;
+      })
+      .join('\n');
+    objects.push(
+      `${pageId} 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PDF_PAGE_WIDTH} ${PDF_PAGE_HEIGHT}] /Contents ${contentId} 0 R /Resources << /Font << /F1 3 0 R >> >> >>endobj`
+    );
+    objects.push(
+      `${contentId} 0 obj<< /Length ${
+        new TextEncoder().encode(stream).length
+      } >>stream\n${stream}\nendstream\nendobj`
+    );
+  });
 
   let pdf = '%PDF-1.4\n';
   const offsets: number[] = [0];
@@ -105,6 +148,14 @@ export function exportMatrixPdf(
     pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
   }
   pdf += `trailer<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+  return pdf;
+}
+
+export function exportMatrixPdf(
+  rows: readonly InsightResponse[],
+  options: { title: string; subtitle: string; disclaimer: string; filename: string }
+): void {
+  const pdf = buildMatrixPdfDocument(rows, options);
 
   const blob = new Blob([pdf], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);

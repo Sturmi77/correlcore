@@ -21,6 +21,7 @@
     reportExportFilename,
   } from '$lib/utils/insightMatrixExport';
   import { buildMatrixDisplayRows, matrixCoverageStats } from '$lib/utils/insightMatrixRows';
+  import { MATRIX_INSIGHT_TYPES } from '$lib/utils/insightMatrixGate';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import InsightReportTable from '$lib/components/insights/InsightReportTable.svelte';
@@ -32,6 +33,13 @@
   let loading = true;
   let error: string | null = null;
   let selectedIds: string[] = [];
+  /**
+   * The initial "everything selected" is seeded once, by `seedSelection` after
+   * a load that produced rows. It used to be a reactive refill of any empty
+   * selection, which made clearing the last row — or unticking "select all" —
+   * impossible and left the `export_empty` path unreachable (#959).
+   */
+  let selectionSeeded = false;
   let exportBusy: 'pdf' | 'png' | 'csv' | 'json' | null = null;
   let exportError: string | null = null;
 
@@ -48,19 +56,12 @@
    */
   $: requestedSignalId = $page.url.searchParams.get('signal');
 
+  // Drop ids a reload no longer offers. An empty result of this pruning stays
+  // empty — only `seedSelection` ever fills the selection.
   $: {
     const valid = new Set(reportRows.map((row) => row.id));
     const kept = selectedIds.filter((id) => valid.has(id));
-    let next = kept;
-    if (kept.length === 0 && reportRows.length > 0) {
-      next =
-        requestedSignalId && valid.has(requestedSignalId)
-          ? [requestedSignalId]
-          : reportRows.map((row) => row.id);
-    }
-    const same =
-      next.length === selectedIds.length && next.every((id, index) => id === selectedIds[index]);
-    if (!same) selectedIds = next;
+    if (kept.length !== selectedIds.length) selectedIds = kept;
   }
 
   /** True when a signal was requested but is not among the reportable rows. */
@@ -68,13 +69,32 @@
     requestedSignalId && !loading && !reportRows.some((row) => row.id === requestedSignalId)
   );
 
+  /** Select everything (or the requested signal) once, on the first load with rows. */
+  function seedSelection(): void {
+    if (selectionSeeded) return;
+    const rows = buildMatrixDisplayRows(insights, { includeWeak: false }).strong;
+    if (rows.length === 0) return;
+    selectedIds =
+      requestedSignalId && rows.some((row) => row.id === requestedSignalId)
+        ? [requestedSignalId]
+        : rows.map((row) => row.id);
+    selectionSeeded = true;
+  }
+
   async function loadReport(): Promise<void> {
     loading = true;
     error = null;
     try {
-      const response = await listLatestInsights({ limit: 50 });
+      // Filtered by family so the cap applies to reportable rows only: an
+      // account with more than 50 analytical subjects used to lose valid rows —
+      // or see an empty report — because unrelated families took the slots (#959).
+      const response = await listLatestInsights({
+        limit: 50,
+        insightTypes: MATRIX_INSIGHT_TYPES,
+      });
       insights = response.insights;
       maturity = response.insight_maturity;
+      seedSelection();
     } catch (err) {
       error = err instanceof Error ? err.message : $_('insights.report.error');
       insights = [];

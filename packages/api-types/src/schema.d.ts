@@ -6336,6 +6336,8 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
+                /** @description Restrict to these insight families before the row cap applies. Repeat the parameter for several families. */
+                insight_type?: string[] | null;
             };
             header?: {
                 authorization?: string | null;
