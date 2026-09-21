@@ -262,6 +262,33 @@ describe('buildMatrixPdfDocument character set (#960)', () => {
     expect(pdf).toContain('B\u00fcro \\(Gro\u00dfraum\\)');
   });
 
+  it('keeps byte offsets right across pages when the rows carry high bytes', () => {
+    // The structural tests above use ASCII rows, where char count and byte
+    // count happen to agree. Under WinAnsi they diverge on every umlaut, and
+    // /Length plus the xref offsets are exactly what that would break.
+    const rows = Array.from({ length: 120 }, (_, index) => ({
+      ...row,
+      id: `i${index}`,
+      subject_label: `Frühstück Nr. ${index} — Büro/Großraum ÄÖÜäöüß`,
+    }));
+    const pdf = buildMatrixPdfDocument(rows, options);
+
+    expect([...pdf].some((char) => char.charCodeAt(0) > 0x7f)).toBe(true);
+    expect(Number(pdf.match(/\/Count (\d+)/)?.[1])).toBeGreaterThan(1);
+
+    const streams = [...pdf.matchAll(/<< \/Length (\d+) >>stream\n([\s\S]*?)\nendstream/g)];
+    expect(streams.length).toBeGreaterThan(1);
+    for (const [, declared, body] of streams) {
+      expect([...body].some((char) => char.charCodeAt(0) > 0x7f)).toBe(true);
+      expect(body.length).toBe(Number(declared));
+    }
+
+    const offsets = [...pdf.matchAll(/^(\d{10}) 00000 n $/gm)].map((match) => Number(match[1]));
+    offsets.forEach((offset, index) => {
+      expect(pdf.slice(offset, offset + 16).startsWith(`${index + 1} 0 obj`)).toBe(true);
+    });
+  });
+
   it('stays silent about the character set when nothing was replaced', () => {
     const pdf = buildMatrixPdfDocument([umlautRow('Erkältung')], options);
 
