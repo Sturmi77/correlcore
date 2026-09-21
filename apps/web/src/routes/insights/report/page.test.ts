@@ -8,9 +8,17 @@ vi.mock('svelte-i18n', async () => {
   return { _: readable((key: string) => key) };
 });
 
+const pageUrl = vi.hoisted(() => ({ value: 'http://localhost/insights/report' }));
+
 vi.mock('$app/stores', async () => {
   const { readable } = await import('svelte/store');
-  return { page: readable({ url: new URL('http://localhost/insights/report') }) };
+  return {
+    page: readable({
+      get url() {
+        return new URL(pageUrl.value);
+      },
+    }),
+  };
 });
 
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
@@ -24,6 +32,15 @@ vi.mock('$lib/stores/auth', async () => {
 
 vi.mock('$lib/api/insights', () => ({
   listLatestInsights: vi.fn(),
+}));
+
+const refreshHandlers = vi.hoisted(() => [] as (() => void)[]);
+
+vi.mock('$lib/stores/pageRefresh', () => ({
+  registerPageRefresh: (handler: () => void) => {
+    refreshHandlers.push(handler);
+    return () => {};
+  },
 }));
 
 function matrixRow(id: string): InsightResponse {
@@ -51,6 +68,8 @@ function matrixRow(id: string): InsightResponse {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  refreshHandlers.length = 0;
+  pageUrl.value = 'http://localhost/insights/report';
   vi.mocked(listLatestInsights).mockResolvedValue({
     insight_maturity: null,
     insights: [matrixRow('a'), matrixRow('b')],
@@ -74,6 +93,44 @@ describe('/insights/report selection (#959)', () => {
     await waitFor(() => expect(screen.getByTestId('insight-report-select-all')).toBeTruthy());
     const selectAll = screen.getByTestId('insight-report-select-all') as HTMLInputElement;
     expect(selectAll.checked).toBe(true);
+  });
+
+  it('preselects only the requested ?signal= row', async () => {
+    pageUrl.value = 'http://localhost/insights/report?signal=b';
+    const { container } = render(Page);
+
+    await waitFor(() => expect(screen.getByTestId('insight-report-row-b')).toBeTruthy());
+    const checked = Array.from(
+      container.querySelectorAll<HTMLInputElement>('[data-testid^="insight-report-row-"] input')
+    ).filter((box) => box.checked);
+
+    expect(checked).toHaveLength(1);
+    expect(
+      checked[0]?.closest('[data-testid^="insight-report-row-"]')?.getAttribute('data-testid')
+    ).toBe('insight-report-row-b');
+  });
+
+  it('does not refill an emptied selection when the page refreshes', async () => {
+    const { container } = render(Page);
+
+    await waitFor(() => expect(screen.getByTestId('insight-report-select-all')).toBeTruthy());
+    const selectAll = screen.getByTestId('insight-report-select-all') as HTMLInputElement;
+    selectAll.checked = false;
+    selectAll.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await waitFor(() => expect(selectAll.checked).toBe(false));
+
+    // The refresh hook reloads the same rows. Seeding is one-shot, so the
+    // user's empty selection has to survive it.
+    expect(refreshHandlers.length).toBeGreaterThan(0);
+    refreshHandlers.forEach((handler) => handler());
+    await waitFor(() => expect(listLatestInsights).toHaveBeenCalledTimes(2));
+
+    const rowBoxes = Array.from(
+      container.querySelectorAll<HTMLInputElement>('[data-testid^="insight-report-row-"] input')
+    );
+    expect(rowBoxes.length).toBeGreaterThan(0);
+    expect(rowBoxes.every((box) => !box.checked)).toBe(true);
   });
 
   it('keeps a deliberately emptied selection empty and surfaces export_empty', async () => {

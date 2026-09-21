@@ -155,6 +155,27 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
     });
   });
 
+  it('declares each content stream with its real byte length', () => {
+    // /Length is now computed per page. A stale or mismatched value is exactly
+    // the kind of error a reader rejects the whole file over.
+    const pdf = buildMatrixPdfDocument(rows(120), options);
+    const streams = [...pdf.matchAll(/<< \/Length (\d+) >>stream\n([\s\S]*?)\nendstream/g)];
+
+    expect(streams.length).toBeGreaterThan(1);
+    for (const [, declared, body] of streams) {
+      expect(new TextEncoder().encode(body).length).toBe(Number(declared));
+    }
+  });
+
+  it('writes the disclaimer inside the last page, not past its bottom edge', () => {
+    const pdf = buildMatrixPdfDocument(rows(120), options);
+    const lastStream = [...pdf.matchAll(/>>stream\n([\s\S]*?)\nendstream/g)].at(-1)?.[1] ?? '';
+    const disclaimerLine = lastStream.split('\n').find((line) => line.includes(options.disclaimer));
+
+    expect(disclaimerLine).toBeDefined();
+    expect(Number(disclaimerLine?.match(/Tf 40 (-?\d+) Td/)?.[1])).toBeGreaterThan(0);
+  });
+
   it('fits the documented number of lines per page', () => {
     // title + subtitle + blank + rows + blank + disclaimer
     const rowsThatFillOnePage = PDF_LINES_PER_PAGE - 5;
