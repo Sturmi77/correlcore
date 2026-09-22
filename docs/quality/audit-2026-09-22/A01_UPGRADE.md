@@ -42,4 +42,6 @@ jeweils eine separate alte Datenbank für 046, 047 und 048, seeded mehrere Nutze
 und Marker und erzwingt ein Backfill-Fehler mitten im Upgrade. Jeder
 Alembic-Aufruf hat einen festen Timeout. Der CI-Integrationsjob führt diese
 Tests mit `CORRELCORE_RUN_INTEGRATION=1` aus. Die allgemeinen Migration-Smokes
-prüfen zusätzlich die frische Installation.
+prüfen zusätzlich die frische Installation und eine `pg_dump`/`pg_restore`-Probe
+der migrierten CI-Datenbank. Der produktive Backup-/Restore-Nachweis bleibt ein
+eigener Release-Gate auf den finalen Images und Betriebsdaten.
