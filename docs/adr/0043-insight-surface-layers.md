@@ -165,7 +165,15 @@ flip.
   “auch an Tagen mit derselben Arbeitssituation” — never “bereinigt” / “cleaned”.
   Non-survival of the association inside the situation is a valid result (aligns D2).
   Layer-1 notes and dashed heatmap borders stay as today.
-- Exact route names for layers 2 and 4 are set in the implementation issues; this ADR fixes
-  only that they are secondary surfaces inside the insights route.
+- ~~Exact route names for layers 2 and 4~~ **Decided in implementation:**
+  `/insights/signal/[id]` (layer 2) and `/insights/report` (layer 4).
 - The interview validation asked for in #930 H.4 remains outside this ADR (product research,
   not a structural blocker for layers 1–2, which have shipped).
+- ~~#928 F1–F6~~ **Ratified 2026-09-22 (option A each):**
+  F1 natural frequencies on the surface, Lift/FDR as an internal gate only;
+  F2 “Zeitversatz” vs “Abfolge”, arrow means temporal direction (`→` lag / `↔` same-day);
+  F3 signal detail as a secondary insights route, not a sixth primary screen;
+  F4 adjusted effects only on layer 2 behind disclosure, never “bereinigt”;
+  F5 a non-result is a first-class answer (`null_association`);
+  F6 v1→v2 hub migrate: exact legacy defaults shrink, customized layouts keep
+  enabled flags. Forest-Plot (G4) and rebuilding L7 ghost-tabs remain rejections.
