@@ -11,6 +11,7 @@ import os
 import subprocess
 import sys
 import uuid
+from datetime import date
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
@@ -90,14 +91,11 @@ async def _seed(database: str) -> tuple[uuid.UUID, uuid.UUID, uuid.UUID, uuid.UU
             await conn.execute(
                 "INSERT INTO entries (id, user_id, entry_date, slot, mood_score, energy, stress, "
                 "work_context, note_visibility) VALUES "
-                "($1, $2, CASE WHEN $1 = $4 THEN DATE '2026-09-02' "
-                "WHEN $1 = $5 THEN DATE '2026-09-03' ELSE DATE '2026-09-01' END, "
-                "'day', 3, 3, 3, 'office', $3)",
+                "($1, $2, $4, 'day', 3, 3, 3, 'office', $3)",
                 entry_id,
                 user_id,
                 visibility,
-                full,
-                hidden,
+                date(2026, 9, 2 if entry_id == full else 3 if entry_id == hidden else 1),
             )
         await conn.execute(
             "INSERT INTO tags (id, user_id, slug, name, category, is_default) "
