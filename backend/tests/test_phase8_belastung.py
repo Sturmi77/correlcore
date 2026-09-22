@@ -109,6 +109,41 @@ def test_belastung_candidates_require_opt_in_and_pattern() -> None:
     )
 
 
+def test_belastung_wording_matches_marginals_on_shared_and_separate_days() -> None:
+    fatigue_id = uuid.uuid4()
+    fatigue = SymptomSnapshot(id=fatigue_id, label="Fatigue", slug="fatigue", is_default=True)
+    as_of = date(2026, 6, 30)
+    prior = [
+        _entry(as_of - timedelta(days=14 + offset), stress=2, energy=3) for offset in range(14)
+    ]
+
+    def candidate(*, shared: bool):
+        recent = [
+            _entry(
+                as_of - timedelta(days=offset),
+                stress=5 if offset < 7 else 2,
+                energy=3,
+                symptom_ids=frozenset({fatigue_id}) if ((offset < 7) == shared) else frozenset(),
+            )
+            for offset in range(14)
+        ]
+        return _belastung_candidates(
+            [*prior, *recent],
+            [],
+            [fatigue],
+            tier=InsightTier.ROBUST,
+            generated_for_date=as_of,
+            enabled=True,
+        )[0]
+
+    shared, separate = candidate(shared=True), candidate(shared=False)
+    assert shared.statement == separate.statement
+    assert "higher stress" in shared.statement
+    assert "more fatigue days" in shared.statement
+    assert "occurred together" in shared.statement  # explicitly disclaims joint evidence
+    assert "joint_frequency_recent" not in shared.payload
+
+
 def test_write_time_covariates_survive_daily_normalization() -> None:
     """#875 / #892: both normalization helpers must carry the write-time fields.
 

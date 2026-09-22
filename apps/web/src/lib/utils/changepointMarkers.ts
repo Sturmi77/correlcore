@@ -29,6 +29,7 @@ export function isChangepointInsight(insight: InsightResponse): boolean {
 export type ChangepointSeries = 'mood_score' | 'stress' | 'energy';
 
 export function changepointSeries(insight: InsightResponse): ChangepointSeries | null {
+  if (insight.evidence?.family === 'changepoint') return insight.evidence.series;
   const fromPayload = asString(insight.payload?.series);
   if (fromPayload === 'mood_score' || fromPayload === 'stress' || fromPayload === 'energy') {
     return fromPayload;
@@ -46,30 +47,38 @@ export function formatChangepointStatement(
 ): string | null {
   if (!isChangepointInsight(insight)) return null;
   const payload = insight.payload ?? {};
-  const date = asString(payload.changepoint_date) ?? insight.subject_label;
-  const shiftDate = asString(payload.shift_date);
+  const evidence = insight.evidence?.family === 'changepoint' ? insight.evidence : null;
+  const date =
+    evidence?.boundary_before ?? asString(payload.changepoint_date) ?? insight.subject_label;
+  const shiftDate = evidence?.boundary_after ?? asString(payload.shift_date);
   const before = asNumber(payload.before_avg);
   const after = asNumber(payload.after_avg);
   const series = changepointSeries(insight);
-  if (!date || before == null || after == null || !series) return null;
-  // Raw averages arrive from the backend; stress is plotted on the inverted
-  // scale, so comparing and printing them raw made the sentence contradict its
-  // own chart — "2.1 → 4.0 (higher)" beside a line moving down (#955).
-  const beforeDisplay = displayMetricValue(series, before);
-  const afterDisplay = displayMetricValue(series, after);
-  const direction = afterDisplay >= beforeDisplay ? 'higher' : 'lower';
-  return t('insights.changepoint.statement', {
-    values: {
-      series: t(`insights.changepoint.series_${series}`),
-      date,
-      shiftDate: shiftDate ?? date,
-      // Printed on the same scale the chart draws, so the numbers and the
-      // direction word agree with the line beside them.
-      before: beforeDisplay.toFixed(1),
-      after: afterDisplay.toFixed(1),
-      direction: t(`insights.changepoint.direction_${direction}`),
-    },
-  });
+  const beforeRaw = evidence?.before_raw ?? before;
+  const afterRaw = evidence?.after_raw ?? after;
+  if (!date || beforeRaw == null || afterRaw == null || !series) return null;
+  // Keep raw direction in the sentence, and explicitly show the chart's
+  // positive-oriented scale for stress. Both values come from one contract.
+  const beforeDisplay = evidence?.before_display ?? displayMetricValue(series, beforeRaw);
+  const afterDisplay = evidence?.after_display ?? displayMetricValue(series, afterRaw);
+  const direction = afterRaw > beforeRaw ? 'higher' : afterRaw < beforeRaw ? 'lower' : 'unchanged';
+  return t(
+    series === 'stress'
+      ? 'insights.changepoint.statement_stress'
+      : 'insights.changepoint.statement',
+    {
+      values: {
+        series: t(`insights.changepoint.series_${series}`),
+        date,
+        shiftDate: shiftDate ?? date,
+        before: beforeRaw.toFixed(1),
+        after: afterRaw.toFixed(1),
+        displayBefore: beforeDisplay.toFixed(1),
+        displayAfter: afterDisplay.toFixed(1),
+        direction: t(`insights.changepoint.direction_${direction}`),
+      },
+    }
+  );
 }
 
 export function changepointInsightsToMarkers(
@@ -82,11 +91,16 @@ export function changepointInsightsToMarkers(
   for (const insight of insights) {
     if (!isChangepointInsight(insight)) continue;
     const payload = insight.payload ?? {};
-    let date = asString(payload.shift_date) ?? asString(payload.changepoint_date);
+    const evidence = insight.evidence?.family === 'changepoint' ? insight.evidence : null;
+    let date =
+      evidence?.boundary_after ??
+      evidence?.boundary_before ??
+      asString(payload.shift_date) ??
+      asString(payload.changepoint_date);
     if (!date) continue;
     const series = changepointSeries(insight);
-    const before = asNumber(payload.before_avg);
-    const after = asNumber(payload.after_avg);
+    const before = evidence?.before_display ?? asNumber(payload.before_avg);
+    const after = evidence?.after_display ?? asNumber(payload.after_avg);
 
     // Phase 4: markers outside the visible window stay as edge markers.
     let clamped = date;
@@ -106,7 +120,13 @@ export function changepointInsightsToMarkers(
       description:
         before != null && after != null
           ? t('insights.changepoint.marker_description', {
-              values: { before: before.toFixed(1), after: after.toFixed(1), date },
+              values: {
+                before: (series && !evidence ? displayMetricValue(series, before) : before).toFixed(
+                  1
+                ),
+                after: (series && !evidence ? displayMetricValue(series, after) : after).toFixed(1),
+                date,
+              },
             })
           : undefined,
     });

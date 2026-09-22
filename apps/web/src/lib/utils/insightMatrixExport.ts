@@ -4,7 +4,8 @@
  */
 
 import type { InsightResponse } from '$lib/api/insights';
-import { matrixConfidencePercent, matrixEffectTone } from '$lib/utils/insightMatrixRows';
+import { matrixConfidencePercent, matrixRowTone } from '$lib/utils/insightMatrixRows';
+import { displayEffectForMetric } from '$lib/utils/metrics';
 
 function themeColor(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -13,7 +14,7 @@ function themeColor(name: string): string {
 /** Download selected matrix rows as a PNG chart (former InsightMatrix.exportPng). */
 export function exportMatrixPng(rows: readonly InsightResponse[], filename: string): void {
   const canvas = document.createElement('canvas');
-  canvas.width = 900;
+  canvas.width = 1050;
   canvas.height = Math.max(220, rows.length * 56 + 96);
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -35,14 +36,18 @@ export function exportMatrixPng(rows: readonly InsightResponse[], filename: stri
   rows.forEach((row, index) => {
     const y = 88 + index * 52;
     const effect = row.effect_size ?? 0;
-    const tone = matrixEffectTone(effect);
+    const tone = matrixRowTone(row);
     ctx.fillStyle =
       tone === 'positive' ? colors.success : tone === 'negative' ? colors.error : colors.muted;
     ctx.fillRect(32, y - 18, Math.max(8, Math.abs(effect) * 280), 24);
     ctx.fillStyle = colors.text;
     ctx.fillText(row.subject_label ?? row.metric, 332, y);
-    ctx.fillText(effect.toFixed(2), 560, y);
-    ctx.fillText(matrixConfidencePercent(row.confidence), 650, y);
+    ctx.fillText(
+      `${effect.toFixed(2)} raw / ${displayEffectForMetric(row.metric, effect).toFixed(2)} view`,
+      560,
+      y
+    );
+    ctx.fillText(matrixConfidencePercent(row.confidence), 890, y);
   });
 
   const link = document.createElement('a');
@@ -177,7 +182,7 @@ export function buildMatrixPdfDocument(
     ...rows.map((row) => {
       const effect = row.effect_size ?? 0;
       const conf = matrixConfidencePercent(row.confidence);
-      return `${row.subject_label ?? '-'} | ${row.metric} | ${effect.toFixed(2)} | n=${row.sample_n} | ${conf}`;
+      return `${row.subject_label ?? '-'} | ${row.metric} | raw ${effect.toFixed(2)} | view ${displayEffectForMetric(row.metric, effect).toFixed(2)} | n=${row.sample_n} | ${conf}`;
     }),
     '',
     options.disclaimer,
@@ -284,6 +289,8 @@ function reportRecords(rows: readonly InsightResponse[]): Record<string, unknown
     metric: row.metric,
     insight_type: row.insight_type,
     effect_size: row.effect_size ?? null,
+    display_effect_size:
+      row.effect_size == null ? null : displayEffectForMetric(row.metric, row.effect_size),
     confidence: row.confidence ?? null,
     confidence_percent: matrixConfidencePercent(row.confidence),
     sample_n: row.sample_n ?? null,
@@ -320,6 +327,7 @@ export function exportReportCsv(rows: readonly InsightResponse[], filename: stri
     'metric',
     'insight_type',
     'effect_size',
+    'display_effect_size',
     'confidence',
     'confidence_percent',
     'sample_n',

@@ -1569,6 +1569,121 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** AssociationEvidence */
+        AssociationEvidence: {
+            /** Calendar Held Coefficient */
+            calendar_held_coefficient?: number | null;
+            /** Evidence End */
+            evidence_end?: string | null;
+            /** Evidence Start */
+            evidence_start?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            family: "association";
+            /** Lag Days */
+            lag_days?: number | null;
+            /** Metric */
+            metric: string;
+            /**
+             * Outcome
+             * @default unknown
+             * @enum {string}
+             */
+            outcome: "association" | "null" | "unknown";
+            /** Raw Coefficient */
+            raw_coefficient?: number | null;
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
+            /** Weekday Held Coefficient */
+            weekday_held_coefficient?: number | null;
+            /** With Distribution */
+            with_distribution?: number[] | null;
+            /** With Good Count */
+            with_good_count?: number | null;
+            /** With Mean Display */
+            with_mean_display?: number | null;
+            /** With Mean Raw */
+            with_mean_raw?: number | null;
+            /** With N */
+            with_n: number;
+            /** Without Distribution */
+            without_distribution?: number[] | null;
+            /** Without Good Count */
+            without_good_count?: number | null;
+            /** Without Mean Display */
+            without_mean_display?: number | null;
+            /** Without Mean Raw */
+            without_mean_raw?: number | null;
+            /** Without N */
+            without_n: number;
+        };
+        /** BelastungEvidence */
+        BelastungEvidence: {
+            /**
+             * Energy Down
+             * @default false
+             */
+            energy_down: boolean;
+            /** Energy Prior Raw */
+            energy_prior_raw?: number | null;
+            /** Energy Recent Raw */
+            energy_recent_raw?: number | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            family: "belastung";
+            /** Fatigue Prior */
+            fatigue_prior?: number | null;
+            /** Fatigue Recent */
+            fatigue_recent?: number | null;
+            /**
+             * Fatigue Up
+             * @default false
+             */
+            fatigue_up: boolean;
+            /** Joint Frequency Prior */
+            joint_frequency_prior?: number | null;
+            /** Joint Frequency Recent */
+            joint_frequency_recent?: number | null;
+            /** Prior End */
+            prior_end?: string | null;
+            /** Prior N */
+            prior_n: number;
+            /** Prior Start */
+            prior_start?: string | null;
+            /** Recent End */
+            recent_end?: string | null;
+            /** Recent N */
+            recent_n: number;
+            /** Recent Start */
+            recent_start?: string | null;
+            /** Stress Prior Display */
+            stress_prior_display?: number | null;
+            /** Stress Prior Raw */
+            stress_prior_raw?: number | null;
+            /** Stress Recent Display */
+            stress_recent_display?: number | null;
+            /** Stress Recent Raw */
+            stress_recent_raw?: number | null;
+            /**
+             * Stress Up
+             * @default false
+             */
+            stress_up: boolean;
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
+        };
         /**
          * BleedingLevel
          * @description Menstrual bleeding strength (ADR-0032). SHD — never log raw values.
@@ -1579,6 +1694,47 @@ export interface components {
         Body_upload_photo_api_v1_media_photos_post: {
             /** File */
             file: string;
+        };
+        /** ChangepointEvidence */
+        ChangepointEvidence: {
+            /** After Display */
+            after_display: number;
+            /** After Raw */
+            after_raw: number;
+            /** Before Display */
+            before_display: number;
+            /** Before Raw */
+            before_raw: number;
+            /** Boundary After */
+            boundary_after?: string | null;
+            /** Boundary Before */
+            boundary_before?: string | null;
+            /**
+             * Display Direction
+             * @enum {string}
+             */
+            display_direction: "higher" | "lower" | "unchanged";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            family: "changepoint";
+            /**
+             * Raw Direction
+             * @enum {string}
+             */
+            raw_direction: "higher" | "lower" | "unchanged";
+            /**
+             * Series
+             * @enum {string}
+             */
+            series: "mood_score" | "stress" | "energy";
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
         };
         /** ComponentModel */
         ComponentModel: {
@@ -2608,6 +2764,8 @@ export interface components {
             created_at: string;
             /** Effect Size */
             effect_size?: number | null;
+            /** Evidence */
+            evidence?: (components["schemas"]["AssociationEvidence"] | components["schemas"]["ChangepointEvidence"] | components["schemas"]["BelastungEvidence"] | components["schemas"]["LagEvidence"]) | null;
             /** First Seen On */
             first_seen_on?: string | null;
             /** Flags */
@@ -2762,6 +2920,8 @@ export interface components {
             created_at: string;
             /** Effect Size */
             effect_size?: number | null;
+            /** Evidence */
+            evidence?: (components["schemas"]["AssociationEvidence"] | components["schemas"]["ChangepointEvidence"] | components["schemas"]["BelastungEvidence"] | components["schemas"]["LagEvidence"]) | null;
             /** Flags */
             flags?: {
                 [key: string]: unknown;
@@ -2950,6 +3110,34 @@ export interface components {
             registration_enabled: boolean;
             /** Version */
             version: string;
+        };
+        /** LagEvidence */
+        LagEvidence: {
+            /** Corrected P */
+            corrected_p?: number | null;
+            /** Evidence End */
+            evidence_end?: string | null;
+            /** Evidence Start */
+            evidence_start?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            family: "lag";
+            /** Feature Key */
+            feature_key: string;
+            /** Lag Days */
+            lag_days: number;
+            /** Raw Coefficient */
+            raw_coefficient?: number | null;
+            /** Target Key */
+            target_key: string;
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
         };
         /** LivenessResponse */
         LivenessResponse: {

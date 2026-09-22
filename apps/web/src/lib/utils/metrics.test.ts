@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { displayMetricValue, displayTimeseriesValue } from './metrics';
+import { displayEffectForMetric, displayMetricValue, displayTimeseriesValue } from './metrics';
 
 describe('displayMetricValue', () => {
   it('passes mood and energy through unchanged', () => {
@@ -18,5 +18,13 @@ describe('displayTimeseriesValue', () => {
   it('inverts stress_avg only', () => {
     expect(displayTimeseriesValue('mood_avg', 4)).toBe(4);
     expect(displayTimeseriesValue('stress_avg', 2)).toBe(4);
+  });
+});
+
+describe('displayEffectForMetric', () => {
+  it('orients stress associations and level shifts in the same direction', () => {
+    expect(displayEffectForMetric('stress', 0.4)).toBe(-0.4);
+    expect(displayEffectForMetric('stress_changepoint', 3)).toBe(-3);
+    expect(displayEffectForMetric('energy', 0.4)).toBe(0.4);
   });
 });

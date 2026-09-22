@@ -5,6 +5,7 @@
 
 import type { InsightResponse } from '$lib/api/insights';
 import { isMatrixInsight, isWeakMatrixInsight } from '$lib/utils/insightMatrixGate';
+import { displayEffectForMetric } from '$lib/utils/metrics';
 
 export type MatrixTone = 'positive' | 'negative' | 'neutral';
 
@@ -85,6 +86,10 @@ export function matrixEffectTone(effect: number): MatrixTone {
   if (effect >= 0.15) return 'positive';
   if (effect <= -0.15) return 'negative';
   return 'neutral';
+}
+
+export function matrixRowTone(row: InsightResponse): MatrixTone {
+  return matrixEffectTone(displayEffectForMetric(row.metric, row.effect_size ?? 0));
 }
 
 export function matrixConfidencePercent(value: number | null): string {
