@@ -613,7 +613,7 @@
       "pin_aria": "Pin row to top",
       "unpin_aria": "Unpin row",
       "pin_limit_aria": "Pin limit reached (max {max})",
-      "check_question": "Check this question in Insights →",
+      "check_question_insights": "Check this question in Insights →",
       "check_question_hint": "Open Insights and use Check association on a card — Layer 2 lives on the signal detail, not as a second ESM entry from Compare.",
       "coincidence": {
         "toggle": "Highlight coincidence",
@@ -1355,7 +1355,7 @@
       "table_heading": "Associations in this window",
       "table_subtitle": "Dense on purpose — a handout should be a table.",
       "table_aria": "Association report table",
-      "selection_hint": "Deselect rows to exclude them from PNG/PDF",
+      "selection_hint": "Deselect rows to exclude them from exports",
       "select_all": "Select all report rows",
       "select_row": "Include \"{label}\" in the export",
       "col_factor": "Factor",
@@ -1374,7 +1374,7 @@
       "export_csv": "CSV",
       "export_json": "JSON",
       "export_busy": "Preparing…",
-      "export_empty": "Select at least one row for PNG or PDF.",
+      "export_empty": "Select at least one row to export.",
       "export_error": "Export failed. Try again.",
       "pdf_subtitle": "CorrelCore association report",
       "pdf_charset_note": "Note: some characters could not be rendered in the PDF and appear as ?. The PNG export shows the labels in full."

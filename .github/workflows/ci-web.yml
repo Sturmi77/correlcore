@@ -16,6 +16,9 @@ on:
       - 'scripts/check-style-contract.mjs'
       - 'scripts/check-style-tokens.mjs'
       - 'scripts/check-no-token-storage.mjs'
+      - 'scripts/check-locale-json.mjs'
+      - 'scripts/check-locale-json.test.mjs'
+      - 'scripts/fixtures/locale-duplicate.json'
       - 'eslint.config.js'
       - '.prettierrc'
       - '.prettierignore'
@@ -35,6 +38,9 @@ on:
       - 'scripts/check-style-contract.mjs'
       - 'scripts/check-style-tokens.mjs'
       - 'scripts/check-no-token-storage.mjs'
+      - 'scripts/check-locale-json.mjs'
+      - 'scripts/check-locale-json.test.mjs'
+      - 'scripts/fixtures/locale-duplicate.json'
       - 'eslint.config.js'
       - '.prettierrc'
       - '.prettierignore'
@@ -70,6 +76,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Locale JSON integrity
+        run: pnpm check:locale-json
         working-directory: .
 
       - name: ESLint + svelte-check
