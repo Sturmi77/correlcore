@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -10,8 +12,11 @@ import pytest
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.insight_dismissal import InsightDismissal
 from app.services.insight_dismissal_service import (
+    canonical_dismissal_subject_key,
     create_insight_dismissal,
+    delete_insight_dismissal,
     delete_insight_dismissal_by_insight_id,
+    list_dismissed_subject_keys,
     rewrite_lag_dismissal_subject_key,
 )
 from app.services.insight_service import insight_subject_key
@@ -21,6 +26,12 @@ from tests.conftest import make_user
 def _scalar_optional_result(value: object | None) -> MagicMock:
     result = MagicMock()
     result.scalar_one_or_none.return_value = value
+    return result
+
+
+def _scalars_result(values: list[object]) -> MagicMock:
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = values
     return result
 
 
@@ -63,7 +74,7 @@ async def test_create_insight_dismissal_is_subject_stable_and_idempotent() -> No
     db.execute = AsyncMock(
         side_effect=[
             _scalar_optional_result(insight),  # get_insight_by_id
-            _scalar_optional_result(None),  # existing dismissal
+            _scalars_result([]),  # existing dismissals
             _scalar_optional_result(prefs),
         ]
     )
@@ -85,7 +96,7 @@ async def test_create_insight_dismissal_is_subject_stable_and_idempotent() -> No
     db.execute = AsyncMock(
         side_effect=[
             _scalar_optional_result(insight),
-            _scalar_optional_result(existing),
+            _scalars_result([existing]),
             _scalar_optional_result(prefs2),
         ]
     )
@@ -114,6 +125,7 @@ async def test_delete_dismissal_by_insight_removes_subject_row() -> None:
     db.execute = AsyncMock(
         side_effect=[
             _scalar_optional_result(row),  # by insight_id
+            _scalars_result([row]),  # all equivalent subject keys
             _scalar_optional_result(prefs),  # remove_dismissed get prefs
         ]
     )
@@ -266,3 +278,181 @@ def test_rewrite_lag_dismissal_subject_key_ignores_non_lag_and_collapsed() -> No
     assert rewrite_lag_dismissal_subject_key(non_lag) is None
     # Malformed input is tolerated.
     assert rewrite_lag_dismissal_subject_key("not json") is None
+
+
+def _key(**changes: object) -> str:
+    payload: dict[str, object] = {
+        "insight_type": "changepoint",
+        "metric": "stress_changepoint",
+        "subject_type": "changepoint",
+        "subject": ["subject", None, "entry_42"],
+    }
+    payload.update(changes)
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def test_canonical_dismissal_key_preserves_series_and_metric_boundaries() -> None:
+    old = _key()
+    current = _key(subject=["changepoint", "stress"])
+    assert canonical_dismissal_subject_key(old) == current
+    assert canonical_dismissal_subject_key(current) == current
+    assert canonical_dismissal_subject_key(_key(metric="mood_changepoint")) != current
+    assert canonical_dismissal_subject_key(_key(metric="unknown_changepoint")) != current
+
+
+def test_canonical_dismissal_key_handles_association_and_lag_history() -> None:
+    old_association = _key(
+        insight_type="null_association",
+        metric="mood_avg",
+        subject_type="tag",
+        subject=["tag_slug", "sport"],
+    )
+    current_association = _key(
+        insight_type="pointbiserial",
+        metric="mood_score",
+        subject_type="tag",
+        subject=["tag_slug", "sport"],
+    )
+    assert canonical_dismissal_subject_key(old_association) == current_association
+    assert (
+        canonical_dismissal_subject_key(
+            _key(
+                insight_type="null_association",
+                metric="stress",
+                subject_type="tag",
+                subject=["tag_slug", "sport"],
+            )
+        )
+        != current_association
+    )
+    old_lag = _key(
+        insight_type="symptom_cluster",
+        metric="mood_score",
+        subject_type="metric",
+        subject=["symptom_cluster", "lag", [["key", "mood_score"]], "tag:sport", 2],
+    )
+    assert json.loads(canonical_dismissal_subject_key(old_lag))["subject"] == [
+        "symptom_cluster",
+        "lag",
+        [["key", "mood_score"]],
+        "tag:sport",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_old_dismissal_key_is_read_as_current_identity_for_one_user() -> None:
+    user_id = uuid.uuid4()
+    db = MagicMock()
+    result = MagicMock()
+    result.all.return_value = [(_key(),)]
+    db.execute = AsyncMock(return_value=result)
+    assert await list_dismissed_subject_keys(db, user_id=user_id) == {
+        _key(subject=["changepoint", "stress"])
+    }
+
+
+@pytest.mark.asyncio
+async def test_targeted_unhide_removes_legacy_collision_only() -> None:
+    user_id = uuid.uuid4()
+    old = InsightDismissal(user_id=user_id, subject_key=_key())
+    old.id = uuid.uuid4()
+    current = InsightDismissal(user_id=user_id, subject_key=_key(subject=["changepoint", "stress"]))
+    current.id = uuid.uuid4()
+    other = InsightDismissal(user_id=user_id, subject_key=_key(metric="mood_changepoint"))
+    other.id = uuid.uuid4()
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[_scalar_optional_result(old), _scalars_result([old, current, other])]
+    )
+    db.delete = AsyncMock()
+    db.flush = AsyncMock()
+    await delete_insight_dismissal(db, user_id=user_id, dismissal_id=old.id)
+    assert {call.args[0].id for call in db.delete.await_args_list} == {old.id, current.id}
+
+
+@pytest.mark.asyncio
+async def test_create_reuses_legacy_changepoint_dismissal() -> None:
+    user = make_user()
+    insight = _make_insight(user)
+    insight.insight_type = InsightType.CHANGEPOINT
+    insight.metric = "stress_changepoint"
+    insight.subject_type = "changepoint"
+    insight.subject_label = "2026-03-07"
+    insight.payload = {"series": "stress"}
+    old = InsightDismissal(user_id=user.id, subject_key=_key(), insight_id=uuid.uuid4())
+    old.id = uuid.uuid4()
+    prefs = MagicMock()
+    prefs.dismissed_insight_keys = []
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_optional_result(insight),
+            _scalars_result([old]),
+            _scalar_optional_result(prefs),
+        ]
+    )
+    db.flush = AsyncMock()
+    db.refresh = AsyncMock()
+    result = await create_insight_dismissal(db, user_id=user.id, insight_id=insight.id)
+    assert result is old
+    assert old.subject_key == insight_subject_key(insight)
+    assert old.insight_id == insight.id
+    db.add.assert_not_called()
+
+
+def test_055_migration_resolves_collisions_per_user_and_is_idempotent(monkeypatch) -> None:
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "migrations/versions/055_canonical_insight_dismissals.py"
+    )
+    spec = importlib.util.spec_from_file_location("migration_055", path)
+    assert spec is not None and spec.loader is not None
+    migration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(migration)
+
+    first_user, second_user = uuid.uuid4(), uuid.uuid4()
+    old_key, current_key = _key(), _key(subject=["changepoint", "stress"])
+    rows = [
+        {
+            "id": uuid.uuid4(),
+            "user_id": first_user,
+            "subject_key": old_key,
+            "dismissed_at": datetime(2026, 1, 1, tzinfo=UTC),
+        },
+        {
+            "id": uuid.uuid4(),
+            "user_id": first_user,
+            "subject_key": current_key,
+            "dismissed_at": datetime(2026, 1, 2, tzinfo=UTC),
+        },
+        {
+            "id": uuid.uuid4(),
+            "user_id": second_user,
+            "subject_key": old_key,
+            "dismissed_at": datetime(2026, 1, 1, tzinfo=UTC),
+        },
+    ]
+
+    class FakeConnection:
+        def execute(self, statement, params=None):
+            sql = str(statement)
+            if sql.startswith("SELECT"):
+                result = MagicMock()
+                result.mappings.return_value = [dict(row) for row in rows]
+                return result
+            if sql.startswith("DELETE"):
+                rows[:] = [row for row in rows if row["id"] not in params["ids"]]
+            if sql.startswith("UPDATE"):
+                next(row for row in rows if row["id"] == params["id"])["subject_key"] = params[
+                    "key"
+                ]
+            return MagicMock()
+
+    monkeypatch.setattr(migration.op, "get_bind", lambda: FakeConnection())
+    migration.upgrade()
+    assert len(rows) == 2
+    assert all(row["subject_key"] == current_key for row in rows)
+    assert {row["user_id"] for row in rows} == {first_user, second_user}
+    snapshot = [dict(row) for row in rows]
+    migration.upgrade()
+    assert rows == snapshot
