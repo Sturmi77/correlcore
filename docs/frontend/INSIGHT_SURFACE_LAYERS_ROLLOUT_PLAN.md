@@ -1,6 +1,6 @@
 # Umsetzungsplan: Insight Surface Layers
 
-**Stand:** 2026-09-18 · **Status:** Vorschlag zur Umsetzung · **Grundlage:** [ADR-0043](../adr/0043-insight-surface-layers.md)
+**Stand:** 2026-09-22 · **Status:** Abgeschlossen · **Grundlage:** [ADR-0043](../adr/0043-insight-surface-layers.md)
 
 Dieses Dokument führt die sechs offenen Analyse- und Feature-Issues im Bereich #875–#933 zu einer
 durchgehenden Umsetzungssequenz zusammen. Es ersetzt keine der Issues — es ordnet sie, macht die
@@ -214,6 +214,24 @@ Darstellung.
 
 ## Abschluss
 
-- Erst wenn die Phasen 0–14 durch sind: #928, #930, #931, #875, #892, #933 schließen. Nach der Regel in [AGENTS.md](../../AGENTS.md) tragen nur die jeweils abschließenden PRs `Closes`; Teil-PRs verwenden `Relates to`. Die Analyse-Issues #928 und #930 dürfen nicht mit einem Docs- oder Chart-PR geschlossen werden.
-- #928 trägt die meisten Einzelpunkte (O1–O7, L1–L9, D1–D5). Beim Abschluss explizit auflisten, welche davon umgesetzt und welche bewusst verworfen wurden — G4 (Forest-Plot) und L7-Nachbau sind Verwerfungen, nicht Auslassungen.
-- Weiterhin offen bleibt danach nur: die in #930 H.4 gewünschte Interview-Validierung (in diesem Plan bewusst kein Arbeitspaket) und `multivariate`-Themen, die Phase 12 als „nein" entscheidet.
+Phasen 0–14 liegen auf `main` (#954 und Folge-PRs #964–#973). F1–F6 sind
+2026-09-22 mit Option A ratifiziert ([ADR-0043](../adr/0043-insight-surface-layers.md)
+Open Questions). Dieser Abschluss schließt #928, #930, #931, #875, #892, #933 und
+#958.
+
+### #928 — umgesetzt vs. verworfen
+
+Umgesetzt: D1 Signal-Detail, D2 Nicht-Ergebnis (`null_association`), D3 zwei Nenner,
+D4 Zeitversatz vs. Abfolge, D5 Hub-Shrink mit versionierter Migration; O1–O7 und
+L1–L6 / L8–L9 in den Phasen 1–14; F1–F6 Option A.
+
+Bewusst verworfen (keine Auslassungen): **G4 Forest-Plot**, **L7-Tab-Nachbau**
+(`mood` / `activities` / `health`). Multivariate als eigene Fläche: nein (Phase 12
+zeigt adjustierte Effekte nur als Layer-2-Disclosure).
+
+### Danach bewusst außerhalb dieses Plans
+
+- #930 H.4 Interview-Validierung (Forschung, kein Code).
+- CodeQL `py/log-injection`-Dismiss (Maintainer).
+- Drei Laufzeit-Prüfungen aus #958 (Mobile-Grid, Fensterwechsel-Race, Preference-PATCH)
+  und das Preferences-PK-Race — erst reproduzieren.
