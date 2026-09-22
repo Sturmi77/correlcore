@@ -22,6 +22,7 @@
     "format:check": "prettier --check .",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:no-token-storage": "node scripts/check-no-token-storage.mjs",
+    "check:locale-json": "node scripts/check-locale-json.mjs && node --test scripts/check-locale-json.test.mjs",
     "check:style-contract": "node scripts/check-style-contract.mjs",
     "check:style-tokens": "node scripts/check-style-tokens.mjs",
     "typecheck": "pnpm -r typecheck",

@@ -10,6 +10,9 @@ backend/.venv
 .env.*
 pnpm-lock.yaml
 
+# Deliberately invalid regression fixture for raw duplicate-key detection.
+scripts/fixtures/locale-duplicate.json
+
 # Generated API types (issue #778) — regenerated and diffed in CI, kept in
 # openapi-typescript's own formatting so the drift check stays byte-exact.
 packages/api-types/openapi.json

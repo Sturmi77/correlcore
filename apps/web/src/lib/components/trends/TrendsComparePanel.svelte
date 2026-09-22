@@ -691,7 +691,7 @@
         hypothesis this comparison represents. A bare /insights link discarded
         it and left users hunting among unrelated insights (#967).
       -->
-      <a href={checkQuestionHref}>{$_('trends.compare.check_question')}</a>
+      <a href={checkQuestionHref}>{$_('trends.compare.check_question_insights')}</a>
       <span class="compare__check-hint">{$_('trends.compare.check_question_hint')}</span>
     </p>
   {/if}
