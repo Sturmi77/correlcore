@@ -3,10 +3,6 @@
 Stand: 22.09.2026 · Status: **geplant, noch nicht umgesetzt**  
 Referenz: Release-Audit vom 22.09.2026 (vollständige Evidenz lokal beim Maintainer), Audit-Basis `71d1089ff77388cadf2253ac67d1471dfa99fa40`.
 
-## Veröffentlichungsstand
-
-Öffentliche Arbeitsfassung. Security-spezifische Details aus A02/A05 bleiben bis zur ausdrücklichen Freigabe gemäß SECURITY.md lokal. Kein Befund ist dadurch erledigt oder aus dem Umfang entfernt. Tracking: [#975](https://github.com/Sturmi77/correlcore/issues/975).
-
 ## Ziel und Abschlussregel
 
 Alle bestätigten Fehler R1–R9 und S1–S2, die Wartbarkeits- und Prozessbefunde sowie die fehlenden Abnahmen erhalten unten eine verantwortliche Rolle, Umsetzung und prüfbare Abschlussbedingung. Die Rollen sind Zuweisungsvorschläge, keine bereits zugesagten Personen.
@@ -67,9 +63,22 @@ Kleine PRs pro Paket; A04 bei Bedarf in Datenvertrag und fachliche Berechnung te
 - Migration mit vorgesehenem Owner-Zugang; App anschließend mit eingeschränkter Runtime-Rolle funktionsfähig.
 - Backup-/Restore-Probe. Ein destruktiver Downgrade wird nicht als Ersatz für getestetes Restore verkauft.
 
-## A02 — Security-Arbeitspaket
+## A02 — S1: Rechenarbeit zuverlässig begrenzen
 
-Die vollständige Beschreibung, Evidenz und Abnahmekriterien liegen im lokalen Maßnahmenplan. Öffentliche Veröffentlichung gemäß SECURITY.md noch in Klärung. Dieses Paket bleibt verpflichtender Teil der Audit-Behebung.
+**Umsetzung**
+- Vor Berechnung Grenzen für eligible Tags, Paarzahl und Gesamtarbeit festlegen. Grenzwerte anhand eines dokumentierten Benchmarks wählen; nicht aus den lokalen 16 Sekunden einen Produktions-SLO ableiten.
+- Rechenbudget vor Fisher/FDR prüfen. Nicht unbemerkt zufällige Tags oder Paare abschneiden; bei Überschreitung expliziten, typisierten Limit-Zustand zurückgeben.
+- CPU-Arbeit in eine begrenzte Ausführung außerhalb des API-Event-Loops verlagern. Prozess-/Job-Kapazität, maximale Queue, gleichzeitige Jobs pro Nutzer, Deduplizierung, Ablauf/Abbruch und Wiederanlauf definieren.
+- `to_thread` allein ist kein ausreichender Abschluss. Ein HTTP-Timeout muss auch die weitere Ressourcenbelegung begrenzen.
+- Cache mit Nutzer-ID, exaktem Fenster, Datenversion und Algorithmusversion schlüsseln; bei Datenänderungen invalidieren. Keine Cache-Vermischung zwischen Nutzern.
+- Vorberechnete Häufigkeiten/effiziente Paarzählung einsetzen, soweit die Statistik äquivalent bleibt. Frühes Entfernen von Paaren darf insbesondere die FDR-Testfamilie nicht still ändern.
+
+**Regression / Abnahme**
+- Die gespeicherte 60-Tag-Probe und größere zulässige Fixtures innerhalb der definierten Budgets.
+- Unter konkurrierender Analyse-Last beantworten Health und eine andere Nutzersession weiterhin Anfragen innerhalb des vorab festgelegten Staging-SLO.
+- Limits, volle Queue, Abbruch, Worker-Ausfall und doppelte Requests haben begrenzte Kosten und verständliche Antworten.
+- Statistikvergleich auf bestehenden Fixtures; Nutzerisolation im Cache; Messartefakte am finalen Commit.
+- S1 im erneuten Security-Diff-Review nicht mehr erreichbar.
 
 ## A03 — R2/R3: Nutzerentscheidungen erhalten
 
@@ -104,7 +113,7 @@ Die vollständige Beschreibung, Evidenz und Abnahmekriterien liegen im lokalen M
 - Gruppen 5/95, fehlende Gruppen, Nullwerte, gleichzeitige und zeitversetzte Beziehungen, historische Payload-Versionen.
 - API→Adapter→Darstellung-Vertragstests, nicht allein OpenAPI-Dateivergleich.
 
-## A05 — R4 und ergänzende Security-Abnahme: Berichte und Export
+## A05 — R4/S2: Berichte und Export
 
 **Umsetzung**
 - Aus A04 ein gemeinsames, typisiertes Report-Row-Modell erzeugen. Bildschirm, PDF, PNG, CSV und JSON konsumieren dieselben ausgewählten Zeilen und Evidenzdaten.
@@ -112,13 +121,16 @@ Die vollständige Beschreibung, Evidenz und Abnahmekriterien liegen im lokalen M
 - Auswahlzustände unterscheiden: Erstaufruf ohne Signal, gültiges Signal, ungültiges/veraltetes/nicht reportbares Signal, bewusst leere Auswahl, Refresh-Fehler.
 - Ungültiges angefordertes Signal wählt keine anderen Zeilen automatisch aus. API-Fehler ist kein fachlicher „nicht reportbar“-Befund; bestehende Auswahl bei Refresh-Fehler erhalten.
 - Sicher erlaubten internen Rücksprung samt `signal`-Parameter durch Login erhalten; keine beliebigen externen Redirect-Ziele zulassen.
+- CSV-Serialisierung unterscheidet Text- und numerische Spalten. Formelführende Textwerte einschließlich relevanter führender Whitespaces/Steuerzeichen neutralisieren; Quote-/Delimiter-Regeln separat anwenden.
 - Hinweise zu Auswahl und leerem Export in beiden Sprachen auf alle vier Formate aktualisieren.
 
 **Regression / Abnahme**
 - 5/95-Gruppen in allen Formaten nachvollziehbar; identische Auswahl; Null-/Sonderzeichen; lange Namen, Umlaute und mehrseitige PDFs.
+- CSV direkt über echten Exportpfad testen, nicht nur einen Mock: `=1+1`, `+`, `-`, `@`, führende Tabs/CR/LF, Quotes, Kommas und Semikolons. Numerische Werte bleiben numerisch sinnvoll.
+- Harmlosen Testbericht in den als unterstützt benannten Tabellenprogrammen öffnen: Textfelder werden nicht als Formeln interpretiert. Gewählten Schutz samt Einschränkungen dokumentieren.
 - Reale Browserwege für Login-Rückkehr, fehlgeschlagenes Laden, Refresh und explizites Deselektieren.
 - PDF-/PNG-Rendering visuell prüfen; keine abgeschnittenen Tabellen, fehlende Gruppen oder unlesbare Zeichen.
-- Der zusätzliche Security-Abschluss dieses Pakets bleibt verpflichtend; Details werden gemäß SECURITY.md separat behandelt.
+- S2 geschlossen erst nach Serializer-, Pfad- und Empfängernachweis.
 
 ## A06 — R5: Evidenzsprache auf allen Oberflächen
 
@@ -226,7 +238,7 @@ Fehlende Zugänge, Geräte oder Interviewpartner erzeugen einen offenen zugewies
 |---|---|---|
 | R1 Sperrzyklus / neues ORM im alten Schema | A01 | direkter 046→Head-Integrationstest |
 | R1 übersprungene detaillierte Backfill-Tests | A01/A10 | alte Schema-Fixture, keine unbemerkten Skips |
-| S1 Security-Befund | A02 | Separat vorliegende validierte Abnahmekriterien erfüllen |
+| S1 Event-Loop / unbegrenzte Paararbeit | A02 | Ressourcen-/Fairness-/Abbruchtests und Security-Nachprüfung |
 | R2 angepasste Layouts überschrieben | A03 | gemeinsame TS/Python-Fixtures |
 | R2 bereits fehlerhaft migrierte Einstellungen | A03 | geprüfter Wiederherstellungsweg statt Rekonstruktion nach Vermutung |
 | R3 Dismissal-Schlüsselwechsel | A03 | persistierte Legacy-Daten bleiben korrekt ausgeblendet |
@@ -234,7 +246,7 @@ Fehlende Zugänge, Geräte oder Interviewpartner erzeugen einen offenen zugewies
 | R4 ungültiges Signal selektiert alle | A05 | sichere leere Auswahl |
 | R4 Fehler wird Nicht-Reportbarkeit | A05 | getrennte fachliche/technische Zustände |
 | R4 Signalverlust bei Login | A05/A08 | erlaubter Rücksprung mit Parameter |
-| S2 Security-Befund | A05 | Separat vorliegende validierte Abnahmekriterien erfüllen |
+| S2 CSV-Formeln | A05 | tatsächlicher Export + harmloser Empfängertest |
 | R5 F1 natürliche Häufigkeiten | A06 | Advanced-Symptom-Fläche ebenfalls abgenommen |
 | R5 F2 Pfeilrichtung | A04/A06 | gleichzeitige/zeitversetzte Fälle |
 | R5 F4 adjustierte Koeffizienten | A04/A06 | Disclosure zeigt vorhandene Werte |
@@ -288,18 +300,26 @@ Diese Punkte sind absichtlich spätere Produktziele, keine durch den Audit neu e
 
 
 
-## GitHub-Arbeitspakete
+## Veröffentlichtes Tracking
 
-- [A00: Ausgangsstand und vollständiges Befundregister](https://github.com/Sturmi77/correlcore/issues/976)
-- [A01: Sicheres Release-Upgrade und Marker-Backfill](https://github.com/Sturmi77/correlcore/issues/977)
-- [A03: Layout-Einstellungen und persistierte Ausblendungen erhalten](https://github.com/Sturmi77/correlcore/issues/978)
-- [A04: Fachliche Datenverträge und Stress-/Belastungssemantik](https://github.com/Sturmi77/correlcore/issues/979)
-- [A06: Evidenzdarstellung F1/F2/F4 vervollständigen](https://github.com/Sturmi77/correlcore/issues/980)
-- [A07: Exakte Analysefenster, Request-State und Leerzustände](https://github.com/Sturmi77/correlcore/issues/981)
-- [A08: Compare-/ESM-Handoffs und Detailnavigation](https://github.com/Sturmi77/correlcore/issues/982)
-- [A09: Timezone-Robustheit und Übersetzungsqualität](https://github.com/Sturmi77/correlcore/issues/983)
-- [A10: CI-, Integrations- und Security-Freigabenachweise](https://github.com/Sturmi77/correlcore/issues/984)
-- [A11: Review- und Dokumentationsabschluss](https://github.com/Sturmi77/correlcore/issues/985)
-- [A12: Geräte-, Betriebs- und Nutzerabnahmen](https://github.com/Sturmi77/correlcore/issues/986)
+Übergeordnet: [#975](https://github.com/Sturmi77/correlcore/issues/975). Dokumentations-PR: [#987](https://github.com/Sturmi77/correlcore/pull/987).
 
-A02/A05: öffentliche Issue-Veröffentlichung noch in Klärung. Existierende externe Aufgaben werden über A12 verknüpft. Die frühere M13-Medienplanung ist mit der dokumentierten neuen Priorisierung in #715 abzugleichen, bevor zusätzliche Implementierungs-Issues entstehen.
+| Paket | GitHub-Issue |
+|---|---|
+| A00 | [#976 — Ausgangsstand und vollständiges Befundregister](https://github.com/Sturmi77/correlcore/issues/976) |
+| A01 | [#977 — Sicheres Release-Upgrade und Marker-Backfill](https://github.com/Sturmi77/correlcore/issues/977) |
+| A02 | [#988 — Begrenzte Analytics-Ausführung](https://github.com/Sturmi77/correlcore/issues/988) |
+| A03 | [#978 — Layout-Einstellungen und persistierte Ausblendungen erhalten](https://github.com/Sturmi77/correlcore/issues/978) |
+| A04 | [#979 — Fachliche Datenverträge und Stress-/Belastungssemantik](https://github.com/Sturmi77/correlcore/issues/979) |
+| A05 | [#989 — Einheitliche und sichere Berichtsexporte](https://github.com/Sturmi77/correlcore/issues/989) |
+| A06 | [#980 — Evidenzdarstellung F1/F2/F4 vervollständigen](https://github.com/Sturmi77/correlcore/issues/980) |
+| A07 | [#981 — Exakte Analysefenster, Request-State und Leerzustände](https://github.com/Sturmi77/correlcore/issues/981) |
+| A08 | [#982 — Compare-/ESM-Handoffs und Detailnavigation](https://github.com/Sturmi77/correlcore/issues/982) |
+| A09 | [#983 — Timezone-Robustheit und Übersetzungsqualität](https://github.com/Sturmi77/correlcore/issues/983) |
+| A10 | [#984 — CI-, Integrations- und Security-Freigabenachweise](https://github.com/Sturmi77/correlcore/issues/984) |
+| A11 | [#985 — Review- und Dokumentationsabschluss](https://github.com/Sturmi77/correlcore/issues/985) |
+| A12 | [#986 — Geräte-, Betriebs- und Nutzerabnahmen](https://github.com/Sturmi77/correlcore/issues/986) |
+
+Die öffentliche Veröffentlichung der Security-Arbeitspakete A02/A05 wurde am 22.09.2026 ausdrücklich als Ausnahme zu SECURITY.md freigegeben. Roh-Audit, lokale Umgebungsdaten und Probe-Artefakte sind nicht Bestandteil dieses Dokumentations-PRs.
+
+Roadmap-Abgleich vor weiterer M13-Planung: #715 dokumentiert eine neuere Priorisierung zugunsten strukturierter Ernährungsdaten. Die historische Medienplanung oben ist daher kein Auftrag, diese Entscheidung zu übergehen; A11 gleicht die Dokumentation ab.
