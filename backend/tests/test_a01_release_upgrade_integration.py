@@ -7,6 +7,7 @@ shared integration database and makes the old-schema fixture unavoidable.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import subprocess
 import sys
@@ -197,7 +198,8 @@ async def _verify(database: str, ids: tuple[uuid.UUID, uuid.UUID, uuid.UUID, uui
             "SELECT entity_type, payload FROM sync_revision_log WHERE user_id = $1", user_a
         )
         assert any(
-            row["entity_type"] == "entry" and row["payload"]["note"] is None for row in revisions
+            row["entity_type"] == "entry" and json.loads(row["payload"])["note"] is None
+            for row in revisions
         )
         assert any(row["entity_type"] == "tag" for row in revisions)
         await conn.execute("SET ROLE correlcore_app")
