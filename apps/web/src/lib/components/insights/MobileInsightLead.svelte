@@ -14,6 +14,7 @@
   export let showMilestone = false;
   /** Enables Explore aligned events on the lead insight card. */
   export let enableExploreEvents = false;
+  export let detailQuery = '';
 
   const dispatch = createEventDispatcher<{
     dismiss: { id: string };
@@ -70,6 +71,7 @@
     showConfidenceSummary
     compactLagProfile
     {enableExploreEvents}
+    {detailQuery}
     on:dismiss={(event) => dispatch('dismiss', event.detail)}
     on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}
   />

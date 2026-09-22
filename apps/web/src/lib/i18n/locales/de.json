@@ -1327,6 +1327,7 @@
     }
   },
   "insights": {
+    "carried_pair_focused": "Die Erkenntnisse sind auf das ausgewählte Paar fokussiert.",
     "carried_signals_unmatched": "Zu diesem Paar gibt es noch keine Erkenntnis \u2014 sie entsteht, sobald genug gemeinsame Tage vorliegen.",
     "page": {
       "title": "Erkenntnisse",

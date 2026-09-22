@@ -316,17 +316,23 @@ export async function regenerateInsights(): Promise<InsightRegenerateResponse> {
 /** GET /insights/{id}/event-windows — ADR-0035 §6 explore-events data. */
 export async function fetchInsightEventWindows(
   insightId: string,
-  range: TagCooccurrenceRange
+  range: TagCooccurrenceRange,
+  options?: { signal?: AbortSignal }
 ): Promise<InsightEventWindowsResponse> {
   const params = new URLSearchParams({ range });
-  return api.get<InsightEventWindowsResponse>(
-    `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`
-  );
+  const path = `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`;
+  return options
+    ? api.get<InsightEventWindowsResponse>(path, options)
+    : api.get<InsightEventWindowsResponse>(path);
 }
 
 /** GET /insights/{id} — single insight for Layer-2 signal detail. */
-export async function fetchInsight(insightId: string): Promise<InsightResponse> {
-  return api.get<InsightResponse>(`/insights/${encodeURIComponent(insightId)}`);
+export async function fetchInsight(
+  insightId: string,
+  options?: { signal?: AbortSignal }
+): Promise<InsightResponse> {
+  const path = `/insights/${encodeURIComponent(insightId)}`;
+  return options ? api.get<InsightResponse>(path, options) : api.get<InsightResponse>(path);
 }
 
 export interface InsightVerificationPoint {
@@ -353,12 +359,14 @@ export interface InsightVerificationResponse {
 /** GET /insights/{id}/verification — with/without day series (Phase 7 / G1). */
 export async function fetchInsightVerification(
   insightId: string,
-  range: TagCooccurrenceRange = '90d'
+  range: TagCooccurrenceRange = '90d',
+  options?: { signal?: AbortSignal }
 ): Promise<InsightVerificationResponse> {
   const params = new URLSearchParams({ range });
-  return api.get<InsightVerificationResponse>(
-    `/insights/${encodeURIComponent(insightId)}/verification?${params}`
-  );
+  const path = `/insights/${encodeURIComponent(insightId)}/verification?${params}`;
+  return options
+    ? api.get<InsightVerificationResponse>(path, options)
+    : api.get<InsightVerificationResponse>(path);
 }
 
 export async function fetchLatestInsightDigest(): Promise<InsightDigestResponse> {

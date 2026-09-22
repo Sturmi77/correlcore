@@ -13,6 +13,7 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { page } from '$app/stores';
   import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
@@ -121,6 +122,14 @@
     type EsmPartnerCandidate,
   } from '$lib/utils/esmPartner';
   import {
+    analysisPairQuery,
+    insightMatchesAnalysisPair,
+    parseAnalysisPair,
+    partnerForInsight,
+    type AnalysisSignalRef,
+  } from '$lib/utils/analysisPairHandoff';
+  import { buildWorkContextHeatmap } from '$lib/utils/workContextHeatmap';
+  import {
     isSmallMultiplesUnlocked,
     SMALL_MULTIPLES_RADIUS,
   } from '$lib/components/trends/smallMultiplesGate';
@@ -182,6 +191,8 @@
   let exploreEventsPartnerCandidates: EsmPartnerCandidate[] = [];
   let exploreEventsPartnerPresence: string[] = [];
   let exploreEventsTagHeatmap: TagHeatmapResponse | null = null;
+  let exploreEventsSymptomHeatmap: SymptomHeatmapResponse | null = null;
+  let exploreEventsWorkContextHeatmap: ReturnType<typeof buildWorkContextHeatmap> | null = null;
   // #918: the sheet opens before partner data arrives — keep "still loading"
   // and "presence data failed" apart from "no partner exists".
   let exploreEventsPartnerLoading = false;
@@ -703,14 +714,6 @@
   }
 
   onMount(() => {
-    // Read straight from the URL rather than the page store: this runs in unit
-    // tests too, where no SvelteKit runtime provides one.
-    if (browser) {
-      carriedSignalIds = (new URLSearchParams(window.location.search).get('signals') ?? '')
-        .split(',')
-        .map((id) => id.trim())
-        .filter(Boolean);
-    }
     mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
     syncCompactInsights();
     mobileMedia?.addEventListener('change', syncCompactInsights);
@@ -761,26 +764,19 @@
    * disabling a preference does not delete what the worker already wrote (#957).
    */
   $: rankableInsights = insights.filter((insight) => insight.insight_type !== 'belastung_pattern');
-  $: filteredRankedInsights = rankInsights(rankableInsights);
+  $: carriedPair = parseAnalysisPair($page.url.searchParams);
+  $: carriedPairQuery = carriedPair ? analysisPairQuery(carriedPair) : '';
+  $: carriedMatches = carriedPair
+    ? rankableInsights.filter((insight) => insightMatchesAnalysisPair(insight, carriedPair!))
+    : [];
+  $: carriedPairSearchComplete = Boolean(carriedPair && insightsLoaded && !loading && !error);
+  $: carriedSignalsUnmatched = carriedPairSearchComplete && carriedMatches.length === 0;
+  $: carriedPairFocused = carriedPairSearchComplete && carriedMatches.length > 0;
+  $: focusedRankableInsights = carriedPairFocused ? carriedMatches : rankableInsights;
+  $: filteredRankedInsights = rankInsights(focusedRankableInsights);
   $: primaryMobileInsight = filteredRankedInsights[0] ?? null;
   $: remainingMobileInsights = filteredRankedInsights.slice(1);
-  /**
-   * `?signals=a,b` carries the pinned pair from Compare's "check this question".
-   * Without it the link landed on the bare hub and the hypothesis had to be
-   * found again among unrelated insights (#967).
-   */
-  let carriedSignalIds: string[] = [];
-
-  /** Insights whose subject is one of the carried signals. */
-  $: carriedMatches = carriedSignalIds.length
-    ? insights.filter(
-        (insight) => insight.subject_id && carriedSignalIds.includes(insight.subject_id)
-      )
-    : [];
-
-  $: carriedSignalsUnmatched =
-    carriedSignalIds.length > 0 && insightsLoaded && carriedMatches.length === 0;
-
+  /** Keep the structured Compare pair focused in the mobile lead and desktop feed. */
   $: feedInsights =
     compactInsights && primaryMobileInsight ? remainingMobileInsights : filteredRankedInsights;
   $: showInsightFeed =
@@ -880,6 +876,8 @@
     exploreEventsPartnerLoading = false;
     exploreEventsPartnerUnavailable = false;
     exploreEventsTagHeatmap = null;
+    exploreEventsSymptomHeatmap = null;
+    exploreEventsWorkContextHeatmap = null;
 
     try {
       if (get(devForceVisualizations)) {
@@ -895,6 +893,9 @@
         const devLag = insight.payload?.lag_days;
         exploreEventsLagOffset = typeof devLag === 'number' ? devLag : null;
         exploreEventsTagHeatmap = fixture.tagHeatmap;
+        exploreEventsSymptomHeatmap = fixture.symptomHeatmap;
+        const fixtureBounds = trendWindowDateBounds(capturedDays);
+        exploreEventsWorkContextHeatmap = buildWorkContextHeatmap(fixture.entries, fixtureBounds);
         applyExploreEventsPartner(
           insight,
           fixture.tagCooccurrenceByRange[
@@ -905,6 +906,7 @@
           ] ?? null,
           fixture.tagHeatmap,
           fixture.symptomHeatmap,
+          exploreEventsWorkContextHeatmap,
           true
         );
         return;
@@ -952,8 +954,23 @@
     symptomCells: SymptomTagCooccurrenceResponse | null,
     tagHeatmap: TagHeatmapResponse | null,
     symptomHeatmapData: SymptomHeatmapResponse | null,
-    tagPresenceAvailable: boolean
+    workContextHeatmapData: ReturnType<typeof buildWorkContextHeatmap> | null,
+    presenceAvailable: boolean
   ): void {
+    const carriedPartner = fixedPartnerForInsight(insight);
+    if (carriedPartner) {
+      exploreEventsPartnerCandidates = [{ ...carriedPartner, score: Number.MAX_SAFE_INTEGER }];
+      exploreEventsPartner = presenceAvailable ? carriedPartner : null;
+      exploreEventsPartnerPresence = presenceAvailable
+        ? presenceDatesForPartner(
+            carriedPartner,
+            tagHeatmap,
+            symptomHeatmapData,
+            workContextHeatmapData
+          )
+        : [];
+      return;
+    }
     const subject = resolveEsmAlignSubject(insight);
     if (!subject) {
       exploreEventsPartnerCandidates = [];
@@ -966,7 +983,7 @@
         ? candidatesFromTagCooccurrence(subject, tagPairs?.pairs ?? [])
         : candidatesFromSymptomTagCooccurrence(subject, symptomCells?.cells ?? []);
     exploreEventsPartnerCandidates = clampPartnerCandidates(ranked);
-    if (!tagPresenceAvailable) {
+    if (!presenceAvailable) {
       exploreEventsPartner = null;
       exploreEventsPartnerPresence = [];
       return;
@@ -975,8 +992,20 @@
     exploreEventsPartnerPresence = presenceDatesForPartner(
       exploreEventsPartner,
       tagHeatmap,
-      symptomHeatmapData
+      symptomHeatmapData,
+      workContextHeatmapData
     );
+  }
+
+  function fixedPartnerForInsight(insight: InsightResponse): EsmPartner | null {
+    if (!carriedPair || !insightMatchesAnalysisPair(insight, carriedPair)) return null;
+    const ref: AnalysisSignalRef | null = partnerForInsight(insight, carriedPair);
+    if (!ref || !['tag', 'symptom', 'work_context'].includes(ref.kind)) return null;
+    return {
+      id: ref.id,
+      label: ref.label ?? ref.context ?? ref.id,
+      kind: ref.kind as EsmPartner['kind'],
+    };
   }
 
   async function ensureExploreEventsPartnerData(
@@ -986,23 +1015,45 @@
     days: TrendWindowDays
   ): Promise<void> {
     const subject = resolveEsmAlignSubject(insight);
-    if (!subject) {
+    const fixedPartner = fixedPartnerForInsight(insight);
+    if (!subject && !fixedPartner) {
       exploreEventsPartnerLoading = false;
       return;
     }
 
-    const needsTagPairs = subject.kind === 'tag';
-    const needsSymptomCells = subject.kind === 'symptom';
+    const needsTagPairs = !fixedPartner && subject?.kind === 'tag';
+    const needsSymptomCells = !fixedPartner && subject?.kind === 'symptom';
     const apiRange = timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(days));
     const { start_date, end_date } = trendWindowDateBounds(days);
     const heatmapStart = shiftIsoDate(start_date, -SMALL_MULTIPLES_RADIUS);
     const heatmapEnd = shiftIsoDate(end_date, SMALL_MULTIPLES_RADIUS);
 
-    const tagHeatmapPromise = fetchTagHeatmap({ start_date: heatmapStart, end_date: heatmapEnd })
-      .then((data) => ({ ok: true as const, data }))
-      .catch(() => ({ ok: false as const, data: null }));
+    const tagHeatmapPromise =
+      !fixedPartner || fixedPartner.kind === 'tag'
+        ? fetchTagHeatmap({ start_date: heatmapStart, end_date: heatmapEnd })
+            .then((data) => ({ ok: true as const, data }))
+            .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null });
+    const symptomHeatmapPromise =
+      fixedPartner?.kind === 'symptom'
+        ? fetchSymptomHeatmap({ start_date: heatmapStart, end_date: heatmapEnd })
+            .then((data) => ({ ok: true as const, data }))
+            .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: visibleSymptomHeatmap ?? symptomHeatmap });
+    const workContextEntriesPromise =
+      fixedPartner?.kind === 'work_context'
+        ? listEntries({ start_date: heatmapStart, end_date: heatmapEnd, limit: 365 })
+            .then((data) => ({ ok: true as const, data }))
+            .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null });
 
-    const [tagPairsResult, symptomCellsResult, tagHeatmapResult] = await Promise.all([
+    const [
+      tagPairsResult,
+      symptomCellsResult,
+      tagHeatmapResult,
+      symptomHeatmapResult,
+      workContextEntriesResult,
+    ] = await Promise.all([
       needsTagPairs
         ? cooccurrence && cooccurrence.range === apiRange
           ? Promise.resolve({ ok: true as const, data: cooccurrence })
@@ -1018,36 +1069,54 @@
               .catch(() => ({ ok: false as const, data: null }))
         : Promise.resolve({ ok: true as const, data: null }),
       tagHeatmapPromise,
+      symptomHeatmapPromise,
+      workContextEntriesPromise,
     ]);
 
     if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
       return;
     }
 
-    const tagPresenceAvailable = tagHeatmapResult.ok && tagHeatmapResult.data !== null;
+    const workContextHeatmapData = workContextEntriesResult.data
+      ? buildWorkContextHeatmap(workContextEntriesResult.data, {
+          start_date: heatmapStart,
+          end_date: heatmapEnd,
+        })
+      : null;
+    const presenceAvailable = fixedPartner
+      ? fixedPartner.kind === 'tag'
+        ? tagHeatmapResult.ok && tagHeatmapResult.data !== null
+        : fixedPartner.kind === 'symptom'
+          ? symptomHeatmapResult.ok && symptomHeatmapResult.data !== null
+          : workContextEntriesResult.ok && workContextHeatmapData !== null
+      : tagHeatmapResult.ok && tagHeatmapResult.data !== null;
     const candidatesAvailable = tagPairsResult.ok && symptomCellsResult.ok;
     exploreEventsTagHeatmap = tagHeatmapResult.data;
+    exploreEventsSymptomHeatmap = symptomHeatmapResult.data;
+    exploreEventsWorkContextHeatmap = workContextHeatmapData;
     exploreEventsPartnerLoading = false;
     applyExploreEventsPartner(
       insight,
       tagPairsResult.data,
       symptomCellsResult.data,
       tagHeatmapResult.data,
-      visibleSymptomHeatmap ?? symptomHeatmap,
-      tagPresenceAvailable
+      symptomHeatmapResult.data,
+      workContextHeatmapData,
+      presenceAvailable
     );
     // A failed candidate lookup produces zero candidates, which would otherwise
     // read as "no partner exists". A failed presence fetch only matters once a
     // partner could have been shown.
     exploreEventsPartnerUnavailable =
-      !candidatesAvailable || (!tagPresenceAvailable && exploreEventsPartnerCandidates.length > 0);
+      (!fixedPartner && !candidatesAvailable) ||
+      (!presenceAvailable && exploreEventsPartnerCandidates.length > 0);
   }
 
   function handleExplorePartnerChange(event: CustomEvent<{ partnerId: string | null }>): void {
     const nextId = event.detail.partnerId;
     const next =
       exploreEventsPartnerCandidates.find((candidate) => candidate.id === nextId) ?? null;
-    if (!exploreEventsTagHeatmap || !next) {
+    if (!next) {
       exploreEventsPartner = null;
       exploreEventsPartnerPresence = [];
       return;
@@ -1056,7 +1125,8 @@
     exploreEventsPartnerPresence = presenceDatesForPartner(
       exploreEventsPartner,
       exploreEventsTagHeatmap,
-      visibleSymptomHeatmap ?? symptomHeatmap
+      exploreEventsSymptomHeatmap ?? visibleSymptomHeatmap ?? symptomHeatmap,
+      exploreEventsWorkContextHeatmap
     );
   }
 
@@ -1160,6 +1230,7 @@
           {#if compactInsights && !feedLoading && !error && primaryMobileInsight}
             <MobileInsightLead
               insight={primaryMobileInsight}
+              detailQuery={carriedPairQuery}
               maturity={insightMaturity}
               entryCount={visibleEntryCount}
               {inactiveTagIds}
@@ -1186,6 +1257,12 @@
               message={$_('insights.carried_signals_unmatched')}
               testId="insights-carried-signals-unmatched"
             />
+          {:else if carriedPairFocused}
+            <InlineAlert
+              variant="info"
+              message={$_('insights.carried_pair_focused')}
+              testId="insights-carried-pair-focused"
+            />
           {/if}
 
           {#if showInsightFeed}
@@ -1196,6 +1273,7 @@
                 {/if}
                 <InsightFeed
                   insights={feedInsights}
+                  detailQuery={carriedPairQuery}
                   stalenessInsights={insights}
                   {lastSuccessfulInsightRunAt}
                   analyticsEnabled={userPreferences?.analytics_enabled !== false}
@@ -1222,6 +1300,7 @@
             {:else}
               <InsightFeed
                 insights={feedInsights}
+                detailQuery={carriedPairQuery}
                 stalenessInsights={insights}
                 {lastSuccessfulInsightRunAt}
                 analyticsEnabled={userPreferences?.analytics_enabled !== false}
