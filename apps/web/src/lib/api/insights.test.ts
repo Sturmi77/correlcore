@@ -40,6 +40,27 @@ describe('insights API client', () => {
     expect(api.get).toHaveBeenCalledWith('/insights/latest?limit=3');
   });
 
+  it('repeats insight_type so the row cap applies inside the asked families (#959)', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });
+
+    await listLatestInsights({
+      limit: 50,
+      insightTypes: ['pointbiserial', 'symptom_mood_association'],
+    });
+
+    expect(api.get).toHaveBeenCalledWith(
+      '/insights/latest?limit=50&insight_type=pointbiserial&insight_type=symptom_mood_association'
+    );
+  });
+
+  it('omits the family filter when none is asked for', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });
+
+    await listLatestInsights({ limit: 3, insightTypes: [] });
+
+    expect(api.get).toHaveBeenCalledWith('/insights/latest?limit=3');
+  });
+
   it('lists insight history', async () => {
     const { listInsights } = await import('./insights');
     vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });

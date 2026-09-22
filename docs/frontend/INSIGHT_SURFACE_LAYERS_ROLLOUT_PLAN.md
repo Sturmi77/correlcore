@@ -137,6 +137,10 @@ den einzigen PNG-Export des Produkts entfernen.
 - [x] Export an einem Ort zusammenführen: `exportPng()` nach [insightMatrixExport.ts](../../apps/web/src/lib/utils/insightMatrixExport.ts) verlagert; CSV/JSON über `downloadExport` / `saveBlob`; **PDF** clientseitig neu. ZIP bleibt auf `/settings/data` (Datenschutz-Export).
 - [x] ADR-0043 §1: Export-Controls nicht mehr in `InsightMatrix` — Link zur Bericht-Route statt PNG-Button.
 - [x] Datenschutz: Der Bericht zeigt aggregierte Zeilen, kein Einzeltag. Disclaimer und Nicht-Diagnose-Hinweis im Bericht.
+- [x] **Zeichensatz des PDF — Entscheidung zu [#960](https://github.com/Sturmi77/correlcore/issues/960): Option B (WinAnsi/CP1252).** Das Dokument schrieb UTF-8-Bytes unter einer Helvetica ganz ohne `/Encoding`, der Viewer fiel auf StandardEncoding zurück, und jeder Umlaut wurde zu zwei Fremdglyphen — für ein deutschsprachiges Produkt der Regelfall, und er traf die selbstvergebenen Tag- und Symptomnamen.
+      Gewählt wurde `/Encoding /WinAnsiEncoding` plus CP1252-Bytes: deckt Deutsch und Westeuropa vollständig ab, kostet nichts und bleibt in sich abgeschlossen. **Nur die Bytes umzustellen reicht nicht** — unter StandardEncoding rendert ein Latin-1 `·` weiterhin als `•`; der Encoding-Eintrag ist die andere Hälfte des Fixes.
+      Verworfen: **A** (Unicode-Font einbetten) — die App liefert heute keine einzige Font-Datei aus, ein Subset wäre die erste, und ADR-0035 §11 hat das Bundle-Budget bereits für Charts verplant. **C** (Druckpfad des Browsers) bleibt das Zielbild, verlangt aber native Arbeit, weil `window.print()` in der Android-WebView ohne PrintManager-Anbindung nichts tut. **D** (PNG ins PDF) verliert selektierbaren Text und Zugänglichkeit.
+      Grenze der gewählten Option: Zeichen außerhalb CP1252 (kyrillisch, türkisch, polnisch, Emoji) werden zu `?`, und das Dokument sagt das dann in einer Zeile und verweist auf den PNG-Export, der sie vollständig zeigt.
 
 ## Phase 6 — D5: Ebene 1 schrumpfen, mit versionierter Migration ✅
 

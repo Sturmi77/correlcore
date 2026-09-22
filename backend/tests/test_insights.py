@@ -12,10 +12,12 @@ from app.main import app
 from app.models.insight import Insight, InsightTier, InsightType
 from app.models.user import User
 from app.services.insight_service import (
+    MAX_INSIGHT_LIST_LIMIT,
     InsightNotFoundError,
     _lag_onset_feature,
     _parse_uuid,
     calculate_insight_maturity,
+    family_fetch_types,
     get_insight_event_windows,
     get_insight_maturity,
     get_visible_insight_by_id,
@@ -1396,3 +1398,229 @@ def test_changepoints_of_different_series_stay_separate() -> None:
     )
 
     assert insight_subject_key(stress) != insight_subject_key(mood)
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_filters_families_before_the_row_cap() -> None:
+    """#959: the report renders two families, and the cap must apply inside them.
+
+    The cap used to be a plain tail slice over every family, so an account with
+    enough unrelated subjects lost valid report rows — or saw an empty report —
+    purely because newer weekday/lag insights occupied the first ``limit`` slots.
+    """
+    user = make_user()
+    # Newest first, as the SQL ordering delivers them.
+    weekday = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 14, tzinfo=UTC),
+        insight_type=InsightType.WEEKDAY_PATTERN,
+        subject_label="monday",
+    )
+    changepoint = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 13, tzinfo=UTC),
+        insight_type=InsightType.CHANGEPOINT,
+        subject_label="2026-05-01",
+    )
+    tag_id = uuid.uuid4()
+    pointbiserial = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=tag_id,
+        subject_label="Sport",
+    )
+    symptom = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 11, tzinfo=UTC),
+        insight_type=InsightType.SYMPTOM_MOOD_ASSOCIATION,
+        subject_type="symptom",
+        subject_label="Headache",
+    )
+    rows = [weekday, changepoint, pointbiserial, symptom]
+
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result(rows),
+            _rows_result([]),
+            _rows_result([(tag_id, "sport")]),
+        ]
+    )
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(
+            db,
+            user_id=user.id,
+            limit=2,
+            insight_types=["pointbiserial", "symptom_mood_association"],
+        )
+
+    assert out == [pointbiserial, symptom]
+
+    # Same cap, no filter: the report families are exactly what falls off.
+    db2 = MagicMock()
+    db2.execute = AsyncMock(
+        side_effect=[
+            _scalars_result(rows),
+            _rows_result([]),
+            _rows_result([(tag_id, "sport")]),
+        ]
+    )
+    with _patch_dismissal_filters():
+        unfiltered = await list_latest_insights(db2, user_id=user.id, limit=2)
+
+    assert unfiltered == [weekday, changepoint]
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_without_family_filter_keeps_every_family() -> None:
+    user = make_user()
+    spearman = _make_insight(user, generated_at=datetime(2026, 5, 12, tzinfo=UTC))
+    weekday = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 11, tzinfo=UTC),
+        insight_type=InsightType.WEEKDAY_PATTERN,
+        subject_label="monday",
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([spearman, weekday]),
+            _rows_result([]),
+            _rows_result([]),
+        ]
+    )
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(db, user_id=user.id, limit=10, insight_types=None)
+
+    assert out == [spearman, weekday]
+
+
+def test_report_families_are_known_insight_types() -> None:
+    """The web client sends these two as `insight_type` (MATRIX_INSIGHT_TYPES).
+
+    Renaming either enum value without updating the frontend constant would make
+    the report request a family the API rejects, so pin them here (#959).
+    """
+    known = {member.value for member in InsightType}
+    assert {"pointbiserial", "symptom_mood_association"} <= known
+
+
+@pytest.mark.asyncio
+async def test_latest_insights_endpoint_rejects_unknown_family(
+    async_client: AsyncClient,
+) -> None:
+    """A silently ignored typo would return everything and look like a filter."""
+    user = make_user()
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        response = await async_client.get(
+            "/api/v1/insights/latest?insight_type=pointbiserial&insight_type=not_a_family",
+            cookies={"access_token": "valid.access.token"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 422
+    assert "not_a_family" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_list_latest_insights_lets_a_null_association_retire_its_subject() -> None:
+    """#973 review: filtering before the winner is picked resurrects stale rows.
+
+    `null_association` and `pointbiserial` compete for one slot (#964). A report
+    asking only for `pointbiserial` must not get the older positive row back
+    once the newer row says there is no association — the subject drops out.
+    """
+    user = make_user()
+    tag_id = uuid.uuid4()
+    newer_null = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 13, tzinfo=UTC),
+        insight_type=InsightType.NULL_ASSOCIATION,
+        subject_type="tag",
+        subject_id=tag_id,
+        subject_label="Sport",
+    )
+    older_positive = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 12, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=tag_id,
+        subject_label="Sport",
+    )
+    other = _make_insight(
+        user,
+        generated_at=datetime(2026, 5, 11, tzinfo=UTC),
+        insight_type=InsightType.POINTBISERIAL,
+        subject_type="tag",
+        subject_id=uuid.uuid4(),
+        subject_label="Walk",
+    )
+
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalars_result([newer_null, older_positive, other]),
+            _rows_result([]),
+            _rows_result([]),
+        ]
+    )
+    with _patch_dismissal_filters():
+        out = await list_latest_insights(
+            db,
+            user_id=user.id,
+            limit=10,
+            insight_types=["pointbiserial", "symptom_mood_association"],
+        )
+
+    assert out == [other]
+    assert older_positive not in out
+
+
+def test_family_fetch_types_widens_to_the_competing_alias() -> None:
+    """The fetch must carry `null_association`, or the test above cannot happen."""
+    assert family_fetch_types(["pointbiserial"]) == {"pointbiserial", "null_association"}
+    assert family_fetch_types(["null_association"]) == {"pointbiserial", "null_association"}
+    assert family_fetch_types(["weekday_pattern"]) == {"weekday_pattern"}
+
+
+def test_newest_insight_per_subject_stmt_filters_families_before_its_own_cap() -> None:
+    """#973 review: this statement caps at MAX_INSIGHT_LIST_LIMIT rows.
+
+    Filtering only in Python would leave an account whose newest subjects are
+    all unrelated families with no matching row fetched at all.
+    """
+    user_id = uuid.uuid4()
+    sql = str(
+        newest_insight_per_subject_stmt(
+            user_id, insight_types={"pointbiserial", "null_association"}
+        ).compile(compile_kwargs={"literal_binds": True})
+    )
+
+    assert "insights.insight_type IN" in sql
+    # The column stores enum *values* (values_callable), so the literals must be
+    # the lowercase storage strings, not the member names.
+    assert "'pointbiserial'" in sql
+    assert "'null_association'" in sql
+    assert f"LIMIT {MAX_INSIGHT_LIST_LIMIT}" in sql
+    # The predicate has to sit on both the ranked subquery and the outer select,
+    # so the cap acts on the filtered set.
+    assert sql.upper().count("INSIGHT_TYPE IN") == 2
+
+
+def test_newest_insight_per_subject_stmt_without_filter_is_unchanged() -> None:
+    sql = str(
+        newest_insight_per_subject_stmt(uuid.uuid4()).compile(
+            compile_kwargs={"literal_binds": True}
+        )
+    )
+
+    assert "insight_type IN" not in sql

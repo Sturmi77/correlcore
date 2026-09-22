@@ -1376,7 +1376,8 @@
       "export_busy": "Wird vorbereitet…",
       "export_empty": "Waehle mindestens eine Zeile fuer PNG oder PDF.",
       "export_error": "Export fehlgeschlagen. Bitte erneut versuchen.",
-      "pdf_subtitle": "CorrelCore Zusammenhaenge-Bericht"
+      "pdf_subtitle": "CorrelCore Zusammenhänge-Bericht",
+      "pdf_charset_note": "Hinweis: Einzelne Zeichen konnten im PDF nicht dargestellt werden und stehen als ?. Der PNG-Export zeigt die Labels vollständig."
     },
     "history": {
       "title": "Erkenntnis-Verlauf",

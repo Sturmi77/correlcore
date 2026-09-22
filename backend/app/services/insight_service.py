@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from datetime import date as date_type
 
@@ -394,6 +394,22 @@ def _latest_family_key(insight_type: str) -> str:
     return _LATEST_FAMILY_ALIASES.get(insight_type, insight_type)
 
 
+def family_fetch_types(insight_types: Collection[str]) -> set[str]:
+    """The requested families plus every type competing for their latest slot.
+
+    A caller asking for ``pointbiserial`` must still see that subject's newer
+    ``null_association`` row: dropping the alias before the winner is picked
+    would leave the stale positive row holding a slot its "no association"
+    successor had already taken, and export it as a finding (#964).
+    """
+
+    wanted = set(insight_types)
+    families = {_latest_family_key(insight_type) for insight_type in wanted}
+    return wanted | {
+        member.value for member in InsightType if _latest_family_key(member.value) in families
+    }
+
+
 def insight_subject_key(
     insight: Insight,
     *,
@@ -441,7 +457,11 @@ async def _tag_slugs_for_legacy_insights(
     return {row[0]: row[1] for row in result.all()}
 
 
-def newest_insight_per_subject_stmt(user_id: uuid.UUID) -> Select[tuple[Insight]]:
+def newest_insight_per_subject_stmt(
+    user_id: uuid.UUID,
+    *,
+    insight_types: Collection[str] | None = None,
+) -> Select[tuple[Insight]]:
     """Select the newest insight row per analytical subject for one user.
 
     Insights accumulate across generation dates — the pipeline only replaces a
@@ -455,8 +475,23 @@ def newest_insight_per_subject_stmt(user_id: uuid.UUID) -> Select[tuple[Insight]
     dedupe in :func:`list_latest_insights`: it also splits on ``payload`` so lag /
     lasso symptom-cluster variants that share a subject id are never merged here.
     The Python pass then collapses the remaining cross-id slug/label variants.
+
+    ``insight_types`` restricts the fetch to those families. It has to happen
+    here rather than in Python, because this statement caps at
+    ``MAX_INSIGHT_LIST_LIMIT`` rows: an account whose newest subjects are all
+    unrelated families would otherwise never load a matching row at all (#959).
+    Pass the alias-expanded set from :func:`family_fetch_types`, never the bare
+    request.
     """
 
+    # Coerced to enum members, not passed as raw strings: the column maps
+    # members to their stored values, and an unknown string would otherwise
+    # risk a silently non-matching query instead of a loud failure.
+    type_filter = (
+        [Insight.insight_type.in_([InsightType(value) for value in sorted(insight_types)])]
+        if insight_types is not None
+        else []
+    )
     ranked = (
         select(
             Insight.id.label("id"),
@@ -473,15 +508,25 @@ def newest_insight_per_subject_stmt(user_id: uuid.UUID) -> Select[tuple[Insight]
             )
             .label("subject_rank"),
         )
-        .where(Insight.user_id == user_id)
+        .where(Insight.user_id == user_id, *type_filter)
         .subquery()
     )
     newest_ids = select(ranked.c.id).where(ranked.c.subject_rank == 1)
     return (
         select(Insight)
-        .where(Insight.user_id == user_id, Insight.id.in_(newest_ids))
+        .where(Insight.user_id == user_id, Insight.id.in_(newest_ids), *type_filter)
         .order_by(Insight.generated_at.desc(), Insight.created_at.desc())
         .limit(MAX_INSIGHT_LIST_LIMIT)
+    )
+
+
+def _insight_type_value(insight: Insight) -> str:
+    """The storage value of an insight's family, whether enum or raw string."""
+
+    return (
+        insight.insight_type.value
+        if isinstance(insight.insight_type, InsightType)
+        else str(insight.insight_type)
     )
 
 
@@ -490,6 +535,7 @@ async def list_latest_insights(
     *,
     user_id: uuid.UUID,
     limit: int = DEFAULT_LATEST_INSIGHT_LIMIT,
+    insight_types: Collection[str] | None = None,
 ) -> list[Insight]:
     """Return the newest insight per analytical subject.
 
@@ -498,6 +544,17 @@ async def list_latest_insights(
     subject (see :func:`newest_insight_per_subject_stmt`) so no subject can be
     starved by the row cap; the Python pass below additionally merges cross-id
     slug/label variants that SQL cannot see.
+
+    ``insight_types`` narrows the result to those families *before* either row
+    cap applies — the SQL fetch's and this function's. Callers that render one
+    family — the report surface renders two — otherwise lose valid rows to
+    unrelated subjects that happen to occupy the first slots, and can be served
+    an empty list while matching rows exist (#959).
+
+    The fetch is widened to the alias siblings of the request, and the narrowing
+    to the request itself happens only after the per-subject winner is picked:
+    a subject whose newest row is a ``null_association`` must disappear from a
+    ``pointbiserial`` request, not fall back to its stale positive row.
     """
 
     limit = _clamp_limit(
@@ -505,7 +562,13 @@ async def list_latest_insights(
         default=DEFAULT_LATEST_INSIGHT_LIMIT,
         maximum=MAX_LATEST_INSIGHT_LIMIT,
     )
-    result = await db.execute(newest_insight_per_subject_stmt(user_id))
+    wanted_types = set(insight_types) if insight_types is not None else None
+    result = await db.execute(
+        newest_insight_per_subject_stmt(
+            user_id,
+            insight_types=family_fetch_types(wanted_types) if wanted_types is not None else None,
+        )
+    )
 
     insights = list(result.scalars().all())
     insights = await _filter_analytics_excluded_insights(
@@ -551,11 +614,7 @@ async def list_latest_insights(
         # and sit next to each other (#964). Rows arrive newest-first, so the
         # current generation wins the slot.
         key = (
-            _latest_family_key(
-                insight.insight_type.value
-                if isinstance(insight.insight_type, InsightType)
-                else str(insight.insight_type)
-            ),
+            _latest_family_key(_insight_type_value(insight)),
             _latest_metric_key(insight),
             insight.subject_type,
             _latest_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id),
@@ -575,7 +634,12 @@ async def list_latest_insights(
             ):
                 # Same generation → strongest lag.
                 chosen[key] = insight
-    return [chosen[key] for key in order][:limit]
+    winners = [chosen[key] for key in order]
+    if wanted_types is not None:
+        # After the winner is picked, never before: an alias row that won its
+        # slot removes the subject instead of yielding it back to a stale row.
+        winners = [insight for insight in winners if _insight_type_value(insight) in wanted_types]
+    return winners[:limit]
 
 
 @dataclass(frozen=True)

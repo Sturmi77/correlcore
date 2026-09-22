@@ -217,10 +217,32 @@ async def list_insights_endpoint(
 async def list_latest_insights_endpoint(
     request: Request,
     limit: int = Query(default=DEFAULT_LATEST_INSIGHT_LIMIT, ge=1, le=MAX_LATEST_INSIGHT_LIMIT),
+    insight_type: list[str] | None = Query(
+        default=None,
+        description=(
+            "Restrict to these insight families before the row cap applies. "
+            "Repeat the parameter for several families."
+        ),
+    ),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> InsightListResponse:
-    insights = await list_latest_insights(db, user_id=user.id, limit=limit)
+    # A silently ignored typo would return every family and look like a working
+    # filter, so an unknown value is rejected rather than dropped (#959).
+    if insight_type is not None:
+        known = {member.value for member in InsightType}
+        unknown = sorted(set(insight_type) - known)
+        if unknown:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"unknown insight_type: {', '.join(unknown)}",
+            )
+    insights = await list_latest_insights(
+        db,
+        user_id=user.id,
+        limit=limit,
+        insight_types=insight_type,
+    )
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
     last_successful_run = await latest_successful_insight_run_at(db, user_id=user.id)
     last_run = await latest_user_insight_run(db, user_id=user.id)

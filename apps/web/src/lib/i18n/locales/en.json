@@ -1376,7 +1376,8 @@
       "export_busy": "Preparing…",
       "export_empty": "Select at least one row for PNG or PDF.",
       "export_error": "Export failed. Try again.",
-      "pdf_subtitle": "CorrelCore association report"
+      "pdf_subtitle": "CorrelCore association report",
+      "pdf_charset_note": "Note: some characters could not be rendered in the PDF and appear as ?. The PNG export shows the labels in full."
     },
     "history": {
       "title": "Insight timeline",
