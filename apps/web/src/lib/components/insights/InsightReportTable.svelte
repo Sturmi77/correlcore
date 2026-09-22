@@ -7,6 +7,7 @@
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import InsightEvidence from './InsightEvidence.svelte';
   import { matrixConfidencePercent, matrixEffectTone } from '$lib/utils/insightMatrixRows';
+  import { insightRelation } from '$lib/utils/insightRelation';
 
   export let rows: InsightResponse[] = [];
   export let selectedIds: readonly string[] = [];
@@ -99,7 +100,7 @@
           on:change={(event) => onToggle(row.id, event.currentTarget.checked)}
         />
       </span>
-      <span role="cell">{row.subject_label ?? '—'}</span>
+      <span role="cell">{row.subject_label ?? '—'} {insightRelation(row).glyph}</span>
       <span role="cell">{metricLabel(row.metric)}</span>
       <span role="cell" class="report-table__effect">
         <span class="report-table__effect-bar" style={`--effect: ${Math.min(1, Math.abs(effect))}`}

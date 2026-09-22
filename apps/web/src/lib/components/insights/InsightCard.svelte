@@ -27,6 +27,7 @@
   import InsightEvidence from './InsightEvidence.svelte';
   import NoteInsightEvidence from './NoteInsightEvidence.svelte';
   import WithWithoutDistribution from './WithWithoutDistribution.svelte';
+  import AdjustedEffects from './AdjustedEffects.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import { isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
   import {
@@ -37,7 +38,9 @@
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import { formatChangepointStatement } from '$lib/utils/changepointMarkers';
+  import { formatSymptomTagStatement } from '$lib/utils/symptomTagStatement';
   import { lagProfileBars, type LagProfileBar } from '$lib/utils/lagInsight';
+  import { relationPairLabel } from '$lib/utils/insightRelation';
 
   export let insight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
@@ -81,7 +84,9 @@
   $: withWithoutView = insight ? parseWithWithoutView(insight) : null;
   $: isNullResult = insight ? isNullAssociation(insight) : false;
   $: changepointStatement = insight ? formatChangepointStatement(insight, $_) : null;
+  $: symptomTagStatement = insight ? formatSymptomTagStatement(insight, $_) : null;
   $: displayStatement =
+    symptomTagStatement ||
     changepointStatement ||
     (insight
       ? stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')
@@ -119,7 +124,6 @@
    * those, `↔` says "these two go together" without naming a direction that
    * was never computed.
    */
-  const RELATION_TEMPORAL = '→';
   const RELATION_SYMMETRIC = '↔';
 
   /**
@@ -265,7 +269,7 @@
     if (ins.insight_type === 'symptom_tag_cooccurrence') {
       const symptom = payloadString(ins, 'symptom_name') ?? 'Symptoms';
       const tag = payloadString(ins, 'tag_name') ?? ins.subject_label ?? 'Insight';
-      return `${symptom} + ${tag}`;
+      return relationPairLabel(ins, symptom, tag);
     }
     if (ins.insight_type === 'work_context_pattern') {
       const context = workContextLabel(ins) ?? ins.subject_label ?? $_('insights.context.fallback');
@@ -277,7 +281,7 @@
       return `${metricLabel(ins.metric)} ${RELATION_SYMMETRIC} ${weekday} + ${context}`;
     }
     if (ins.insight_type === 'symptom_cluster') {
-      const method = payloadString(ins, 'method');
+      const method = payloadString(ins, 'method') ?? (ins.flags?.method === 'lag' ? 'lag' : null);
       const target =
         payloadFeatureLabel(ins.payload?.target) ?? metricLabel(ins.metric) ?? ins.metric;
       if (method === 'lasso') {
@@ -304,10 +308,7 @@
             : featureKey === 'sleep_quality'
               ? $_('trends.metric.sleep_quality')
               : featureRaw;
-        const lagDays = payloadNumber(ins, 'lag_days');
-        const lagSuffix =
-          lagDays !== null ? ` (+${lagDays} ${$_('insights.card.lag_days_unit')})` : '';
-        return `${feature} ${RELATION_TEMPORAL} ${target}${lagSuffix}`;
+        return relationPairLabel(ins, feature, target);
       }
     }
     if (ins.metric === 'mood_sleep_minutes' || ins.metric === 'mood_sleep_quality') {
@@ -323,7 +324,7 @@
     // rest exactly as they were.
     const a = ins.metric ? metricLabel(ins.metric) : '?';
     const b = ins.subject_label ?? null;
-    return b ? `${a} ${RELATION_SYMMETRIC} ${b}` : a;
+    return b ? relationPairLabel(ins, a, b) : a;
   }
 
   function confounderNoteKey(confounder: InsightConfounder | null): string {
@@ -557,7 +558,7 @@
                           class="insight-card__lag-bar insight-card__lag-bar--pos"
                           data-testid="insight-card-lag-bar"
                           style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
-                          title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                          title={`${bar.lag > 0 ? '+' : ''}${bar.lag}d · r=${bar.r.toFixed(2)}`}
                         ></div>
                       {/if}
                     </div>
@@ -568,7 +569,7 @@
                           class="insight-card__lag-bar insight-card__lag-bar--neg"
                           data-testid="insight-card-lag-bar"
                           style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
-                          title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                          title={`${bar.lag > 0 ? '+' : ''}${bar.lag}d · r=${bar.r.toFixed(2)}`}
                         ></div>
                       {/if}
                     </div>
@@ -656,6 +657,7 @@
             <dd>{insight.sample_n}</dd>
           </div>
         </dl>
+        <AdjustedEffects {insight} />
       </section>
     {/if}
   </article>

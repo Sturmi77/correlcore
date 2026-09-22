@@ -45,6 +45,11 @@ describe('SymptomCooccurrenceDetailSheet', () => {
     });
 
     expect(screen.getByText('insights.work_context_confounded_note')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Headache ↔ Sport' })).toBeTruthy();
+    expect(screen.getByText('insights.symptoms.detail_co_count')).toBeTruthy();
+    expect(screen.queryByText('insights.symptoms.detail_lift')).toBeNull();
+    expect(screen.queryByText('insights.symptoms.detail_phi')).toBeNull();
+    expect(screen.queryByText('insights.symptoms.detail_jaccard')).toBeNull();
   });
 
   it('renders specific copy for calendar-context confounded cells', () => {

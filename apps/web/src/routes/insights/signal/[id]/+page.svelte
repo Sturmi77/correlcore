@@ -23,6 +23,7 @@
   import InsightEvidence from '$lib/components/insights/InsightEvidence.svelte';
   import WithWithoutDistribution from '$lib/components/insights/WithWithoutDistribution.svelte';
   import SignalScatter from '$lib/components/insights/SignalScatter.svelte';
+  import AdjustedEffects from '$lib/components/insights/AdjustedEffects.svelte';
   import EventAlignedSmallMultiplesSheet from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { TimeseriesPoint } from '$lib/api/stats';
@@ -35,6 +36,12 @@
   import { parseSameSituationView } from '$lib/utils/sameSituation';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import { isLagInsight, isSameDaySleepSpearman } from '$lib/utils/lagInsight';
+  import { relationPairLabel } from '$lib/utils/insightRelation';
+  import { formatSymptomTagStatement } from '$lib/utils/symptomTagStatement';
+  import {
+    hasUsableVerification,
+    supportsInsightVerification,
+  } from '$lib/utils/insightVerification';
   import SignalLagEvidence from '$lib/components/insights/SignalLagEvidence.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
@@ -44,6 +51,7 @@
   let verification: InsightVerificationResponse | null = null;
   /** True when this subject cannot carry a day-level series (composite, metric). */
   let verificationUnsupported = false;
+  let verificationUnavailable = false;
 
   /** Raw enum values (`office`, `travel`) have translated labels — use them (#967). */
   function workContextLabel(value: string | null): string {
@@ -68,14 +76,30 @@
   $: isNull = insight ? isNullAssociation(insight) : false;
   $: isLag = insight ? isLagInsight(insight) : false;
   $: isSameDaySleep = insight ? isSameDaySleepSpearman(insight) : false;
-  $: title =
-    insight?.subject_label && insight.metric
-      ? `${insight.subject_label} → ${insight.metric}`
-      : $_('insights.signal.title_fallback');
+  function pairName(value: unknown): string | null {
+    if (!value || typeof value !== 'object') return null;
+    const record = value as Record<string, unknown>;
+    return typeof record.name === 'string' && record.name.length > 0 ? record.name : null;
+  }
+
+  $: title = insight
+    ? isLagInsight(insight)
+      ? relationPairLabel(
+          insight,
+          pairName(insight.payload?.feature) ??
+            insight.subject_label ??
+            $_('insights.signal.title_fallback'),
+          pairName(insight.payload?.target) ?? insight.metric
+        )
+      : insight.subject_label && insight.metric
+        ? relationPairLabel(insight, insight.subject_label, insight.metric)
+        : $_('insights.signal.title_fallback')
+    : $_('insights.signal.title_fallback');
   $: canOpenEsm =
     Boolean(insight && isExploreEventsSubject(insight)) &&
     isSmallMultiplesUnlocked(maturity?.phase ?? null);
   $: showUncertaintyRibbon = maturity?.phase !== 'robust';
+  $: verificationReady = hasUsableVerification(verification);
 
   async function load(): Promise<void> {
     if (!insightId) return;
@@ -91,11 +115,15 @@
       // Composite subjects (the Belastung overlay's own insight) have no
       // day-level presence series, so the endpoint answers 422. Swallowing that
       // left the section blank and made both Belastung CTAs look broken (#967).
-      verificationUnsupported = false;
-      verification = await fetchInsightVerification(insightId, '90d').catch((err) => {
-        if (err instanceof ApiError && err.status === 422) verificationUnsupported = true;
-        return null;
-      });
+      verificationUnsupported = !supportsInsightVerification(detail);
+      verificationUnavailable = false;
+      verification = verificationUnsupported
+        ? null
+        : await fetchInsightVerification(insightId, '90d').catch((err) => {
+            if (err instanceof ApiError && err.status === 422) verificationUnsupported = true;
+            else verificationUnavailable = true;
+            return null;
+          });
     } catch (err) {
       error = err instanceof Error ? err.message : $_('insights.signal.error');
       insight = null;
@@ -157,7 +185,9 @@
   {:else if insight}
     <section class="signal-page__card" data-testid="signal-statement">
       <p class="signal-page__statement">
-        {stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')}
+        {formatSymptomTagStatement(insight, $_) ||
+          stripLegacyInsightStatementTails(insight.statement) ||
+          $_('home.insight.empty_statement')}
       </p>
       {#if isLag}
         <p class="signal-page__badge" data-testid="signal-zeitversatz-badge">
@@ -229,6 +259,8 @@
       </section>
     {/if}
 
+    <section class="signal-page__card"><AdjustedEffects {insight} /></section>
+
     <section class="signal-page__card">
       <div class="signal-page__row">
         <h2>{$_('insights.signal.course_heading')}</h2>
@@ -250,7 +282,12 @@
           testId="signal-verification-unsupported"
         />
       {/if}
-      {#if verification && verification.with_mean != null && verification.without_mean != null}
+      {#if verificationUnavailable}
+        <InlineAlert variant="info" message={$_('insights.signal.verification_unavailable')} />
+      {:else if !verificationUnsupported && verification && !verificationReady}
+        <InlineAlert variant="info" message={$_('insights.signal.verification_insufficient')} />
+      {/if}
+      {#if verificationReady && verification && verification.with_mean != null && verification.without_mean != null}
         <p class="signal-page__means" data-testid="signal-means">
           {$_('insights.signal.means', {
             values: {
@@ -263,15 +300,17 @@
         </p>
       {/if}
       <div class="signal-page__actions">
-        <button
-          type="button"
-          class="signal-page__chip"
-          data-testid="signal-toggle-scatter"
-          aria-expanded={showScatter}
-          on:click={() => (showScatter = !showScatter)}
-        >
-          {showScatter ? $_('insights.signal.scatter_hide') : $_('insights.signal.scatter_show')}
-        </button>
+        {#if verificationReady}
+          <button
+            type="button"
+            class="signal-page__chip"
+            data-testid="signal-toggle-scatter"
+            aria-expanded={showScatter}
+            on:click={() => (showScatter = !showScatter)}
+          >
+            {showScatter ? $_('insights.signal.scatter_hide') : $_('insights.signal.scatter_show')}
+          </button>
+        {/if}
         <a class="signal-page__chip" href="/trends" data-testid="signal-pin-trends">
           {$_('insights.signal.pin_trends')}
         </a>
@@ -283,7 +322,7 @@
           {$_('insights.signal.remember_report')}
         </a>
       </div>
-      {#if showScatter && verification}
+      {#if showScatter && verificationReady && verification}
         <SignalScatter
           points={verification.points}
           withMean={verification.with_mean}

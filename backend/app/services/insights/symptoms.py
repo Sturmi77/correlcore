@@ -87,13 +87,10 @@ def _symptom_metric_statement(finding: SymptomMetricAssociation) -> str:
 
 
 def _symptom_tag_statement(finding: SymptomTagAssociation) -> str:
-    if finding.lift >= 1:
-        relationship = "appears together with"
-    else:
-        relationship = "appears less often with"
     statement = (
-        f"{finding.symptom.label} currently {relationship} {finding.tag.label} "
-        "more than expected from their individual frequencies."
+        f"{finding.symptom.label} and {finding.tag.label} appeared together on "
+        f"{finding.co_count} of {finding.symptom_count} days with that symptom "
+        f"({finding.tag_count} days with the tag in the same period)."
     )
     return _context_confounded_statement(
         statement,

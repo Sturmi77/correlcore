@@ -998,6 +998,10 @@ async def get_insight_verification(
     insight = await get_visible_insight_by_id(db, user_id=user_id, insight_id=insight_id)
     if insight.subject_type not in {"tag", "symptom"}:
         raise InsightEventWindowsUnsupportedError(str(insight.subject_type))
+    if insight.metric not in {"mood_score", "energy", "stress", "sleep_quality"} or (
+        isinstance(insight.payload, dict) and insight.payload.get("method") == "lag"
+    ):
+        raise InsightEventWindowsUnsupportedError(str(insight.metric))
 
     from datetime import UTC, datetime
 

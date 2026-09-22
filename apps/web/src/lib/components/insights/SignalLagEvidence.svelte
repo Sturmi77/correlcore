@@ -49,6 +49,11 @@
   <section class="signal-lag" data-testid="signal-lag-evidence">
     <h2>{$_('insights.signal.lag_heading')}</h2>
     <p class="signal-lag__hint">{$_('insights.signal.lag_hint')}</p>
+    {#if (freq?.lagDays ?? peak?.lag ?? 0) < 0}
+      <p class="signal-lag__hint" data-testid="signal-lag-negative-note">
+        {$_('insights.signal.lag_negative_note')}
+      </p>
+    {/if}
 
     {#if bars}
       <div

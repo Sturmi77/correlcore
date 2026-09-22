@@ -47,13 +47,17 @@ const data = {
 };
 
 describe('SymptomCooccurrenceHeatmap', () => {
-  it('renders lift values in provisional phase', () => {
+  it('renders natural frequencies in provisional phase without lift or FDR', () => {
     render(SymptomCooccurrenceHeatmap, {
       props: { data, phase: 'provisional' },
     });
 
-    expect(screen.getByText('2.1*')).toBeTruthy();
-    expect(screen.getByText('insights.symptoms.cooccurrence_lift_legend')).toBeTruthy();
+    expect(screen.getByText('4/6')).toBeTruthy();
+    expect(screen.getByText('insights.symptoms.cooccurrence_count_legend')).toBeTruthy();
+    expect(
+      screen.getByTestId('symptom-cooccurrence-cell').getAttribute('aria-label')
+    ).not.toContain('lift');
+    expect(screen.queryByText('2.1*')).toBeNull();
   });
 
   it('renders raw counts in early_patterns phase', () => {
@@ -61,7 +65,7 @@ describe('SymptomCooccurrenceHeatmap', () => {
       props: { data, phase: 'early_patterns' },
     });
 
-    expect(screen.getByText('4')).toBeTruthy();
+    expect(screen.getByText('4/6')).toBeTruthy();
     expect(screen.getByText('insights.symptoms.cooccurrence_count_legend')).toBeTruthy();
   });
 

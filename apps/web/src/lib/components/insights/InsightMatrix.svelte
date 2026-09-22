@@ -2,6 +2,7 @@
   import { _, locale } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
   import { buildMatrixDisplayRows, matrixEffectTone } from '$lib/utils/insightMatrixRows';
+  import { insightRelation } from '$lib/utils/insightRelation';
   import InsightEvidence from './InsightEvidence.svelte';
 
   export let insights: InsightResponse[] = [];
@@ -125,7 +126,7 @@
         data-tone={tone(effect)}
         title={`${row.statement ?? ''} | ${freqLabel(row)}`}
       >
-        <span role="cell">{row.subject_label ?? '-'}</span>
+        <span role="cell">{row.subject_label ?? '-'} {insightRelation(row).glyph}</span>
         <span role="cell">{row.metric}</span>
         <span role="cell" class="insight-matrix__effect">
           <span
