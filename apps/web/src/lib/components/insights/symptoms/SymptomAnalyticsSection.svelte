@@ -29,6 +29,7 @@
   export let entries: EntryResponse[] = [];
   export let cooccurrence: SymptomTagCooccurrenceResponse | null = null;
   export let cooccurrenceLoading = false;
+  export let cooccurrenceError = false;
   export let phase: InsightMaturityPhase | null = null;
   export let loading = false;
   export let pruneSparseAxes = true;
@@ -55,7 +56,7 @@
   $: trendDates = heatmap ? trendDatesForHeatmap(heatmap.start_date, heatmap.end_date) : [];
   $: showCooccurrencePanel =
     canShowSymptomCooccurrence(phase) &&
-    (cooccurrenceLoading || (cooccurrence?.cells.length ?? 0) > 0);
+    (cooccurrenceLoading || cooccurrenceError || cooccurrence !== null);
 </script>
 
 <section class="symptom-analytics" aria-labelledby="symptom-analytics-heading">
@@ -161,6 +162,7 @@
       <SymptomCooccurrenceHeatmap
         data={cooccurrence}
         loading={cooccurrenceLoading}
+        error={cooccurrenceError}
         {phase}
         sortMode={cooccurrenceSortMode}
         hideHeading={true}

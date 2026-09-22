@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
+import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
 import { updateUserPreferences } from '$lib/api/preferences';
 import { fetchSymptomHeatmap, fetchTimeseries } from '$lib/api/stats';
 import { listEntries } from '$lib/api/entries';
@@ -158,6 +159,9 @@ describe('/trends page', () => {
   beforeEach(() => {
     vi.setSystemTime(new Date('2026-05-16T12:00:00Z'));
     localStorage.clear();
+    trendWindowPreference.bind(null);
+    trendWindowPreference.bind('user-1');
+    trendWindowPreference.hydrate('user-1', 28, trendWindowPreference.revision());
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       writable: true,
@@ -280,7 +284,10 @@ describe('/trends page', () => {
     await waitFor(() => {
       expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('quarter');
     });
-    expect(vi.mocked(updateUserPreferences)).toHaveBeenCalledWith({ trend_window_days: 90 });
+    expect(vi.mocked(updateUserPreferences)).toHaveBeenCalledWith(
+      { trend_window_days: 90 },
+      { signal: expect.any(AbortSignal) }
+    );
 
     const callsAfterRangeChange = vi
       .mocked(fetchTimeseries)

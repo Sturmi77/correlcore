@@ -9,6 +9,10 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
+  import { analysisRange } from '$lib/stores/analysisRange';
+  import { localIsoDate } from '$lib/utils/isoDate';
+  import { trendWindowDaysToCooccurrence, type TrendWindowDays } from '$lib/utils/trendWindowDays';
+  import { RequestGeneration } from '$lib/utils/requestGeneration';
   import {
     fetchInsight,
     fetchInsightEventWindows,
@@ -61,8 +65,26 @@
   let esmPoints: TimeseriesPoint[] = [];
   let esmLag: number | null = null;
   let esmLoading = false;
+  let mounted = false;
+  let loadedContext = '';
+  const detailRequests = new RequestGeneration();
+  const esmRequests = new RequestGeneration();
 
   $: insightId = $page.params.id ?? '';
+  $: actorId = $auth.status === 'authenticated' ? $auth.user.id : null;
+  $: contextKey = `${actorId ?? ''}:${insightId}:${$analysisRange}`;
+  $: if (mounted && actorId && insightId && contextKey !== loadedContext) {
+    loadedContext = contextKey;
+    void load(insightId, $analysisRange, actorId);
+  }
+  $: if (mounted && !actorId && loadedContext) {
+    loadedContext = '';
+    detailRequests.cancel();
+    esmRequests.cancel();
+    insight = null;
+    verification = null;
+    esmOpen = false;
+  }
   $: withWithout = insight ? parseWithWithoutView(insight) : null;
   $: sameSituation = insight ? parseSameSituationView(insight) : null;
   $: isNull = insight ? isNullAssociation(insight) : false;
@@ -77,40 +99,59 @@
     isSmallMultiplesUnlocked(maturity?.phase ?? null);
   $: showUncertaintyRibbon = maturity?.phase !== 'robust';
 
-  async function load(): Promise<void> {
-    if (!insightId) return;
+  async function load(id: string, days: TrendWindowDays, actor: string): Promise<void> {
+    const request = detailRequests.begin(`${actor}:${id}:${days}`);
+    esmRequests.cancel();
+    esmOpen = false;
     loading = true;
     error = null;
+    verification = null;
     try {
       const [detail, latest] = await Promise.all([
-        fetchInsight(insightId),
+        fetchInsight(id),
         listLatestInsights({ limit: 1 }).catch(() => null),
       ]);
+      if (!request.isCurrent()) return;
       insight = detail;
       maturity = latest?.insight_maturity ?? null;
       // Composite subjects (the Belastung overlay's own insight) have no
       // day-level presence series, so the endpoint answers 422. Swallowing that
       // left the section blank and made both Belastung CTAs look broken (#967).
       verificationUnsupported = false;
-      verification = await fetchInsightVerification(insightId, '90d').catch((err) => {
-        if (err instanceof ApiError && err.status === 422) verificationUnsupported = true;
+      const result = await fetchInsightVerification(id, trendWindowDaysToCooccurrence(days), {
+        days,
+        end_date: localIsoDate(new Date()),
+        signal: request.signal,
+      }).catch((err) => {
+        if (request.isCurrent() && err instanceof ApiError && err.status === 422)
+          verificationUnsupported = true;
         return null;
       });
+      if (request.isCurrent()) verification = result;
     } catch (err) {
+      if (!request.isCurrent()) return;
       error = err instanceof Error ? err.message : $_('insights.signal.error');
       insight = null;
       verification = null;
     } finally {
-      loading = false;
+      if (request.isCurrent()) loading = false;
     }
   }
 
   async function openEsm(): Promise<void> {
-    if (!insight) return;
+    if (!insight || !actorId) return;
+    const id = insight.id;
+    const days = $analysisRange;
+    const request = esmRequests.begin(`${actorId}:${id}:${days}`);
     esmOpen = true;
     esmLoading = true;
     try {
-      const response = await fetchInsightEventWindows(insight.id, '90d');
+      const response = await fetchInsightEventWindows(id, trendWindowDaysToCooccurrence(days), {
+        days,
+        end_date: localIsoDate(new Date()),
+        signal: request.signal,
+      });
+      if (!request.isCurrent()) return;
       esmWindows = response.events.map((event) => ({
         onset: event.onset,
         label: event.label ?? undefined,
@@ -118,21 +159,28 @@
       esmPoints = response.points;
       esmLag = response.lag_days ?? null;
     } catch {
+      if (!request.isCurrent()) return;
       esmWindows = [];
       esmPoints = [];
       esmLag = null;
     } finally {
-      esmLoading = false;
+      if (request.isCurrent()) esmLoading = false;
     }
   }
 
   onMount(() => {
+    mounted = true;
     if ($auth.status !== 'authenticated') {
       void goto(`/auth/login?next=${encodeURIComponent($page.url.pathname)}`);
-      return;
     }
-    void load();
-    return registerPageRefresh(() => void load());
+    const unregister = registerPageRefresh(() => {
+      if (actorId && insightId) void load(insightId, $analysisRange, actorId);
+    });
+    return () => {
+      unregister();
+      detailRequests.cancel();
+      esmRequests.cancel();
+    };
   });
 </script>
 

@@ -47,6 +47,20 @@ const data = {
 };
 
 describe('SymptomCooccurrenceHeatmap', () => {
+  it.each([
+    [{ ...data, cells: [], window_too_short: true }, false, 'cooccurrence_window_too_short'],
+    [{ ...data, cells: [], analytics_disabled: true }, false, 'cooccurrence_analytics_disabled'],
+    [{ ...data, cells: [] }, false, 'cooccurrence_empty'],
+    [null, true, 'cooccurrence_load_error'],
+  ] as const)('shows the distinct %s status', (response, error, key) => {
+    render(SymptomCooccurrenceHeatmap, {
+      props: { data: response ? { ...response, cells: [...response.cells] } : null, error },
+    });
+    expect(screen.getByTestId('symptom-cooccurrence-status').textContent).toContain(
+      `insights.symptoms.${key}`
+    );
+  });
+
   it('renders lift values in provisional phase', () => {
     render(SymptomCooccurrenceHeatmap, {
       props: { data, phase: 'provisional' },

@@ -1797,6 +1797,19 @@
             "title": "Adherence Rate",
             "type": "number"
           },
+          "correlation_confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Confidence"
+          },
           "correlation_metric": {
             "anyOf": [
               {
@@ -2546,6 +2559,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -3225,6 +3240,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -4205,6 +4222,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -5017,6 +5036,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -5028,11 +5049,6 @@
             "format": "date",
             "title": "Start Date",
             "type": "string"
-          },
-          "window_too_short": {
-            "default": false,
-            "title": "Window Too Short",
-            "type": "boolean"
           }
         },
         "required": [
@@ -9381,7 +9397,7 @@
             }
           },
           {
-            "description": "Exact window length in days. Takes precedence over `range`, which can only express 7/30/90/365 and therefore cannot carry the shared analysis window (14 | 28 | 90).",
+            "description": "Exact daily window",
             "in": "query",
             "name": "days",
             "required": false,
@@ -9396,7 +9412,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Exact window length in days. Takes precedence over `range`, which can only express 7/30/90/365 and therefore cannot carry the shared analysis window (14 | 28 | 90).",
+              "description": "Exact daily window",
               "title": "Days"
             }
           },
@@ -11025,9 +11041,8 @@
             }
           },
           {
-            "description": "Restrict to these insight families before the row cap applies. Repeat the parameter for several families.",
             "in": "query",
-            "name": "insight_type",
+            "name": "insight_types",
             "required": false,
             "schema": {
               "anyOf": [
@@ -11041,8 +11056,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Restrict to these insight families before the row cap applies. Repeat the parameter for several families.",
-              "title": "Insight Type"
+              "title": "Insight Types"
             }
           },
           {
@@ -12343,6 +12357,24 @@
       "post": {
         "operationId": "sync_push_api_v1_sync_push_post",
         "parameters": [
+          {
+            "description": "IANA timezone for first-write covariates",
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IANA timezone for first-write covariates",
+              "title": "Tz"
+            }
+          },
           {
             "in": "header",
             "name": "authorization",

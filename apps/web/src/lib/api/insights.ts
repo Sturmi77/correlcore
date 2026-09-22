@@ -115,7 +115,7 @@ export interface LatestInsightListQuery extends InsightListQuery {
   insightTypes?: readonly string[];
 }
 
-export type TagCooccurrenceRange = '7d' | '30d' | '90d' | '1y';
+export type TagCooccurrenceRange = '7d' | '14d' | '28d' | '30d' | '90d' | '1y';
 
 export interface TagCooccurrenceTagRef {
   tag_id: string;
@@ -135,6 +135,7 @@ export interface TagCooccurrencePair {
 
 export interface TagCooccurrenceResponse {
   range: TagCooccurrenceRange;
+  days?: number | null;
   start_date: string;
   end_date: string;
   min_count: number;
@@ -145,11 +146,16 @@ export interface TagCooccurrenceResponse {
    * range can never reach the floor (#966).
    */
   window_too_short?: boolean;
+  analytics_disabled?: boolean;
+  observed_days?: number;
 }
 
 export interface TagCooccurrenceQuery {
   range?: TagCooccurrenceRange;
+  days?: number;
+  end_date?: string;
   min_count?: number;
+  signal?: AbortSignal;
 }
 
 export interface TagClusterMember {
@@ -224,10 +230,14 @@ export interface SymptomTagCooccurrenceCell {
 
 export interface SymptomTagCooccurrenceResponse {
   range: TagCooccurrenceRange;
+  days?: number | null;
   start_date: string;
   end_date: string;
   min_count: number;
   cells: SymptomTagCooccurrenceCell[];
+  window_too_short?: boolean;
+  analytics_disabled?: boolean;
+  observed_days?: number;
 }
 
 function buildQuery(query: InsightListQuery): string {
@@ -268,10 +278,13 @@ export async function fetchTagCooccurrence(
 ): Promise<TagCooccurrenceResponse> {
   const params = new URLSearchParams();
   if (query.range) params.set('range', query.range);
+  if (query.days !== undefined) params.set('days', String(query.days));
+  if (query.end_date) params.set('end_date', query.end_date);
   if (query.min_count !== undefined) params.set('min_count', String(query.min_count));
   const qs = params.toString();
   return api.get<TagCooccurrenceResponse>(
-    qs ? `/insights/tag-cooccurrence?${qs}` : '/insights/tag-cooccurrence'
+    qs ? `/insights/tag-cooccurrence?${qs}` : '/insights/tag-cooccurrence',
+    { signal: query.signal }
   );
 }
 
@@ -286,10 +299,13 @@ export async function fetchSymptomTagCooccurrence(
 ): Promise<SymptomTagCooccurrenceResponse> {
   const params = new URLSearchParams();
   if (query.range) params.set('range', query.range);
+  if (query.days !== undefined) params.set('days', String(query.days));
+  if (query.end_date) params.set('end_date', query.end_date);
   if (query.min_count !== undefined) params.set('min_count', String(query.min_count));
   const qs = params.toString();
   return api.get<SymptomTagCooccurrenceResponse>(
-    qs ? `/insights/symptom-tag-cooccurrence?${qs}` : '/insights/symptom-tag-cooccurrence'
+    qs ? `/insights/symptom-tag-cooccurrence?${qs}` : '/insights/symptom-tag-cooccurrence',
+    { signal: query.signal }
   );
 }
 
@@ -300,6 +316,7 @@ export interface InsightEventWindowResponse {
 
 export interface InsightEventWindowsResponse {
   range: TagCooccurrenceRange;
+  days?: number | null;
   start_date: string;
   end_date: string;
   events: InsightEventWindowResponse[];
@@ -316,11 +333,15 @@ export async function regenerateInsights(): Promise<InsightRegenerateResponse> {
 /** GET /insights/{id}/event-windows — ADR-0035 §6 explore-events data. */
 export async function fetchInsightEventWindows(
   insightId: string,
-  range: TagCooccurrenceRange
+  range: TagCooccurrenceRange,
+  options: { days?: number; end_date?: string; signal?: AbortSignal } = {}
 ): Promise<InsightEventWindowsResponse> {
   const params = new URLSearchParams({ range });
+  if (options.days !== undefined) params.set('days', String(options.days));
+  if (options.end_date) params.set('end_date', options.end_date);
   return api.get<InsightEventWindowsResponse>(
-    `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`
+    `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`,
+    { signal: options.signal }
   );
 }
 
@@ -337,6 +358,7 @@ export interface InsightVerificationPoint {
 
 export interface InsightVerificationResponse {
   range: TagCooccurrenceRange;
+  days?: number | null;
   start_date: string;
   end_date: string;
   metric: string;
@@ -353,11 +375,15 @@ export interface InsightVerificationResponse {
 /** GET /insights/{id}/verification — with/without day series (Phase 7 / G1). */
 export async function fetchInsightVerification(
   insightId: string,
-  range: TagCooccurrenceRange = '90d'
+  range: TagCooccurrenceRange = '90d',
+  options: { days?: number; end_date?: string; signal?: AbortSignal } = {}
 ): Promise<InsightVerificationResponse> {
   const params = new URLSearchParams({ range });
+  if (options.days !== undefined) params.set('days', String(options.days));
+  if (options.end_date) params.set('end_date', options.end_date);
   return api.get<InsightVerificationResponse>(
-    `/insights/${encodeURIComponent(insightId)}/verification?${params}`
+    `/insights/${encodeURIComponent(insightId)}/verification?${params}`,
+    { signal: options.signal }
   );
 }
 

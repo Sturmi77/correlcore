@@ -400,6 +400,46 @@ async def test_tag_cooccurrence_endpoint_returns_pairs(
 
 
 @pytest.mark.asyncio
+async def test_tag_cooccurrence_endpoint_forwards_exact_window(
+    async_client: AsyncClient, user: User
+) -> None:
+    end = date(2026, 3, 29)
+    payload = TagCooccurrenceResponse(
+        range="7d",
+        days=14,
+        start_date=end - timedelta(days=13),
+        end_date=end,
+        min_count=2,
+        pairs=[],
+        window_too_short=True,
+    )
+
+    async def override() -> User:
+        return user
+
+    app.dependency_overrides[get_current_verified_user] = override
+    try:
+        with patch(
+            "app.api.v1.endpoints.insights.get_tag_cooccurrence",
+            new_callable=AsyncMock,
+            return_value=payload,
+        ) as service:
+            response = await async_client.get(
+                "/api/v1/insights/tag-cooccurrence?range=7d&days=14&end_date=2026-03-29",
+                cookies={"access_token": "valid.access.token"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["days"] == 14
+    assert response.json()["window_too_short"] is True
+    assert service.await_args.kwargs["range_"] == "7d"
+    assert service.await_args.kwargs["days"] == 14
+    assert service.await_args.kwargs["as_of"] == end
+
+
+@pytest.mark.asyncio
 async def test_tag_cooccurrence_endpoint_rejects_invalid_range(
     async_client: AsyncClient,
     user: User,
@@ -410,13 +450,57 @@ async def test_tag_cooccurrence_endpoint_rejects_invalid_range(
     app.dependency_overrides[get_current_verified_user] = override
     try:
         response = await async_client.get(
-            "/api/v1/insights/tag-cooccurrence?range=28d",
+            "/api/v1/insights/tag-cooccurrence?range=29d",
             cookies={"access_token": "valid.access.token"},
         )
     finally:
         app.dependency_overrides.clear()
 
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize("days", [14, 28, 90])
+@pytest.mark.asyncio
+async def test_tag_cooccurrence_exact_days_override_legacy_range(days: int) -> None:
+    # 2026-03-29 is the spring DST change in Europe/Vienna. Windows use
+    # inclusive calendar dates, independent of the elapsed clock hours.
+    user = make_user()
+    end = date(2026, 3, 29)
+    db = MagicMock()
+    db.execute = AsyncMock(side_effect=[_scalar_one_or_none_result(True), _scalar_result([])])
+
+    out = await get_tag_cooccurrence(db, user_id=user.id, range_="7d", days=days, as_of=end)
+
+    assert out.days == days
+    assert out.start_date == end - timedelta(days=days - 1)
+    assert out.end_date == end
+    assert out.window_too_short is True
+    assert out.observed_days == 0
+    assert out.analytics_disabled is False
+
+
+@pytest.mark.parametrize("logged_days", [1, 14, 15])
+@pytest.mark.asyncio
+async def test_tag_cooccurrence_sparse_window_reports_observed_days(logged_days: int) -> None:
+    user = make_user()
+    end = date(2026, 3, 29)
+    entries = [
+        make_entry(user, entry_date=end - timedelta(days=offset)) for offset in range(logged_days)
+    ]
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_or_none_result(True),
+            _scalar_result(entries),
+            _row_result([]),
+        ]
+    )
+
+    out = await get_tag_cooccurrence(db, user_id=user.id, range_="28d", as_of=end)
+
+    assert out.observed_days == logged_days
+    assert out.window_too_short is (logged_days < 15)
+    assert out.pairs == []
 
 
 @pytest.mark.asyncio

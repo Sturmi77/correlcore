@@ -299,9 +299,14 @@ async def get_symptom_heatmap(
 def _cooccurrence_window(
     range_: TagCooccurrenceRange,
     as_of: date_type,
+    days: int | None = None,
 ) -> tuple[date_type, date_type]:
-    days = COOCCURRENCE_RANGE_DAYS[range_]
-    start = as_of - timedelta(days=days - 1)
+    # An explicit day count wins over the legacy range enum. Date arithmetic
+    # stays in calendar days, so DST transitions cannot shorten the window.
+    window_days = days if days is not None else COOCCURRENCE_RANGE_DAYS[range_]
+    if not 1 <= window_days <= 365:
+        raise ValueError("days must be between 1 and 365")
+    start = as_of - timedelta(days=window_days - 1)
     return start, as_of
 
 
@@ -313,7 +318,7 @@ async def _analytics_enabled(db: AsyncSession, *, user_id: uuid.UUID) -> bool:
 
 
 def cooccurrence_range_to_timeseries(range_: TagCooccurrenceRange) -> TimeseriesRange:
-    if range_ == "7d":
+    if range_ in {"7d", "14d"}:
         return "week"
     if range_ == "90d":
         return "quarter"
@@ -449,6 +454,7 @@ async def get_tag_cooccurrence(
     range_: TagCooccurrenceRange,
     min_count: int = 2,
     as_of: date_type | None = None,
+    days: int | None = None,
 ) -> TagCooccurrenceResponse:
     """Return tag×tag pairs gated by daily Lift / Fisher / BH-FDR (α=0.10).
 
@@ -460,15 +466,18 @@ async def get_tag_cooccurrence(
     """
 
     as_of = as_of or _today()
-    start_date, end_date = _cooccurrence_window(range_, as_of)
+    start_date, end_date = _cooccurrence_window(range_, as_of, days)
+    window_days = (end_date - start_date).days + 1
 
     if not await _analytics_enabled(db, user_id=user_id):
         return TagCooccurrenceResponse(
             range=range_,
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
             pairs=[],
+            analytics_disabled=True,
         )
 
     entry_result = await db.execute(
@@ -482,10 +491,12 @@ async def get_tag_cooccurrence(
     if not entries:
         return TagCooccurrenceResponse(
             range=range_,
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
             pairs=[],
+            window_too_short=True,
         )
 
     tag_result = await db.execute(
@@ -559,11 +570,13 @@ async def get_tag_cooccurrence(
     pairs.sort(key=lambda pair: (-pair.count, pair.tag_a.slug, pair.tag_b.slug))
     return TagCooccurrenceResponse(
         range=range_,
+        days=window_days,
         start_date=start_date,
         end_date=end_date,
         min_count=min_count,
         pairs=pairs,
         window_too_short=window_too_short,
+        observed_days=len(daily_entries),
     )
 
 
@@ -583,19 +596,23 @@ async def get_symptom_tag_cooccurrence(
     range_: TagCooccurrenceRange,
     min_count: int = 3,
     as_of: date_type | None = None,
+    days: int | None = None,
 ) -> SymptomTagCooccurrenceResponse:
     """Return symptom x tag co-occurrence cells for the M7 Insights heatmap."""
 
     as_of = as_of or _today()
-    start_date, end_date = _cooccurrence_window(range_, as_of)
+    start_date, end_date = _cooccurrence_window(range_, as_of, days)
+    window_days = (end_date - start_date).days + 1
 
     if not await _analytics_enabled(db, user_id=user_id):
         return SymptomTagCooccurrenceResponse(
             range=range_,
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
             cells=[],
+            analytics_disabled=True,
         )
 
     entry_result = await db.execute(
@@ -609,10 +626,12 @@ async def get_symptom_tag_cooccurrence(
     if not entries:
         return SymptomTagCooccurrenceResponse(
             range=range_,
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
             cells=[],
+            window_too_short=True,
         )
 
     tag_result = await db.execute(
@@ -722,8 +741,11 @@ async def get_symptom_tag_cooccurrence(
     cells.sort(key=lambda cell: (-abs(cell.lift - 1.0), cell.symptom.slug, cell.tag.slug))
     return SymptomTagCooccurrenceResponse(
         range=range_,
+        days=window_days,
         start_date=start_date,
         end_date=end_date,
         min_count=min_count,
         cells=cells,
+        window_too_short=len(daily_entries) < MIN_SYMPTOM_ANALYTICS_ENTRIES,
+        observed_days=len(daily_entries),
     )

@@ -2246,6 +2246,8 @@ export interface components {
             adherence_delta?: number | null;
             /** Adherence Rate */
             adherence_rate: number;
+            /** Correlation Confidence */
+            correlation_confidence?: number | null;
             /** Correlation Metric */
             correlation_metric?: string | null;
             /** Correlation Score */
@@ -2587,7 +2589,7 @@ export interface components {
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
@@ -2888,7 +2890,7 @@ export interface components {
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
@@ -3290,7 +3292,7 @@ export interface components {
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
@@ -3675,17 +3677,12 @@ export interface components {
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
              */
             start_date: string;
-            /**
-             * Window Too Short
-             * @default false
-             */
-            window_too_short: boolean;
         };
         /** TagCooccurrenceTagRef */
         TagCooccurrenceTagRef: {
@@ -5564,7 +5561,7 @@ export interface operations {
         parameters: {
             query?: {
                 range?: "week" | "month" | "quarter" | "year";
-                /** @description Exact window length in days. Takes precedence over `range`, which can only express 7/30/90/365 and therefore cannot carry the shared analysis window (14 | 28 | 90). */
+                /** @description Exact daily window */
                 days?: number | null;
             };
             header?: {
@@ -6336,8 +6333,7 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
-                /** @description Restrict to these insight families before the row cap applies. Repeat the parameter for several families. */
-                insight_type?: string[] | null;
+                insight_types?: string[] | null;
             };
             header?: {
                 authorization?: string | null;
@@ -6965,7 +6961,10 @@ export interface operations {
     };
     sync_push_api_v1_sync_push_post: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description IANA timezone for first-write covariates */
+                tz?: string | null;
+            };
             header?: {
                 authorization?: string | null;
             };

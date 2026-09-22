@@ -13,7 +13,9 @@
     updateUserPreferences,
     type UserPreferencesResponse,
   } from '$lib/api/preferences';
-  import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
+  import { analysisRange } from '$lib/stores/analysisRange';
+  import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
+  import TrendWindowSaveStatus from '$lib/components/analysis/TrendWindowSaveStatus.svelte';
   import {
     TREND_WINDOW_DAYS_OPTIONS,
     coerceTrendWindowDays,
@@ -31,7 +33,15 @@
   /** #819: digest enabled but no persisted snapshot yet (modal cannot fire). */
   let digestPendingHint = false;
 
-  $: trendWindowDays = coerceTrendWindowDays(preferences?.trend_window_days ?? $analysisRange);
+  $: trendWindowDays = coerceTrendWindowDays($analysisRange);
+  let loadedPrefsActor: string | null = null;
+  $: settingsActor = $auth.status === 'authenticated' ? $auth.user.id : null;
+  $: if (settingsActor !== loadedPrefsActor) {
+    loadedPrefsActor = settingsActor;
+    trendWindowPreference.bind(settingsActor);
+    preferences = null;
+    if (settingsActor) void loadPreferences();
+  }
 
   async function refreshDigestPendingHint(): Promise<void> {
     digestPendingHint = false;
@@ -47,9 +57,13 @@
 
   async function loadPreferences(): Promise<void> {
     if ($auth.status !== 'authenticated') return;
+    const actor = $auth.user.id;
+    const revision = trendWindowPreference.revision();
     try {
-      preferences = await fetchUserPreferences();
-      analysisRange.hydrateFromServer(preferences.trend_window_days);
+      const loaded = await fetchUserPreferences();
+      if ($auth.status !== 'authenticated' || $auth.user.id !== actor) return;
+      preferences = loaded;
+      trendWindowPreference.hydrate(actor, loaded.trend_window_days, revision);
       await refreshDigestPendingHint();
     } catch (err) {
       preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
@@ -57,16 +71,7 @@
   }
 
   async function setTrendWindow(days: TrendWindowDays): Promise<void> {
-    preferencesBusy = true;
-    preferencesError = '';
-    try {
-      preferences = await updateUserPreferences({ trend_window_days: days });
-      setAnalysisRange(days);
-    } catch (err) {
-      preferencesError = err instanceof Error ? err.message : $_('settings.analysis.error');
-    } finally {
-      preferencesBusy = false;
-    }
+    if ($auth.status === 'authenticated') trendWindowPreference.select($auth.user.id, days);
   }
 
   async function toggleAnalytics(enabled: boolean): Promise<void> {
@@ -120,7 +125,6 @@
   }
 
   onMount(() => {
-    void loadPreferences();
     return registerPageRefresh(async () => {
       await loadPreferences();
     });
@@ -139,6 +143,7 @@
     back={{ href: '/settings', label: $_('nav.settings') }}
   />
   <SettingsCategoryBar />
+  <TrendWindowSaveStatus />
 
   {#if $auth.status !== 'authenticated'}
     <Panel variant="bordered">

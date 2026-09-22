@@ -101,6 +101,7 @@ class InsightEventWindowsResponse(BaseModel):
     """Event onsets plus timeseries points for Explore-Events small multiples."""
 
     range: TagCooccurrenceRange
+    days: int | None = None
     start_date: date_type
     end_date: date_type
     events: list[InsightEventWindow] = Field(default_factory=list)
@@ -122,6 +123,7 @@ class InsightVerificationResponse(BaseModel):
     """With/without series for Layer-2 verification (Phase 7 / G1)."""
 
     range: TagCooccurrenceRange
+    days: int | None = None
     start_date: date_type
     end_date: date_type
     metric: str

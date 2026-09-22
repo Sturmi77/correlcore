@@ -188,6 +188,7 @@ async def create_entry_batch_endpoint(
 async def get_timeseries_endpoint(
     request: Request,
     range: TimeseriesRange = Query(default="week"),
+    end_date: date_type | None = Query(default=None),
     days: Annotated[
         int | None,
         Query(
@@ -203,7 +204,7 @@ async def get_timeseries_endpoint(
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> TimeseriesResponse:
-    return await get_timeseries(db, user_id=user.id, range_=range, days=days)
+    return await get_timeseries(db, user_id=user.id, range_=range, days=days, as_of=end_date)
 
 
 @router.get(

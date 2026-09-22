@@ -22,6 +22,7 @@
 
   export let data: TagCooccurrenceResponse | null = null;
   export let loading = false;
+  export let error = false;
   export let range: TagCooccurrenceRange = '90d';
   export let showRangeSelector = true;
   export let minPairsForDisplay = 5;
@@ -447,6 +448,14 @@
         <span class={`cooccurrence__legend-cell cooccurrence__cell--${level}`}></span>
       {/each}
       <span>{$_('insights.cooccurrence.more')}</span>
+    </div>
+  {:else if !loading && error}
+    <div class="cooccurrence__empty" data-testid="cooccurrence-error">
+      <p>{$_('insights.cooccurrence.load_error')}</p>
+    </div>
+  {:else if !loading && data?.analytics_disabled}
+    <div class="cooccurrence__empty" data-testid="cooccurrence-opt-out">
+      <p>{$_('insights.cooccurrence.analytics_disabled')}</p>
     </div>
   {:else if !loading && data?.window_too_short}
     <!--
