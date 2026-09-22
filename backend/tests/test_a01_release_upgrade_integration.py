@@ -19,6 +19,8 @@ from urllib.parse import urlsplit, urlunsplit
 import asyncpg
 import pytest
 
+from app.core.crypto import decrypt_with_dek, encrypt_with_dek, generate_dek, unwrap_dek, wrap_dek
+
 pytestmark = pytest.mark.integration
 _BACKEND = Path(__file__).resolve().parents[1]
 
@@ -98,6 +100,26 @@ async def _seed(database: str) -> tuple[uuid.UUID, uuid.UUID, uuid.UUID, uuid.UU
                 visibility,
                 date(2026, 9, 2 if entry_id == full else 3 if entry_id == hidden else 1),
             )
+        dek = generate_dek()
+        await conn.execute(
+            "INSERT INTO user_encryption_keys (user_id, wrapped_dek) VALUES ($1, $2)",
+            user_a,
+            wrap_dek(dek),
+        )
+        await conn.execute(
+            "UPDATE entries SET note_enc = $1 WHERE id = $2",
+            encrypt_with_dek("A01 encrypted note", dek),
+            visible,
+        )
+        conflict_id = await conn.fetchval(
+            "SELECT id FROM tags WHERE slug = 'conflict' AND is_default = true"
+        )
+        await conn.execute(
+            "INSERT INTO entry_tags (entry_id, tag_id, user_id) VALUES ($1, $2, $3)",
+            visible,
+            conflict_id,
+            user_a,
+        )
         await conn.execute(
             "INSERT INTO tags (id, user_id, slug, name, category, is_default) "
             "VALUES ($1, $2, 'my-custom', 'Existing', 'other', false)",
@@ -165,6 +187,7 @@ async def _verify(database: str, ids: tuple[uuid.UUID, uuid.UUID, uuid.UUID, uui
         assert "co-llision" in slugs and "co-llision-2" in slugs
         assert "work" not in slugs
         assert "travel" not in slugs
+        assert slugs.count("conflict") == 1
         assert (
             await conn.fetchval("SELECT count(*) FROM entry_tags WHERE entry_id = $1", hidden) == 0
         )
@@ -179,6 +202,18 @@ async def _verify(database: str, ids: tuple[uuid.UUID, uuid.UUID, uuid.UUID, uui
         assert (
             await conn.fetchval(
                 "SELECT count(*) FROM tags WHERE slug = 'full-cap' AND user_id = $1", user_a
+            )
+            == 0
+        )
+        ciphertext = await conn.fetchval("SELECT note_enc FROM entries WHERE id = $1", visible)
+        wrapped = await conn.fetchval(
+            "SELECT wrapped_dek FROM user_encryption_keys WHERE user_id = $1", user_a
+        )
+        assert decrypt_with_dek(ciphertext, unwrap_dek(wrapped)) == "A01 encrypted note"
+        assert (
+            await conn.fetchval(
+                "SELECT count(*) FROM entry_tags et JOIN entries e ON e.id = et.entry_id "
+                "WHERE et.user_id <> e.user_id"
             )
             == 0
         )
@@ -259,7 +294,7 @@ def test_mid_backfill_failure_keeps_source_and_can_retry() -> None:
             try:
                 assert await conn.fetchval("SELECT version_num FROM alembic_version") == "048"
                 assert await conn.fetchval("SELECT count(*) FROM entry_note_markers") == 9
-                assert await conn.fetchval("SELECT count(*) FROM entry_tags") == 50
+                assert await conn.fetchval("SELECT count(*) FROM entry_tags") == 51
                 assert (
                     await conn.fetchval("SELECT count(*) FROM tags WHERE slug = 'co-llision'") == 0
                 )
