@@ -72,8 +72,8 @@
     class="scatter__axis"
   />
   <line x1={pad.left} y1={pad.top} x2={pad.left} y2={pad.top + plotH} class="scatter__axis" />
-  <text x={pad.left - 6} y={yFor(5) + 3} class="scatter__tick">5</text>
-  <text x={pad.left - 6} y={yFor(1) + 3} class="scatter__tick">1</text>
+  <text x={pad.left - 6} y={pad.top + 3} class="scatter__tick">5</text>
+  <text x={pad.left - 6} y={pad.top + plotH + 3} class="scatter__tick">1</text>
   <text x={pad.left + plotW * 0.32} y={height - 8} class="scatter__tick" text-anchor="middle">
     {$_('insights.signal.scatter_with')}
   </text>

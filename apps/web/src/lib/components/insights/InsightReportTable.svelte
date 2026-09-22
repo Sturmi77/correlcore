@@ -6,7 +6,7 @@
   import { _ } from 'svelte-i18n';
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import InsightEvidence from './InsightEvidence.svelte';
-  import { matrixConfidencePercent, matrixEffectTone } from '$lib/utils/insightMatrixRows';
+  import { matrixConfidencePercent, matrixRowTone } from '$lib/utils/insightMatrixRows';
 
   export let rows: InsightResponse[] = [];
   export let selectedIds: readonly string[] = [];
@@ -86,7 +86,7 @@
     <div
       class="report-table__row"
       role="row"
-      data-tone={matrixEffectTone(effect)}
+      data-tone={matrixRowTone(row)}
       data-testid={`insight-report-row-${row.id}`}
     >
       <span role="cell" class="report-table__select">

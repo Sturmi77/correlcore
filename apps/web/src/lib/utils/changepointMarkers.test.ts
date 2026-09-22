@@ -65,21 +65,31 @@ describe('changepointMarkers', () => {
 
 describe('stress is read on the scale it is plotted on (#955)', () => {
   const stressCp = (before: number, after: number) =>
-    changepoint({ payload: { series: 'stress', before_avg: before, after_avg: after } });
+    changepoint({
+      payload: { series: 'stress', before_avg: before, after_avg: after, shift_date: '2026-03-11' },
+    });
 
-  it('calls rising raw stress a move to lower levels', () => {
-    // Raw 2.1 -> 4.0 is more stress. The chart plots the inverted value, so the
-    // line moves down; the sentence has to say the same thing.
+  it('names the actual raw-stress direction and exposes the plotted values', () => {
     const out = formatChangepointStatement(stressCp(2.1, 4.0), t) ?? '';
-    expect(out).toContain('direction_lower');
-    expect(out).not.toContain('direction_higher');
+    expect(out).toContain('statement_stress');
+    expect(out).toContain('direction_higher');
+    expect(out).toContain('"displayBefore":"3.9"');
+    expect(out).toContain('"displayAfter":"2.0"');
   });
 
-  it('prints the values on the plotted scale', () => {
+  it('keeps raw values separate and plots inverted stress in markers', () => {
     const out = formatChangepointStatement(stressCp(2.1, 4.0), t) ?? '';
-    // 6 - 2.1 = 3.9 and 6 - 4.0 = 2.0
-    expect(out).toContain('"before":"3.9"');
-    expect(out).toContain('"after":"2.0"');
+    expect(out).toContain('"before":"2.1"');
+    expect(out).toContain('"after":"4.0"');
+    const markers = changepointInsightsToMarkers([stressCp(2.1, 4.0)], t);
+    expect(markers[0].description).toContain('"before":"3.9"');
+    expect(markers[0].description).toContain('"after":"2.0"');
+  });
+
+  it('handles falling and unchanged stress without inventing a direction', () => {
+    expect(formatChangepointStatement(stressCp(5, 2), t)).toContain('direction_lower');
+    expect(formatChangepointStatement(stressCp(3, 3), t)).toContain('direction_unchanged');
+    expect(formatChangepointStatement(stressCp(3, Number.NaN), t)).toBeNull();
   });
 
   it('leaves a non-inverted metric alone', () => {

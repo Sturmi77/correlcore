@@ -97,6 +97,11 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
     }));
   }
 
+  it('labels stress coefficients in raw and display orientation', () => {
+    const pdf = buildMatrixPdfDocument([{ ...row, metric: 'stress', effect_size: 0.4 }], options);
+    expect(pdf).toContain('raw 0.40 | view -0.40');
+  });
+
   function pageCount(pdf: string): number {
     return Number(pdf.match(/\/Type \/Pages [^>]*\/Count (\d+)/)?.[1] ?? 0);
   }

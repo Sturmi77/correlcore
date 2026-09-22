@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { InsightResponse } from '$lib/api/insights';
-import { buildMatrixDisplayRows, matrixCoverageStats, matrixRowKey } from './insightMatrixRows';
+import {
+  buildMatrixDisplayRows,
+  matrixCoverageStats,
+  matrixRowKey,
+  matrixRowTone,
+} from './insightMatrixRows';
 
 const base: InsightResponse = {
   id: 'insight-1',
@@ -59,5 +64,15 @@ describe('matrixCoverageStats', () => {
         { ...base, id: '2', sample_n: 40 },
       ])
     ).toEqual({ rowCount: 2, maxSampleN: 40 });
+  });
+});
+
+describe('stress matrix semantics', () => {
+  it('uses positive display orientation for stress while retaining the raw coefficient', () => {
+    const higherStress = { ...base, metric: 'stress', effect_size: 0.4 };
+    const lowerStress = { ...base, metric: 'stress', effect_size: -0.4 };
+    expect(matrixRowTone(higherStress)).toBe('negative');
+    expect(matrixRowTone(lowerStress)).toBe('positive');
+    expect(higherStress.effect_size).toBe(0.4);
   });
 });
