@@ -422,6 +422,24 @@ describe('InsightCard relation glyph (#928 D2)', () => {
     expect(title).not.toContain('↔');
   });
 
+  it('points back to the feature for a negative lag', () => {
+    render(InsightCard, {
+      props: {
+        insight: {
+          ...CLUSTER,
+          id: 'rel-negative-lag',
+          payload: {
+            method: 'lag',
+            target: { kind: 'metric', key: 'mood_score', name: 'Mood' },
+            feature: { kind: 'tag', key: 'tag:sport', name: 'Sport' },
+            lag_days: -2,
+          },
+        },
+      },
+    });
+    expect(screen.getByTestId('insight-card-title').textContent).toContain('Sport ← Mood (-2d)');
+  });
+
   it('uses ↔ for same-day Lasso, which regresses features measured the same day', () => {
     render(InsightCard, {
       props: {

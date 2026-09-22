@@ -111,7 +111,6 @@
   $: cellByKey = new Map(
     (data?.cells ?? []).map((cell) => [`${cell.symptom.symptom_id}:${cell.tag.tag_id}`, cell])
   );
-  $: showLift = phase === 'provisional' || phase === 'robust';
   $: showSkeleton = loading && !data;
   $: interactiveCells = symptoms.flatMap((symptom, rowIndex) =>
     tags.flatMap((tag, colIndex) => {
@@ -182,18 +181,12 @@
   }
 
   function cellLevel(cell: SymptomTagCooccurrenceCell): string {
-    if (!showLift) return 'count';
     if (isConfoundedCell(cell)) return 'confounded';
-    if (cell.lift >= 2) return 'high-positive';
-    if (cell.lift >= 1.5) return 'positive';
-    if (cell.lift <= 0.5) return 'high-negative';
-    if (cell.lift <= 0.8) return 'negative';
-    return 'neutral';
+    return 'count';
   }
 
   function cellPrimaryLabel(cell: SymptomTagCooccurrenceCell): string {
-    if (!showLift) return String(cell.co_count);
-    return `${cell.lift.toFixed(1)}${cell.p_value_corrected < 0.1 ? '*' : ''}`;
+    return `${cell.co_count}/${cell.symptom_count}`;
   }
 
   function cellAriaLabel(
@@ -208,7 +201,7 @@
         co: cell.co_count,
         symptomDays: cell.symptom_count,
         tagDays: cell.tag_count,
-        lift: cell.lift.toFixed(2),
+        totalDays: cell.total_count,
       },
     });
     const noteKey = confounderNoteKey(cell.confounder);
@@ -265,7 +258,11 @@
   }
 </script>
 
-<section class="symptom-cooccurrence" data-loading={loading ? 'true' : 'false'}>
+<section
+  class="symptom-cooccurrence"
+  data-loading={loading ? 'true' : 'false'}
+  data-phase={phase ?? 'unknown'}
+>
   <header
     class="symptom-cooccurrence__header"
     class:symptom-cooccurrence__header--compact={hideHeading}
@@ -361,9 +358,6 @@
                 on:keydown={(event) => handleCellKeydown(event, cellKey, rowIndex, colIndex)}
               >
                 <span class="symptom-cooccurrence__primary">{cellPrimaryLabel(cell)}</span>
-                {#if showLift}
-                  <sub class="symptom-cooccurrence__sub">{cell.co_count}</sub>
-                {/if}
               </button>
             {:else}
               <div
@@ -377,13 +371,11 @@
       </div>
     </div>
     <p class="symptom-cooccurrence__legend">
-      {showLift
-        ? $_('insights.symptoms.cooccurrence_lift_legend')
-        : $_('insights.symptoms.cooccurrence_count_legend')}
-      {#if showLift && symptoms.some((symptom) => tags.some((tag) => {
-            const cell = cellByKey.get(`${symptom.symptom_id}:${tag.tag_id}`);
-            return cell ? isConfoundedCell(cell) : false;
-          }))}
+      {$_('insights.symptoms.cooccurrence_count_legend')}
+      {#if symptoms.some((symptom) => tags.some((tag) => {
+          const cell = cellByKey.get(`${symptom.symptom_id}:${tag.tag_id}`);
+          return cell ? isConfoundedCell(cell) : false;
+        }))}
         {' '}{$_('insights.symptoms.cooccurrence_confounder_note')}
       {/if}
     </p>

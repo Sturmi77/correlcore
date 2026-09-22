@@ -82,4 +82,25 @@ describe('LagCorrelationHeatmap (#488 Phase 2)', () => {
     expect(label).toContain('trends.metric.mood');
     expect(label).not.toContain('mood_score');
   });
+
+  it('shows negative lag columns and a backward pair arrow', () => {
+    const negative = (id: string): InsightResponse => ({
+      ...lagInsight(id, -2),
+      payload: {
+        ...lagInsight(id, -2).payload,
+        lag_profile: [
+          { lag: -3, r: 0.1 },
+          { lag: -2, r: 0.42 },
+        ],
+      },
+    });
+    const { container } = render(LagCorrelationHeatmap, {
+      props: { insights: [negative('a'), negative('b')] },
+    });
+    expect(container.querySelector('.lag-heatmap__row-label')?.textContent).toContain('←');
+    expect(
+      [...container.querySelectorAll('.lag-heatmap__col-head')].map((node) => node.textContent)
+    ).toContain('-2');
+    expect(container.querySelectorAll('.lag-heatmap__cell--active')).toHaveLength(2);
+  });
 });

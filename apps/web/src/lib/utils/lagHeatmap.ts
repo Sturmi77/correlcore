@@ -77,7 +77,18 @@ export function buildLagHeatmapRows(insights: readonly InsightResponse[]): LagHe
 
     const chosenLag = typeof payload.lag_days === 'number' ? payload.lag_days : null;
     const cells: LagHeatmapCell[] = [];
-    for (let lag = 1; lag <= LAG_HEATMAP_MAX_DAYS; lag += 1) {
+    const lags = [
+      ...(Array.from(byLag.keys()).some((lag) => lag < 0)
+        ? Array.from(
+            { length: LAG_HEATMAP_MAX_DAYS },
+            (_unused, index) => index - LAG_HEATMAP_MAX_DAYS
+          )
+        : []),
+      ...(Array.from(byLag.keys()).some((lag) => lag > 0)
+        ? Array.from({ length: LAG_HEATMAP_MAX_DAYS }, (_unused, index) => index + 1)
+        : []),
+    ];
+    for (const lag of lags) {
       cells.push({
         lag,
         r: byLag.has(lag) ? (byLag.get(lag) ?? null) : null,

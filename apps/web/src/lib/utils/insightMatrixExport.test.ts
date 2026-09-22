@@ -106,6 +106,7 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
 
     expect(pageCount(pdf)).toBe(1);
     expect(pdf).toContain(options.disclaimer);
+    expect(pdf).toContain('Subject 0 <-> mood_score');
   });
 
   it('breaks a full selection across pages instead of dropping the overflow', () => {
