@@ -10,6 +10,8 @@
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
   import { analysisRange } from '$lib/stores/analysisRange';
+  import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
+  import { fetchUserPreferences } from '$lib/api/preferences';
   import { localIsoDate } from '$lib/utils/isoDate';
   import { trendWindowDaysToCooccurrence, type TrendWindowDays } from '$lib/utils/trendWindowDays';
   import { RequestGeneration } from '$lib/utils/requestGeneration';
@@ -67,13 +69,24 @@
   let esmLoading = false;
   let mounted = false;
   let loadedContext = '';
+  let preferenceRequestActor: string | null = null;
+  let preferenceReadyActor: string | null = null;
   const detailRequests = new RequestGeneration();
   const esmRequests = new RequestGeneration();
 
   $: insightId = $page.params.id ?? '';
   $: actorId = $auth.status === 'authenticated' ? $auth.user.id : null;
   $: contextKey = `${actorId ?? ''}:${insightId}:${$analysisRange}`;
-  $: if (mounted && actorId && insightId && contextKey !== loadedContext) {
+  $: if (mounted && actorId && preferenceRequestActor !== actorId) {
+    void hydrateAnalysisWindow(actorId);
+  }
+  $: if (
+    mounted &&
+    actorId &&
+    preferenceReadyActor === actorId &&
+    insightId &&
+    contextKey !== loadedContext
+  ) {
     loadedContext = contextKey;
     void load(insightId, $analysisRange, actorId);
   }
@@ -84,6 +97,28 @@
     insight = null;
     verification = null;
     esmOpen = false;
+  }
+  $: if (mounted && !actorId && preferenceRequestActor) {
+    preferenceRequestActor = null;
+    preferenceReadyActor = null;
+    trendWindowPreference.bind(null);
+  }
+
+  async function hydrateAnalysisWindow(actor: string): Promise<void> {
+    preferenceRequestActor = actor;
+    preferenceReadyActor = null;
+    trendWindowPreference.bind(actor);
+    const revision = trendWindowPreference.revision();
+    try {
+      const preferences = await fetchUserPreferences();
+      trendWindowPreference.hydrate(actor, preferences.trend_window_days, revision);
+    } catch {
+      // The bound default/local value remains usable while preferences are offline.
+    } finally {
+      if (actorId === actor && preferenceRequestActor === actor) {
+        preferenceReadyActor = actor;
+      }
+    }
   }
   $: withWithout = insight ? parseWithWithoutView(insight) : null;
   $: sameSituation = insight ? parseSameSituationView(insight) : null;
