@@ -1,6 +1,6 @@
 # CorrelCore — Testing Strategy
 
-**Living document.** Last updated: 2026-09-05.
+**Living document.** Last updated: 2026-09-23.
 
 Canonical test / CI strategy for CorrelCore. Operational commands live in
 [`docs/DEVELOPMENT.md`](../DEVELOPMENT.md) and [`AGENTS.md`](../../AGENTS.md).
@@ -13,24 +13,24 @@ closeout records, not the living strategy.
 
 ## Pyramid
 
-| Layer                | What                                                                                                                       | When                                        |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **Unit**             | Backend `pytest` (mocked DB/Redis); Web Vitest                                                                             | Every PR (path-filtered)                    |
-| **Contract / style** | OpenAPI→TS (`ci-contract.yml`), `apiContract.ts`, contrast/style/token guards                                              | Every PR touching those paths               |
-| **Integration**      | `pytest -m integration` against real Postgres (pgvector) + Redis                                                           | Every API PR (`ci-api.yml` integration job) |
-| **E2E (Playwright)** | Mocked API smoke (+ a11y) on PR; mobile / journeys / GDPR nightly                                                          | PR smoke; nightly expanded                  |
-| **Security**         | gitleaks, pip-audit, pnpm audit (gating); CodeQL / Trivy / ZAP (report; CRITICAL gate deferred until image baseline clean) | Push/PR / schedule                          |
-| **Manual / device**  | Capacitor, Health Connect, widgets, FCM, Play Pre-Launch                                                                   | Milestone / device QA — not CI              |
+| Layer                | What                                                                                                                                | When                                        |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| **Unit**             | Backend `pytest` (mocked DB/Redis); Web Vitest                                                                                      | Every PR (path-filtered)                    |
+| **Contract / style** | OpenAPI→TS (`ci-contract.yml`), `apiContract.ts`, contrast/style/token guards                                                       | Every PR touching those paths               |
+| **Integration**      | `pytest -m integration` against real Postgres (pgvector) + Redis                                                                    | Every API PR (`ci-api.yml` integration job) |
+| **E2E (Playwright)** | Mocked API smoke (+ a11y) on PR; mobile / journeys / GDPR nightly                                                                   | PR smoke; nightly expanded                  |
+| **Security**         | gitleaks, dependency audits, CRITICAL image gate, ZAP findings gate; A10 also scans exact release digests and authenticated staging | Push/PR/schedule; release candidate         |
+| **Manual / device**  | Capacitor, Health Connect, widgets, FCM, Play Pre-Launch                                                                            | Milestone / device QA — not CI              |
 
 ---
 
 ## Coverage floors
 
-| Surface                               | Gate                                                           | Location                                |
-| ------------------------------------- | -------------------------------------------------------------- | --------------------------------------- |
-| Backend `app`                         | `--cov-fail-under=70`                                          | `backend/pyproject.toml`, `ci-api.yml`  |
-| Critical paths (auth / crypto / sync) | Target ≥85 % (report in CQR; not a separate CI fail-under yet) | Design-Doc §9 CQR                       |
-| Web `src/lib/api` + `src/lib/offline` | Vitest thresholds                                              | `apps/web/vite.config.ts`, coverage job |
+| Surface                                              | Gate                                                                 | Location                                |
+| ---------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------- |
+| Backend `app`                                        | `--cov-fail-under=70`                                                | `backend/pyproject.toml`, `ci-api.yml`  |
+| Critical paths (auth / scoped DEK / insight compute) | ≥85% in the A10 release gate; sync uses the real-DB integration gate | `audit-a10-release-evidence.yml`        |
+| Web `src/lib/api` + `src/lib/offline`                | Vitest thresholds                                                    | `apps/web/vite.config.ts`, coverage job |
 
 Raise floors as coverage grows; do not lower them to land a change.
 
@@ -53,9 +53,12 @@ Recommended required status checks:
 
 ---
 
-## Real-API browser E2E — deferred
+## Real-API release-candidate E2E
 
-Compensating layers: Playwright smoke (mocked API) + API health/migrations/integration against real Postgres/Redis. Nightly expands mobile/journeys/GDPR. Revisit with a shared multi-service harness.
+PR Playwright remains a fast mocked-API gate. Before release, the A10 workflow
+runs a two-user journey against an isolated, proxy-fronted staging stack and
+binds its result to the exact commit and API/web image digests. See
+[`A10_RELEASE_EVIDENCE.md`](audit-2026-09-22/A10_RELEASE_EVIDENCE.md).
 
 ---
 

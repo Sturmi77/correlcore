@@ -44,6 +44,7 @@ x-api-env: &id001
   DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
   IMAGE_TAG: ${IMAGE_TAG:-latest}
   IMAGE_DIGEST: ${IMAGE_DIGEST:-}
+  WEB_IMAGE_DIGEST: ${WEB_IMAGE_DIGEST:-}
 services:
   migrate:
     image: ${IMAGE_REGISTRY:-ghcr.io/sturmi77}/correlcore-api:${IMAGE_TAG:-latest}
@@ -74,6 +75,7 @@ services:
       DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
       IMAGE_TAG: ${IMAGE_TAG:-latest}
       IMAGE_DIGEST: ${IMAGE_DIGEST:-}
+      WEB_IMAGE_DIGEST: ${WEB_IMAGE_DIGEST:-}
     depends_on:
       postgres:
         condition: service_healthy

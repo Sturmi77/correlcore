@@ -14,8 +14,8 @@
 # exercise the header suite dynamically, scan the Traefik-fronted stack — see
 # the follow-up note in the workflow header.
 #
-# Everything not listed keeps its default threshold (passive alerts WARN; the
-# scan is non-gating regardless — see the `-I` flag / continue-on-error step).
+# Everything not listed keeps its default threshold. WARN and FAIL both block
+# CI; every IGNORE therefore needs the concrete topology reason recorded here.
 
 10020	IGNORE	Anti-clickjacking (X-Frame-Options) — Traefik frameDeny=true
 10021	IGNORE	X-Content-Type-Options missing — Traefik contentTypeNosniff=true
