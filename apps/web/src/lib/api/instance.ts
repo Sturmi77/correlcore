@@ -14,6 +14,9 @@ export interface InstanceInfo {
   mode: InstanceMode;
   registration_enabled: boolean;
   version: string;
+  git_commit: string;
+  api_image: string;
+  web_image: string;
 }
 
 /** Fetch the public instance descriptor. Never sends/refreshes auth. */

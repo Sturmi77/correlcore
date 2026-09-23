@@ -3392,6 +3392,14 @@
       "InstanceInfo": {
         "description": "Non-sensitive, public deployment descriptor.",
         "properties": {
+          "api_image": {
+            "title": "Api Image",
+            "type": "string"
+          },
+          "git_commit": {
+            "title": "Git Commit",
+            "type": "string"
+          },
           "mode": {
             "enum": [
               "hosted",
@@ -3407,12 +3415,19 @@
           "version": {
             "title": "Version",
             "type": "string"
+          },
+          "web_image": {
+            "title": "Web Image",
+            "type": "string"
           }
         },
         "required": [
           "mode",
           "registration_enabled",
-          "version"
+          "version",
+          "git_commit",
+          "api_image",
+          "web_image"
         ],
         "title": "InstanceInfo",
         "type": "object"

@@ -1,0 +1,443 @@
+name: Audit A10 - Release evidence
+
+# Manual release-candidate gate. Every input is immutable: a full commit SHA
+# and two registry digest references. The final manifest is emitted only after
+# all required evidence jobs have passed for that exact candidate.
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Full 40-character commit SHA to verify
+        required: true
+        type: string
+      api_image:
+        description: API image reference pinned with @sha256
+        required: true
+        type: string
+      web_image:
+        description: Web image reference pinned with @sha256
+        required: true
+        type: string
+      staging_url:
+        description: Isolated, proxy-fronted staging URL running these digests
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: audit-a10-${{ inputs.release_sha }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_SHA: ${{ inputs.release_sha }}
+  API_IMAGE: ${{ inputs.api_image }}
+  WEB_IMAGE: ${{ inputs.web_image }}
+  UV_VERSION: '0.9.5'
+
+jobs:
+  identity:
+    name: Immutable candidate identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate immutable inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "::error::release_sha must be a lowercase full commit SHA"; exit 1;
+          }
+          [[ "$API_IMAGE" =~ @sha256:[0-9a-f]{64}$ ]] || {
+            echo "::error::api_image must be pinned by digest"; exit 1;
+          }
+          [[ "$WEB_IMAGE" =~ @sha256:[0-9a-f]{64}$ ]] || {
+            echo "::error::web_image must be pinned by digest"; exit 1;
+          }
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_sha }}
+          fetch-depth: 1
+      - name: Verify checkout
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+
+  linux-ci:
+    name: Linux lint, types, unit tests, production build
+    needs: identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_sha }}
+      - uses: pnpm/action-setup@v6
+        with:
+          version: '11.0.8'
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Frozen installs
+        run: |
+          pnpm install --frozen-lockfile
+          cd backend
+          uv sync --python 3.12 --extra dev --extra analytics --frozen
+      - name: Web quality and production build
+        env:
+          CI: 'true'
+        run: |
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+          pnpm build
+      - name: API lint, types, tests, and critical-path coverage
+        working-directory: backend
+        env:
+          APP_ENV: test
+          SECRET_KEY: test-secret-key-min-32-bytes-long-padding
+          ENCRYPTION_KEY: SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4=
+          SLUG_HMAC_KEY: ci-slug-hmac-key-for-correlcore-tests-32b
+        run: |
+          uv run --python 3.12 ruff check .
+          uv run --python 3.12 ruff format --check .
+          uv run --python 3.12 mypy app
+          uv run --python 3.12 pytest
+          uv run --python 3.12 pytest -o addopts='' tests/test_auth_deps.py tests/test_crypto.py tests/test_insight_engine.py --cov=app.api.v1.deps.auth --cov=app.core.crypto --cov=app.services.insight_engine --cov-report=term-missing --cov-fail-under=85
+
+  windows-timezone:
+    name: Windows and timezone regression
+    needs: identity
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_sha }}
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Frozen backend install
+        working-directory: backend
+        run: uv sync --python 3.12 --extra dev --extra analytics --frozen
+      - name: Timezone and export checks on Windows
+        working-directory: backend
+        env:
+          APP_ENV: test
+          SECRET_KEY: test-secret-key-min-32-bytes-long-padding
+          ENCRYPTION_KEY: SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4=
+          SLUG_HMAC_KEY: ci-slug-hmac-key-for-correlcore-tests-32b
+        run: uv run --python 3.12 pytest tests/test_timezone_utils.py tests/test_export_service.py -q --no-cov
+
+  migration:
+    name: Migrations, backfills, real PostgreSQL integration
+    needs: identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: correlcore
+          POSTGRES_PASSWORD: correlcore
+          POSTGRES_DB: correlcore
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U correlcore"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: test
+      CORRELCORE_RUN_INTEGRATION: '1'
+      DATABASE_URL: postgresql+asyncpg://correlcore:correlcore@localhost:5432/correlcore
+      REDIS_URL: redis://localhost:6379/0
+      SECRET_KEY: test-secret-key-min-32-bytes-long-padding
+      ENCRYPTION_KEY: SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4=
+      SLUG_HMAC_KEY: ci-slug-hmac-key-for-correlcore-tests-32b
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_sha }}
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Frozen install and migration round trip
+        working-directory: backend
+        run: |
+          uv sync --python 3.12 --extra dev --extra analytics --frozen
+          uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
+          uv run --python 3.12 alembic -c migrations/alembic.ini downgrade base
+          uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
+      - name: Run every marked integration and reject skips
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(grep -rl --include='test_*.py' '@pytest.mark.integration' tests | sort)
+          test "${#files[@]}" -gt 0
+          for file in "${files[@]}"; do
+            report="integration-$(basename "$file" .py).xml"
+            uv run --python 3.12 pytest "$file" -m integration -q --no-cov --junitxml="$report"
+            uv run --python 3.12 python scripts/assert_junit_no_skips.py "$report"
+          done
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: a10-migration-integration-junit
+          path: backend/integration-*.xml
+          if-no-files-found: error
+          retention-days: 90
+
+  real-api-e2e:
+    name: Real API two-user release journey
+    needs: identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: audit-rc
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+      - name: Verify deployed revision and images
+        env:
+          STAGING_URL: ${{ inputs.staging_url }}
+        run: |
+          set -euo pipefail
+          facts="$(curl -fsS "$STAGING_URL/api/v1/instance")"
+          test "$(jq -r '.git_commit' <<<"$facts")" = "$RELEASE_SHA"
+          test "$(jq -r '.api_image' <<<"$facts")" = "$API_IMAGE"
+          test "$(jq -r '.web_image' <<<"$facts")" = "$WEB_IMAGE"
+      - name: Run destructive-safe seeded-account journey
+        env:
+          A10_STAGING_URL: ${{ inputs.staging_url }}
+          A10_RELEASE_SHA: ${{ inputs.release_sha }}
+          A10_USER_A_EMAIL: ${{ secrets.A10_USER_A_EMAIL }}
+          A10_USER_A_PASSWORD: ${{ secrets.A10_USER_A_PASSWORD }}
+          A10_USER_B_EMAIL: ${{ secrets.A10_USER_B_EMAIL }}
+          A10_USER_B_PASSWORD: ${{ secrets.A10_USER_B_PASSWORD }}
+        run: node scripts/a10-staging-smoke.mjs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: a10-real-api-e2e
+          path: a10-real-api-e2e.json
+          retention-days: 90
+          if-no-files-found: error
+
+  security-dependency:
+    name: Dependency, image and authenticated DAST gates
+    needs: [identity, real-api-e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: audit-rc
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_sha }}
+      - uses: pnpm/action-setup@v6
+        with:
+          version: '11.0.8'
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate temporary exception register
+        run: >-
+          python backend/scripts/verify_security_exceptions.py
+          docs/quality/audit-2026-09-22/A10_SECURITY_EXCEPTIONS.json
+          PYSEC-2026-1325 PYSEC-2026-3721
+      - name: Fresh dependency advisories
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --prod --audit-level=high
+          cd backend
+          uv sync --python 3.12 --extra dev --extra analytics --frozen
+          uv run --python 3.12 pip-audit --skip-editable --ignore-vuln PYSEC-2026-1325 --ignore-vuln PYSEC-2026-3721
+      - name: Install Trivy
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key |
+            gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" |
+            sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+      - name: Scan exact release image digests
+        run: |
+          set -euo pipefail
+          trivy image --format json --output trivy-api.json --severity CRITICAL,HIGH --exit-code 1 "$API_IMAGE"
+          trivy image --format json --output trivy-web.json --severity CRITICAL,HIGH --exit-code 1 "$WEB_IMAGE"
+      - name: Authenticate and run proxy-fronted ZAP API scan
+        env:
+          STAGING_URL: ${{ inputs.staging_url }}
+          A10_USER_A_EMAIL: ${{ secrets.A10_USER_A_EMAIL }}
+          A10_USER_A_PASSWORD: ${{ secrets.A10_USER_A_PASSWORD }}
+        run: |
+          set -euo pipefail
+          body="$(jq -nc --arg e "$A10_USER_A_EMAIL" --arg p "$A10_USER_A_PASSWORD" '{email:$e,password:$p,remember_me:false}')"
+          token="$(curl -fsS "$STAGING_URL/api/v1/auth/login?include_access_token=true" -H 'content-type: application/json' --data "$body" | jq -er .access_token)"
+          mkdir -p zap-out
+          cp .zap/a10-staging-rules.tsv packages/api-types/openapi.json zap-out/
+          chmod -R 777 zap-out
+          docker run --rm -v "$GITHUB_WORKSPACE/zap-out:/zap/wrk/:rw" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py -t openapi.json -f openapi -O "$STAGING_URL" -c a10-staging-rules.tsv -J zap-report.json -w zap-report.md -z "-config replacer.full_list(0).description=a10-auth -config replacer.full_list(0).enabled=true -config replacer.full_list(0).matchtype=REQ_HEADER -config replacer.full_list(0).matchstr=Authorization -config replacer.full_list(0).replacement=Bearer%20$token"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: a10-security-reports
+          path: |
+            trivy-*.json
+            zap-out/zap-report.*
+          retention-days: 90
+          if-no-files-found: error
+
+  performance:
+    name: Bounded compute and web asset budgets
+    needs: identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_sha }}
+      - uses: pnpm/action-setup@v6
+        with:
+          version: '11.0.8'
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Build and enforce compressed asset budget
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          node scripts/check-web-build-budget.mjs
+      - name: Bounded analytics and worker regressions
+        working-directory: backend
+        env:
+          APP_ENV: test
+          SECRET_KEY: test-secret-key-min-32-bytes-long-padding
+          ENCRYPTION_KEY: SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4=
+          SLUG_HMAC_KEY: ci-slug-hmac-key-for-correlcore-tests-32b
+        run: |
+          uv sync --python 3.12 --extra dev --extra analytics --frozen
+          timeout 8m uv run --python 3.12 pytest tests/test_insight_engine.py tests/test_multivariate_analytics.py tests/test_worker_fault_injection.py -q --no-cov
+
+  visual-a11y:
+    name: Production visual, accessibility, download and mobile smoke
+    needs: identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_sha }}
+      - uses: pnpm/action-setup@v6
+        with:
+          version: '11.0.8'
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @correlcore/web exec playwright install --with-deps chromium
+      - name: Core, a11y, small viewport and export/download flows
+        env:
+          CI: 'true'
+          PLAYWRIGHT_WEB_SERVER: production
+        run: |
+          pnpm --filter @correlcore/web test:e2e:smoke
+          pnpm --filter @correlcore/web test:e2e:mobile
+          pnpm --filter @correlcore/web test:e2e:gdpr
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: a10-playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 90
+          if-no-files-found: warn
+
+  evidence:
+    name: Seal A10 evidence manifest
+    needs:
+      - identity
+      - linux-ci
+      - windows-timezone
+      - migration
+      - real-api-e2e
+      - security-dependency
+      - performance
+      - visual-a11y
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_sha }}
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Create and validate immutable evidence manifest
+        env:
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          completed="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          jq -n --arg sha "$RELEASE_SHA" --arg api "$API_IMAGE" --arg web "$WEB_IMAGE" --arg url "$RUN_URL" --arg completed "$completed" '{
+              schemaVersion: 1,
+              release: {sha: $sha, apiImage: $api, webImage: $web},
+              evidence: [
+                "linux-ci", "windows-timezone", "migration", "real-api-e2e",
+                "security-dependency", "performance", "visual-a11y"
+              ] | map({
+                gate: ., status: "passed", sha: $sha, apiImage: $api,
+                webImage: $web, url: ($url + "#" + .), completedAt: $completed
+              })
+            }' > a10-release-evidence.json
+          uv run --python 3.12 python backend/scripts/verify_release_evidence.py a10-release-evidence.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: a10-release-evidence-${{ inputs.release_sha }}
+          path: a10-release-evidence.json
+          retention-days: 90
+          if-no-files-found: error

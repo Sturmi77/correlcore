@@ -342,3 +342,20 @@ test('trends and insights render authenticated analytics surfaces', async ({ pag
   );
   await expect(page.getByTestId('insight-stage-meta')).toBeVisible();
 });
+
+test('insights remains readable in print media at a small viewport', async ({ page }) => {
+  await installSmokeApi(page, { authenticated: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ media: 'print' });
+
+  await page.goto('/insights');
+  await expect(page.getByTestId('insight-stage-header')).toBeVisible({
+    timeout: APP_READY_TIMEOUT_MS,
+  });
+  expect(await page.evaluate(() => window.matchMedia('print').matches)).toBe(true);
+  const width = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(width.content).toBeLessThanOrEqual(width.viewport);
+});

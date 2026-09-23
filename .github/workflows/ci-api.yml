@@ -202,19 +202,18 @@ jobs:
       - name: pytest -m integration (per-module processes)
         run: |
           set -euo pipefail
-          files=(
-            tests/test_health_readiness_integration.py
-            tests/test_digest_backfill_integration.py
-            tests/test_gdpr_delete_integration.py
-            tests/test_rls_isolation_integration.py
-            tests/test_m7_qa_seed_integration.py
-            tests/test_049_drop_entry_note_markers_integration.py
-            tests/test_password_reset.py
-            tests/test_sync_service.py
-          )
+          mapfile -t files < <(grep -rl --include='test_*.py' '@pytest.mark.integration' tests | sort)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::No integration test modules were discovered." >&2
+            exit 1
+          fi
+          echo "Discovered ${#files[@]} integration test modules."
           for f in "${files[@]}"; do
             echo "::group::pytest -m integration $f"
-            uv run --python 3.12 pytest "$f" -m integration -q --no-cov
+            report="integration-$(basename "$f" .py).xml"
+            uv run --python 3.12 pytest "$f" -m integration -q --no-cov \
+              --junitxml="$report"
+            uv run --python 3.12 python scripts/assert_junit_no_skips.py "$report"
             echo "::endgroup::"
           done
         env:
@@ -225,6 +224,14 @@ jobs:
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
           SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
+      - name: Upload integration reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-junit
+          path: backend/integration-*.xml
+          retention-days: 30
+          if-no-files-found: error
 
   migrations-smoke:
     name: Migrations smoke (alembic upgrade head)
