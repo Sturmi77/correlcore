@@ -75,6 +75,7 @@
   let esmPoints: TimeseriesPoint[] = [];
   let esmLag: number | null = null;
   let esmLoading = false;
+  let esmPartnerLoading = false;
   let esmPartner: EsmPartner | null = null;
   let esmPartnerPresence: string[] = [];
   let esmPartnerUnavailable = false;
@@ -183,6 +184,7 @@
     esmAbort = controller;
     esmOpen = true;
     esmLoading = true;
+    esmPartnerLoading = false;
     esmPartner = null;
     esmPartnerPresence = [];
     esmPartnerUnavailable = false;
@@ -203,12 +205,16 @@
       }));
       esmPoints = response.points;
       esmLag = response.lag_days ?? null;
+      // The primary visualization is complete. Open it while optional partner
+      // presence loads and let the sheet render its dedicated loading state.
+      esmLoading = false;
 
       const partnerRef =
         carriedPair && insightMatchesAnalysisPair(insight, carriedPair)
           ? partnerForInsight(insight, carriedPair)
           : null;
       if (partnerRef && ['tag', 'symptom', 'work_context'].includes(partnerRef.kind)) {
+        esmPartnerLoading = true;
         const partner: EsmPartner = {
           id: partnerRef.id,
           label: partnerRef.label ?? partnerRef.context ?? partnerRef.id,
@@ -228,7 +234,7 @@
             const entries = await listEntries({
               start_date: startDate,
               end_date: endDate,
-              limit: 365,
+              limit: 500,
             });
             partnerPresence = presenceDatesForPartner(
               partner,
@@ -252,6 +258,10 @@
         } catch {
           if (controller.signal.aborted || generation !== requestGeneration) return;
           esmPartnerUnavailable = true;
+        } finally {
+          if (!controller.signal.aborted && generation === requestGeneration) {
+            esmPartnerLoading = false;
+          }
         }
       }
     } catch {
@@ -261,6 +271,7 @@
       esmLag = null;
       esmPartner = null;
       esmPartnerPresence = [];
+      esmPartnerLoading = false;
     } finally {
       if (!controller.signal.aborted && generation === requestGeneration) esmLoading = false;
     }
@@ -470,6 +481,7 @@
     partner={esmPartner}
     partnerPresenceDates={esmPartnerPresence}
     partnerCandidates={esmPartner ? [{ ...esmPartner, score: Number.MAX_SAFE_INTEGER }] : []}
+    partnerLoading={esmPartnerLoading}
     partnerUnavailable={esmPartnerUnavailable}
     phase={maturity?.phase ?? null}
     on:close={() => {

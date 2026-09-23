@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { InsightResponse } from '$lib/api/insights';
+import { fetchSymptomHeatmap } from '$lib/api/stats';
 import Page from './+page.svelte';
 
 type Deferred<T> = {
@@ -281,5 +282,33 @@ describe('/insights/signal/[id]', () => {
       })
     );
     expect(testHelpers.lastEsmProps.partnerPresenceDates).toEqual(['2026-09-20']);
+  });
+
+  it('opens ESM while optional partner presence is still loading', async () => {
+    const pair = {
+      version: 1,
+      signals: [
+        { kind: 'tag', id: 'tag-a' },
+        { kind: 'symptom', id: 'symptom-b' },
+      ],
+    };
+    const partnerRequest = testHelpers.deferred<Awaited<ReturnType<typeof fetchSymptomHeatmap>>>();
+    vi.mocked(fetchSymptomHeatmap).mockReturnValueOnce(partnerRequest.promise);
+    testHelpers.navigate('a', `?${new URLSearchParams({ pair: JSON.stringify(pair) }).toString()}`);
+    render(Page);
+    await waitFor(() => expect(testHelpers.detailRequests).toHaveLength(1));
+    testHelpers.detailRequests[0].deferred.resolve(
+      insight('a', {
+        payload: { features: [{ kind: 'symptom', id: 'symptom-b', name: 'Symptom B' }] },
+      })
+    );
+    await waitFor(() => expect(screen.getByTestId('signal-open-esm')).toBeTruthy());
+
+    await fireEvent.click(screen.getByTestId('signal-open-esm'));
+
+    await waitFor(() => expect(testHelpers.lastEsmProps.open).toBe(true));
+    expect(testHelpers.lastEsmProps.partnerLoading).toBe(true);
+    partnerRequest.resolve({ start_date: '2026-06-24', end_date: '2026-09-29', symptoms: [] });
+    await waitFor(() => expect(testHelpers.lastEsmProps.partnerLoading).toBe(false));
   });
 });

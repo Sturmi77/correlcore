@@ -1066,7 +1066,7 @@
         : Promise.resolve({ ok: true as const, data: visibleSymptomHeatmap ?? symptomHeatmap });
     const workContextEntriesPromise =
       fixedPartner?.kind === 'work_context'
-        ? listEntries({ start_date: heatmapStart, end_date: heatmapEnd, limit: 365 })
+        ? listEntries({ start_date: heatmapStart, end_date: heatmapEnd, limit: 500 })
             .then((data) => ({ ok: true as const, data }))
             .catch(() => ({ ok: false as const, data: null }))
         : Promise.resolve({ ok: true as const, data: null });

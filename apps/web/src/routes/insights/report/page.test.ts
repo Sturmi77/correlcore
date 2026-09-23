@@ -119,6 +119,26 @@ describe('/insights/report selection (#959)', () => {
     ).toBe('insight-report-row-b');
   });
 
+  it('preserves a carried pair in the back link', async () => {
+    const pair = {
+      version: 1,
+      signals: [
+        { kind: 'tag', id: 'a' },
+        { kind: 'tag', id: 'b' },
+      ],
+    };
+    pageUrl.value = `http://localhost/insights/report?${new URLSearchParams({
+      signal: 'b',
+      pair: JSON.stringify(pair),
+    })}`;
+    render(Page);
+
+    const back = await screen.findByTestId('screen-back');
+    expect(new URL((back as HTMLAnchorElement).href).searchParams.get('pair')).toBe(
+      JSON.stringify(pair)
+    );
+  });
+
   it('does not refill an emptied selection when the page refreshes', async () => {
     const { container } = render(Page);
 

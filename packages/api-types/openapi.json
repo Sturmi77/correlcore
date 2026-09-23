@@ -8643,7 +8643,7 @@
             "required": false,
             "schema": {
               "default": 100,
-              "maximum": 365,
+              "maximum": 500,
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
