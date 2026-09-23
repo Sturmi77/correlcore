@@ -244,7 +244,11 @@ async def list_latest_insights_endpoint(
     parsed_pair_signals: list[tuple[str, str]] = []
     for raw in pair_signal or []:
         kind, separator, signal_id = raw.partition(":")
-        if not separator or kind not in {"tag", "symptom", "work_context", "metric"} or not signal_id:
+        if (
+            not separator
+            or kind not in {"tag", "symptom", "work_context", "metric"}
+            or not signal_id
+        ):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"invalid pair_signal: {raw}",

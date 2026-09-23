@@ -541,7 +541,9 @@ def newest_insight_per_subject_stmt(
     newest_ids = select(ranked.c.id).where(ranked.c.subject_rank == 1)
     return (
         select(Insight)
-        .where(Insight.user_id == user_id, Insight.id.in_(newest_ids), *type_filter, *signal_filters)
+        .where(
+            Insight.user_id == user_id, Insight.id.in_(newest_ids), *type_filter, *signal_filters
+        )
         .order_by(Insight.generated_at.desc(), Insight.created_at.desc())
         .limit(MAX_INSIGHT_LIST_LIMIT)
     )
