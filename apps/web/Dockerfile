@@ -61,7 +61,9 @@ RUN pnpm deploy --filter @correlcore/web --prod --legacy /repo/deploy
 # virtual store even though the corresponding packages are dev-only. They are
 # never used by the adapter-node runtime; remove them before copying prod deps
 # so the shipped image does not carry esbuild's embedded Go runtime.
-RUN rm -rf /repo/deploy/node_modules/.pnpm/@esbuild+*
+RUN rm -rf \
+    /repo/deploy/node_modules/.pnpm/@esbuild+* \
+    /repo/deploy/node_modules/.pnpm/esbuild@*
 
 # ---- Runtime stage ----
 FROM node:26-alpine AS runtime
