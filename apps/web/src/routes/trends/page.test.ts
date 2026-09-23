@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
-import { updateUserPreferences } from '$lib/api/preferences';
+import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
+import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
 import { fetchSymptomHeatmap, fetchTimeseries } from '$lib/api/stats';
 import { listEntries } from '$lib/api/entries';
 import { ApiError } from '$lib/api/client';
@@ -158,6 +159,9 @@ describe('/trends page', () => {
   beforeEach(() => {
     vi.setSystemTime(new Date('2026-05-16T12:00:00Z'));
     localStorage.clear();
+    trendWindowPreference.bind(null);
+    trendWindowPreference.bind('user-1');
+    trendWindowPreference.hydrate('user-1', 28, trendWindowPreference.revision());
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       writable: true,
@@ -265,6 +269,30 @@ describe('/trends page', () => {
     });
   });
 
+  it('restarts a stale initial load after the server window is hydrated', async () => {
+    let resolveInitial!: (value: Awaited<ReturnType<typeof fetchTimeseries>>) => void;
+    vi.mocked(fetchTimeseries)
+      .mockImplementationOnce(
+        async () =>
+          await new Promise<Awaited<ReturnType<typeof fetchTimeseries>>>((resolve) => {
+            resolveInitial = resolve;
+          })
+      )
+      .mockImplementationOnce(async (range) => ({ range, points: [] }));
+    vi.mocked(fetchUserPreferences).mockResolvedValueOnce({
+      trend_window_days: 90,
+    } as Awaited<ReturnType<typeof fetchUserPreferences>>);
+
+    render(Page);
+    await waitFor(() => expect(vi.mocked(fetchTimeseries)).toHaveBeenCalledTimes(1));
+
+    resolveInitial({ range: 'month', points: [] });
+
+    await waitFor(() => {
+      expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('quarter');
+    });
+  });
+
   it('loads the newly selected range on Habits and persists the preference', async () => {
     setAnalysisRange(14);
     vi.mocked(fetchTimeseries).mockClear();
@@ -280,7 +308,10 @@ describe('/trends page', () => {
     await waitFor(() => {
       expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('quarter');
     });
-    expect(vi.mocked(updateUserPreferences)).toHaveBeenCalledWith({ trend_window_days: 90 });
+    expect(vi.mocked(updateUserPreferences)).toHaveBeenCalledWith(
+      { trend_window_days: 90 },
+      { signal: expect.any(AbortSignal) }
+    );
 
     const callsAfterRangeChange = vi
       .mocked(fetchTimeseries)

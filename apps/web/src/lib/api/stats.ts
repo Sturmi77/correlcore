@@ -122,10 +122,15 @@ export interface HealthContextResponse {
  */
 export async function fetchTimeseries(
   range: TimeseriesRange,
-  days?: number
+  days?: number,
+  options: { end_date?: string; signal?: AbortSignal } = {}
 ): Promise<TimeseriesResponse> {
-  const query = days ? `range=${range}&days=${days}` : `range=${range}`;
-  return api.get<TimeseriesResponse>(`/entries/stats/timeseries?${query}`);
+  const query = new URLSearchParams({ range });
+  if (days !== undefined) query.set('days', String(days));
+  if (options.end_date) query.set('end_date', options.end_date);
+  return api.get<TimeseriesResponse>(`/entries/stats/timeseries?${query}`, {
+    signal: options.signal,
+  });
 }
 
 export async function fetchTagHeatmap(

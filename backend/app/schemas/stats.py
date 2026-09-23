@@ -12,10 +12,12 @@ from pydantic import BaseModel, Field
 from app.models.tag import TagCategory
 
 TimeseriesRange = Literal["week", "month", "quarter", "year"]
-TagCooccurrenceRange = Literal["7d", "30d", "90d", "1y"]
+TagCooccurrenceRange = Literal["7d", "14d", "28d", "30d", "90d", "1y"]
 
 COOCCURRENCE_RANGE_DAYS: dict[TagCooccurrenceRange, int] = {
     "7d": 7,
+    "14d": 14,
+    "28d": 28,
     "30d": 30,
     "90d": 90,
     "1y": 365,
@@ -175,6 +177,7 @@ class TagCooccurrencePair(BaseModel):
 
 class TagCooccurrenceResponse(BaseModel):
     range: TagCooccurrenceRange
+    days: int | None = None
     start_date: date_type
     end_date: date_type
     min_count: int = Field(ge=1)
@@ -184,6 +187,8 @@ class TagCooccurrenceResponse(BaseModel):
     # A 7-day range can never reach the floor, so it returned an empty panel
     # with no explanation (#966).
     window_too_short: bool = False
+    analytics_disabled: bool = False
+    observed_days: int = 0
 
 
 class SymptomTagCooccurrenceSymptomRef(BaseModel):
@@ -209,10 +214,14 @@ class SymptomTagCooccurrenceCell(BaseModel):
 
 class SymptomTagCooccurrenceResponse(BaseModel):
     range: TagCooccurrenceRange
+    days: int | None = None
     start_date: date_type
     end_date: date_type
     min_count: int = Field(ge=1)
     cells: list[SymptomTagCooccurrenceCell] = Field(default_factory=list)
+    window_too_short: bool = False
+    analytics_disabled: bool = False
+    observed_days: int = 0
 
 
 class TagClusterMember(BaseModel):

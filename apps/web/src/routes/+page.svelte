@@ -101,6 +101,17 @@
   // Monotonic token: a dashboard (re)load bumps it to invalidate any in-flight
   // summary fetch, so a stale fetch's finally cannot clobber the reset key.
   let trendsSummaryToken = 0;
+  let lastTrendsActor: string | null = null;
+  $: trendsActor = $currentUser?.id ?? null;
+  $: if (trendsActor !== lastTrendsActor) {
+    lastTrendsActor = trendsActor;
+    trendsSummaryToken += 1;
+    trendsSummaryLoadedKey = null;
+    trendsSummaryLoading = false;
+    trendsSummaryPoints = [];
+    trendsSummaryTagHeatmap = null;
+    trendsSummarySymptomHeatmap = null;
+  }
 
   $: entrySheetOpen = $entrySheetStore.open;
 
@@ -265,6 +276,7 @@
       // (re)load — a new entry or page refresh must update it too. Skip the reset
       // in forced-visualization mode, where the fixture branch populated it.
       trendsSummaryToken++;
+      trendsSummaryLoading = false;
       if (!get(devForceVisualizations)) trendsSummaryLoadedKey = null;
     }
   }
@@ -287,11 +299,12 @@
     const token = ++trendsSummaryToken;
     trendsSummaryLoading = true;
     try {
-      const start = shiftIsoDate(todayIso, -(Math.max(1, windowDays) - 1));
+      const endDate = localIsoDate(new Date());
+      const start = shiftIsoDate(endDate, -(Math.max(1, windowDays) - 1));
       const [timeseries, tags, symptoms] = await Promise.allSettled([
-        fetchTimeseries(rangeForWindow(windowDays), windowDays),
-        fetchTagHeatmap({ start_date: start, end_date: todayIso }),
-        fetchSymptomHeatmap({ start_date: start, end_date: todayIso }),
+        fetchTimeseries(rangeForWindow(windowDays), windowDays, { end_date: endDate }),
+        fetchTagHeatmap({ start_date: start, end_date: endDate }),
+        fetchSymptomHeatmap({ start_date: start, end_date: endDate }),
       ]);
       // A newer load (e.g. an entry-save refresh) superseded this fetch: drop
       // its result so it cannot show stale data or settle the window key.
@@ -306,12 +319,8 @@
         trendsSummarySymptomHeatmap = null;
       }
     } finally {
-      // Always clear the loading flag — even a superseded fetch must release the
-      // reactive guard so the follow-up refetch can start (spinner never sticks).
-      trendsSummaryLoading = false;
-      // Only settle the window key when still current, so an invalidating
-      // dashboard reload keeps key=null and the refetch runs.
       if (token === trendsSummaryToken) {
+        trendsSummaryLoading = false;
         trendsSummaryLoadedKey = windowDays;
       }
     }
@@ -398,6 +407,7 @@
       void loadInsights();
     });
     return () => {
+      trendsSummaryToken += 1;
       unregisterRefresh();
       unsubscribeSave();
     };

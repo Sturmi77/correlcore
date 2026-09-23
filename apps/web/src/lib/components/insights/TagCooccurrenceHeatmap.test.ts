@@ -150,6 +150,22 @@ describe('TagCooccurrenceHeatmap', () => {
     expect(screen.getByText('insights.cooccurrence.empty')).toBeTruthy();
   });
 
+  it.each([
+    [{ ...data, pairs: [], window_too_short: true }, false, 'window-too-short'],
+    [{ ...data, pairs: [], analytics_disabled: true }, false, 'opt-out'],
+    [null, true, 'error'],
+  ] as const)('shows the distinct %s status', (response, error, status) => {
+    render(TagCooccurrenceHeatmap, {
+      props: {
+        data: response ? { ...response, pairs: [...response.pairs] } : null,
+        error,
+        loading: false,
+        showRangeSelector: false,
+      },
+    });
+    expect(screen.getByTestId(`cooccurrence-${status}`)).toBeTruthy();
+  });
+
   it('shows loading skeleton', () => {
     render(TagCooccurrenceHeatmap, {
       props: { data: null, loading: true, range: '90d' },

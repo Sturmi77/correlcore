@@ -17,18 +17,21 @@
   } from '$lib/api/stats';
   import type { InsightMaturity } from '$lib/api/insights';
   import { listHabits, type HabitStatsResponse, type HabitWindow } from '$lib/api/habits';
-  import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
+  import { fetchUserPreferences } from '$lib/api/preferences';
   import { listSymptomsForEntry, listVisibleSymptoms } from '$lib/api/symptoms';
   import { listTagsForEntry, listVisibleTags, type TagResponse } from '$lib/api/tags';
   import type { MetricKey } from '$lib/utils/charts';
   import type { TagCategory } from '$lib/api/tags';
   import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
-  import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
+  import { analysisRange } from '$lib/stores/analysisRange';
+  import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
+  import TrendWindowSaveStatus from '$lib/components/analysis/TrendWindowSaveStatus.svelte';
   import { insightStore, loadInsights, rankedInsights } from '$lib/stores/insights';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
   import { scheduleSync } from '$lib/offline/syncOrchestrator';
   import { localIsoDate, shiftIsoDate } from '$lib/utils/isoDate';
+  import { RequestGeneration } from '$lib/utils/requestGeneration';
   import { smoothTimeseriesPoints } from '$lib/utils/charts';
   import {
     rangeToDays,
@@ -114,6 +117,37 @@
   let timeseries: TimeseriesResponse | null = null;
   /** Analysis window the current `timeseries` was loaded for. */
   let loadedWindowDays: TrendWindowDays | null = null;
+  const trendsRequest = new RequestGeneration();
+  let lastAuthUserId: string | null = null;
+  $: authUserId = $auth.status === 'authenticated' ? $auth.user.id : null;
+  $: if (authUserId !== lastAuthUserId) {
+    const previousActor = lastAuthUserId;
+    lastAuthUserId = authUserId;
+    trendWindowPreference.bind(authUserId);
+    trendsRequest.cancel();
+    if (previousActor !== null) {
+      timeseries = null;
+      heatmap = null;
+      symptomHeatmap = null;
+      trendEntries = [];
+      loadedWindowDays = null;
+      loading = false;
+      trendsLoaded = false;
+    }
+  }
+  let preferenceLoadedActor: string | null = null;
+  $: if (authUserId && preferenceLoadedActor !== authUserId) {
+    preferenceLoadedActor = authUserId;
+    const revision = trendWindowPreference.revision();
+    void fetchUserPreferences()
+      .then((prefs) =>
+        trendWindowPreference.hydrate(authUserId!, prefs.trend_window_days, revision)
+      )
+      .catch(() => {
+        // The current local choice remains available while offline.
+      });
+  }
+  $: if (!authUserId) preferenceLoadedActor = null;
   let heatmap: TagHeatmapResponse | null = null;
   let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let healthContext: HealthContextResponse | null = null;
@@ -193,7 +227,11 @@
 
   async function loadTrends(rangeOverride?: TrendWindowDays): Promise<void> {
     if ($auth.status !== 'authenticated') return;
+    const requestUserId = $auth.user.id;
     const activeWindowDays: TrendWindowDays = rangeOverride ?? windowDays;
+    const request = trendsRequest.begin(
+      `${requestUserId}:${activeWindowDays}:${activeTab}:${selectedCategory}`
+    );
     // Record the window this load is for *before* awaiting. The reload guard
     // below compares against this, never against a field of the response: a
     // response that omits it (older backend, cached service-worker entry, a
@@ -257,7 +295,10 @@
       ] = await Promise.allSettled([
         // Exact window: the enum alone would fetch 7 days for a 14-day
         // selection and 30 for a 28-day one (#867).
-        fetchTimeseries(activeRange, activeWindowDays),
+        fetchTimeseries(activeRange, activeWindowDays, {
+          end_date,
+          signal: request.signal,
+        }),
         fetchTagHeatmap({
           start_date,
           end_date,
@@ -271,6 +312,13 @@
         activeTab === 'habits' ? listHabits(habitWindow) : Promise.resolve({ habits: habitStats }),
         activeTab === 'habits' ? listVisibleTags() : Promise.resolve(habitTags),
       ]);
+      if (
+        !request.isCurrent() ||
+        $auth.status !== 'authenticated' ||
+        $auth.user.id !== requestUserId ||
+        activeWindowDays !== $analysisRange
+      )
+        return;
 
       // Health context is optional context — a failure must not blank the tab.
       const coreFailed = [timeseriesResult, heatmapResult, entriesResult].find(
@@ -302,10 +350,12 @@
         habitTags = tagsResult.value.filter((tag) => tag.habit_type !== 'none');
       }
     } catch (err) {
-      error = err instanceof Error ? err.message : $_('error.generic');
+      if (request.isCurrent()) error = err instanceof Error ? err.message : $_('error.generic');
     } finally {
-      loading = false;
-      trendsLoaded = true;
+      if (request.isCurrent()) {
+        loading = false;
+        trendsLoaded = true;
+      }
     }
   }
 
@@ -409,7 +459,6 @@
   }
   $: if (
     $auth.status === 'authenticated' &&
-    timeseries &&
     // The window this data was loaded for, not a field of the response. The
     // coarse enum could not tell 14 from 28 correctly, and reading `days` off
     // the response makes the guard unsatisfiable whenever the field is absent.
@@ -498,11 +547,6 @@
     updateCompactTrends();
     mobileMedia?.addEventListener('change', updateCompactTrends);
     // loadTrends runs via the auth-reactive block above (avoids racing hydrate).
-    void fetchUserPreferences()
-      .then((prefs) => analysisRange.hydrateFromServer(prefs.trend_window_days))
-      .catch(() => {
-        // Keep local cache when preferences are unavailable.
-      });
     void loadInsights();
     const unregisterRefresh = registerPageRefresh(async () => {
       await Promise.all([loadTrends(), loadInsights()]);
@@ -510,6 +554,7 @@
       scheduleSync();
     });
     return () => {
+      trendsRequest.cancel();
       unregisterRefresh();
       mobileMedia?.removeEventListener('change', updateCompactTrends);
     };
@@ -534,11 +579,9 @@
           showRangeControl={true}
           on:rangeChange={(event) => {
             const nextDays = coerceTrendWindowDays(event.detail.value);
-            setAnalysisRange(nextDays);
+            if ($auth.status === 'authenticated')
+              trendWindowPreference.select($auth.user.id, nextDays);
             void loadTrends(nextDays);
-            void updateUserPreferences({ trend_window_days: nextDays }).catch(() => {
-              // Optimistic local window; server sync can retry on next visit.
-            });
           }}
           on:tabChange={(event) => {
             activeTab = event.detail.value as TrendTab;
@@ -582,6 +625,7 @@
       {/if}
     </svelte:fragment>
   </ScreenHeader>
+  <TrendWindowSaveStatus />
 
   {#if $auth.status !== 'authenticated'}
     <Panel variant="bordered">
@@ -675,11 +719,9 @@
         on:zoomOut={compareZoomOut}
         on:rangeChange={(event) => {
           const nextDays = coerceTrendWindowDays(event.detail.value);
-          setAnalysisRange(nextDays);
+          if ($auth.status === 'authenticated')
+            trendWindowPreference.select($auth.user.id, nextDays);
           void loadTrends(nextDays);
-          void updateUserPreferences({ trend_window_days: nextDays }).catch(() => {
-            // Optimistic local window; server sync can retry on next visit.
-          });
         }}
         on:coincidenceChange={(event) => {
           compareCoincidenceHighlight = event.detail.value;

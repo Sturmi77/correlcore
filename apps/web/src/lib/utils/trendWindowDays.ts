@@ -3,6 +3,7 @@
  * Maps to TimeseriesRange only where the stats API still expects an enum.
  */
 import type { TimeseriesRange } from '$lib/api/stats';
+import type { TagCooccurrenceRange } from '$lib/api/insights';
 
 export const TREND_WINDOW_DAYS_OPTIONS = [14, 28, 90] as const;
 export type TrendWindowDays = (typeof TREND_WINDOW_DAYS_OPTIONS)[number];
@@ -26,6 +27,13 @@ export function trendWindowDaysToTimeseriesRange(days: TrendWindowDays): Timeser
   if (days === 14) return 'week';
   if (days === 90) return 'quarter';
   return 'month';
+}
+
+/** Exact co-occurrence window for the shared analysis preference. */
+export function trendWindowDaysToCooccurrence(days: TrendWindowDays): TagCooccurrenceRange {
+  if (days === 14) return '14d';
+  if (days === 90) return '90d';
+  return '28d';
 }
 
 /** Map legacy TimeseriesRange chips → preference days (year collapses to 90). */

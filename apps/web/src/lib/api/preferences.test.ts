@@ -24,8 +24,12 @@ describe('preferences API client', () => {
   it('updates user preferences', async () => {
     vi.mocked(api.patch).mockResolvedValueOnce({ dismissed_insight_keys: ['first_week_pattern'] });
     await updateUserPreferences({ dismissed_insight_keys: ['first_week_pattern'] });
-    expect(api.patch).toHaveBeenCalledWith('/user/preferences', {
-      dismissed_insight_keys: ['first_week_pattern'],
-    });
+    expect(api.patch).toHaveBeenCalledWith(
+      '/user/preferences',
+      {
+        dismissed_insight_keys: ['first_week_pattern'],
+      },
+      {}
+    );
   });
 });

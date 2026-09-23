@@ -870,6 +870,8 @@ async def get_insight_event_windows(
     user_id: uuid.UUID,
     insight_id: uuid.UUID,
     range_: TagCooccurrenceRange,
+    days: int | None = None,
+    as_of: date_type | None = None,
 ) -> InsightEventWindowsResponse:
     insight = await get_visible_insight_by_id(db, user_id=user_id, insight_id=insight_id)
 
@@ -898,13 +900,15 @@ async def get_insight_event_windows(
 
     from datetime import UTC, date, datetime
 
-    as_of = datetime.now(UTC).date()
-    start_date, end_date = _cooccurrence_window(range_, as_of)
+    as_of = as_of or datetime.now(UTC).date()
+    start_date, end_date = _cooccurrence_window(range_, as_of, days)
+    window_days = (end_date - start_date).days + 1
     dates: list[date]
 
     if not await _analytics_enabled(db, user_id=user_id):
         return InsightEventWindowsResponse(
             range=range_,
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             events=[],
@@ -949,12 +953,15 @@ async def get_insight_event_windows(
         db,
         user_id=user_id,
         range_=cooccurrence_range_to_timeseries(range_),
+        days=window_days,
+        as_of=as_of,
     )
     # #809: occurrence = episode (contiguous presence days → one onset).
     episode_onsets = collapse_presence_dates_to_episodes(dates)
     events = [InsightEventWindow(onset=day, label=label) for day in episode_onsets]
     return InsightEventWindowsResponse(
         range=range_,
+        days=window_days,
         start_date=start_date,
         end_date=end_date,
         events=events,
@@ -992,6 +999,8 @@ async def get_insight_verification(
     user_id: uuid.UUID,
     insight_id: uuid.UUID,
     range_: TagCooccurrenceRange,
+    days: int | None = None,
+    as_of: date_type | None = None,
 ) -> InsightVerificationResponse:
     """Day-level with/without series for Layer-2 scatter and uncertainty (Phase 7)."""
 
@@ -1001,10 +1010,12 @@ async def get_insight_verification(
 
     from datetime import UTC, datetime
 
-    as_of = datetime.now(UTC).date()
-    start_date, end_date = _cooccurrence_window(range_, as_of)
+    as_of = as_of or datetime.now(UTC).date()
+    start_date, end_date = _cooccurrence_window(range_, as_of, days)
+    window_days = (end_date - start_date).days + 1
     empty = InsightVerificationResponse(
         range=range_,
+        days=window_days,
         start_date=start_date,
         end_date=end_date,
         metric=insight.metric,
@@ -1043,6 +1054,8 @@ async def get_insight_verification(
         db,
         user_id=user_id,
         range_=cooccurrence_range_to_timeseries(range_),
+        days=window_days,
+        as_of=as_of,
     )
     points: list[InsightVerificationPoint] = []
     with_values: list[float] = []
@@ -1066,6 +1079,7 @@ async def get_insight_verification(
     without_mean, without_se = _mean_and_se(without_values)
     return InsightVerificationResponse(
         range=range_,
+        days=window_days,
         start_date=start_date,
         end_date=end_date,
         metric=insight.metric,

@@ -144,6 +144,8 @@ describe('insights API client', () => {
 
     await fetchTagCooccurrence({ range: '30d', min_count: 2 });
 
-    expect(api.get).toHaveBeenCalledWith('/insights/tag-cooccurrence?range=30d&min_count=2');
+    expect(api.get).toHaveBeenCalledWith('/insights/tag-cooccurrence?range=30d&min_count=2', {
+      signal: undefined,
+    });
   });
 });

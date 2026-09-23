@@ -18,6 +18,7 @@
 
   export let data: SymptomTagCooccurrenceResponse | null = null;
   export let loading = false;
+  export let error = false;
   export let phase: InsightMaturityPhase | null = null;
   export let sortMode: CooccurrenceSortMode = 'alphabetical';
   export let hideHeading = false;
@@ -388,7 +389,17 @@
       {/if}
     </p>
   {:else if !loading}
-    <p class="symptom-cooccurrence__empty">{$_('insights.symptoms.cooccurrence_empty')}</p>
+    <p class="symptom-cooccurrence__empty" data-testid="symptom-cooccurrence-status">
+      {$_(
+        error
+          ? 'insights.symptoms.cooccurrence_load_error'
+          : data?.analytics_disabled
+            ? 'insights.symptoms.cooccurrence_analytics_disabled'
+            : data?.window_too_short
+              ? 'insights.symptoms.cooccurrence_window_too_short'
+              : 'insights.symptoms.cooccurrence_empty'
+      )}
+    </p>
   {/if}
 </section>
 

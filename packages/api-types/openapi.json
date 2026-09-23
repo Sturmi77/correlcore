@@ -2513,6 +2513,17 @@
       "InsightEventWindowsResponse": {
         "description": "Event onsets plus timeseries points for Explore-Events small multiples.",
         "properties": {
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
           "end_date": {
             "format": "date",
             "title": "End Date",
@@ -2546,6 +2557,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -3206,6 +3219,17 @@
       "InsightVerificationResponse": {
         "description": "With/without series for Layer-2 verification (Phase 7 / G1).",
         "properties": {
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
           "end_date": {
             "format": "date",
             "title": "End Date",
@@ -3225,6 +3249,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -4185,12 +4211,28 @@
       },
       "SymptomTagCooccurrenceResponse": {
         "properties": {
+          "analytics_disabled": {
+            "default": false,
+            "title": "Analytics Disabled",
+            "type": "boolean"
+          },
           "cells": {
             "items": {
               "$ref": "#/components/schemas/SymptomTagCooccurrenceCell"
             },
             "title": "Cells",
             "type": "array"
+          },
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
           },
           "end_date": {
             "format": "date",
@@ -4202,9 +4244,16 @@
             "title": "Min Count",
             "type": "integer"
           },
+          "observed_days": {
+            "default": 0,
+            "title": "Observed Days",
+            "type": "integer"
+          },
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -4216,6 +4265,11 @@
             "format": "date",
             "title": "Start Date",
             "type": "string"
+          },
+          "window_too_short": {
+            "default": false,
+            "title": "Window Too Short",
+            "type": "boolean"
           }
         },
         "required": [
@@ -4997,6 +5051,22 @@
       },
       "TagCooccurrenceResponse": {
         "properties": {
+          "analytics_disabled": {
+            "default": false,
+            "title": "Analytics Disabled",
+            "type": "boolean"
+          },
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
           "end_date": {
             "format": "date",
             "title": "End Date",
@@ -5005,6 +5075,11 @@
           "min_count": {
             "minimum": 1.0,
             "title": "Min Count",
+            "type": "integer"
+          },
+          "observed_days": {
+            "default": 0,
+            "title": "Observed Days",
             "type": "integer"
           },
           "pairs": {
@@ -5017,6 +5092,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -9381,6 +9458,23 @@
             }
           },
           {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
             "description": "Exact window length in days. Takes precedence over `range`, which can only express 7/30/90/365 and therefore cannot carry the shared analysis window (14 | 28 | 90).",
             "in": "query",
             "name": "days",
@@ -11176,6 +11270,43 @@
         "operationId": "get_symptom_tag_cooccurrence_endpoint_api_v1_insights_symptom_tag_cooccurrence_get",
         "parameters": [
           {
+            "description": "Exact days; takes precedence over range",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact days; takes precedence over range",
+              "title": "Days"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
             "in": "query",
             "name": "min_count",
             "required": false,
@@ -11327,6 +11458,43 @@
       "get": {
         "operationId": "get_tag_cooccurrence_endpoint_api_v1_insights_tag_cooccurrence_get",
         "parameters": [
+          {
+            "description": "Exact days; takes precedence over range",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact days; takes precedence over range",
+              "title": "Days"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
           {
             "in": "query",
             "name": "min_count",
@@ -11565,6 +11733,43 @@
             }
           },
           {
+            "description": "Exact days; takes precedence over range",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact days; takes precedence over range",
+              "title": "Days"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
             "in": "query",
             "name": "range",
             "required": false,
@@ -11647,6 +11852,43 @@
               "format": "uuid",
               "title": "Insight Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "Exact days; takes precedence over range",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact days; takes precedence over range",
+              "title": "Days"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
             }
           },
           {
