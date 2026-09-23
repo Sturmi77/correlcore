@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted (2026-09-19)
+Accepted (architecture decision, 2026-09-19). Implementation acceptance remains
+open in the [post-1.9.1 audit](../quality/audit-2026-09-22/README.md).
 
 Amends and supersedes parts of [ADR-0017](0017-frontend-screen-architecture.md)
 (see "Relationship to ADR-0017" below). Context: analysis issues
@@ -20,7 +21,7 @@ share one cause, and it is not a missing chart type:
 
 **Analytical seriousness is currently signalled through density in the entry surface.**
 
-Evidence in the code at the time of writing:
+Historical evidence in the code when this ADR was written (before PRs #954–#973):
 
 - `DEFAULT_INSIGHT_SECTIONS` (`apps/web/src/lib/utils/insightSections.ts`) enables **eight**
   sections by default, with `correlation_matrix` ordered **before** `insight_feed`.
@@ -130,12 +131,13 @@ flip.
 
 ## Consequences
 
-- **Layer 2 is the one genuine new build.** It closes the checkability gap and is the
-  precondition for the non-result state.
-- **Layer 4 must exist before layer 1 is reduced.** It also finally provides a home for the
-  §2.10 export job (PDF is still missing everywhere).
-- **DESIGN_DOCUMENT §1.6 changes** to Time-to-First-Answer. §2.10 must be corrected
-  independently (PNG is implemented; PDF exists in no layer) — see #931.
+- **Layer 2 was the one genuine new build.** It is now implemented, while its F1/F2/F4
+  evidence paths remain under A06 review before release acceptance.
+- **Layer 4 exists at `/insights/report`, so layer 1 could be reduced.** PNG and PDF are
+  implemented there. A05 still has to prove that screen, PDF, PNG, CSV and JSON consume
+  one selected-row/evidence contract and that CSV is safe in the supported recipients.
+- **DESIGN_DOCUMENT §1.6 changed** to Time-to-First-Answer. Its §2.10 export status now
+  distinguishes landed format support from the still-open A05 acceptance evidence.
 - **ADR-0017 line "evaluate `InsightMatrix.svelte` … removed or repurposed if redundant"
   is retired by this ADR**: the component is not redundant, it is misplaced. It moves to
   layer 4 as a report table.
@@ -145,6 +147,8 @@ flip.
 - Any future analytical feature must name its layer in its issue. A feature without a layer
   defaults to layer 3 (laboratory), never layer 1.
 - The five-primary-screen contract of ADR-0017 remains intact.
+- Acceptance of the architecture does not close product validation: interview evidence,
+  final-release CI/security evidence and device/operations acceptance remain in A10/A12.
 - Sequencing, gaps and the accompanying mockups (E1–E6) are documented in #928; the
   mockup sources live in
   [`../assets/visualization_inventory/src/mocks_e.py`](../assets/visualization_inventory/src/mocks_e.py),

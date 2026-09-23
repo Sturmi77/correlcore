@@ -19,3 +19,7 @@
 | A12   | [#986 — Geräte-, Betriebs- und Nutzerabnahmen](https://github.com/Sturmi77/correlcore/issues/986)                        |
 
 Alle Arbeitspakete besitzen konkrete Maßnahmen, Regressionstests und Abschlusskriterien. Bestehende externe Aufgaben bleiben verknüpft. Dieser Dokumentationsstand behebt selbst keine Produktfehler.
+
+## A11-Nachweise
+
+[Review- und Dokumentationsabschluss](A11_REVIEW_CLOSEOUT.md) · [verlustfreies Abschlussregister](A11_REVIEW_CLOSEOUT.csv)
