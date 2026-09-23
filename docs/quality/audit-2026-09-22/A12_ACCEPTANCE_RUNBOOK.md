@@ -24,7 +24,11 @@ Vor jedem A12-Lauf in `A12_ACCEPTANCE_REGISTER.json` eintragen:
   Datenbank-URLs oder Schlüssel committen.
 - Screenshots vor dem Commit auf Benachrichtigungen, Kontonamen, Geräte-IDs und
   Gesundheitsdaten prüfen.
-- `passed` verlangt Evidenz **und** ein Sign-off mit Rolle, Datum und Ergebnis.
+- `passed` verlangt Evidenz, ein Sign-off mit Rolle, Datum und Ergebnis sowie
+  unter `candidate` einen Snapshot des geprüften Release-Kandidaten. SHA und
+  Image-Digests müssen exakt mit `release_candidate` übereinstimmen.
+- Das Gate `deployment_restore` darf erst auf `passed`, wenn `staging` und
+  `production_smoke` jeweils bestanden und an denselben Kandidaten gebunden sind.
 
 ## 3. Nutzerverständnis – #930 H.4
 

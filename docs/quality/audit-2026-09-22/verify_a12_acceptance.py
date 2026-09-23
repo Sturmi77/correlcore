@@ -36,6 +36,22 @@ def _candidate_is_immutable(candidate: dict[str, Any]) -> bool:
     )
 
 
+def _candidate_identity(candidate: dict[str, Any]) -> tuple[Any, ...]:
+    return tuple(
+        candidate.get(key)
+        for key in ("git_sha", "api_image_digest", "web_image_digest", "worker_image_digest")
+    )
+
+
+def _assert_bound_candidate(scope: dict[str, Any], release_candidate: dict[str, Any], label: str) -> None:
+    candidate = scope.get("candidate")
+    assert isinstance(candidate, dict), f"{label}: passed evidence requires candidate snapshot"
+    assert _candidate_is_immutable(candidate), f"{label}: candidate snapshot must be immutable"
+    assert _candidate_identity(candidate) == _candidate_identity(release_candidate), (
+        f"{label}: evidence/sign-off candidate differs from release candidate"
+    )
+
+
 def main() -> None:
     data = json.loads(REGISTER.read_text(encoding="utf-8"))
     assert data["schema_version"] == 1
@@ -59,6 +75,7 @@ def main() -> None:
             assert gate["evidence"], f"{gate['id']}: failed requires failure evidence"
         if gate["status"] == "passed":
             assert immutable_candidate, f"{gate['id']}: passed requires immutable candidate"
+            _assert_bound_candidate(gate, data["release_candidate"], gate["id"])
             assert gate["evidence"], f"{gate['id']}: passed requires evidence"
             signoff = gate["signoff"]
             assert signoff and signoff.get("role") and signoff.get("date")
@@ -71,9 +88,16 @@ def main() -> None:
     assert production["status"] in STEP_STATUSES
     if staging["status"] == "passed":
         assert immutable_candidate and staging["evidence"]
+        _assert_bound_candidate(staging, data["release_candidate"], "deployment_restore.staging")
     if production["status"] == "passed":
         assert staging["status"] == "passed"
         assert production["evidence"]
+        _assert_bound_candidate(
+            production, data["release_candidate"], "deployment_restore.production_smoke"
+        )
+    if deployment["status"] == "passed":
+        assert staging["status"] == "passed", "deployment gate requires passed staging"
+        assert production["status"] == "passed", "deployment gate requires passed production smoke"
 
     passed = sum(gate["status"] == "passed" for gate in gates)
     print(f"A12 register verified: {len(gates)} gates, {passed} passed")

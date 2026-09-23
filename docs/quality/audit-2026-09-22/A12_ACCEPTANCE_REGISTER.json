@@ -23,6 +23,7 @@
         "Befunde mit Schweregrad und Entscheidung",
         "umgesetzte Änderungen und Nachtest"
       ],
+      "candidate": null,
       "evidence": [],
       "signoff": null
     },
@@ -38,6 +39,7 @@
         "Consent, Permission, Import, Zeitbezug und Widerruf",
         "wiederholter Import ohne Duplikate"
       ],
+      "candidate": null,
       "evidence": [],
       "signoff": null
     },
@@ -53,6 +55,7 @@
         "Login, Registrierung, Reset und Legal-Seiten",
         "Owner-Entscheidung für jeden offenen #621-Punkt"
       ],
+      "candidate": null,
       "evidence": [],
       "signoff": null
     },
@@ -68,6 +71,7 @@
         "Pre-Launch-Report ohne kritische Crashes",
         "Closed Testing, Data Safety und Privacy-URL"
       ],
+      "candidate": null,
       "evidence": [],
       "signoff": null
     },
@@ -83,6 +87,7 @@
         "aktualisierter CAZ-3-Sign-off",
         "Release-Build und Gerät/OS eindeutig benannt"
       ],
+      "candidate": null,
       "evidence": [],
       "signoff": null
     },
@@ -98,6 +103,7 @@
         "TLS-/Proxy- und Cookie-Istzustand",
         "Worker-Befehl, Zeitplan und letzte erfolgreiche Läufe"
       ],
+      "candidate": null,
       "evidence": [],
       "signoff": null
     },
@@ -115,12 +121,15 @@
       ],
       "staging": {
         "status": "pending",
+        "candidate": null,
         "evidence": []
       },
       "production_smoke": {
         "status": "pending",
+        "candidate": null,
         "evidence": []
       },
+      "candidate": null,
       "evidence": [],
       "signoff": null
     }
