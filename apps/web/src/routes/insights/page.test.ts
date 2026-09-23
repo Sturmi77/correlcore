@@ -434,7 +434,7 @@ describe('/insights page analysis range', () => {
     testHelpers.setPageUrl(
       `http://localhost/insights?${new URLSearchParams({ pair: JSON.stringify(pair) })}`
     );
-    vi.mocked(listLatestInsights).mockResolvedValueOnce({
+    const exactPairResponse = {
       insight_maturity: provisionalMaturity,
       insights: [
         insightResponse('exact-pair', {
@@ -454,7 +454,10 @@ describe('/insights page analysis range', () => {
           subject_label: 'Tag B',
         }),
       ],
-    });
+    };
+    vi.mocked(listLatestInsights)
+      .mockResolvedValueOnce(exactPairResponse)
+      .mockResolvedValueOnce(exactPairResponse);
 
     render(Page);
 

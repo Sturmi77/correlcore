@@ -223,8 +223,8 @@ describe('TrendsComparePanel', () => {
     expect(pair).toEqual({
       version: 1,
       signals: [
-        { kind: 'tag', id: 't2', label: 'Sleep' },
-        { kind: 'tag', id: 't1', label: 'Sport' },
+        { kind: 'tag', id: 't2' },
+        { kind: 'tag', id: 't1' },
       ],
     });
   });
