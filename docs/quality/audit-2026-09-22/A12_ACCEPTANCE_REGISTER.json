@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "audit_basis": "71d1089ff77388cadf2253ac67d1471dfa99fa40",
+  "updated_at": "2026-09-23",
+  "release_candidate": {
+    "git_sha": null,
+    "api_image_digest": null,
+    "web_image_digest": null,
+    "worker_image_digest": null,
+    "android_artifact_digest": null,
+    "staging_deployment_id": null,
+    "deployed_at_utc": null
+  },
+  "gates": [
+    {
+      "id": "research_h4",
+      "title": "Nutzerverständnis #930 H.4",
+      "status": "blocked_external",
+      "owner_role": "Product / Research",
+      "tracking_issues": [930, 986],
+      "blocking_reason": "4–6 Interviewpartner und dokumentierte Nachtests fehlen.",
+      "required_evidence": [
+        "anonymisierte Durchführung der sechs Leitfragen",
+        "Befunde mit Schweregrad und Entscheidung",
+        "umgesetzte Änderungen und Nachtest"
+      ],
+      "candidate": null,
+      "evidence": [],
+      "signoff": null
+    },
+    {
+      "id": "health_connect_m8",
+      "title": "Health Connect / M8",
+      "status": "blocked_external",
+      "owner_role": "Mobile QA",
+      "tracking_issues": [986],
+      "blocking_reason": "Reale Android-Geräte und OS-/Health-Connect-Matrix fehlen.",
+      "required_evidence": [
+        "Android-13- und Android-14+-Matrix",
+        "Consent, Permission, Import, Zeitbezug und Widerruf",
+        "wiederholter Import ohne Duplikate"
+      ],
+      "candidate": null,
+      "evidence": [],
+      "signoff": null
+    },
+    {
+      "id": "hosted_beta",
+      "title": "Hosted Beta / #621",
+      "status": "blocked_external",
+      "owner_role": "Operations / Release",
+      "tracking_issues": [621, 986],
+      "blocking_reason": "Owner-Abgleich gegen die laufende Hosted-Konfiguration fehlt.",
+      "required_evidence": [
+        "SMTP- und Domain-Hygiene",
+        "Login, Registrierung, Reset und Legal-Seiten",
+        "Owner-Entscheidung für jeden offenen #621-Punkt"
+      ],
+      "candidate": null,
+      "evidence": [],
+      "signoff": null
+    },
+    {
+      "id": "firebase_play",
+      "title": "Firebase / Play",
+      "status": "blocked_external",
+      "owner_role": "Mobile / Operations",
+      "tracking_issues": [717, 722, 723, 724, 986],
+      "blocking_reason": "Firebase-/Play-Zugang, Realgerät und Pre-Launch-/Closed-Testing-Nachweise fehlen.",
+      "required_evidence": [
+        "FCM-Zustellung, Abmeldung und Fehlerfälle",
+        "Pre-Launch-Report ohne kritische Crashes",
+        "Closed Testing, Data Safety und Privacy-URL"
+      ],
+      "candidate": null,
+      "evidence": [],
+      "signoff": null
+    },
+    {
+      "id": "compare_device",
+      "title": "Compare Device-QA",
+      "status": "blocked_external",
+      "owner_role": "Mobile QA",
+      "tracking_issues": [585, 986],
+      "blocking_reason": "Offene Strip-Zoom-, Persistenz- und Performance-Zeilen wurden nicht auf einem Release-Gerät geprüft.",
+      "required_evidence": [
+        "vollständige #585-Gerätecheckliste",
+        "aktualisierter CAZ-3-Sign-off",
+        "Release-Build und Gerät/OS eindeutig benannt"
+      ],
+      "candidate": null,
+      "evidence": [],
+      "signoff": null
+    },
+    {
+      "id": "runtime_security",
+      "title": "Laufzeit-Sicherheit",
+      "status": "blocked_external",
+      "owner_role": "Operations / Security",
+      "tracking_issues": [776, 984, 986],
+      "blocking_reason": "Zugriff auf reale DB-, Proxy-, Cookie- und Worker-Konfiguration fehlt.",
+      "required_evidence": [
+        "API-DB-Rolle ohne Superuser/BYPASSRLS und wirksame RLS",
+        "TLS-/Proxy- und Cookie-Istzustand",
+        "Worker-Befehl, Zeitplan und letzte erfolgreiche Läufe"
+      ],
+      "candidate": null,
+      "evidence": [],
+      "signoff": null
+    },
+    {
+      "id": "deployment_restore",
+      "title": "Deployment / Wiederherstellung",
+      "status": "blocked_external",
+      "owner_role": "Operations / Release",
+      "tracking_issues": [984, 986],
+      "blocking_reason": "Finaler Kandidat und Staging-/Restore-Zugang fehlen.",
+      "required_evidence": [
+        "v1.9.1-Fixture-Upgrade mit finalen Image-Digests",
+        "Staging-Smoke und isolierter Backup-Restore",
+        "Freigabe und nachgelagerter Produktions-Smoke"
+      ],
+      "staging": {
+        "status": "pending",
+        "candidate": null,
+        "evidence": []
+      },
+      "production_smoke": {
+        "status": "pending",
+        "candidate": null,
+        "evidence": []
+      },
+      "candidate": null,
+      "evidence": [],
+      "signoff": null
+    }
+  ]
+}
