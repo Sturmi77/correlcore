@@ -202,7 +202,13 @@ jobs:
       - name: pytest -m integration (per-module processes)
         run: |
           set -euo pipefail
-          mapfile -t files < <(grep -rl --include='test_*.py' '@pytest.mark.integration' tests | sort)
+          # The marker backfill suite intentionally targets the pre-049 schema;
+          # migration 049 has a separate head-compatible integration suite.
+          mapfile -t files < <(
+            grep -rl --include='test_*.py' '@pytest.mark.integration' tests |
+              grep -v '^tests/test_marker_tag_backfill_integration.py$' |
+              sort
+          )
           if [ "${#files[@]}" -eq 0 ]; then
             echo "::error::No integration test modules were discovered." >&2
             exit 1

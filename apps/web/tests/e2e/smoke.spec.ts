@@ -349,7 +349,7 @@ test('insights remains readable in print media at a small viewport', async ({ pa
   await page.emulateMedia({ media: 'print' });
 
   await page.goto('/insights');
-  await expect(page.getByTestId('insight-stage-header')).toBeVisible({
+  await expect(page.getByTestId('insight-stage-header').first()).toBeVisible({
     timeout: APP_READY_TIMEOUT_MS,
   });
   expect(await page.evaluate(() => window.matchMedia('print').matches)).toBe(true);
