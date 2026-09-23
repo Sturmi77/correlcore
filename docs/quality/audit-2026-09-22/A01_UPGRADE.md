@@ -10,6 +10,9 @@ bei regulären Entry-Revisionen `note: null` und die neuen Tag-IDs.
 
 1. Schreibzugriffe der App und Worker anhalten. Migrationen mit dem dafür
    vorgesehenen Owner beziehungsweise einer Rolle mit `BYPASSRLS` ausführen.
+   Revision 049 hebt `FORCE ROW LEVEL SECURITY` für die betroffenen Tabellen
+   transaktionslokal auf, wenn die aktuelle Rolle deren tatsächlicher Owner ist,
+   und aktiviert den Schutz vor dem Abschluss der Revision wieder.
    Die eingeschränkte App-Rolle ist nicht als Migrationsrolle geeignet.
 2. Eine vollständige PostgreSQL-Sicherung erstellen und **in eine separate
    Datenbank zurückspielen**. `pg_dump -Fc` und `pg_restore` sind dafür ein

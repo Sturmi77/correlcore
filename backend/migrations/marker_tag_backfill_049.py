@@ -25,6 +25,15 @@ _OVERLAP = frozenset(
 )
 _MAX_TAGS_PER_ENTRY = 50  # schema/tag.py at revision 049
 _SLUG_INVALID = re.compile(r"[^a-z0-9]+")
+_RLS_TABLES = (
+    "entries",
+    "entry_note_markers",
+    "entry_symptoms",
+    "entry_tags",
+    "sync_revision_log",
+    "sync_user_revisions",
+    "tags",
+)
 
 
 def _slug(marker: str) -> str | None:
@@ -202,13 +211,52 @@ def _entry_revision(conn: Connection, user_id: uuid.UUID, entry_id: uuid.UUID) -
     _revision(conn, user_id, "entry", entry_id, payload, updated_at)
 
 
-def run(conn: Connection) -> None:
-    """Convert all 049-era marker rows on Alembic's connection and transaction."""
+def _prepare_owner_rls_access(conn: Connection) -> tuple[str, ...]:
+    """Temporarily let the schema owner run the cross-user backfill.
+
+    PostgreSQL table owners normally bypass RLS, but CorrelCore deliberately
+    uses ``FORCE ROW LEVEL SECURITY``.  A dedicated migration owner can safely
+    suspend FORCE for this transaction; RLS remains enabled and the ALTERs are
+    rolled back together with revision 049 if anything fails.
+    """
     privileged = conn.execute(
         sa.text("SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname = current_user")
     ).scalar_one()
-    if not privileged:
-        raise RuntimeError("049 requires a superuser or BYPASSRLS migration role")
+    if privileged:
+        return ()
+
+    table_names = ", ".join(f"'{name}'" for name in _RLS_TABLES)
+    rows = conn.execute(
+        sa.text(
+            "SELECT c.relname, c.relowner = current_user::regrole AS owned, "
+            "c.relforcerowsecurity FROM pg_class c "
+            "JOIN pg_namespace n ON n.oid = c.relnamespace "
+            f"WHERE n.nspname = current_schema() AND c.relname IN ({table_names})"
+        )
+    ).all()
+    by_name = {row.relname: row for row in rows}
+    missing_or_foreign = [
+        name for name in _RLS_TABLES if name not in by_name or not by_name[name].owned
+    ]
+    if missing_or_foreign:
+        raise RuntimeError(
+            "049 requires a superuser, BYPASSRLS role, or the owner of every backfill table; "
+            f"not owned: {', '.join(missing_or_foreign)}"
+        )
+
+    forced = tuple(name for name in _RLS_TABLES if by_name[name].relforcerowsecurity)
+    for name in forced:
+        conn.execute(sa.text(f"ALTER TABLE {name} NO FORCE ROW LEVEL SECURITY"))
+    return forced
+
+
+def _restore_forced_rls(conn: Connection, tables: tuple[str, ...]) -> None:
+    for name in tables:
+        conn.execute(sa.text(f"ALTER TABLE {name} FORCE ROW LEVEL SECURITY"))
+
+
+def _run_backfill(conn: Connection) -> None:
+    """Convert all 049-era marker rows on Alembic's connection and transaction."""
 
     inconsistent = conn.execute(
         sa.text(
@@ -312,3 +360,10 @@ def run(conn: Connection) -> None:
         tags_created,
         skipped,
     )
+
+
+def run(conn: Connection) -> None:
+    """Run the backfill as a privileged role or the configured schema owner."""
+    temporarily_unforced = _prepare_owner_rls_access(conn)
+    _run_backfill(conn)
+    _restore_forced_rls(conn, temporarily_unforced)
