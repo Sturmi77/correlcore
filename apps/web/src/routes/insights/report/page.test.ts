@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listLatestInsights, type InsightResponse } from '$lib/api/insights';
 import { exportMatrixPdf } from '$lib/utils/insightMatrixExport';
+import { goto } from '$app/navigation';
 import Page from './+page.svelte';
 
 vi.mock('svelte-i18n', async () => {
@@ -24,10 +25,24 @@ vi.mock('$app/stores', async () => {
 
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
-vi.mock('$lib/stores/auth', async () => {
-  const { readable } = await import('svelte/store');
+const authState = vi.hoisted(() => ({
+  current: {
+    status: 'authenticated' as string,
+    user: { id: 'user-1', email: 'u@example.com' } as {
+      id: string;
+      email: string;
+    } | null,
+  },
+}));
+
+vi.mock('$lib/stores/auth', () => {
   return {
-    auth: readable({ status: 'authenticated', user: { id: 'user-1', email: 'u@example.com' } }),
+    auth: {
+      subscribe: (run: (value: typeof authState.current) => void) => {
+        run(authState.current);
+        return () => undefined;
+      },
+    },
   };
 });
 
@@ -79,6 +94,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   refreshHandlers.length = 0;
   pageUrl.value = 'http://localhost/insights/report';
+  authState.current = {
+    status: 'authenticated',
+    user: { id: 'user-1', email: 'u@example.com' },
+  };
   vi.mocked(listLatestInsights).mockResolvedValue({
     insight_maturity: null,
     insights: [matrixRow('a'), matrixRow('b')],
@@ -91,7 +110,7 @@ describe('/insights/report selection (#959)', () => {
 
     await waitFor(() => expect(listLatestInsights).toHaveBeenCalled());
     expect(listLatestInsights).toHaveBeenCalledWith({
-      limit: 50,
+      limit: 100,
       insightTypes: ['pointbiserial', 'symptom_mood_association'],
     });
   });
@@ -117,6 +136,39 @@ describe('/insights/report selection (#959)', () => {
     expect(
       checked[0]?.closest('[data-testid^="insight-report-row-"]')?.getAttribute('data-testid')
     ).toBe('insight-report-row-b');
+  });
+
+  it('keeps an invalid requested signal unselected instead of falling back to all rows', async () => {
+    pageUrl.value = 'http://localhost/insights/report?signal=stale-id';
+    const { container } = render(Page);
+
+    await waitFor(() => expect(screen.getByTestId('report-signal-missing')).toBeTruthy());
+    const checked = Array.from(
+      container.querySelectorAll<HTMLInputElement>('[data-testid^="insight-report-row-"] input')
+    ).filter((box) => box.checked);
+
+    expect(checked).toHaveLength(0);
+  });
+
+  it('preserves the requested signal through the safe login return path', async () => {
+    pageUrl.value = 'http://localhost/insights/report?signal=a/b';
+    authState.current = { status: 'anonymous', user: null };
+
+    render(Page);
+
+    await waitFor(() =>
+      expect(goto).toHaveBeenCalledWith('/auth/login?next=%2Finsights%2Freport%3Fsignal%3Da%252Fb')
+    );
+    expect(listLatestInsights).not.toHaveBeenCalled();
+  });
+
+  it('shows a load error without also classifying the requested signal as not reportable', async () => {
+    pageUrl.value = 'http://localhost/insights/report?signal=a';
+    vi.mocked(listLatestInsights).mockRejectedValueOnce(new Error('offline'));
+    const { container } = render(Page);
+
+    await waitFor(() => expect(container.textContent).toContain('offline'));
+    expect(screen.queryByTestId('report-signal-missing')).toBeNull();
   });
 
   it('does not refill an emptied selection when the page refreshes', async () => {

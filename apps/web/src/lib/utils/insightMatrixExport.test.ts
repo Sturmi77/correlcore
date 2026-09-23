@@ -2,13 +2,16 @@ import { describe, expect, it, vi } from 'vitest';
 import type { InsightResponse } from '$lib/api/insights';
 import {
   buildMatrixPdfDocument,
+  exportReportCsv,
   exportMatrixPdf,
   PDF_LINES_PER_PAGE,
   reportExportFilename,
+  serializeReportCsv,
   toWinAnsi,
 } from './insightMatrixExport';
+import { toInsightReportRow, type InsightReportRow } from './insightReportRows';
 
-const row: InsightResponse = {
+const apiRow: InsightResponse = {
   id: 'insight-1',
   user_id: 'user-1',
   insight_type: 'pointbiserial',
@@ -28,6 +31,7 @@ const row: InsightResponse = {
   created_at: '2026-05-12T03:00:00Z',
   updated_at: '2026-05-12T03:00:00Z',
 };
+const row = toInsightReportRow(apiRow);
 
 describe('reportExportFilename', () => {
   it('names report files by kind and date', () => {
@@ -89,11 +93,11 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
     disclaimer: 'Associations in your entries, not a cause.',
   };
 
-  function rows(count: number): InsightResponse[] {
+  function rows(count: number): InsightReportRow[] {
     return Array.from({ length: count }, (_, index) => ({
       ...row,
       id: `insight-${index}`,
-      subject_label: `Subject ${index}`,
+      factor: `Subject ${index}`,
     }));
   }
 
@@ -236,8 +240,8 @@ describe('buildMatrixPdfDocument character set (#960)', () => {
     charsetNote: 'Hinweis: Einzelne Zeichen konnten nicht dargestellt werden.',
   };
 
-  function umlautRow(label: string): InsightResponse {
-    return { ...row, subject_label: label };
+  function umlautRow(label: string): InsightReportRow {
+    return { ...row, factor: label };
   }
 
   it('declares WinAnsi on the font', () => {
@@ -269,7 +273,7 @@ describe('buildMatrixPdfDocument character set (#960)', () => {
     const rows = Array.from({ length: 120 }, (_, index) => ({
       ...row,
       id: `i${index}`,
-      subject_label: `Frühstück Nr. ${index} — Büro/Großraum ÄÖÜäöüß`,
+      factor: `Frühstück Nr. ${index} — Büro/Großraum ÄÖÜäöüß`,
     }));
     const pdf = buildMatrixPdfDocument(rows, options);
 
@@ -311,5 +315,73 @@ describe('buildMatrixPdfDocument character set (#960)', () => {
 
     expect(pdf).toContain('????');
     expect(pdf).not.toContain('Hinweis');
+  });
+});
+
+describe('report CSV export security and types (#989)', () => {
+  const formulaLabels = [
+    '=1+1',
+    '+SUM(A1:A2)',
+    '-1+2',
+    '@SUM(A1:A2)',
+    '\t=1+1',
+    '\r=1+1',
+    '\n=1+1',
+    '"quoted", comma; semicolon',
+  ];
+  const rows = formulaLabels.map((factor, index) => ({
+    ...row,
+    id: `csv-${index}`,
+    factor,
+    effect: index === 0 ? -0.4 : row.effect,
+    sampleWith: 5,
+    sampleWithout: 95,
+    sampleTotal: 100,
+    analysisWindowStart: '2026-01-01',
+    analysisWindowEnd: '2026-04-10',
+  }));
+
+  it('neutralizes formula-leading text after control bytes while keeping numbers numeric', () => {
+    const csv = serializeReportCsv(rows);
+
+    expect(csv).toContain("'=1+1");
+    expect(csv).toContain("'+SUM(A1:A2)");
+    expect(csv).toContain("'-1+2");
+    expect(csv).toContain("'@SUM(A1:A2)");
+    expect(csv).toContain("'\t=1+1");
+    expect(csv).toContain('"\'\r=1+1"');
+    expect(csv).toContain('"\'\n=1+1"');
+    expect(csv).toContain('""quoted"", comma; semicolon');
+    expect(csv).toMatch(/,-0\.4,0\.7,5,95,100,/);
+    expect(csv).not.toContain("'-0.4");
+  });
+
+  it('uses the hardened serializer in the real CSV download path', async () => {
+    let downloaded: Blob | undefined;
+    const click = vi.fn();
+    const createElement = vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+      if (tag === 'a') {
+        return { click, remove: vi.fn() } as unknown as HTMLAnchorElement;
+      }
+      return document.createElementNS('http://www.w3.org/1999/xhtml', tag);
+    });
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn((blob: Blob) => {
+        downloaded = blob;
+        return 'blob:csv';
+      }),
+      revokeObjectURL: vi.fn(),
+    });
+    const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
+
+    exportReportCsv(rows, 'report.csv');
+
+    expect(click).toHaveBeenCalledOnce();
+    expect(downloaded?.type).toBe('text/csv;charset=utf-8');
+    expect(await downloaded?.text()).toBe(serializeReportCsv(rows));
+
+    createElement.mockRestore();
+    appendChild.mockRestore();
+    vi.unstubAllGlobals();
   });
 });

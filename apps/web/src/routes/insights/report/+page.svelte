@@ -20,7 +20,8 @@
     exportReportJson,
     reportExportFilename,
   } from '$lib/utils/insightMatrixExport';
-  import { buildMatrixDisplayRows, matrixCoverageStats } from '$lib/utils/insightMatrixRows';
+  import { buildMatrixDisplayRows } from '$lib/utils/insightMatrixRows';
+  import { buildInsightReportRows, reportCoverageStats } from '$lib/utils/insightReportRows';
   import { MATRIX_INSIGHT_TYPES } from '$lib/utils/insightMatrixGate';
   import ScreenHeader from '$lib/components/common/ScreenHeader.svelte';
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
@@ -43,9 +44,10 @@
   let exportBusy: 'pdf' | 'png' | 'csv' | 'json' | null = null;
   let exportError: string | null = null;
 
-  $: reportRows = buildMatrixDisplayRows(insights, { includeWeak: false }).strong;
+  $: matrixRows = buildMatrixDisplayRows(insights, { includeWeak: false }).strong;
+  $: reportRows = buildInsightReportRows(matrixRows);
   $: selectedRows = reportRows.filter((row) => selectedIds.includes(row.id));
-  $: coverage = matrixCoverageStats(selectedRows.length > 0 ? selectedRows : reportRows);
+  $: coverage = reportCoverageStats(selectedRows);
 
   /**
    * `?signal=<id>` preselects one row.
@@ -66,7 +68,10 @@
 
   /** True when a signal was requested but is not among the reportable rows. */
   $: requestedSignalMissing = Boolean(
-    requestedSignalId && !loading && !reportRows.some((row) => row.id === requestedSignalId)
+    requestedSignalId &&
+    !loading &&
+    !error &&
+    !reportRows.some((row) => row.id === requestedSignalId)
   );
 
   /** Select everything (or the requested signal) once, on the first load with rows. */
@@ -74,10 +79,11 @@
     if (selectionSeeded) return;
     const rows = buildMatrixDisplayRows(insights, { includeWeak: false }).strong;
     if (rows.length === 0) return;
-    selectedIds =
-      requestedSignalId && rows.some((row) => row.id === requestedSignalId)
+    selectedIds = requestedSignalId
+      ? rows.some((row) => row.id === requestedSignalId)
         ? [requestedSignalId]
-        : rows.map((row) => row.id);
+        : []
+      : rows.map((row) => row.id);
     selectionSeeded = true;
   }
 
@@ -89,7 +95,7 @@
       // account with more than 50 analytical subjects used to lose valid rows —
       // or see an empty report — because unrelated families took the slots (#959).
       const response = await listLatestInsights({
-        limit: 50,
+        limit: 100,
         insightTypes: MATRIX_INSIGHT_TYPES,
       });
       insights = response.insights;
@@ -127,7 +133,15 @@
     }
     exportBusy = 'png';
     try {
-      exportMatrixPng(selectedRows, reportExportFilename('png'));
+      exportMatrixPng(selectedRows, reportExportFilename('png'), {
+        effect: $_('insights.report.col_effect'),
+        with: $_('insights.report.col_with'),
+        without: $_('insights.report.col_without'),
+        total: $_('insights.report.col_total'),
+        confidence: $_('insights.report.col_confidence'),
+        window: $_('insights.report.col_window'),
+        missing: $_('insights.report.missing'),
+      });
     } finally {
       exportBusy = null;
     }
@@ -147,6 +161,16 @@
         disclaimer: $_('insights.report.disclaimer'),
         // Only printed when a label actually lost a character (#960).
         charsetNote: $_('insights.report.pdf_charset_note'),
+        missingLabel: $_('insights.report.missing'),
+        labels: {
+          effect: $_('insights.report.col_effect'),
+          with: $_('insights.report.col_with'),
+          without: $_('insights.report.col_without'),
+          total: $_('insights.report.col_total'),
+          confidence: $_('insights.report.col_confidence'),
+          window: $_('insights.report.col_window'),
+          missing: $_('insights.report.missing'),
+        },
         filename: reportExportFilename('pdf'),
       });
     } finally {
@@ -184,7 +208,10 @@
 
   onMount(() => {
     if ($auth.status !== 'authenticated') {
-      void goto('/auth/login?next=/insights/report');
+      const returnPath = requestedSignalId
+        ? `/insights/report?signal=${encodeURIComponent(requestedSignalId)}`
+        : '/insights/report';
+      void goto(`/auth/login?next=${encodeURIComponent(returnPath)}`);
       return;
     }
     void loadReport();

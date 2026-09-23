@@ -36,7 +36,7 @@ from app.services.tag_service import visible_tag_predicate
 DEFAULT_INSIGHT_LIST_LIMIT = 50
 MAX_INSIGHT_LIST_LIMIT = 200
 DEFAULT_LATEST_INSIGHT_LIMIT = 10
-MAX_LATEST_INSIGHT_LIMIT = 50
+MAX_LATEST_INSIGHT_LIMIT = 100
 
 
 class InsightNotFoundError(Exception):
