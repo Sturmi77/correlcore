@@ -11,6 +11,7 @@
   } from '$lib/api/rememberMePreference';
   import { login } from '$lib/stores/auth';
   import { mapApiError, type ApiErrorMap } from '$lib/utils/error';
+  import { safeInternalReturnPath } from '$lib/utils/safeReturnPath';
 
   let email = '';
   let password = '';
@@ -29,14 +30,6 @@
     429: 'auth.login.error_rate_limit',
   };
 
-  /** Whitelist next-target to in-app paths to prevent open-redirect. */
-  function safeNext(raw: string | null): string {
-    if (!raw) return '/';
-    if (!raw.startsWith('/') || raw.startsWith('//')) return '/';
-    if (raw.startsWith('/auth/')) return '/';
-    return raw;
-  }
-
   async function onSubmit() {
     if (busy) return;
     errorKey = null;
@@ -53,7 +46,7 @@
         password,
         remember_me: rememberMe,
       });
-      const target = safeNext($page.url.searchParams.get('next'));
+      const target = safeInternalReturnPath($page.url.searchParams.get('next'));
       await goto(target, { replaceState: true });
     } catch (err) {
       errorKey = mapApiError(err, ERROR_MAP);

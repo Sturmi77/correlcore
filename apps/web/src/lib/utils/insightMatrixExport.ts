@@ -3,18 +3,69 @@
  * PNG was previously embedded in InsightMatrix; PDF is new (Phase 5).
  */
 
-import type { InsightResponse } from '$lib/api/insights';
+import type { InsightReportRow } from '$lib/utils/insightReportRows';
 import { matrixConfidencePercent, matrixEffectTone } from '$lib/utils/insightMatrixRows';
 
 function themeColor(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+export interface ReportRenderLabels {
+  effect: string;
+  with: string;
+  without: string;
+  total: string;
+  confidence: string;
+  window: string;
+  missing: string;
+}
+
+const DEFAULT_RENDER_LABELS: ReportRenderLabels = {
+  effect: 'effect',
+  with: 'with',
+  without: 'without',
+  total: 'total',
+  confidence: 'confidence',
+  window: 'window',
+  missing: '—',
+};
+
+function wrapCanvasText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const lines: string[] = [];
+  let current = '';
+  for (const char of text) {
+    const candidate = current + char;
+    if (current && ctx.measureText(candidate).width > maxWidth) {
+      lines.push(current);
+      current = char;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current || lines.length === 0) lines.push(current);
+  return lines;
+}
+
 /** Download selected matrix rows as a PNG chart (former InsightMatrix.exportPng). */
-export function exportMatrixPng(rows: readonly InsightResponse[], filename: string): void {
+export function exportMatrixPng(
+  rows: readonly InsightReportRow[],
+  filename: string,
+  labels: ReportRenderLabels = DEFAULT_RENDER_LABELS
+): void {
   const canvas = document.createElement('canvas');
-  canvas.width = 900;
-  canvas.height = Math.max(220, rows.length * 56 + 96);
+  canvas.width = 1400;
+  const measurementContext = canvas.getContext('2d');
+  if (!measurementContext) return;
+  measurementContext.font = '13px sans-serif';
+  const prepared = rows.map((row) => ({
+    row,
+    factorLines: wrapCanvasText(measurementContext, row.factor ?? labels.missing, 280),
+  }));
+  const rowHeights = prepared.map(({ factorLines }) => Math.max(72, factorLines.length * 18 + 38));
+  canvas.height = Math.max(
+    220,
+    rowHeights.reduce((total, height) => total + height, 110)
+  );
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
@@ -31,18 +82,32 @@ export function exportMatrixPng(rows: readonly InsightResponse[], filename: stri
   ctx.fillStyle = colors.text;
   ctx.font = '700 24px sans-serif';
   ctx.fillText('CorrelCore Report', 32, 44);
-  ctx.font = '14px sans-serif';
-  rows.forEach((row, index) => {
-    const y = 88 + index * 52;
-    const effect = row.effect_size ?? 0;
+  ctx.font = '13px sans-serif';
+  let y = 94;
+  prepared.forEach(({ row, factorLines }, index) => {
+    const effect = row.effect ?? 0;
     const tone = matrixEffectTone(effect);
     ctx.fillStyle =
       tone === 'positive' ? colors.success : tone === 'negative' ? colors.error : colors.muted;
-    ctx.fillRect(32, y - 18, Math.max(8, Math.abs(effect) * 280), 24);
+    ctx.fillRect(32, y - 18, Math.max(8, Math.abs(effect) * 210), 24);
     ctx.fillStyle = colors.text;
-    ctx.fillText(row.subject_label ?? row.metric, 332, y);
-    ctx.fillText(effect.toFixed(2), 560, y);
-    ctx.fillText(matrixConfidencePercent(row.confidence), 650, y);
+    factorLines.forEach((line, lineIndex) => ctx.fillText(line, 270, y + lineIndex * 18));
+    ctx.fillText(row.metric, 570, y, 170);
+    ctx.fillText(row.effect === null ? labels.missing : row.effect.toFixed(2), 760, y);
+    ctx.fillText(
+      `${labels.with} ${row.sampleWith ?? labels.missing} / ${labels.without} ${row.sampleWithout ?? labels.missing}`,
+      850,
+      y
+    );
+    ctx.fillText(`${labels.total} ${row.sampleTotal}`, 1080, y);
+    const window =
+      row.analysisWindowStart && row.analysisWindowEnd
+        ? `${row.analysisWindowStart} – ${row.analysisWindowEnd}`
+        : labels.missing;
+    ctx.fillText(`${labels.window} ${window}`, 1180, y, 190);
+    ctx.fillStyle = colors.muted;
+    ctx.fillText(matrixConfidencePercent(row.confidence), 760, y + 22);
+    y += rowHeights[index] ?? 72;
   });
 
   const link = document.createElement('a');
@@ -167,25 +232,36 @@ function paginate(lines: readonly string[]): string[][] {
  * Exported separately from the download so the document itself is testable.
  */
 export function buildMatrixPdfDocument(
-  rows: readonly InsightResponse[],
-  options: { title: string; subtitle: string; disclaimer: string; charsetNote?: string }
+  rows: readonly InsightReportRow[],
+  options: {
+    title: string;
+    subtitle: string;
+    disclaimer: string;
+    charsetNote?: string;
+    missingLabel?: string;
+    labels?: Partial<ReportRenderLabels>;
+  }
 ): string {
+  const labels = { ...DEFAULT_RENDER_LABELS, ...options.labels };
+  const missing = options.missingLabel ?? labels.missing;
   const sourceLines: string[] = [
     options.title,
     options.subtitle,
     '',
-    ...rows.map((row) => {
-      const effect = row.effect_size ?? 0;
+    ...rows.flatMap((row) => {
       const conf = matrixConfidencePercent(row.confidence);
-      return `${row.subject_label ?? '-'} | ${row.metric} | ${effect.toFixed(2)} | n=${row.sample_n} | ${conf}`;
+      const window =
+        row.analysisWindowStart && row.analysisWindowEnd
+          ? `${row.analysisWindowStart}–${row.analysisWindowEnd}`
+          : missing;
+      const line = `${row.factor ?? missing} | ${row.metric} | ${labels.effect}=${row.effect === null ? missing : row.effect.toFixed(2)} | ${labels.with}=${row.sampleWith ?? missing} | ${labels.without}=${row.sampleWithout ?? missing} | ${labels.total}=${row.sampleTotal} | ${labels.confidence}=${conf} | ${labels.window}=${window}`;
+      return line.match(/.{1,105}(?:\s|$)|\S{1,105}/g) ?? [line];
     }),
     '',
     options.disclaimer,
   ];
 
-  // Truncate first, encode second: the cut is about how much fits on a line,
-  // and WinAnsi never widens a string, so the order keeps the limit honest.
-  const encoded = sourceLines.map((line) => toWinAnsi(line.slice(0, 110)));
+  const encoded = sourceLines.map((line) => toWinAnsi(line));
   const lines = encoded.map((entry) => entry.text);
   // A replaced character is visible as `?`, but only the document itself can
   // say why — and where the full labels are still readable (#960).
@@ -245,12 +321,14 @@ export function buildMatrixPdfDocument(
 }
 
 export function exportMatrixPdf(
-  rows: readonly InsightResponse[],
+  rows: readonly InsightReportRow[],
   options: {
     title: string;
     subtitle: string;
     disclaimer: string;
     charsetNote?: string;
+    missingLabel?: string;
+    labels?: Partial<ReportRenderLabels>;
     filename: string;
   }
 ): void {
@@ -270,26 +348,42 @@ export function exportMatrixPdf(
   URL.revokeObjectURL(url);
 }
 
-function csvCell(value: string | number | null | undefined): string {
-  if (value === null || value === undefined) return '';
-  const text = String(value);
-  return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+type CsvCell = { kind: 'text'; value: string | null } | { kind: 'number'; value: number | null };
+
+function startsWithSpreadsheetFormula(text: string): boolean {
+  let index = 0;
+  while (index < text.length && text.charCodeAt(index) <= 0x20) index += 1;
+  const marker = text[index];
+  return marker !== undefined && '=+-@'.includes(marker);
+}
+
+function csvCell(cell: CsvCell): string {
+  if (cell.value === null) return '';
+  if (cell.kind === 'number') return Number.isFinite(cell.value) ? String(cell.value) : '';
+  // Spreadsheet programs ignore leading whitespace/control bytes while deciding
+  // whether a cell is a formula. Prefix text whose first meaningful character
+  // is a formula marker; quoting is a separate CSV concern and is applied after.
+  const safe = startsWithSpreadsheetFormula(cell.value) ? `'${cell.value}` : cell.value;
+  return /[",\r\n;]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
 /** The report's own rows, as data — never the account-wide export (#928 §Datenschutz). */
-function reportRecords(rows: readonly InsightResponse[]): Record<string, unknown>[] {
+function reportRecords(rows: readonly InsightReportRow[]): Record<string, CsvCell>[] {
   return rows.map((row) => ({
-    subject: row.subject_label ?? '',
-    subject_type: row.subject_type ?? '',
-    metric: row.metric,
-    insight_type: row.insight_type,
-    effect_size: row.effect_size ?? null,
-    confidence: row.confidence ?? null,
-    confidence_percent: matrixConfidencePercent(row.confidence),
-    sample_n: row.sample_n ?? null,
-    tier: row.tier ?? null,
-    generated_for_date: row.generated_for_date ?? null,
-    statement: row.statement ?? '',
+    factor: { kind: 'text', value: row.factor },
+    factor_type: { kind: 'text', value: row.factorType },
+    metric: { kind: 'text', value: row.metric },
+    insight_type: { kind: 'text', value: row.insightType },
+    effect_size: { kind: 'number', value: row.effect },
+    confidence: { kind: 'number', value: row.confidence },
+    sample_with: { kind: 'number', value: row.sampleWith },
+    sample_without: { kind: 'number', value: row.sampleWithout },
+    sample_total: { kind: 'number', value: row.sampleTotal },
+    tier: { kind: 'text', value: row.tier },
+    analysis_window_start: { kind: 'text', value: row.analysisWindowStart },
+    analysis_window_end: { kind: 'text', value: row.analysisWindowEnd },
+    generated_for_date: { kind: 'text', value: row.generatedForDate },
+    statement: { kind: 'text', value: row.statement },
   }));
 }
 
@@ -312,38 +406,52 @@ function downloadBlob(blob: Blob, filename: string): void {
  * medical conversation, that button disclosed far more than the aggregated
  * report it appeared to offer (#928 L1 / Datenschutz-Impact).
  */
-export function exportReportCsv(rows: readonly InsightResponse[], filename: string): void {
+export function serializeReportCsv(rows: readonly InsightReportRow[]): string {
   const records = reportRecords(rows);
   const headers = [
-    'subject',
-    'subject_type',
+    'factor',
+    'factor_type',
     'metric',
     'insight_type',
     'effect_size',
     'confidence',
-    'confidence_percent',
-    'sample_n',
+    'sample_with',
+    'sample_without',
+    'sample_total',
     'tier',
+    'analysis_window_start',
+    'analysis_window_end',
     'generated_for_date',
     'statement',
   ];
   const lines = [
     headers.join(','),
-    ...records.map((record) => headers.map((key) => csvCell(record[key] as string)).join(',')),
+    ...records.map((record) => headers.map((key) => csvCell(record[key])).join(',')),
   ];
-  downloadBlob(new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' }), filename);
+  return lines.join('\r\n');
+}
+
+export function exportReportCsv(rows: readonly InsightReportRow[], filename: string): void {
+  downloadBlob(new Blob([serializeReportCsv(rows)], { type: 'text/csv;charset=utf-8' }), filename);
 }
 
 /** Export the selected report rows as JSON — the report only, not the account. */
-export function exportReportJson(rows: readonly InsightResponse[], filename: string): void {
+export function buildReportJson(
+  rows: readonly InsightReportRow[],
+  generatedAt = new Date()
+): string {
   const payload = {
     kind: 'correlcore-insight-report',
-    generated_at: new Date().toISOString(),
+    generated_at: generatedAt.toISOString(),
     row_count: rows.length,
-    rows: reportRecords(rows),
+    rows,
   };
+  return JSON.stringify(payload, null, 2);
+}
+
+export function exportReportJson(rows: readonly InsightReportRow[], filename: string): void {
   downloadBlob(
-    new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }),
+    new Blob([buildReportJson(rows)], { type: 'application/json;charset=utf-8' }),
     filename
   );
 }

@@ -4,11 +4,12 @@
    * Row selection feeds PNG/PDF export; confidence uses InsightEvidence only.
    */
   import { _ } from 'svelte-i18n';
-  import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
+  import type { InsightMaturity } from '$lib/api/insights';
+  import type { InsightReportRow } from '$lib/utils/insightReportRows';
   import InsightEvidence from './InsightEvidence.svelte';
   import { matrixConfidencePercent, matrixEffectTone } from '$lib/utils/insightMatrixRows';
 
-  export let rows: InsightResponse[] = [];
+  export let rows: InsightReportRow[] = [];
   export let selectedIds: readonly string[] = [];
   export let maturity: InsightMaturity | null = null;
   export let onToggle: (id: string, selected: boolean) => void = () => undefined;
@@ -28,33 +29,13 @@
     return metric;
   }
 
-  function payloadCount(row: InsightResponse, ...keys: string[]): number | null {
-    const payload = row.payload as Record<string, unknown> | undefined;
-    for (const key of keys) {
-      const value = payload?.[key];
-      if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value;
-    }
-    return null;
+  function countLabel(value: number | null): string {
+    return value === null ? $_('insights.report.missing') : String(value);
   }
 
-  /**
-   * Both group sizes where the payload has them, the total only as a fallback.
-   *
-   * Phase 7 added `tagged_count` / `untagged_count` for tag associations and
-   * `symptom_n` / `comparison_n` for symptom ones, but this kept showing the
-   * combined `sample_n`. An association built on 5 marked against 95 unmarked
-   * days then looked as well covered as a balanced 50-to-50 comparison — the
-   * one number that puts the coefficient in context was missing (#965).
-   */
-  function frequencyLabel(row: InsightResponse): string {
-    const withN = payloadCount(row, 'tagged_count', 'symptom_n');
-    const withoutN = payloadCount(row, 'untagged_count', 'comparison_n');
-    if (withN !== null && withoutN !== null) {
-      return $_('insights.report.frequency_groups', {
-        values: { withN, withoutN },
-      });
-    }
-    return $_('insights.report.frequency_n', { values: { n: row.sample_n } });
+  function windowLabel(row: InsightReportRow): string {
+    if (!row.analysisWindowStart || !row.analysisWindowEnd) return $_('insights.report.missing');
+    return `${row.analysisWindowStart} – ${row.analysisWindowEnd}`;
   }
 </script>
 
@@ -77,12 +58,15 @@
     <span role="columnheader">{$_('insights.report.col_factor')}</span>
     <span role="columnheader">{$_('insights.report.col_metric')}</span>
     <span role="columnheader">{$_('insights.report.col_effect')}</span>
-    <span role="columnheader">{$_('insights.report.col_frequency')}</span>
+    <span role="columnheader">{$_('insights.report.col_with')}</span>
+    <span role="columnheader">{$_('insights.report.col_without')}</span>
+    <span role="columnheader">{$_('insights.report.col_total')}</span>
+    <span role="columnheader">{$_('insights.report.col_window')}</span>
     <span role="columnheader">{$_('insights.report.col_confidence')}</span>
   </div>
 
   {#each rows as row (row.id)}
-    {@const effect = row.effect_size ?? 0}
+    {@const effect = row.effect ?? 0}
     <div
       class="report-table__row"
       role="row"
@@ -94,19 +78,24 @@
           type="checkbox"
           checked={selectedSet.has(row.id)}
           aria-label={$_('insights.report.select_row', {
-            values: { label: row.subject_label ?? row.metric },
+            values: { label: row.factor ?? row.metric },
           })}
           on:change={(event) => onToggle(row.id, event.currentTarget.checked)}
         />
       </span>
-      <span role="cell">{row.subject_label ?? '—'}</span>
+      <span role="cell">{row.factor ?? $_('insights.report.missing')}</span>
       <span role="cell">{metricLabel(row.metric)}</span>
       <span role="cell" class="report-table__effect">
         <span class="report-table__effect-bar" style={`--effect: ${Math.min(1, Math.abs(effect))}`}
         ></span>
-        {effect >= 0 ? '+' : ''}{effect.toFixed(2)}
+        {row.effect === null
+          ? $_('insights.report.missing')
+          : `${effect >= 0 ? '+' : ''}${effect.toFixed(2)}`}
       </span>
-      <span role="cell" class="report-table__freq">{frequencyLabel(row)}</span>
+      <span role="cell" class="report-table__freq">{countLabel(row.sampleWith)}</span>
+      <span role="cell" class="report-table__freq">{countLabel(row.sampleWithout)}</span>
+      <span role="cell" class="report-table__freq">{row.sampleTotal}</span>
+      <span role="cell" class="report-table__freq">{windowLabel(row)}</span>
       <span role="cell" class="report-table__evidence">
         <!--
           The badge's label comes from the account-wide maturity phase, so its
@@ -119,7 +108,7 @@
           showMaturityBadge={Boolean(maturity)}
           confidenceScore={row.confidence ?? 0}
           currentTier={row.tier}
-          entryCount={maturity?.current_entries ?? row.sample_n}
+          entryCount={maturity?.current_entries ?? row.sampleTotal}
           showSample={false}
         />
         <span class="report-table__conf-pct">{matrixConfidencePercent(row.confidence)}</span>
@@ -137,11 +126,11 @@
   }
 
   .report-table__row {
-    min-width: 52rem;
+    min-width: 76rem;
     display: grid;
     grid-template-columns:
-      2rem minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
-      minmax(0, 1.4fr);
+      2rem minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.8fr) repeat(3, minmax(0, 0.65fr))
+      minmax(0, 1.5fr) minmax(0, 1.4fr);
     gap: 0.65rem;
     align-items: center;
     padding: 0.55rem 0.75rem;

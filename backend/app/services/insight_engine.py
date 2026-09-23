@@ -250,6 +250,14 @@ def generate_insight_candidates(
             enabled=belastung_overlay_enabled,
         ),
     ]
+    # Every persisted insight carries the exact input range used by this run.
+    # Report consumers must not infer it from the generation date or sample
+    # count: sparse tracking can make those approximations materially wrong.
+    analysis_window_start = daily_entries[0].entry_date.isoformat()
+    analysis_window_end = daily_entries[-1].entry_date.isoformat()
+    for candidate in candidates:
+        candidate.payload.setdefault("analysis_window_start", analysis_window_start)
+        candidate.payload.setdefault("analysis_window_end", analysis_window_end)
     return sorted(
         candidates,
         key=lambda candidate: (
