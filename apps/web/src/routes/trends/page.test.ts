@@ -278,7 +278,7 @@ describe('/trends page', () => {
             resolveInitial = resolve;
           })
       )
-      .mockImplementation(async (range: string) => ({ range, points: [] }));
+      .mockImplementationOnce(async (range) => ({ range, points: [] }));
     vi.mocked(fetchUserPreferences).mockResolvedValueOnce({
       trend_window_days: 90,
     } as Awaited<ReturnType<typeof fetchUserPreferences>>);
