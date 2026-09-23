@@ -7,6 +7,7 @@
     "api_image_digest": null,
     "web_image_digest": null,
     "worker_image_digest": null,
+    "android_artifact_digest": null,
     "staging_deployment_id": null,
     "deployed_at_utc": null
   },

@@ -27,6 +27,12 @@ Vor jedem A12-Lauf in `A12_ACCEPTANCE_REGISTER.json` eintragen:
 - `passed` verlangt Evidenz, ein Sign-off mit Rolle, Datum und Ergebnis sowie
   unter `candidate` einen Snapshot des geprüften Release-Kandidaten. SHA und
   Image-Digests müssen exakt mit `release_candidate` übereinstimmen.
+- Mobile Gates (`health_connect_m8`, `firebase_play`, `compare_device`) verlangen
+  zusätzlich den SHA-256-Digest des installierten APK/AAB unter
+  `android_artifact_digest` im Kandidaten und im Gate-Snapshot.
+- `not_applicable` ist nur für Gates außerhalb des angebotenen Releaseumfangs
+  zulässig und verlangt `not_applicable_reason` sowie ein Sign-off mit dem
+  Ergebnis `not_applicable`.
 - Das Gate `deployment_restore` darf erst auf `passed`, wenn `staging` und
   `production_smoke` jeweils bestanden und an denselben Kandidaten gebunden sind.
 
