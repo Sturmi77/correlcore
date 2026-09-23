@@ -5,6 +5,7 @@ import {
   createAnalysisPair,
   insightMatchesAnalysisPair,
   parseAnalysisPair,
+  partnerForInsight,
 } from './analysisPairHandoff';
 
 function insight(overrides: Partial<InsightResponse>): InsightResponse {
@@ -37,8 +38,17 @@ describe('analysis pair handoff', () => {
     { kind: 'tag', id: 'tag-b', label: 'Meetings' }
   );
 
-  it('round-trips a structured pair in either pin order', () => {
-    expect(parseAnalysisPair(new URLSearchParams(analysisPairQuery(pair)))).toEqual(pair);
+  it('round-trips structured identities without placing health labels in the URL', () => {
+    const query = analysisPairQuery(pair);
+    expect(query).not.toContain('Headache');
+    expect(query).not.toContain('Meetings');
+    expect(parseAnalysisPair(new URLSearchParams(query))).toEqual({
+      version: 1,
+      signals: [
+        { kind: 'symptom', id: 'symptom-a' },
+        { kind: 'tag', id: 'tag-b' },
+      ],
+    });
     const reversed = createAnalysisPair(pair.signals[1], pair.signals[0]);
     expect(
       insightMatchesAnalysisPair(
@@ -67,22 +77,28 @@ describe('analysis pair handoff', () => {
       { kind: 'tag', id: 'walk', lagDays: 1 },
       { kind: 'metric', id: 'mood_score', metric: 'mood_score', lagDays: 1 }
     );
+    const lagInsight = insight({
+      insight_type: 'symptom_cluster',
+      subject_type: 'metric',
+      subject_id: null,
+      payload: {
+        method: 'lag',
+        lag_days: 1,
+        feature: { kind: 'tag', key: 'tag:walk' },
+        target: { kind: 'metric', key: 'mood_score' },
+      },
+    });
+    expect(insightMatchesAnalysisPair(lagInsight, lagPair)).toBe(true);
     expect(
       insightMatchesAnalysisPair(
-        insight({
-          insight_type: 'symptom_cluster',
-          subject_type: 'metric',
-          subject_id: null,
-          payload: {
-            method: 'lag',
-            lag_days: 1,
-            feature: { kind: 'tag', key: 'tag:walk' },
-            target: { kind: 'metric', key: 'mood_score' },
-          },
-        }),
-        lagPair
+        lagInsight,
+        createAnalysisPair(lagPair.signals[1], lagPair.signals[0])
       )
-    ).toBe(true);
+    ).toBe(false);
+    expect(partnerForInsight(lagInsight, lagPair)).toMatchObject({
+      kind: 'metric',
+      id: 'mood_score',
+    });
   });
 
   it('keeps work-context identity distinct from a tag with the same id', () => {

@@ -94,6 +94,10 @@
     activeContext = requestedContext;
     void load(insightId, authenticatedUserId);
   }
+  $: if (mounted && $auth.status === 'anonymous') {
+    const next = `${$page.url.pathname}${$page.url.search}`;
+    void goto(`/auth/login?next=${encodeURIComponent(next)}`);
+  }
   $: withWithout = insight ? parseWithWithoutView(insight) : null;
   $: sameSituation = insight ? parseSameSituationView(insight) : null;
   $: isNull = insight ? isNullAssociation(insight) : false;
@@ -263,10 +267,6 @@
   }
 
   onMount(() => {
-    if ($auth.status !== 'authenticated') {
-      void goto(`/auth/login?next=${encodeURIComponent($page.url.pathname)}`);
-      return;
-    }
     mounted = true;
     const unregisterRefresh = registerPageRefresh(() => {
       if (authenticatedUserId && insightId) void load(insightId, authenticatedUserId);

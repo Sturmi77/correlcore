@@ -224,6 +224,10 @@ async def list_latest_insights_endpoint(
             "Repeat the parameter for several families."
         ),
     ),
+    pair_signal: list[str] | None = Query(
+        default=None,
+        description="Structured kind:id identities that must all be present before the row cap.",
+    ),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> InsightListResponse:
@@ -237,11 +241,26 @@ async def list_latest_insights_endpoint(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"unknown insight_type: {', '.join(unknown)}",
             )
+    parsed_pair_signals: list[tuple[str, str]] = []
+    for raw in pair_signal or []:
+        kind, separator, signal_id = raw.partition(":")
+        if not separator or kind not in {"tag", "symptom", "work_context", "metric"} or not signal_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"invalid pair_signal: {raw}",
+            )
+        parsed_pair_signals.append((kind, signal_id))
+    if pair_signal is not None and len(parsed_pair_signals) != 2:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="pair_signal must be supplied exactly twice",
+        )
     insights = await list_latest_insights(
         db,
         user_id=user.id,
         limit=limit,
         insight_types=insight_type,
+        pair_signals=parsed_pair_signals or None,
     )
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
     last_successful_run = await latest_successful_insight_run_at(db, user_id=user.id)

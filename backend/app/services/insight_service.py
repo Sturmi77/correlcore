@@ -8,7 +8,7 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from datetime import date as date_type
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, String, and_, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry
@@ -461,6 +461,7 @@ def newest_insight_per_subject_stmt(
     user_id: uuid.UUID,
     *,
     insight_types: Collection[str] | None = None,
+    pair_signals: Collection[tuple[str, str]] | None = None,
 ) -> Select[tuple[Insight]]:
     """Select the newest insight row per analytical subject for one user.
 
@@ -492,6 +493,32 @@ def newest_insight_per_subject_stmt(
         if insight_types is not None
         else []
     )
+    signal_filters = []
+    for kind, signal_id in pair_signals or ():
+        nested_matches = []
+        for field in ("feature", "target"):
+            item = Insight.payload[field]
+            nested_matches.append(
+                and_(
+                    item["kind"].astext == kind,
+                    or_(
+                        item["id"].astext == signal_id,
+                        item["key"].astext == signal_id,
+                        item["key"].astext == f"{kind}:{signal_id}",
+                        item["slug"].astext == signal_id,
+                    ),
+                )
+            )
+        direct_matches = [
+            and_(Insight.subject_type == kind, cast(Insight.subject_id, String) == signal_id),
+            Insight.payload[f"{kind}_id"].astext == signal_id,
+            *nested_matches,
+        ]
+        if kind == "metric":
+            direct_matches.append(Insight.metric == signal_id)
+        elif kind == "work_context":
+            direct_matches.append(Insight.payload["work_context"].astext == signal_id)
+        signal_filters.append(or_(*direct_matches))
     ranked = (
         select(
             Insight.id.label("id"),
@@ -508,13 +535,13 @@ def newest_insight_per_subject_stmt(
             )
             .label("subject_rank"),
         )
-        .where(Insight.user_id == user_id, *type_filter)
+        .where(Insight.user_id == user_id, *type_filter, *signal_filters)
         .subquery()
     )
     newest_ids = select(ranked.c.id).where(ranked.c.subject_rank == 1)
     return (
         select(Insight)
-        .where(Insight.user_id == user_id, Insight.id.in_(newest_ids), *type_filter)
+        .where(Insight.user_id == user_id, Insight.id.in_(newest_ids), *type_filter, *signal_filters)
         .order_by(Insight.generated_at.desc(), Insight.created_at.desc())
         .limit(MAX_INSIGHT_LIST_LIMIT)
     )
@@ -536,6 +563,7 @@ async def list_latest_insights(
     user_id: uuid.UUID,
     limit: int = DEFAULT_LATEST_INSIGHT_LIMIT,
     insight_types: Collection[str] | None = None,
+    pair_signals: Collection[tuple[str, str]] | None = None,
 ) -> list[Insight]:
     """Return the newest insight per analytical subject.
 
@@ -567,6 +595,7 @@ async def list_latest_insights(
         newest_insight_per_subject_stmt(
             user_id,
             insight_types=family_fetch_types(wanted_types) if wanted_types is not None else None,
+            pair_signals=pair_signals,
         )
     )
 

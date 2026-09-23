@@ -113,6 +113,8 @@ export interface LatestInsightListQuery extends InsightListQuery {
    * subjects occupying the first `limit` slots (#959).
    */
   insightTypes?: readonly string[];
+  /** Restrict before the row cap to insights containing every structured signal. */
+  pairSignals?: readonly { kind: string; id: string }[];
 }
 
 export type TagCooccurrenceRange = '7d' | '30d' | '90d' | '1y';
@@ -246,6 +248,9 @@ function buildLatestQuery(query: LatestInsightListQuery): string {
   if (query.limit !== undefined) params.set('limit', String(query.limit));
   // Repeated `insight_type=` params — FastAPI reads them as a list.
   for (const type of query.insightTypes ?? []) params.append('insight_type', type);
+  for (const signal of query.pairSignals ?? []) {
+    params.append('pair_signal', `${signal.kind}:${signal.id}`);
+  }
   const qs = params.toString();
   return qs ? `?${qs}` : '';
 }

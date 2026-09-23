@@ -11046,6 +11046,27 @@
             }
           },
           {
+            "description": "Structured kind:id identities that must all be present before the row cap.",
+            "in": "query",
+            "name": "pair_signal",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Structured kind:id identities that must all be present before the row cap.",
+              "title": "Pair Signal"
+            }
+          },
+          {
             "in": "header",
             "name": "authorization",
             "required": false,

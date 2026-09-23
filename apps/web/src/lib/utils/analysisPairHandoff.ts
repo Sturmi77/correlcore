@@ -68,7 +68,16 @@ export function createAnalysisPair(
 
 export function analysisPairQuery(pair: AnalysisPairHandoff): string {
   const params = new URLSearchParams();
-  params.set('pair', JSON.stringify(pair));
+  // Labels may describe health data. URLs are copied, logged and retained in
+  // browser history, so carry stable identities only and resolve labels at the
+  // destination from authenticated data.
+  params.set(
+    'pair',
+    JSON.stringify({
+      version: pair.version,
+      signals: pair.signals.map(({ label: _label, ...signal }) => signal),
+    })
+  );
   return params.toString();
 }
 
@@ -205,8 +214,15 @@ export function insightMatchesAnalysisPair(
   insight: InsightResponse,
   pair: AnalysisPairHandoff
 ): boolean {
-  const refs = insightSignalRefs(insight);
   const [first, second] = pair.signals;
+  const payload = insight.payload ?? {};
+  if (payload.method === 'lag') {
+    const lagDays = number(payload.lag_days) ?? undefined;
+    const feature = payloadFeatureRef(payload.feature, lagDays);
+    const target = payloadFeatureRef(payload.target, lagDays);
+    return Boolean(feature && target && refMatches(first, feature) && refMatches(second, target));
+  }
+  const refs = insightSignalRefs(insight);
   return refs.some((ref) => refMatches(first, ref)) && refs.some((ref) => refMatches(second, ref));
 }
 
@@ -214,6 +230,23 @@ export function partnerForInsight(
   insight: InsightResponse,
   pair: AnalysisPairHandoff
 ): AnalysisSignalRef | null {
+  const payload = insight.payload ?? {};
+  if (payload.method === 'lag') {
+    const lagDays = number(payload.lag_days) ?? undefined;
+    const feature = payloadFeatureRef(payload.feature, lagDays);
+    const target = payloadFeatureRef(payload.target, lagDays);
+    // Event windows for lag insights are aligned on the antecedent feature.
+    // The comparison partner therefore has to be the outcome/target.
+    if (
+      feature &&
+      target &&
+      refMatches(pair.signals[0], feature) &&
+      refMatches(pair.signals[1], target)
+    ) {
+      return target;
+    }
+    return null;
+  }
   const refs = insightSignalRefs(insight);
   const [first, second] = pair.signals;
   const firstIsSubject = refs.some((ref) => refMatches(first, ref));

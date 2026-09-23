@@ -139,6 +139,8 @@
   let showDismissedPanel = false;
   let loading = false;
   let insightsLoaded = false;
+  let carriedPairInsights: InsightResponse[] = [];
+  let carriedPairLookupComplete = false;
   let error: string | null = null;
   let insightMaturity: InsightMaturity | null = null;
   let lastSuccessfulInsightRunAt: string | null = null;
@@ -583,6 +585,8 @@
     if (get(auth).status !== 'authenticated') return;
     loading = true;
     error = null;
+    carriedPairInsights = [];
+    carriedPairLookupComplete = false;
     try {
       const requestedDays = windowDays;
       if (get(devForceVisualizations)) {
@@ -602,17 +606,35 @@
       }
 
       const { start_date: startIso, end_date: todayIso } = trendWindowDateBounds(requestedDays);
-      const [insightsResult, symptomWindowResult, tagResult, defaultTagsResult, preferencesResult] =
-        await Promise.allSettled([
-          listLatestInsights({ limit: 50 }),
-          Promise.all([
-            listEntries({ start_date: startIso, end_date: todayIso }),
-            fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }),
-          ]),
-          listVisibleTags({ include_hidden: true }),
-          listDefaultTags(),
-          fetchUserPreferences(),
-        ]);
+      const requestedPair = parseAnalysisPair(get(page).url.searchParams);
+      const [
+        insightsResult,
+        pairResult,
+        symptomWindowResult,
+        tagResult,
+        defaultTagsResult,
+        preferencesResult,
+      ] = await Promise.allSettled([
+        listLatestInsights({ limit: 50 }),
+        requestedPair
+          ? listLatestInsights({
+              limit: 50,
+              pairSignals: requestedPair.signals.map(({ kind, id }) => ({ kind, id })),
+            })
+          : Promise.resolve(null),
+        Promise.all([
+          listEntries({ start_date: startIso, end_date: todayIso }),
+          fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }),
+        ]),
+        listVisibleTags({ include_hidden: true }),
+        listDefaultTags(),
+        fetchUserPreferences(),
+      ]);
+
+      if (requestedPair && pairResult.status === 'fulfilled' && pairResult.value) {
+        carriedPairInsights = pairResult.value.insights;
+        carriedPairLookupComplete = true;
+      }
 
       if (insightsResult.status === 'fulfilled') {
         insights = insightsResult.value.insights;
@@ -767,9 +789,11 @@
   $: carriedPair = parseAnalysisPair($page.url.searchParams);
   $: carriedPairQuery = carriedPair ? analysisPairQuery(carriedPair) : '';
   $: carriedMatches = carriedPair
-    ? rankableInsights.filter((insight) => insightMatchesAnalysisPair(insight, carriedPair!))
+    ? carriedPairInsights.filter((insight) => insightMatchesAnalysisPair(insight, carriedPair!))
     : [];
-  $: carriedPairSearchComplete = Boolean(carriedPair && insightsLoaded && !loading && !error);
+  $: carriedPairSearchComplete = Boolean(
+    carriedPair && carriedPairLookupComplete && insightsLoaded && !loading && !error
+  );
   $: carriedSignalsUnmatched = carriedPairSearchComplete && carriedMatches.length === 0;
   $: carriedPairFocused = carriedPairSearchComplete && carriedMatches.length > 0;
   $: focusedRankableInsights = carriedPairFocused ? carriedMatches : rankableInsights;
