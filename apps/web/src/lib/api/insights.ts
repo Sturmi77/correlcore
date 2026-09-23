@@ -116,6 +116,16 @@ export interface LatestInsightListQuery extends InsightListQuery {
 }
 
 export type TagCooccurrenceRange = '7d' | '30d' | '90d' | '1y';
+export type CooccurrenceAnalysisStatus =
+  'ok' | 'insufficient_data' | 'limit_exceeded' | 'busy' | 'timeout' | 'unavailable';
+
+export interface CooccurrenceAnalysisLimit {
+  reason: 'eligible_tags' | 'eligible_symptoms' | 'pair_count' | 'work_units';
+  eligible_tags: number;
+  eligible_symptoms: number;
+  pair_count: number;
+  work_units: number;
+}
 
 export interface TagCooccurrenceTagRef {
   tag_id: string;
@@ -139,6 +149,8 @@ export interface TagCooccurrenceResponse {
   end_date: string;
   min_count: number;
   pairs: TagCooccurrencePair[];
+  analysis_status?: CooccurrenceAnalysisStatus;
+  analysis_limit?: CooccurrenceAnalysisLimit | null;
   /**
    * The window holds fewer logged days than the analysis needs. An empty
    * `pairs` then means "cannot be computed here", not "nothing found" — a 7-day
@@ -228,6 +240,8 @@ export interface SymptomTagCooccurrenceResponse {
   end_date: string;
   min_count: number;
   cells: SymptomTagCooccurrenceCell[];
+  analysis_status?: CooccurrenceAnalysisStatus;
+  analysis_limit?: CooccurrenceAnalysisLimit | null;
 }
 
 function buildQuery(query: InsightListQuery): string {

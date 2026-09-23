@@ -113,6 +113,11 @@
   );
   $: showLift = phase === 'provisional' || phase === 'robust';
   $: showSkeleton = loading && !data;
+  $: analysisUnavailable =
+    data?.analysis_status === 'limit_exceeded' ||
+    data?.analysis_status === 'busy' ||
+    data?.analysis_status === 'timeout' ||
+    data?.analysis_status === 'unavailable';
   $: interactiveCells = symptoms.flatMap((symptom, rowIndex) =>
     tags.flatMap((tag, colIndex) => {
       const cell = cellByKey.get(`${symptom.symptom_id}:${tag.tag_id}`);
@@ -329,6 +334,10 @@
       <span></span>
       <span></span>
     </div>
+  {:else if !loading && analysisUnavailable}
+    <p class="symptom-cooccurrence__empty" data-testid="symptom-cooccurrence-unavailable">
+      {$_(`insights.symptoms.cooccurrence_status_${data?.analysis_status}`)}
+    </p>
   {:else if symptoms.length > 0 && tags.length > 0}
     <div
       class="symptom-cooccurrence__scroller"
