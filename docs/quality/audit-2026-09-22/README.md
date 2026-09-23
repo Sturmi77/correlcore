@@ -19,3 +19,6 @@
 | A12   | [#986 — Geräte-, Betriebs- und Nutzerabnahmen](https://github.com/Sturmi77/correlcore/issues/986)                        |
 
 Alle Arbeitspakete besitzen konkrete Maßnahmen, Regressionstests und Abschlusskriterien. Bestehende externe Aufgaben bleiben verknüpft. Dieser Dokumentationsstand behebt selbst keine Produktfehler.
+
+Für A01 beschreibt [der Upgrade- und Wiederanlaufplan](A01_UPGRADE.md) die
+Migration aus 046–048 und die erforderliche Backup-/Restore-Probe.

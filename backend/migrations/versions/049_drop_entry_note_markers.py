@@ -5,9 +5,9 @@ Revises: 048
 Create Date: 2026-09-16
 
 Marker endgame after #890 Option 4. Before dropping ``entry_note_markers``,
-``upgrade()`` runs the service-layer marker→tag backfill (#895/#900/#901) so
-self-hosted ``alembic upgrade head`` converts remaining rows. The CLI exits
-non-zero when any user fails, which aborts this migration before the DROP.
+``upgrade()`` converts retained markers on Alembic's own connection. That keeps
+the conversion in the same transaction as revision 048's DDL and the DROP;
+no child process can block on locks held by its waiting parent.
 The backfill is add-only: it only inserts missing ``entry_tags`` links for
 marker-derived tags (predefined 1:1 map + custom markers) and never deletes,
 renames, or rewrites unrelated tags.
@@ -21,7 +21,7 @@ Tag blast radius
 The Alembic DDL in this file does not write ``tags`` / ``entry_tags`` /
 ``entry_note_signals``. It only:
 
-- runs the add-only backfill (subprocess) — may insert missing ``entry_tags``
+- runs the add-only backfill on the migration connection — may insert missing ``entry_tags``
   for marker-derived targets only;
 - deletes leftover ``insights`` rows with ``insight_type = 'note_marker_mood'``
   (tag correlation, symptom↔tag co-occurrence, and every other insight
@@ -41,12 +41,11 @@ existing *custom* tag of the same slug); curated defaults are never mutated.
 from __future__ import annotations
 
 import logging
-import subprocess
-import sys
-from pathlib import Path
 
 import sqlalchemy as sa
 from alembic import op
+
+from migrations.marker_tag_backfill_049 import run as backfill_on_migration_connection
 
 revision: str = "049"
 down_revision: str | None = "048"
@@ -73,30 +72,9 @@ SKIPPED_OVERLAP_MARKERS: frozenset[str] = frozenset(
 
 
 def _run_marker_tag_backfill() -> None:
-    """Convert remaining markers → tags before the source table is dropped.
-
-    Runs the CLI in a subprocess so we do not nest ``asyncio.run`` inside
-    Alembic's already-running async event loop (``env.py`` → ``run_sync``).
-    """
-    backend_root = Path(__file__).resolve().parents[2]
-    script = backend_root / "scripts" / "backfill_marker_tags.py"
-    if not script.is_file():
-        raise RuntimeError(f"marker→tag backfill script missing: {script}")
-
-    logger.info("049: running marker→tag backfill before DROP TABLE")
-    proc = subprocess.run(
-        [sys.executable, str(script)],
-        cwd=str(backend_root),
-        check=False,
-    )
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"marker→tag backfill failed (exit {proc.returncode}); "
-            "the CLI exits non-zero when any user fails (CryptoError / "
-            "TagError / DB) or the run crashes — fix those users, then "
-            "re-run `alembic upgrade head`. entry_note_markers is not "
-            "dropped until the backfill reports zero failures"
-        )
+    """Convert remaining markers in the caller's open Alembic transaction."""
+    logger.info("049: converting markers on the migration connection before DROP TABLE")
+    backfill_on_migration_connection(op.get_bind())
 
 
 def upgrade() -> None:

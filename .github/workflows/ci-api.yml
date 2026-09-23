@@ -209,6 +209,7 @@ jobs:
             tests/test_rls_isolation_integration.py
             tests/test_m7_qa_seed_integration.py
             tests/test_049_drop_entry_note_markers_integration.py
+            tests/test_a01_release_upgrade_integration.py
             tests/test_password_reset.py
             tests/test_sync_service.py
           )
@@ -277,3 +278,19 @@ jobs:
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
           SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
+      - name: Backup and restore migrated database
+        run: |
+          set -euo pipefail
+          pg_container='${{ job.services.postgres.id }}'
+          dump="$(mktemp)"
+          trap 'rm -f "$dump"' EXIT
+          docker exec "$pg_container" pg_dump -U correlcore -Fc correlcore > "$dump"
+          docker exec "$pg_container" createdb -U correlcore correlcore_restore
+          docker exec -i "$pg_container" pg_restore -U correlcore -d correlcore_restore < "$dump"
+          source_rev=$(docker exec "$pg_container" psql -U correlcore -d correlcore -Atc 'SELECT version_num FROM alembic_version')
+          restored_rev=$(docker exec "$pg_container" psql -U correlcore -d correlcore_restore -Atc 'SELECT version_num FROM alembic_version')
+          source_tags=$(docker exec "$pg_container" psql -U correlcore -d correlcore -Atc 'SELECT count(*) FROM tags')
+          restored_tags=$(docker exec "$pg_container" psql -U correlcore -d correlcore_restore -Atc 'SELECT count(*) FROM tags')
+          test "$source_rev" = "$restored_rev"
+          test "$source_tags" = "$restored_tags"
+          test "$restored_tags" -gt 0
