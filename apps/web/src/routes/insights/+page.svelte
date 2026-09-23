@@ -753,7 +753,9 @@
   $: showLagHeatmap = showAdvancedAnalytics && buildLagHeatmapRows(insights).length >= 2;
   $: showTagCooccurrencePanel =
     canShowTagCooccurrence(insightMaturity?.phase ?? null) &&
-    (cooccurrenceLoading || hasTagCooccurrenceData(cooccurrence));
+    (cooccurrenceLoading ||
+      hasTagCooccurrenceData(cooccurrence) ||
+      Boolean(cooccurrence && cooccurrence.analysis_status !== 'ok'));
   /**
    * The Belastung composite has its own opt-in overlay, so it must not also ride
    * the ordinary feed: enabled users saw it twice, and users who switched the

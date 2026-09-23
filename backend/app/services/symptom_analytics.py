@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import time
 import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -35,6 +36,15 @@ MIN_CARD_LIFT_DELTA = 0.67
 MIN_HEATMAP_LIFT_DELTA = 0.50
 
 METRIC_TARGETS: tuple[MetricName, ...] = ("mood_score", "energy", "stress")
+
+
+class CooccurrenceComputationTimeout(RuntimeError):
+    """Raised cooperatively when an interactive analysis exhausts its budget."""
+
+
+def _check_cooccurrence_deadline(deadline: float | None) -> None:
+    if deadline is not None and time.monotonic() >= deadline:
+        raise CooccurrenceComputationTimeout
 
 
 @dataclass(frozen=True)
@@ -425,6 +435,32 @@ def _cooccurrence_stats(
     return co_count, count_a, count_b, total, phi, jaccard, lift, float(p_value)
 
 
+def _cooccurrence_stats_from_presence(
+    present_a: frozenset[int],
+    present_b: frozenset[int],
+    *,
+    total: int,
+) -> tuple[int, int, int, int, float, float, float, float] | None:
+    """Equivalent pair statistics from precomputed daily-presence indexes."""
+
+    co_count = len(present_a & present_b)
+    count_a = len(present_a)
+    count_b = len(present_b)
+    neither_count = total - count_a - count_b + co_count
+    only_a = count_a - co_count
+    only_b = count_b - co_count
+    phi = _phi(co_count, only_a, only_b, neither_count)
+    if phi is None:
+        return None
+    union_count = count_a + count_b - co_count
+    jaccard = co_count / union_count if union_count else 0.0
+    expected = (count_a / total) * (count_b / total)
+    observed = co_count / total
+    lift = observed / expected if expected else 0.0
+    _, p_value = fisher_exact([[co_count, only_a], [only_b, neither_count]])
+    return co_count, count_a, count_b, total, phi, jaccard, lift, float(p_value)
+
+
 def compute_symptom_tag_associations(
     entries: Sequence[DailySymptomEntry],
     symptoms: Mapping[uuid.UUID, SymptomRef],
@@ -434,6 +470,7 @@ def compute_symptom_tag_associations(
     min_symptom_usages: int = MIN_SYMPTOM_USAGES,
     min_tag_usages: int = MIN_TAG_USAGES_FOR_SYMPTOM_COOCCURRENCE,
     card_lift_delta: float = MIN_CARD_LIFT_DELTA,
+    deadline: float | None = None,
 ) -> list[SymptomTagAssociation]:
     """Compute symptom x tag associations with Fisher exact + BH-FDR."""
 
@@ -441,26 +478,70 @@ def compute_symptom_tag_associations(
         return []
 
     symptom_counts = {
-        symptom_id: sum(1 for entry in entries if symptom_id in entry.symptom_ids)
-        for symptom_id in symptoms
+        signal_id: sum(signal_id in entry.symptom_ids for entry in entries)
+        for signal_id in symptoms
     }
-    tag_counts = {tag_id: sum(1 for entry in entries if tag_id in entry.tag_ids) for tag_id in tags}
+    tag_counts = {
+        signal_id: sum(signal_id in entry.tag_ids for entry in entries) for signal_id in tags
+    }
+    eligible_symptoms = {
+        signal_id: symptoms[signal_id]
+        for signal_id, count in symptom_counts.items()
+        if count >= min_symptom_usages
+    }
+    eligible_tags = {
+        signal_id: tags[signal_id]
+        for signal_id, count in tag_counts.items()
+        if count >= min_tag_usages
+    }
+    symptom_presence = {
+        symptom_id: frozenset(
+            index for index, entry in enumerate(entries) if symptom_id in entry.symptom_ids
+        )
+        for symptom_id in eligible_symptoms
+    }
+    tag_presence = {
+        tag_id: frozenset(index for index, entry in enumerate(entries) if tag_id in entry.tag_ids)
+        for tag_id in eligible_tags
+    }
+    symptom_vectors = {
+        signal_id: [1 if index in indexes else 0 for index in range(len(entries))]
+        for signal_id, indexes in symptom_presence.items()
+    }
+    tag_vectors = {
+        signal_id: [1 if index in indexes else 0 for index in range(len(entries))]
+        for signal_id, indexes in tag_presence.items()
+    }
+    entry_dates = [entry.entry_date for entry in entries]
+    work_contexts = [entry.work_context.value for entry in entries]
+    symptom_weekday_bias = {
+        signal_id: is_weekday_biased_signal(entries, signal_id, kind="symptom")
+        for signal_id in eligible_symptoms
+    }
+    tag_weekday_bias = {
+        signal_id: is_weekday_biased_signal(entries, signal_id, kind="tag")
+        for signal_id in eligible_tags
+    }
+    symptom_work_bias = {
+        signal_id: is_work_context_biased_signal(entries, signal_id, kind="symptom")
+        for signal_id in eligible_symptoms
+    }
+    tag_work_bias = {
+        signal_id: is_work_context_biased_signal(entries, signal_id, kind="tag")
+        for signal_id in eligible_tags
+    }
 
     raw: list[
         tuple[SymptomRef, TagRef, int, int, int, int, float, float, float, float, bool, bool, bool]
     ] = []
-    for symptom_id, symptom in sorted(symptoms.items(), key=lambda item: item[1].slug):
-        if symptom_counts[symptom_id] < min_symptom_usages:
-            continue
-        for tag_id, tag in sorted(tags.items(), key=lambda item: item[1].slug):
-            if tag_counts[tag_id] < min_tag_usages:
-                continue
-            stats = _cooccurrence_stats(
-                entries,
-                signal_a_id=symptom_id,
-                signal_b_id=tag_id,
-                kind_a="symptom",
-                kind_b="tag",
+    for symptom_id, symptom in sorted(eligible_symptoms.items(), key=lambda item: item[1].slug):
+        _check_cooccurrence_deadline(deadline)
+        for tag_id, tag in sorted(eligible_tags.items(), key=lambda item: item[1].slug):
+            _check_cooccurrence_deadline(deadline)
+            stats = _cooccurrence_stats_from_presence(
+                symptom_presence[symptom_id],
+                tag_presence[tag_id],
+                total=len(entries),
             )
             if stats is None:
                 continue
@@ -468,25 +549,22 @@ def compute_symptom_tag_associations(
             if co_count < 5 and not (co_count >= 3 and p_value < 0.05):
                 continue
             weekday_confounded = (
-                is_weekday_biased_signal(entries, symptom_id, kind="symptom")
-                and is_weekday_biased_signal(entries, tag_id, kind="tag")
+                symptom_weekday_bias[symptom_id] and tag_weekday_bias[tag_id]
             ) or is_pair_cooccurrence_weekday_confounded(
-                [entry.entry_date for entry in entries],
-                [1 if symptom_id in entry.symptom_ids else 0 for entry in entries],
-                [1 if tag_id in entry.tag_ids else 0 for entry in entries],
+                entry_dates,
+                symptom_vectors[symptom_id],
+                tag_vectors[tag_id],
                 alpha=COOCCURRENCE_FDR_ALPHA,
             )
-            work_context_confounded = is_work_context_biased_signal(
-                entries, symptom_id, kind="symptom"
-            ) and is_work_context_biased_signal(entries, tag_id, kind="tag")
+            work_context_confounded = symptom_work_bias[symptom_id] and tag_work_bias[tag_id]
             calendar_context_confounded = (
                 weekday_confounded
                 or work_context_confounded
                 or is_pair_cooccurrence_calendar_context_confounded(
-                    [entry.entry_date for entry in entries],
-                    [entry.work_context.value for entry in entries],
-                    [1 if symptom_id in entry.symptom_ids else 0 for entry in entries],
-                    [1 if tag_id in entry.tag_ids else 0 for entry in entries],
+                    entry_dates,
+                    work_contexts,
+                    symptom_vectors[symptom_id],
+                    tag_vectors[tag_id],
                     alpha=COOCCURRENCE_FDR_ALPHA,
                 )
             )
@@ -562,6 +640,7 @@ def heatmap_symptom_tag_associations(
     min_symptom_usages: int = MIN_SYMPTOM_USAGES,
     min_tag_usages: int = MIN_TAG_USAGES_FOR_SYMPTOM_COOCCURRENCE,
     heatmap_lift_delta: float = MIN_HEATMAP_LIFT_DELTA,
+    deadline: float | None = None,
 ) -> list[SymptomTagAssociation]:
     """Return associations broad enough for exploratory heatmap rendering."""
 
@@ -576,6 +655,7 @@ def heatmap_symptom_tag_associations(
         min_symptom_usages=min_symptom_usages,
         min_tag_usages=min_tag_usages,
         card_lift_delta=0.0,
+        deadline=deadline,
     )
     return [
         association
@@ -593,6 +673,7 @@ def compute_tag_tag_associations(
     min_tag_usages: int = MIN_TAG_USAGES_FOR_TAG_COOCCURRENCE,
     card_lift_delta: float = MIN_CARD_LIFT_DELTA,
     require_significance: bool = True,
+    deadline: float | None = None,
 ) -> list[TagTagAssociation]:
     """Compute tag×tag associations with Fisher exact + BH-FDR (α=0.10).
 
@@ -606,24 +687,45 @@ def compute_tag_tag_associations(
     if len(entries) < min_entries:
         return []
 
-    tag_counts = {tag_id: sum(1 for entry in entries if tag_id in entry.tag_ids) for tag_id in tags}
-    tag_items = sorted(tags.items(), key=lambda item: item[1].slug)
+    tag_counts = {
+        signal_id: sum(signal_id in entry.tag_ids for entry in entries) for signal_id in tags
+    }
+    eligible_tags = {
+        signal_id: tags[signal_id]
+        for signal_id, count in tag_counts.items()
+        if count >= min_tag_usages
+    }
+    tag_presence = {
+        tag_id: frozenset(index for index, entry in enumerate(entries) if tag_id in entry.tag_ids)
+        for tag_id in eligible_tags
+    }
+    tag_vectors = {
+        signal_id: [1 if index in indexes else 0 for index in range(len(entries))]
+        for signal_id, indexes in tag_presence.items()
+    }
+    entry_dates = [entry.entry_date for entry in entries]
+    work_contexts = [entry.work_context.value for entry in entries]
+    tag_weekday_bias = {
+        signal_id: is_weekday_biased_signal(entries, signal_id, kind="tag")
+        for signal_id in eligible_tags
+    }
+    tag_work_bias = {
+        signal_id: is_work_context_biased_signal(entries, signal_id, kind="tag")
+        for signal_id in eligible_tags
+    }
+    tag_items = sorted(eligible_tags.items(), key=lambda item: item[1].slug)
 
     raw: list[
         tuple[TagRef, TagRef, int, int, int, int, float, float, float, float, bool, bool, bool]
     ] = []
     for index, (tag_a_id, tag_a) in enumerate(tag_items):
-        if tag_counts[tag_a_id] < min_tag_usages:
-            continue
+        _check_cooccurrence_deadline(deadline)
         for tag_b_id, tag_b in tag_items[index + 1 :]:
-            if tag_counts[tag_b_id] < min_tag_usages:
-                continue
-            stats = _cooccurrence_stats(
-                entries,
-                signal_a_id=tag_a_id,
-                signal_b_id=tag_b_id,
-                kind_a="tag",
-                kind_b="tag",
+            _check_cooccurrence_deadline(deadline)
+            stats = _cooccurrence_stats_from_presence(
+                tag_presence[tag_a_id],
+                tag_presence[tag_b_id],
+                total=len(entries),
             )
             if stats is None:
                 continue
@@ -631,25 +733,22 @@ def compute_tag_tag_associations(
             if co_count < 5 and not (co_count >= 3 and p_value < 0.05):
                 continue
             weekday_confounded = (
-                is_weekday_biased_signal(entries, tag_a_id, kind="tag")
-                and is_weekday_biased_signal(entries, tag_b_id, kind="tag")
+                tag_weekday_bias[tag_a_id] and tag_weekday_bias[tag_b_id]
             ) or is_pair_cooccurrence_weekday_confounded(
-                [entry.entry_date for entry in entries],
-                [1 if tag_a_id in entry.tag_ids else 0 for entry in entries],
-                [1 if tag_b_id in entry.tag_ids else 0 for entry in entries],
+                entry_dates,
+                tag_vectors[tag_a_id],
+                tag_vectors[tag_b_id],
                 alpha=COOCCURRENCE_FDR_ALPHA,
             )
-            work_context_confounded = is_work_context_biased_signal(
-                entries, tag_a_id, kind="tag"
-            ) and is_work_context_biased_signal(entries, tag_b_id, kind="tag")
+            work_context_confounded = tag_work_bias[tag_a_id] and tag_work_bias[tag_b_id]
             calendar_context_confounded = (
                 weekday_confounded
                 or work_context_confounded
                 or is_pair_cooccurrence_calendar_context_confounded(
-                    [entry.entry_date for entry in entries],
-                    [entry.work_context.value for entry in entries],
-                    [1 if tag_a_id in entry.tag_ids else 0 for entry in entries],
-                    [1 if tag_b_id in entry.tag_ids else 0 for entry in entries],
+                    entry_dates,
+                    work_contexts,
+                    tag_vectors[tag_a_id],
+                    tag_vectors[tag_b_id],
                     alpha=COOCCURRENCE_FDR_ALPHA,
                 )
             )
@@ -725,6 +824,7 @@ def heatmap_tag_tag_associations(
     min_entries: int = MIN_SYMPTOM_ANALYTICS_ENTRIES,
     min_tag_usages: int = MIN_TAG_USAGES_FOR_TAG_COOCCURRENCE,
     heatmap_lift_delta: float = MIN_HEATMAP_LIFT_DELTA,
+    deadline: float | None = None,
 ) -> list[TagTagAssociation]:
     """Return tag×tag associations for the Insights heatmap gate (no UI lift column)."""
 
@@ -740,6 +840,7 @@ def heatmap_tag_tag_associations(
         # The gate below admits a pair on a large lift *or* FDR significance;
         # dropping the insignificant ones here would decide that in advance.
         require_significance=False,
+        deadline=deadline,
     )
     return [
         association

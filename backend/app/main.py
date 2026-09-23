@@ -20,6 +20,7 @@ from app.core.error_tracking import init_error_tracking
 from app.core.logging import setup_logging
 from app.core.rate_limit import limiter
 from app.core.request_id import RequestIDMiddleware
+from app.services.cooccurrence_runtime import cooccurrence_runner
 from app.services.health_service import check_liveness
 
 
@@ -33,6 +34,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # lifespan hook focused on process-wide setup until a measured startup
     # warmup or explicit shutdown hook is required.
     yield
+    cooccurrence_runner.shutdown()
 
 
 def create_app() -> FastAPI:

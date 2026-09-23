@@ -55,7 +55,9 @@
   $: trendDates = heatmap ? trendDatesForHeatmap(heatmap.start_date, heatmap.end_date) : [];
   $: showCooccurrencePanel =
     canShowSymptomCooccurrence(phase) &&
-    (cooccurrenceLoading || (cooccurrence?.cells.length ?? 0) > 0);
+    (cooccurrenceLoading ||
+      (cooccurrence?.cells.length ?? 0) > 0 ||
+      Boolean(cooccurrence && cooccurrence.analysis_status !== 'ok'));
 </script>
 
 <section class="symptom-analytics" aria-labelledby="symptom-analytics-heading">

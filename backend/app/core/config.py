@@ -248,6 +248,22 @@ class Settings(BaseSettings):
     # rare tags have too little statistical power even inside a large history.
     ANALYTICS_MIN_TAG_USAGES: int = Field(default=10, ge=2)
 
+    # Interactive co-occurrence analytics (#988). A request is admitted only
+    # after its full Fisher/FDR family is known to fit these deterministic
+    # budgets. CPU work then runs in this bounded process pool, never in the API
+    # event loop. Work units are ``logged days * eligible pairs``.
+    COOCCURRENCE_MAX_ELIGIBLE_TAGS: int = Field(default=28, ge=2, le=100)
+    COOCCURRENCE_MAX_ELIGIBLE_SYMPTOMS: int = Field(default=20, ge=1, le=100)
+    COOCCURRENCE_MAX_SUPPLIED_TAGS: int = Field(default=200, ge=2, le=10_000)
+    COOCCURRENCE_MAX_SUPPLIED_SYMPTOMS: int = Field(default=100, ge=1, le=10_000)
+    COOCCURRENCE_MAX_PAIRS: int = Field(default=400, ge=1)
+    COOCCURRENCE_MAX_WORK_UNITS: int = Field(default=100_000, ge=1)
+    COOCCURRENCE_PROCESS_WORKERS: int = Field(default=2, ge=1, le=8)
+    COOCCURRENCE_MAX_QUEUE_SIZE: int = Field(default=4, ge=0, le=100)
+    COOCCURRENCE_JOB_TIMEOUT_SECONDS: float = Field(default=8.0, ge=0.1, le=60.0)
+    COOCCURRENCE_CACHE_TTL_SECONDS: float = Field(default=300.0, ge=0.0, le=3600.0)
+    COOCCURRENCE_CACHE_MAX_ENTRIES: int = Field(default=128, ge=1, le=10_000)
+
     # Worker robustness (#753): hard ceilings so a stuck query, a held
     # advisory lock, or a runaway per-user job cannot hang a connection or
     # the nightly batch indefinitely. Milliseconds, mirrors Postgres units.

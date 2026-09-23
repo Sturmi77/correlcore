@@ -173,12 +173,39 @@ class TagCooccurrencePair(BaseModel):
     pct_of_b: float = Field(ge=0, le=100)
 
 
+CooccurrenceAnalysisStatus = Literal[
+    "ok",
+    "insufficient_data",
+    "limit_exceeded",
+    "busy",
+    "timeout",
+    "unavailable",
+]
+
+
+class CooccurrenceAnalysisLimit(BaseModel):
+    reason: Literal[
+        "supplied_tags",
+        "supplied_symptoms",
+        "eligible_tags",
+        "eligible_symptoms",
+        "pair_count",
+        "work_units",
+    ]
+    eligible_tags: int = Field(ge=0)
+    eligible_symptoms: int = Field(ge=0)
+    pair_count: int = Field(ge=0)
+    work_units: int = Field(ge=0)
+
+
 class TagCooccurrenceResponse(BaseModel):
     range: TagCooccurrenceRange
     start_date: date_type
     end_date: date_type
     min_count: int = Field(ge=1)
     pairs: list[TagCooccurrencePair] = Field(default_factory=list)
+    analysis_status: CooccurrenceAnalysisStatus = "ok"
+    analysis_limit: CooccurrenceAnalysisLimit | None = None
     # True when the window holds fewer logged days than the analysis needs, so
     # an empty `pairs` means "cannot be computed here", not "nothing found".
     # A 7-day range can never reach the floor, so it returned an empty panel
@@ -213,6 +240,8 @@ class SymptomTagCooccurrenceResponse(BaseModel):
     end_date: date_type
     min_count: int = Field(ge=1)
     cells: list[SymptomTagCooccurrenceCell] = Field(default_factory=list)
+    analysis_status: CooccurrenceAnalysisStatus = "ok"
+    analysis_limit: CooccurrenceAnalysisLimit | None = None
 
 
 class TagClusterMember(BaseModel):

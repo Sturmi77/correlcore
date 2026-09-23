@@ -47,6 +47,19 @@ const data = {
 };
 
 describe('SymptomCooccurrenceHeatmap', () => {
+  it('renders insufficient data as an uncomputed analysis state', () => {
+    render(SymptomCooccurrenceHeatmap, {
+      props: {
+        data: { ...data, cells: [], analysis_status: 'insufficient_data' },
+        phase: 'provisional',
+      },
+    });
+
+    expect(
+      screen.getByText('insights.symptoms.cooccurrence_status_insufficient_data')
+    ).toBeTruthy();
+  });
+
   it('renders lift values in provisional phase', () => {
     render(SymptomCooccurrenceHeatmap, {
       props: { data, phase: 'provisional' },

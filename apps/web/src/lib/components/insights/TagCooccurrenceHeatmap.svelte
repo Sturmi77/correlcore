@@ -125,6 +125,11 @@
   $: maxCount = matrix.counts.flat().reduce((peak, count) => Math.max(peak, count), 0);
   $: hasEnoughPairs = (data?.pairs?.length ?? 0) >= minPairsForDisplay;
   $: showSkeleton = loading && !data;
+  $: analysisUnavailable =
+    data?.analysis_status === 'limit_exceeded' ||
+    data?.analysis_status === 'busy' ||
+    data?.analysis_status === 'timeout' ||
+    data?.analysis_status === 'unavailable';
   $: interactiveCells = matrix.tags.flatMap((rowTag, rowIndex) =>
     matrix.tags.flatMap((colTag, colIndex) => {
       if (rowIndex === colIndex) return [];
@@ -447,6 +452,10 @@
         <span class={`cooccurrence__legend-cell cooccurrence__cell--${level}`}></span>
       {/each}
       <span>{$_('insights.cooccurrence.more')}</span>
+    </div>
+  {:else if !loading && analysisUnavailable}
+    <div class="cooccurrence__empty" data-testid="cooccurrence-analysis-unavailable">
+      <p>{$_(`insights.cooccurrence.status_${data?.analysis_status}`)}</p>
     </div>
   {:else if !loading && data?.window_too_short}
     <!--

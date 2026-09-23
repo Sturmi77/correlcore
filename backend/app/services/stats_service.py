@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass
@@ -11,12 +12,14 @@ from datetime import date as date_type
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.entry import Entry
 from app.models.symptom import EntrySymptom, Symptom
 from app.models.tag import EntryTag, Tag, TagCategory
 from app.models.user_preference import UserPreference
 from app.schemas.stats import (
     COOCCURRENCE_RANGE_DAYS,
+    CooccurrenceAnalysisLimit,
     SymptomHeatmapDay,
     SymptomHeatmapResponse,
     SymptomHeatmapSymptom,
@@ -34,13 +37,26 @@ from app.schemas.stats import (
     TimeseriesRange,
     TimeseriesResponse,
 )
+from app.services.cooccurrence_runtime import (
+    COOCCURRENCE_ALGORITHM_VERSION,
+    CooccurrenceBusyError,
+    CooccurrenceLimitReason,
+    CooccurrenceTimeoutError,
+    CooccurrenceWorkerError,
+    CooccurrenceWorkPlan,
+    compute_symptom_tag_job,
+    compute_tag_tag_job,
+    cooccurrence_runner,
+    plan_symptom_tag_work,
+    plan_tag_tag_work,
+    work_limit_reason,
+)
 from app.services.symptom_analytics import (
     MIN_SYMPTOM_ANALYTICS_ENTRIES,
+    MIN_SYMPTOM_USAGES,
     DailySymptomEntry,
     SymptomRef,
     TagRef,
-    heatmap_symptom_tag_associations,
-    heatmap_tag_tag_associations,
 )
 from app.services.tag_service import (
     active_tag_predicate,
@@ -79,6 +95,54 @@ def _dedupe_daily_symptom_entries(entries: list[DailySymptomEntry]) -> list[Dail
             )
         )
     return daily_entries
+
+
+def _cooccurrence_data_version(
+    entries: list[DailySymptomEntry],
+    *,
+    tags: dict[uuid.UUID, TagRef],
+    symptoms: dict[uuid.UUID, SymptomRef] | None = None,
+) -> str:
+    """Exact, user-local data version for the short-lived analysis cache."""
+
+    digest = hashlib.sha256()
+
+    def add_text(value: str) -> None:
+        encoded = value.encode()
+        digest.update(len(encoded).to_bytes(4, byteorder="big"))
+        digest.update(encoded)
+
+    for entry in entries:
+        add_text(entry.entry_date.isoformat())
+        digest.update(bytes((entry.mood_score, entry.energy, entry.stress)))
+        add_text(entry.work_context.value)
+        for tag_id in sorted(entry.tag_ids, key=str):
+            digest.update(tag_id.bytes)
+        digest.update(b"|")
+        for symptom_id in sorted(entry.symptom_ids, key=str):
+            digest.update(symptom_id.bytes)
+        digest.update(b"\n")
+    for tag_id, tag in sorted(tags.items(), key=lambda item: str(item[0])):
+        digest.update(tag_id.bytes)
+        add_text(tag.slug)
+        add_text(tag.label)
+    for symptom_id, symptom in sorted((symptoms or {}).items(), key=lambda item: str(item[0])):
+        digest.update(symptom_id.bytes)
+        add_text(symptom.slug)
+        add_text(symptom.label)
+    return digest.hexdigest()
+
+
+def _analysis_limit(
+    plan: CooccurrenceWorkPlan, reason: CooccurrenceLimitReason
+) -> CooccurrenceAnalysisLimit:
+    return CooccurrenceAnalysisLimit(
+        reason=reason,
+        eligible_tags=plan.eligible_tags,
+        eligible_symptoms=plan.eligible_symptoms,
+        pair_count=plan.pair_count,
+        work_units=plan.work_units,
+    )
 
 
 @dataclass(frozen=True)
@@ -535,14 +599,87 @@ async def get_tag_cooccurrence(
     # an empty panel indistinguishable from "no pairs found" (#966). Say which.
     window_too_short = len(daily_entries) < MIN_SYMPTOM_ANALYTICS_ENTRIES
 
-    associations = heatmap_tag_tag_associations(
+    if window_too_short:
+        return TagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+            analysis_status="insufficient_data",
+            window_too_short=True,
+        )
+
+    tag_refs = {
+        tag_id: TagRef(id=tag.id, label=tag.name, slug=tag.slug)
+        for tag_id, tag in tags_by_id.items()
+    }
+    min_tag_usages = max(min_count, 5)
+    plan = plan_tag_tag_work(
         daily_entries,
-        {
-            tag_id: TagRef(id=tag.id, label=tag.name, slug=tag.slug)
-            for tag_id, tag in tags_by_id.items()
-        },
-        min_tag_usages=max(min_count, 5),
+        tag_refs,
+        min_tag_usages=min_tag_usages,
     )
+    limit_reason = work_limit_reason(plan)
+    if limit_reason is not None:
+        return TagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+            analysis_status="limit_exceeded",
+            analysis_limit=_analysis_limit(plan, limit_reason),
+            window_too_short=window_too_short,
+        )
+    cache_key = (
+        "tag_tag",
+        user_id,
+        start_date,
+        end_date,
+        _cooccurrence_data_version(daily_entries, tags=tag_refs),
+        COOCCURRENCE_ALGORITHM_VERSION,
+        min_tag_usages,
+    )
+    try:
+        associations = await cooccurrence_runner.run(
+            key=cache_key,
+            user_id=user_id,
+            function=compute_tag_tag_job,
+            args=(
+                daily_entries,
+                tag_refs,
+                min_tag_usages,
+                settings.COOCCURRENCE_JOB_TIMEOUT_SECONDS,
+            ),
+        )
+    except CooccurrenceBusyError:
+        return TagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+            analysis_status="busy",
+        )
+    except CooccurrenceTimeoutError:
+        return TagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+            analysis_status="timeout",
+        )
+    except CooccurrenceWorkerError:
+        return TagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+            analysis_status="unavailable",
+        )
 
     pairs: list[TagCooccurrencePair] = [
         TagCooccurrencePair(
@@ -677,22 +814,95 @@ async def get_symptom_tag_cooccurrence(
             for entry in sorted(entries, key=lambda item: (item.entry_date, item.slot.value))
         ]
     )
-    associations = heatmap_symptom_tag_associations(
+    if len(daily_entries) < MIN_SYMPTOM_ANALYTICS_ENTRIES:
+        return SymptomTagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+            analysis_status="insufficient_data",
+        )
+
+    symptom_refs = {
+        symptom_id: SymptomRef(
+            id=symptom.id,
+            label=symptom.display_name,
+            slug=symptom.slug,
+        )
+        for symptom_id, symptom in symptoms_by_id.items()
+    }
+    tag_refs = {
+        tag_id: TagRef(id=tag.id, label=tag.name, slug=tag.slug)
+        for tag_id, tag in tags_by_id.items()
+    }
+    plan = plan_symptom_tag_work(
         daily_entries,
-        {
-            symptom_id: SymptomRef(
-                id=symptom.id,
-                label=symptom.display_name,
-                slug=symptom.slug,
-            )
-            for symptom_id, symptom in symptoms_by_id.items()
-        },
-        {
-            tag_id: TagRef(id=tag.id, label=tag.name, slug=tag.slug)
-            for tag_id, tag in tags_by_id.items()
-        },
+        symptom_refs,
+        tag_refs,
+        min_symptom_usages=MIN_SYMPTOM_USAGES,
         min_tag_usages=min_count,
     )
+    limit_reason = work_limit_reason(plan)
+    if limit_reason is not None:
+        return SymptomTagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+            analysis_status="limit_exceeded",
+            analysis_limit=_analysis_limit(plan, limit_reason),
+        )
+    cache_key = (
+        "symptom_tag",
+        user_id,
+        start_date,
+        end_date,
+        _cooccurrence_data_version(daily_entries, tags=tag_refs, symptoms=symptom_refs),
+        COOCCURRENCE_ALGORITHM_VERSION,
+        min_count,
+    )
+    try:
+        associations = await cooccurrence_runner.run(
+            key=cache_key,
+            user_id=user_id,
+            function=compute_symptom_tag_job,
+            args=(
+                daily_entries,
+                symptom_refs,
+                tag_refs,
+                min_count,
+                settings.COOCCURRENCE_JOB_TIMEOUT_SECONDS,
+            ),
+        )
+    except CooccurrenceBusyError:
+        return SymptomTagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+            analysis_status="busy",
+        )
+    except CooccurrenceTimeoutError:
+        return SymptomTagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+            analysis_status="timeout",
+        )
+    except CooccurrenceWorkerError:
+        return SymptomTagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+            analysis_status="unavailable",
+        )
 
     cells = [
         SymptomTagCooccurrenceCell(
