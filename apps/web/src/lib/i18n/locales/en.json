@@ -1537,6 +1537,7 @@
       "cooccurrence_count_legend": "Shared entry counts until enough data is available for lift.",
       "cooccurrence_empty": "No stable symptom-tag patterns in this range yet.",
       "cooccurrence_status_limit_exceeded": "This range contains too many signals to analyse safely. Choose a shorter range or hide unused tags.",
+      "cooccurrence_status_insufficient_data": "This range contains too few logged days to compute symptom-tag patterns. Choose a longer range.",
       "cooccurrence_status_busy": "An analysis is already running. Try again shortly.",
       "cooccurrence_status_timeout": "The analysis reached its time limit. Choose a shorter range and try again.",
       "cooccurrence_status_unavailable": "The analysis is temporarily unavailable. Try again shortly.",

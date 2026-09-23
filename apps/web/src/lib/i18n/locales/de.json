@@ -1537,6 +1537,7 @@
       "cooccurrence_count_legend": "Gemeinsame Entry-Anzahl, bis genug Daten fuer Lift vorhanden sind.",
       "cooccurrence_empty": "Noch keine stabilen Symptom-Tag-Muster in diesem Zeitraum.",
       "cooccurrence_status_limit_exceeded": "Dieser Zeitraum enthält zu viele Signale für eine sichere Analyse. Wähle einen kürzeren Zeitraum oder blende ungenutzte Tags aus.",
+      "cooccurrence_status_insufficient_data": "Für diesen Zeitraum liegen zu wenige erfasste Tage vor, um Symptom-Tag-Muster zu berechnen. Wähle einen längeren Zeitraum.",
       "cooccurrence_status_busy": "Eine Analyse läuft bereits. Versuche es gleich noch einmal.",
       "cooccurrence_status_timeout": "Die Analyse hat ihr Zeitlimit erreicht. Wähle einen kürzeren Zeitraum und versuche es erneut.",
       "cooccurrence_status_unavailable": "Die Analyse ist vorübergehend nicht verfügbar. Versuche es gleich noch einmal.",

@@ -190,6 +190,33 @@ async def test_tag_cooccurrence_reports_limit_without_starting_analysis(monkeypa
 
 
 @pytest.mark.asyncio
+async def test_tag_cooccurrence_reports_insufficient_data_before_work_limit(monkeypatch) -> None:
+    user = make_user()
+    _sport, _focus, entries, tag_rows, _start = _lifted_pair_fixture(user)
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_or_none_result(True),
+            _scalar_result(entries[:10]),
+            _row_result(tag_rows),
+        ]
+    )
+    monkeypatch.setattr("app.services.stats_service.settings.COOCCURRENCE_MAX_PAIRS", 0)
+
+    out = await get_tag_cooccurrence(
+        db,
+        user_id=user.id,
+        range_="90d",
+        min_count=5,
+        as_of=date(2026, 2, 9),
+    )
+
+    assert out.analysis_status == "insufficient_data"
+    assert out.analysis_limit is None
+    assert out.window_too_short is True
+
+
+@pytest.mark.asyncio
 async def test_tag_cooccurrence_skips_when_analytics_disabled() -> None:
     user = make_user()
     db = MagicMock()

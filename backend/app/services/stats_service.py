@@ -599,6 +599,17 @@ async def get_tag_cooccurrence(
     # an empty panel indistinguishable from "no pairs found" (#966). Say which.
     window_too_short = len(daily_entries) < MIN_SYMPTOM_ANALYTICS_ENTRIES
 
+    if window_too_short:
+        return TagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+            analysis_status="insufficient_data",
+            window_too_short=True,
+        )
+
     tag_refs = {
         tag_id: TagRef(id=tag.id, label=tag.name, slug=tag.slug)
         for tag_id, tag in tags_by_id.items()
@@ -621,17 +632,6 @@ async def get_tag_cooccurrence(
             analysis_limit=_analysis_limit(plan, limit_reason),
             window_too_short=window_too_short,
         )
-    if window_too_short:
-        return TagCooccurrenceResponse(
-            range=range_,
-            start_date=start_date,
-            end_date=end_date,
-            min_count=min_count,
-            pairs=[],
-            analysis_status="insufficient_data",
-            window_too_short=True,
-        )
-
     cache_key = (
         "tag_tag",
         user_id,
@@ -814,6 +814,16 @@ async def get_symptom_tag_cooccurrence(
             for entry in sorted(entries, key=lambda item: (item.entry_date, item.slot.value))
         ]
     )
+    if len(daily_entries) < MIN_SYMPTOM_ANALYTICS_ENTRIES:
+        return SymptomTagCooccurrenceResponse(
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+            analysis_status="insufficient_data",
+        )
+
     symptom_refs = {
         symptom_id: SymptomRef(
             id=symptom.id,
@@ -844,16 +854,6 @@ async def get_symptom_tag_cooccurrence(
             analysis_status="limit_exceeded",
             analysis_limit=_analysis_limit(plan, limit_reason),
         )
-    if len(daily_entries) < MIN_SYMPTOM_ANALYTICS_ENTRIES:
-        return SymptomTagCooccurrenceResponse(
-            range=range_,
-            start_date=start_date,
-            end_date=end_date,
-            min_count=min_count,
-            cells=[],
-            analysis_status="insufficient_data",
-        )
-
     cache_key = (
         "symptom_tag",
         user_id,

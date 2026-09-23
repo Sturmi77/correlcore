@@ -114,6 +114,7 @@
   $: showLift = phase === 'provisional' || phase === 'robust';
   $: showSkeleton = loading && !data;
   $: analysisUnavailable =
+    data?.analysis_status === 'insufficient_data' ||
     data?.analysis_status === 'limit_exceeded' ||
     data?.analysis_status === 'busy' ||
     data?.analysis_status === 'timeout' ||
