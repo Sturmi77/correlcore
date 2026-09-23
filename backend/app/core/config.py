@@ -254,6 +254,8 @@ class Settings(BaseSettings):
     # event loop. Work units are ``logged days * eligible pairs``.
     COOCCURRENCE_MAX_ELIGIBLE_TAGS: int = Field(default=28, ge=2, le=100)
     COOCCURRENCE_MAX_ELIGIBLE_SYMPTOMS: int = Field(default=20, ge=1, le=100)
+    COOCCURRENCE_MAX_SUPPLIED_TAGS: int = Field(default=200, ge=2, le=10_000)
+    COOCCURRENCE_MAX_SUPPLIED_SYMPTOMS: int = Field(default=100, ge=1, le=10_000)
     COOCCURRENCE_MAX_PAIRS: int = Field(default=400, ge=1)
     COOCCURRENCE_MAX_WORK_UNITS: int = Field(default=100_000, ge=1)
     COOCCURRENCE_PROCESS_WORKERS: int = Field(default=2, ge=1, le=8)

@@ -13,6 +13,7 @@ import time
 import uuid
 from collections import OrderedDict
 from collections.abc import Callable, Hashable, Mapping, Sequence
+from concurrent.futures import Future as ConcurrentFuture
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from dataclasses import dataclass
@@ -48,6 +49,8 @@ class CooccurrenceWorkerError(RuntimeError):
 
 @dataclass(frozen=True)
 class CooccurrenceWorkPlan:
+    supplied_tags: int
+    supplied_symptoms: int
     eligible_tags: int
     eligible_symptoms: int
     pair_count: int
@@ -68,6 +71,8 @@ def plan_tag_tag_work(
     eligible_tags = sum(count >= min_tag_usages for count in counts.values())
     pair_count = eligible_tags * (eligible_tags - 1) // 2
     return CooccurrenceWorkPlan(
+        supplied_tags=len(tags),
+        supplied_symptoms=0,
         eligible_tags=eligible_tags,
         eligible_symptoms=0,
         pair_count=pair_count,
@@ -96,6 +101,8 @@ def plan_symptom_tag_work(
     eligible_tags = sum(count >= min_tag_usages for count in tag_counts.values())
     pair_count = eligible_symptoms * eligible_tags
     return CooccurrenceWorkPlan(
+        supplied_tags=len(tags),
+        supplied_symptoms=len(symptoms),
         eligible_tags=eligible_tags,
         eligible_symptoms=eligible_symptoms,
         pair_count=pair_count,
@@ -104,6 +111,10 @@ def plan_symptom_tag_work(
 
 
 def work_limit_reason(plan: CooccurrenceWorkPlan) -> str | None:
+    if plan.supplied_tags > settings.COOCCURRENCE_MAX_SUPPLIED_TAGS:
+        return "supplied_tags"
+    if plan.supplied_symptoms > settings.COOCCURRENCE_MAX_SUPPLIED_SYMPTOMS:
+        return "supplied_symptoms"
     if plan.eligible_tags > settings.COOCCURRENCE_MAX_ELIGIBLE_TAGS:
         return "eligible_tags"
     if plan.eligible_symptoms > settings.COOCCURRENCE_MAX_ELIGIBLE_SYMPTOMS:
@@ -210,12 +221,14 @@ class CooccurrenceRunner:
         function: Callable[..., T],
         args: tuple[Any, ...],
     ) -> T:
-        future: asyncio.Future[T] | None = None
+        concurrent_future: ConcurrentFuture[T] | None = None
+        release_here = True
         try:
             loop = asyncio.get_running_loop()
-            future = loop.run_in_executor(self._get_executor(), function, *args)
+            concurrent_future = self._get_executor().submit(function, *args)
+            future = asyncio.wrap_future(concurrent_future, loop=loop)
             result = await asyncio.wait_for(
-                future,
+                asyncio.shield(future),
                 timeout=settings.COOCCURRENCE_JOB_TIMEOUT_SECONDS,
             )
             async with self._lock:
@@ -226,8 +239,15 @@ class CooccurrenceRunner:
                     self._cache.popitem(last=False)
             return result
         except (TimeoutError, CooccurrenceComputationTimeout) as exc:
-            if future is not None:
-                future.cancel()
+            if concurrent_future is not None and not concurrent_future.done():
+                # ProcessPool jobs cannot be stopped once running. Keep the job
+                # and user in admission accounting until the worker really exits.
+                release_here = False
+                concurrent_future.add_done_callback(
+                    lambda _future: loop.call_soon_threadsafe(
+                        lambda: asyncio.create_task(self._release(key, user_id))
+                    )
+                )
             raise CooccurrenceTimeoutError from exc
         except BrokenProcessPool as exc:
             executor = self._executor
@@ -238,9 +258,13 @@ class CooccurrenceRunner:
         except Exception as exc:
             raise CooccurrenceWorkerError from exc
         finally:
-            async with self._lock:
-                self._inflight.pop(key, None)
-                self._users.discard(user_id)
+            if release_here:
+                await self._release(key, user_id)
+
+    async def _release(self, key: Hashable, user_id: uuid.UUID) -> None:
+        async with self._lock:
+            self._inflight.pop(key, None)
+            self._users.discard(user_id)
 
     def shutdown(self) -> None:
         executor = self._executor

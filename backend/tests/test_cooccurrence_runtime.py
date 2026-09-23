@@ -95,6 +95,16 @@ def test_work_plan_returns_typed_limit_without_truncating_pairs(monkeypatch) -> 
     assert work_limit_reason(plan) == "pair_count"
 
 
+def test_work_plan_rejects_excess_supplied_signals_even_when_unused(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "COOCCURRENCE_MAX_SUPPLIED_TAGS", 3)
+    tag_ids = [uuid4() for _ in range(4)]
+    tags = {value: TagRef(id=value, label=str(value), slug=str(value)) for value in tag_ids}
+    plan = plan_tag_tag_work([], tags, min_tag_usages=5)
+
+    assert plan.eligible_tags == 0
+    assert work_limit_reason(plan) == "supplied_tags"
+
+
 def test_precomputed_pair_counts_are_statistically_equivalent() -> None:
     tag_ids = [uuid4(), uuid4()]
     start = date(2026, 1, 1)
@@ -234,13 +244,21 @@ async def test_runner_maps_timeout_and_worker_failure(monkeypatch) -> None:
     monkeypatch.setattr(settings, "COOCCURRENCE_JOB_TIMEOUT_SECONDS", 0.01)
     runner = CooccurrenceRunner()
     runner._executor = ThreadPoolExecutor(max_workers=1)  # type: ignore[assignment]
+    timed_out_user = uuid4()
     try:
         with pytest.raises(CooccurrenceTimeoutError):
             await runner.run(
                 key=(uuid4(), "slow"),
-                user_id=uuid4(),
+                user_id=timed_out_user,
                 function=_sleep_and_return,
                 args=(0.1, "late"),
+            )
+        with pytest.raises(CooccurrenceBusyError):
+            await runner.run(
+                key=(timed_out_user, "too-soon"),
+                user_id=timed_out_user,
+                function=_sleep_and_return,
+                args=(0.0, "no"),
             )
         await asyncio.sleep(0.11)
         monkeypatch.setattr(settings, "COOCCURRENCE_JOB_TIMEOUT_SECONDS", 1.0)

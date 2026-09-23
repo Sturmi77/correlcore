@@ -10,6 +10,8 @@ they are not inferred from an HTTP timeout.
 | ---------------------- | ------------------------: | ---------------------------------------------------------------------------------- |
 | Eligible tags          |                        28 | Whole request returns `limit_exceeded`; signals are not truncated                  |
 | Eligible symptoms      |                        20 | Whole request returns `limit_exceeded`                                             |
+| Supplied tags          |                       200 | Input catalog is rejected before per-signal preprocessing                          |
+| Supplied symptoms      |                       100 | Input catalog is rejected before per-signal preprocessing                          |
 | Fisher/FDR pairs       |                       400 | Checked before the first Fisher test; the FDR family remains complete              |
 | Work units             |                   100,000 | `logged days × eligible pairs`                                                     |
 | Worker processes       |         2 per API process | CPU work does not run on the asyncio event loop                                    |
@@ -23,8 +25,9 @@ symptom identity, slug, and label. Any relevant entry, assignment, context, or
 signal metadata change therefore misses the old cache entry. User ID is part of
 the key, so results cannot be reused across accounts.
 
-The worker checks its own monotonic deadline between candidate pairs. Cancelling
-or timing out the HTTP waiter therefore cannot leave unbounded CPU work behind.
+The worker checks its own monotonic deadline between candidate pairs. A timed-out
+job remains in admission accounting until its process future actually completes,
+so repeated requests cannot oversubscribe the pool while old work winds down.
 A broken process pool is discarded and recreated by the next admitted request.
 
 ## Reproducible capacity measurement

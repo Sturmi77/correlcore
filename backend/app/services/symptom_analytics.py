@@ -477,18 +477,33 @@ def compute_symptom_tag_associations(
     if len(entries) < min_entries:
         return []
 
+    symptom_counts = {
+        signal_id: sum(signal_id in entry.symptom_ids for entry in entries)
+        for signal_id in symptoms
+    }
+    tag_counts = {
+        signal_id: sum(signal_id in entry.tag_ids for entry in entries) for signal_id in tags
+    }
+    eligible_symptoms = {
+        signal_id: symptoms[signal_id]
+        for signal_id, count in symptom_counts.items()
+        if count >= min_symptom_usages
+    }
+    eligible_tags = {
+        signal_id: tags[signal_id]
+        for signal_id, count in tag_counts.items()
+        if count >= min_tag_usages
+    }
     symptom_presence = {
         symptom_id: frozenset(
             index for index, entry in enumerate(entries) if symptom_id in entry.symptom_ids
         )
-        for symptom_id in symptoms
+        for symptom_id in eligible_symptoms
     }
     tag_presence = {
         tag_id: frozenset(index for index, entry in enumerate(entries) if tag_id in entry.tag_ids)
-        for tag_id in tags
+        for tag_id in eligible_tags
     }
-    symptom_counts = {signal_id: len(indexes) for signal_id, indexes in symptom_presence.items()}
-    tag_counts = {signal_id: len(indexes) for signal_id, indexes in tag_presence.items()}
     symptom_vectors = {
         signal_id: [1 if index in indexes else 0 for index in range(len(entries))]
         for signal_id, indexes in symptom_presence.items()
@@ -501,31 +516,28 @@ def compute_symptom_tag_associations(
     work_contexts = [entry.work_context.value for entry in entries]
     symptom_weekday_bias = {
         signal_id: is_weekday_biased_signal(entries, signal_id, kind="symptom")
-        for signal_id in symptoms
+        for signal_id in eligible_symptoms
     }
     tag_weekday_bias = {
-        signal_id: is_weekday_biased_signal(entries, signal_id, kind="tag") for signal_id in tags
+        signal_id: is_weekday_biased_signal(entries, signal_id, kind="tag")
+        for signal_id in eligible_tags
     }
     symptom_work_bias = {
         signal_id: is_work_context_biased_signal(entries, signal_id, kind="symptom")
-        for signal_id in symptoms
+        for signal_id in eligible_symptoms
     }
     tag_work_bias = {
         signal_id: is_work_context_biased_signal(entries, signal_id, kind="tag")
-        for signal_id in tags
+        for signal_id in eligible_tags
     }
 
     raw: list[
         tuple[SymptomRef, TagRef, int, int, int, int, float, float, float, float, bool, bool, bool]
     ] = []
-    for symptom_id, symptom in sorted(symptoms.items(), key=lambda item: item[1].slug):
+    for symptom_id, symptom in sorted(eligible_symptoms.items(), key=lambda item: item[1].slug):
         _check_cooccurrence_deadline(deadline)
-        if symptom_counts[symptom_id] < min_symptom_usages:
-            continue
-        for tag_id, tag in sorted(tags.items(), key=lambda item: item[1].slug):
+        for tag_id, tag in sorted(eligible_tags.items(), key=lambda item: item[1].slug):
             _check_cooccurrence_deadline(deadline)
-            if tag_counts[tag_id] < min_tag_usages:
-                continue
             stats = _cooccurrence_stats_from_presence(
                 symptom_presence[symptom_id],
                 tag_presence[tag_id],
@@ -678,11 +690,18 @@ def compute_tag_tag_associations(
     if len(entries) < min_entries:
         return []
 
+    tag_counts = {
+        signal_id: sum(signal_id in entry.tag_ids for entry in entries) for signal_id in tags
+    }
+    eligible_tags = {
+        signal_id: tags[signal_id]
+        for signal_id, count in tag_counts.items()
+        if count >= min_tag_usages
+    }
     tag_presence = {
         tag_id: frozenset(index for index, entry in enumerate(entries) if tag_id in entry.tag_ids)
-        for tag_id in tags
+        for tag_id in eligible_tags
     }
-    tag_counts = {signal_id: len(indexes) for signal_id, indexes in tag_presence.items()}
     tag_vectors = {
         signal_id: [1 if index in indexes else 0 for index in range(len(entries))]
         for signal_id, indexes in tag_presence.items()
@@ -690,25 +709,22 @@ def compute_tag_tag_associations(
     entry_dates = [entry.entry_date for entry in entries]
     work_contexts = [entry.work_context.value for entry in entries]
     tag_weekday_bias = {
-        signal_id: is_weekday_biased_signal(entries, signal_id, kind="tag") for signal_id in tags
+        signal_id: is_weekday_biased_signal(entries, signal_id, kind="tag")
+        for signal_id in eligible_tags
     }
     tag_work_bias = {
         signal_id: is_work_context_biased_signal(entries, signal_id, kind="tag")
-        for signal_id in tags
+        for signal_id in eligible_tags
     }
-    tag_items = sorted(tags.items(), key=lambda item: item[1].slug)
+    tag_items = sorted(eligible_tags.items(), key=lambda item: item[1].slug)
 
     raw: list[
         tuple[TagRef, TagRef, int, int, int, int, float, float, float, float, bool, bool, bool]
     ] = []
     for index, (tag_a_id, tag_a) in enumerate(tag_items):
         _check_cooccurrence_deadline(deadline)
-        if tag_counts[tag_a_id] < min_tag_usages:
-            continue
         for tag_b_id, tag_b in tag_items[index + 1 :]:
             _check_cooccurrence_deadline(deadline)
-            if tag_counts[tag_b_id] < min_tag_usages:
-                continue
             stats = _cooccurrence_stats_from_presence(
                 tag_presence[tag_a_id],
                 tag_presence[tag_b_id],
