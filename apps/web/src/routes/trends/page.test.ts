@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
 import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
-import { updateUserPreferences } from '$lib/api/preferences';
+import { fetchUserPreferences, updateUserPreferences } from '$lib/api/preferences';
 import { fetchSymptomHeatmap, fetchTimeseries } from '$lib/api/stats';
 import { listEntries } from '$lib/api/entries';
 import { ApiError } from '$lib/api/client';
@@ -266,6 +266,30 @@ describe('/trends page', () => {
 
     await waitFor(() => {
       expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('week');
+    });
+  });
+
+  it('restarts a stale initial load after the server window is hydrated', async () => {
+    let resolveInitial!: (value: Awaited<ReturnType<typeof fetchTimeseries>>) => void;
+    vi.mocked(fetchTimeseries)
+      .mockImplementationOnce(
+        async () =>
+          await new Promise<Awaited<ReturnType<typeof fetchTimeseries>>>((resolve) => {
+            resolveInitial = resolve;
+          })
+      )
+      .mockImplementation(async (range: string) => ({ range, points: [] }));
+    vi.mocked(fetchUserPreferences).mockResolvedValueOnce({
+      trend_window_days: 90,
+    } as Awaited<ReturnType<typeof fetchUserPreferences>>);
+
+    render(Page);
+    await waitFor(() => expect(vi.mocked(fetchTimeseries)).toHaveBeenCalledTimes(1));
+
+    resolveInitial({ range: 'month', points: [] });
+
+    await waitFor(() => {
+      expect(vi.mocked(fetchTimeseries).mock.calls.at(-1)?.[0]).toBe('quarter');
     });
   });
 

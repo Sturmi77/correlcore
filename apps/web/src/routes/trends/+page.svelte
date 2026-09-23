@@ -459,7 +459,6 @@
   }
   $: if (
     $auth.status === 'authenticated' &&
-    timeseries &&
     // The window this data was loaded for, not a field of the response. The
     // coarse enum could not tell 14 from 28 correctly, and reading `days` off
     // the response makes the guard unsatisfiable whenever the field is absent.
