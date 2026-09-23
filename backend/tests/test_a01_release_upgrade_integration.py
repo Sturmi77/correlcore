@@ -23,6 +23,16 @@ from app.core.crypto import decrypt_with_dek, encrypt_with_dek, generate_dek, un
 
 pytestmark = pytest.mark.integration
 _BACKEND = Path(__file__).resolve().parents[1]
+_RLS_TABLES = (
+    "entries",
+    "entry_note_markers",
+    "entry_symptoms",
+    "entry_tags",
+    "sync_revision_log",
+    "sync_user_revisions",
+    "tags",
+)
+_SURVIVING_RLS_TABLES = tuple(name for name in _RLS_TABLES if name != "entry_note_markers")
 
 
 def _url(database: str) -> str:
@@ -52,6 +62,21 @@ async def _drop_database(name: str) -> None:
         await admin.execute(f'DROP DATABASE IF EXISTS "{name}"')
     finally:
         await admin.close()
+
+
+async def _rls_force_state(database: str, tables: tuple[str, ...]) -> dict[str, bool]:
+    conn = await asyncpg.connect(_url(database))
+    try:
+        rows = await conn.fetch(
+            "SELECT c.relname, c.relforcerowsecurity FROM pg_class c "
+            "JOIN pg_namespace n ON n.oid = c.relnamespace "
+            "WHERE n.nspname = current_schema() AND c.relname = ANY($1::text[]) "
+            "ORDER BY c.relname",
+            list(tables),
+        )
+        return {row["relname"]: row["relforcerowsecurity"] for row in rows}
+    finally:
+        await conn.close()
 
 
 def _alembic(database: str, revision: str, *, succeeds: bool = True) -> None:
@@ -254,7 +279,9 @@ def test_upgrade_from_old_schema(start: str) -> None:
     try:
         _alembic(database, start)
         ids = asyncio.run(_seed(database))
+        force_before = asyncio.run(_rls_force_state(database, _SURVIVING_RLS_TABLES))
         _alembic(database, "head")
+        assert asyncio.run(_rls_force_state(database, _SURVIVING_RLS_TABLES)) == force_before
         asyncio.run(_verify(database, ids))
         _alembic(database, "head")  # already-applied 049 is never replayed
     finally:
@@ -270,6 +297,7 @@ def test_mid_backfill_failure_keeps_source_and_can_retry() -> None:
         _alembic(database, "048")
         ids = asyncio.run(_seed(database))
         user_b = ids[1]
+        force_before = asyncio.run(_rls_force_state(database, _RLS_TABLES))
 
         async def add_fault() -> None:
             conn = await asyncpg.connect(_url(database))
@@ -288,6 +316,7 @@ def test_mid_backfill_failure_keeps_source_and_can_retry() -> None:
 
         asyncio.run(add_fault())
         _alembic(database, "head", succeeds=False)
+        assert asyncio.run(_rls_force_state(database, _RLS_TABLES)) == force_before
 
         async def inspect_and_clear() -> None:
             conn = await asyncpg.connect(_url(database))

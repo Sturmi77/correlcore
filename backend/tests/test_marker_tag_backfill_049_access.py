@@ -77,6 +77,39 @@ def test_restricted_non_owner_is_rejected() -> None:
         backfill._prepare_owner_rls_access(conn)
 
 
+def test_run_restores_force_rls_after_python_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    conn = _Connection(privileged=False, rows=_owned_rows(forced={"entries", "tags"}))
+
+    def fail(_conn: object) -> None:
+        raise RuntimeError("injected Python failure")
+
+    monkeypatch.setattr(backfill, "_run_backfill", fail)
+
+    with pytest.raises(RuntimeError, match="injected Python failure"):
+        backfill.run(conn)  # type: ignore[arg-type]
+
+    assert "ALTER TABLE entries FORCE ROW LEVEL SECURITY" in conn.statements
+    assert "ALTER TABLE tags FORCE ROW LEVEL SECURITY" in conn.statements
+
+
+def test_run_preserves_original_error_when_restore_needs_rollback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    conn = _Connection(privileged=False, rows=_owned_rows(forced={"entries"}))
+
+    def fail(_conn: object) -> None:
+        raise RuntimeError("original backfill failure")
+
+    def restore_fails(_conn: object, _tables: tuple[str, ...]) -> None:
+        raise RuntimeError("transaction is aborted")
+
+    monkeypatch.setattr(backfill, "_run_backfill", fail)
+    monkeypatch.setattr(backfill, "_restore_forced_rls", restore_fails)
+
+    with pytest.raises(RuntimeError, match="original backfill failure"):
+        backfill.run(conn)  # type: ignore[arg-type]
+
+
 def test_collision_rows_use_legacy_unicode_codepoint_order() -> None:
     rows = [
         SimpleNamespace(user_id="u", entry_id="e", marker="ä"),

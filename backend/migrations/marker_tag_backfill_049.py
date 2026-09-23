@@ -378,5 +378,21 @@ def _run_backfill(conn: Connection) -> None:
 def run(conn: Connection) -> None:
     """Run the backfill as a privileged role or the configured schema owner."""
     temporarily_unforced = _prepare_owner_rls_access(conn)
-    _run_backfill(conn)
-    _restore_forced_rls(conn, temporarily_unforced)
+    try:
+        _run_backfill(conn)
+    except BaseException:
+        # A Python-side failure can leave the transaction usable, so restore
+        # FORCE RLS immediately. A database error may already have aborted the
+        # transaction; in that case PostgreSQL's rollback restores the ALTERs.
+        # Never replace the original backfill error with that expected cleanup
+        # failure.
+        try:
+            _restore_forced_rls(conn, temporarily_unforced)
+        except Exception:
+            logger.warning(
+                "049: immediate FORCE RLS restore failed; transaction rollback will restore it",
+                exc_info=True,
+            )
+        raise
+    else:
+        _restore_forced_rls(conn, temporarily_unforced)

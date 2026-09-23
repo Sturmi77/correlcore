@@ -33,6 +33,13 @@ angewendet hat, sind seine Marker entfernt; fehlende Daten können nur aus einer
 vorherigen Sicherung rekonstruiert werden. Deshalb den Restore **vor** dem
 Produktionsupgrade testen.
 
+Bei einem Python-seitigen Fehler versucht der Backfill, zuvor aufgehobenes
+`FORCE ROW LEVEL SECURITY` sofort wiederherzustellen. Hat ein SQL-Fehler die
+Transaktion bereits abgebrochen, ist kein weiteres `ALTER TABLE` mehr möglich;
+der unvermeidliche Transaktions-Rollback stellt dann den vorherigen RLS-Zustand
+wieder her. Der Integrationstest vergleicht diesen Zustand vor und nach Erfolg
+sowie nach einem erzwungenen Fehler.
+
 Ein Downgrade erzeugt nur eine leere Markertabelle und ist **kein** Restore.
 Produktions-Rollback erfolgt über die zuvor geprüfte Datenbanksicherung und das
 zugehörige App-Image. Den konkreten Backup-/Restore-Nachweis und die finalen
