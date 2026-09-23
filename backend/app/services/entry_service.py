@@ -53,7 +53,9 @@ logger = logging.getLogger(__name__)
 # Cap list responses to avoid accidentally pulling thousands of rows.
 # The frontend pages the timeline, so this is a guard rail, not a UX limit.
 DEFAULT_LIST_LIMIT = 100
-MAX_LIST_LIMIT = 365
+# A 90-day event window expands by seven days on both sides and can contain
+# four entry slots per day (416 rows). Keep one bounded request complete.
+MAX_LIST_LIMIT = 500
 
 
 # ---------------------------------------------------------------------------

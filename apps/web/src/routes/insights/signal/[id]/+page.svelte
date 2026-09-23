@@ -26,6 +26,8 @@
   import EventAlignedSmallMultiplesSheet from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { TimeseriesPoint } from '$lib/api/stats';
+  import { fetchSymptomHeatmap, fetchTagHeatmap } from '$lib/api/stats';
+  import { listEntries } from '$lib/api/entries';
   import {
     insightMetricToChartKey,
     insightMetricToEntryField,
@@ -36,8 +38,20 @@
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import { isLagInsight, isSameDaySleepSpearman } from '$lib/utils/lagInsight';
   import SignalLagEvidence from '$lib/components/insights/SignalLagEvidence.svelte';
-  import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
+  import {
+    isSmallMultiplesUnlocked,
+    SMALL_MULTIPLES_RADIUS,
+  } from '$lib/components/trends/smallMultiplesGate';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
+  import {
+    analysisPairQuery,
+    insightMatchesAnalysisPair,
+    parseAnalysisPair,
+    partnerForInsight,
+  } from '$lib/utils/analysisPairHandoff';
+  import { presenceDatesForPartner, type EsmPartner } from '$lib/utils/esmPartner';
+  import { buildWorkContextHeatmap } from '$lib/utils/workContextHeatmap';
+  import { shiftIsoDate } from '$lib/utils/isoDate';
 
   let insight: InsightResponse | null = null;
   let maturity: InsightMaturity | null = null;
@@ -61,8 +75,30 @@
   let esmPoints: TimeseriesPoint[] = [];
   let esmLag: number | null = null;
   let esmLoading = false;
+  let esmPartnerLoading = false;
+  let esmPartner: EsmPartner | null = null;
+  let esmPartnerPresence: string[] = [];
+  let esmPartnerUnavailable = false;
+  let mounted = false;
+  let activeContext = '';
+  let requestGeneration = 0;
+  let detailAbort: AbortController | null = null;
+  let esmAbort: AbortController | null = null;
 
   $: insightId = $page.params.id ?? '';
+  $: authenticatedUserId = $auth.status === 'authenticated' ? $auth.user.id : '';
+  $: carriedPair = parseAnalysisPair($page.url.searchParams);
+  $: carriedPairQuery = carriedPair ? analysisPairQuery(carriedPair) : '';
+  $: requestedContext =
+    authenticatedUserId && insightId ? `${authenticatedUserId}:${insightId}` : '';
+  $: if (mounted && requestedContext && requestedContext !== activeContext) {
+    activeContext = requestedContext;
+    void load(insightId, authenticatedUserId);
+  }
+  $: if (mounted && $auth.status === 'anonymous') {
+    const next = `${$page.url.pathname}${$page.url.search}`;
+    void goto(`/auth/login?next=${encodeURIComponent(next)}`);
+  }
   $: withWithout = insight ? parseWithWithoutView(insight) : null;
   $: sameSituation = insight ? parseSameSituationView(insight) : null;
   $: isNull = insight ? isNullAssociation(insight) : false;
@@ -77,62 +113,182 @@
     isSmallMultiplesUnlocked(maturity?.phase ?? null);
   $: showUncertaintyRibbon = maturity?.phase !== 'robust';
 
-  async function load(): Promise<void> {
-    if (!insightId) return;
+  async function load(requestedId: string, actorId: string): Promise<void> {
+    if (!requestedId || !actorId) return;
+    const generation = ++requestGeneration;
+    detailAbort?.abort();
+    esmAbort?.abort();
+    const controller = new AbortController();
+    detailAbort = controller;
     loading = true;
     error = null;
+    insight = null;
+    verification = null;
+    verificationUnsupported = false;
+    maturity = null;
+    esmOpen = false;
+    esmLoading = false;
+    esmPartner = null;
+    esmPartnerPresence = [];
+    esmPartnerUnavailable = false;
     try {
       const [detail, latest] = await Promise.all([
-        fetchInsight(insightId),
+        fetchInsight(requestedId, { signal: controller.signal }),
         listLatestInsights({ limit: 1 }).catch(() => null),
       ]);
+      if (
+        generation !== requestGeneration ||
+        requestedId !== insightId ||
+        actorId !== authenticatedUserId
+      ) {
+        return;
+      }
       insight = detail;
       maturity = latest?.insight_maturity ?? null;
       // Composite subjects (the Belastung overlay's own insight) have no
       // day-level presence series, so the endpoint answers 422. Swallowing that
       // left the section blank and made both Belastung CTAs look broken (#967).
       verificationUnsupported = false;
-      verification = await fetchInsightVerification(insightId, '90d').catch((err) => {
-        if (err instanceof ApiError && err.status === 422) verificationUnsupported = true;
+      let nextVerificationUnsupported = false;
+      const nextVerification = await fetchInsightVerification(requestedId, '90d', {
+        signal: controller.signal,
+      }).catch((err) => {
+        if (err instanceof ApiError && err.status === 422) nextVerificationUnsupported = true;
         return null;
       });
+      if (
+        generation !== requestGeneration ||
+        requestedId !== insightId ||
+        actorId !== authenticatedUserId
+      ) {
+        return;
+      }
+      verificationUnsupported = nextVerificationUnsupported;
+      verification = nextVerification;
     } catch (err) {
+      if (controller.signal.aborted || generation !== requestGeneration) return;
       error = err instanceof Error ? err.message : $_('insights.signal.error');
       insight = null;
       verification = null;
     } finally {
-      loading = false;
+      if (generation === requestGeneration) loading = false;
     }
   }
 
   async function openEsm(): Promise<void> {
     if (!insight) return;
+    const requestedId = insight.id;
+    const generation = requestGeneration;
+    esmAbort?.abort();
+    const controller = new AbortController();
+    esmAbort = controller;
     esmOpen = true;
     esmLoading = true;
+    esmPartnerLoading = false;
+    esmPartner = null;
+    esmPartnerPresence = [];
+    esmPartnerUnavailable = false;
     try {
-      const response = await fetchInsightEventWindows(insight.id, '90d');
+      const response = await fetchInsightEventWindows(requestedId, '90d', {
+        signal: controller.signal,
+      });
+      if (
+        controller.signal.aborted ||
+        generation !== requestGeneration ||
+        insight?.id !== requestedId
+      ) {
+        return;
+      }
       esmWindows = response.events.map((event) => ({
         onset: event.onset,
         label: event.label ?? undefined,
       }));
       esmPoints = response.points;
       esmLag = response.lag_days ?? null;
+      // The primary visualization is complete. Open it while optional partner
+      // presence loads and let the sheet render its dedicated loading state.
+      esmLoading = false;
+
+      const partnerRef =
+        carriedPair && insightMatchesAnalysisPair(insight, carriedPair)
+          ? partnerForInsight(insight, carriedPair)
+          : null;
+      if (partnerRef && ['tag', 'symptom', 'work_context'].includes(partnerRef.kind)) {
+        esmPartnerLoading = true;
+        const partner: EsmPartner = {
+          id: partnerRef.id,
+          label: partnerRef.label ?? partnerRef.context ?? partnerRef.id,
+          kind: partnerRef.kind as EsmPartner['kind'],
+        };
+        const startDate = shiftIsoDate(response.start_date, -SMALL_MULTIPLES_RADIUS);
+        const endDate = shiftIsoDate(response.end_date, SMALL_MULTIPLES_RADIUS);
+        try {
+          let partnerPresence: string[];
+          if (partner.kind === 'tag') {
+            const heatmap = await fetchTagHeatmap({ start_date: startDate, end_date: endDate });
+            partnerPresence = presenceDatesForPartner(partner, heatmap, null);
+          } else if (partner.kind === 'symptom') {
+            const heatmap = await fetchSymptomHeatmap({ start_date: startDate, end_date: endDate });
+            partnerPresence = presenceDatesForPartner(partner, null, heatmap);
+          } else {
+            const entries = await listEntries({
+              start_date: startDate,
+              end_date: endDate,
+              limit: 500,
+            });
+            partnerPresence = presenceDatesForPartner(
+              partner,
+              null,
+              null,
+              buildWorkContextHeatmap(entries, {
+                start_date: startDate,
+                end_date: endDate,
+              })
+            );
+          }
+          if (
+            controller.signal.aborted ||
+            generation !== requestGeneration ||
+            insight?.id !== requestedId
+          ) {
+            return;
+          }
+          esmPartner = partner;
+          esmPartnerPresence = partnerPresence;
+        } catch {
+          if (controller.signal.aborted || generation !== requestGeneration) return;
+          esmPartnerUnavailable = true;
+        } finally {
+          if (!controller.signal.aborted && generation === requestGeneration) {
+            esmPartnerLoading = false;
+          }
+        }
+      }
     } catch {
+      if (controller.signal.aborted || generation !== requestGeneration) return;
       esmWindows = [];
       esmPoints = [];
       esmLag = null;
+      esmPartner = null;
+      esmPartnerPresence = [];
+      esmPartnerLoading = false;
     } finally {
-      esmLoading = false;
+      if (!controller.signal.aborted && generation === requestGeneration) esmLoading = false;
     }
   }
 
   onMount(() => {
-    if ($auth.status !== 'authenticated') {
-      void goto(`/auth/login?next=${encodeURIComponent($page.url.pathname)}`);
-      return;
-    }
-    void load();
-    return registerPageRefresh(() => void load());
+    mounted = true;
+    const unregisterRefresh = registerPageRefresh(() => {
+      if (authenticatedUserId && insightId) void load(insightId, authenticatedUserId);
+    });
+    return () => {
+      mounted = false;
+      requestGeneration += 1;
+      detailAbort?.abort();
+      esmAbort?.abort();
+      unregisterRefresh();
+    };
   });
 </script>
 
@@ -147,7 +303,10 @@
     subtitle={isNull
       ? `${$_('insights.signal.subtitle')} · ${$_('insights.card.null_badge')}`
       : $_('insights.signal.subtitle')}
-    back={{ href: '/insights', label: $_('insights.signal.back') }}
+    back={{
+      href: `/insights${carriedPairQuery ? `?${carriedPairQuery}` : ''}`,
+      label: $_('insights.signal.back'),
+    }}
   />
 
   {#if loading}
@@ -277,7 +436,7 @@
         </a>
         <a
           class="signal-page__chip"
-          href={`/insights/report?signal=${encodeURIComponent(insight.id)}`}
+          href={`/insights/report?signal=${encodeURIComponent(insight.id)}${carriedPairQuery ? `&${carriedPairQuery}` : ''}`}
           data-testid="signal-report-link"
         >
           {$_('insights.signal.remember_report')}
@@ -319,6 +478,11 @@
     points={esmPoints}
     metric={insight ? insightMetricToChartKey(insight.metric) : 'mood_avg'}
     lagOffset={esmLag}
+    partner={esmPartner}
+    partnerPresenceDates={esmPartnerPresence}
+    partnerCandidates={esmPartner ? [{ ...esmPartner, score: Number.MAX_SAFE_INTEGER }] : []}
+    partnerLoading={esmPartnerLoading}
+    partnerUnavailable={esmPartnerUnavailable}
     phase={maturity?.phase ?? null}
     on:close={() => {
       esmOpen = false;

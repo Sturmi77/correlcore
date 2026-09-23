@@ -197,6 +197,38 @@ async function pinAllRows(container: HTMLElement): Promise<void> {
 }
 
 describe('TrendsComparePanel', () => {
+  it('carries both structured pins to Insights in pin order', async () => {
+    const { container } = render(TrendsComparePanel, {
+      props: {
+        points: weekPoints,
+        range: 'year',
+        enabled,
+        tagHeatmap: coincidenceHeatmap,
+        showTags: true,
+        loading: false,
+        compactChrome: true,
+      },
+    });
+
+    const pins = [...container.querySelectorAll('.compare-heatmap__pin')] as HTMLButtonElement[];
+    const sportPin = pins.find((button) => button.parentElement?.textContent?.includes('Sport'));
+    const sleepPin = pins.find((button) => button.parentElement?.textContent?.includes('Sleep'));
+    await fireEvent.click(sleepPin!);
+    await fireEvent.click(sportPin!);
+
+    const link = container.querySelector(
+      '[data-testid="trends-compare-check-question"] a'
+    ) as HTMLAnchorElement;
+    const pair = JSON.parse(new URL(link.href).searchParams.get('pair') ?? 'null');
+    expect(pair).toEqual({
+      version: 1,
+      signals: [
+        { kind: 'tag', id: 't2' },
+        { kind: 'tag', id: 't1' },
+      ],
+    });
+  });
+
   it('hides Kontextzeilen when the selected range has no entries', () => {
     const { container } = render(TrendsComparePanel, {
       props: {

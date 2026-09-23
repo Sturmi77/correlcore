@@ -6338,6 +6338,8 @@ export interface operations {
                 limit?: number;
                 /** @description Restrict to these insight families before the row cap applies. Repeat the parameter for several families. */
                 insight_type?: string[] | null;
+                /** @description Structured kind:id identities that must all be present before the row cap. */
+                pair_signal?: string[] | null;
             };
             header?: {
                 authorization?: string | null;

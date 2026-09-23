@@ -75,6 +75,7 @@
   export let now: Date | string | undefined = undefined;
   /** Renders only status messages; used beside the compact primary mobile card. */
   export let hideContent = false;
+  export let detailQuery = '';
 
   const dispatch = createEventDispatcher<{
     retry: void;
@@ -281,6 +282,7 @@
               {inactiveTagIds}
               {showMaturityBadge}
               {enableExploreEvents}
+              {detailQuery}
               featured={index === 0}
               on:dismiss={(event) => dispatch('dismiss', event.detail)}
               on:exploreEvents={(event) => dispatch('exploreEvents', event.detail)}

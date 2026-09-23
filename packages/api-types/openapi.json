@@ -8643,7 +8643,7 @@
             "required": false,
             "schema": {
               "default": 100,
-              "maximum": 365,
+              "maximum": 500,
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
@@ -11043,6 +11043,27 @@
               ],
               "description": "Restrict to these insight families before the row cap applies. Repeat the parameter for several families.",
               "title": "Insight Type"
+            }
+          },
+          {
+            "description": "Structured kind:id identities that must all be present before the row cap.",
+            "in": "query",
+            "name": "pair_signal",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Structured kind:id identities that must all be present before the row cap.",
+              "title": "Pair Signal"
             }
           },
           {
