@@ -40,8 +40,10 @@ from app.schemas.stats import (
 from app.services.cooccurrence_runtime import (
     COOCCURRENCE_ALGORITHM_VERSION,
     CooccurrenceBusyError,
+    CooccurrenceLimitReason,
     CooccurrenceTimeoutError,
     CooccurrenceWorkerError,
+    CooccurrenceWorkPlan,
     compute_symptom_tag_job,
     compute_tag_tag_job,
     cooccurrence_runner,
@@ -124,16 +126,16 @@ def _cooccurrence_data_version(
         digest.update(tag_id.bytes)
         add_text(tag.slug)
         add_text(tag.label)
-    for symptom_id, symptom in sorted(
-        (symptoms or {}).items(), key=lambda item: str(item[0])
-    ):
+    for symptom_id, symptom in sorted((symptoms or {}).items(), key=lambda item: str(item[0])):
         digest.update(symptom_id.bytes)
         add_text(symptom.slug)
         add_text(symptom.label)
     return digest.hexdigest()
 
 
-def _analysis_limit(plan, reason: str) -> CooccurrenceAnalysisLimit:
+def _analysis_limit(
+    plan: CooccurrenceWorkPlan, reason: CooccurrenceLimitReason
+) -> CooccurrenceAnalysisLimit:
     return CooccurrenceAnalysisLimit(
         reason=reason,
         eligible_tags=plan.eligible_tags,
@@ -653,18 +655,30 @@ async def get_tag_cooccurrence(
         )
     except CooccurrenceBusyError:
         return TagCooccurrenceResponse(
-            range=range_, start_date=start_date, end_date=end_date, min_count=min_count,
-            pairs=[], analysis_status="busy"
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+            analysis_status="busy",
         )
     except CooccurrenceTimeoutError:
         return TagCooccurrenceResponse(
-            range=range_, start_date=start_date, end_date=end_date, min_count=min_count,
-            pairs=[], analysis_status="timeout"
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+            analysis_status="timeout",
         )
     except CooccurrenceWorkerError:
         return TagCooccurrenceResponse(
-            range=range_, start_date=start_date, end_date=end_date, min_count=min_count,
-            pairs=[], analysis_status="unavailable"
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            pairs=[],
+            analysis_status="unavailable",
         )
 
     pairs: list[TagCooccurrencePair] = [
@@ -864,18 +878,30 @@ async def get_symptom_tag_cooccurrence(
         )
     except CooccurrenceBusyError:
         return SymptomTagCooccurrenceResponse(
-            range=range_, start_date=start_date, end_date=end_date, min_count=min_count,
-            cells=[], analysis_status="busy"
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+            analysis_status="busy",
         )
     except CooccurrenceTimeoutError:
         return SymptomTagCooccurrenceResponse(
-            range=range_, start_date=start_date, end_date=end_date, min_count=min_count,
-            cells=[], analysis_status="timeout"
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+            analysis_status="timeout",
         )
     except CooccurrenceWorkerError:
         return SymptomTagCooccurrenceResponse(
-            range=range_, start_date=start_date, end_date=end_date, min_count=min_count,
-            cells=[], analysis_status="unavailable"
+            range=range_,
+            start_date=start_date,
+            end_date=end_date,
+            min_count=min_count,
+            cells=[],
+            analysis_status="unavailable",
         )
 
     cells = [

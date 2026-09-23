@@ -55,9 +55,7 @@ def main() -> None:
             energy=3,
             stress=3,
             tag_ids=frozenset(
-                signal_id
-                for index, signal_id in enumerate(tag_ids)
-                if (day + index * 3) % 11 < 5
+                signal_id for index, signal_id in enumerate(tag_ids) if (day + index * 3) % 11 < 5
             ),
             symptom_ids=frozenset(
                 signal_id

@@ -89,7 +89,9 @@ def test_work_plan_returns_typed_limit_without_truncating_pairs(monkeypatch) -> 
     monkeypatch.setattr(settings, "COOCCURRENCE_MAX_PAIRS", 5)
     tag_ids = [uuid4() for _ in range(4)]
     tags = {value: TagRef(id=value, label=str(value), slug=str(value)) for value in tag_ids}
-    plan = plan_tag_tag_work(_entries(days=60, tag_ids=tag_ids, symptom_ids=[]), tags, min_tag_usages=5)
+    plan = plan_tag_tag_work(
+        _entries(days=60, tag_ids=tag_ids, symptom_ids=[]), tags, min_tag_usages=5
+    )
 
     assert plan.pair_count == 6
     assert work_limit_reason(plan) == "pair_count"
@@ -115,9 +117,7 @@ def test_precomputed_pair_counts_are_statistically_equivalent() -> None:
             energy=3,
             stress=3,
             tag_ids=frozenset(
-                tag_id
-                for index, tag_id in enumerate(tag_ids)
-                if (offset + index * 2) % 5 < 3
+                tag_id for index, tag_id in enumerate(tag_ids) if (offset + index * 2) % 5 < 3
             ),
             symptom_ids=frozenset(),
         )

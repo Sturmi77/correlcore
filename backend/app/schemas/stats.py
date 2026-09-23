@@ -184,7 +184,14 @@ CooccurrenceAnalysisStatus = Literal[
 
 
 class CooccurrenceAnalysisLimit(BaseModel):
-    reason: Literal["eligible_tags", "eligible_symptoms", "pair_count", "work_units"]
+    reason: Literal[
+        "supplied_tags",
+        "supplied_symptoms",
+        "eligible_tags",
+        "eligible_symptoms",
+        "pair_count",
+        "work_units",
+    ]
     eligible_tags: int = Field(ge=0)
     eligible_symptoms: int = Field(ge=0)
     pair_count: int = Field(ge=0)

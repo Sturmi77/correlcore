@@ -17,7 +17,7 @@ from concurrent.futures import Future as ConcurrentFuture
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 from app.core.config import settings
 from app.services.symptom_analytics import (
@@ -32,6 +32,14 @@ from app.services.symptom_analytics import (
 )
 
 T = TypeVar("T")
+CooccurrenceLimitReason = Literal[
+    "supplied_tags",
+    "supplied_symptoms",
+    "eligible_tags",
+    "eligible_symptoms",
+    "pair_count",
+    "work_units",
+]
 COOCCURRENCE_ALGORITHM_VERSION = "fisher-bh-v2"
 
 
@@ -110,7 +118,7 @@ def plan_symptom_tag_work(
     )
 
 
-def work_limit_reason(plan: CooccurrenceWorkPlan) -> str | None:
+def work_limit_reason(plan: CooccurrenceWorkPlan) -> CooccurrenceLimitReason | None:
     if plan.supplied_tags > settings.COOCCURRENCE_MAX_SUPPLIED_TAGS:
         return "supplied_tags"
     if plan.supplied_symptoms > settings.COOCCURRENCE_MAX_SUPPLIED_SYMPTOMS:
@@ -192,15 +200,14 @@ class CooccurrenceRunner:
             cached = self._cache.get(key)
             if cached is not None and cached[0] > now:
                 self._cache.move_to_end(key)
-                return cached[1]
+                return cast(T, cached[1])
             if cached is not None:
                 del self._cache[key]
 
             task = self._inflight.get(key)
             if task is None:
                 capacity = (
-                    settings.COOCCURRENCE_PROCESS_WORKERS
-                    + settings.COOCCURRENCE_MAX_QUEUE_SIZE
+                    settings.COOCCURRENCE_PROCESS_WORKERS + settings.COOCCURRENCE_MAX_QUEUE_SIZE
                 )
                 if user_id in self._users or len(self._inflight) >= capacity:
                     raise CooccurrenceBusyError

@@ -372,6 +372,51 @@
         "title": "ConsentStatusItem",
         "type": "object"
       },
+      "CooccurrenceAnalysisLimit": {
+        "properties": {
+          "eligible_symptoms": {
+            "minimum": 0.0,
+            "title": "Eligible Symptoms",
+            "type": "integer"
+          },
+          "eligible_tags": {
+            "minimum": 0.0,
+            "title": "Eligible Tags",
+            "type": "integer"
+          },
+          "pair_count": {
+            "minimum": 0.0,
+            "title": "Pair Count",
+            "type": "integer"
+          },
+          "reason": {
+            "enum": [
+              "supplied_tags",
+              "supplied_symptoms",
+              "eligible_tags",
+              "eligible_symptoms",
+              "pair_count",
+              "work_units"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "work_units": {
+            "minimum": 0.0,
+            "title": "Work Units",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "reason",
+          "eligible_tags",
+          "eligible_symptoms",
+          "pair_count",
+          "work_units"
+        ],
+        "title": "CooccurrenceAnalysisLimit",
+        "type": "object"
+      },
       "CoverageMetric": {
         "description": "A neutral coverage ratio over the rolling window (no streak record).",
         "properties": {
@@ -4185,6 +4230,29 @@
       },
       "SymptomTagCooccurrenceResponse": {
         "properties": {
+          "analysis_limit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CooccurrenceAnalysisLimit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "analysis_status": {
+            "default": "ok",
+            "enum": [
+              "ok",
+              "insufficient_data",
+              "limit_exceeded",
+              "busy",
+              "timeout",
+              "unavailable"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
           "cells": {
             "items": {
               "$ref": "#/components/schemas/SymptomTagCooccurrenceCell"
@@ -4997,6 +5065,29 @@
       },
       "TagCooccurrenceResponse": {
         "properties": {
+          "analysis_limit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CooccurrenceAnalysisLimit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "analysis_status": {
+            "default": "ok",
+            "enum": [
+              "ok",
+              "insufficient_data",
+              "limit_exceeded",
+              "busy",
+              "timeout",
+              "unavailable"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
           "end_date": {
             "format": "date",
             "title": "End Date",

@@ -549,17 +549,14 @@ def compute_symptom_tag_associations(
             if co_count < 5 and not (co_count >= 3 and p_value < 0.05):
                 continue
             weekday_confounded = (
-                symptom_weekday_bias[symptom_id]
-                and tag_weekday_bias[tag_id]
+                symptom_weekday_bias[symptom_id] and tag_weekday_bias[tag_id]
             ) or is_pair_cooccurrence_weekday_confounded(
                 entry_dates,
                 symptom_vectors[symptom_id],
                 tag_vectors[tag_id],
                 alpha=COOCCURRENCE_FDR_ALPHA,
             )
-            work_context_confounded = (
-                symptom_work_bias[symptom_id] and tag_work_bias[tag_id]
-            )
+            work_context_confounded = symptom_work_bias[symptom_id] and tag_work_bias[tag_id]
             calendar_context_confounded = (
                 weekday_confounded
                 or work_context_confounded
@@ -736,8 +733,7 @@ def compute_tag_tag_associations(
             if co_count < 5 and not (co_count >= 3 and p_value < 0.05):
                 continue
             weekday_confounded = (
-                tag_weekday_bias[tag_a_id]
-                and tag_weekday_bias[tag_b_id]
+                tag_weekday_bias[tag_a_id] and tag_weekday_bias[tag_b_id]
             ) or is_pair_cooccurrence_weekday_confounded(
                 entry_dates,
                 tag_vectors[tag_a_id],
