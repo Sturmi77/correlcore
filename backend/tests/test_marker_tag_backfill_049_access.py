@@ -75,3 +75,19 @@ def test_restricted_non_owner_is_rejected() -> None:
 
     with pytest.raises(RuntimeError, match="not owned: entries"):
         backfill._prepare_owner_rls_access(conn)
+
+
+def test_collision_rows_use_legacy_unicode_codepoint_order() -> None:
+    rows = [
+        SimpleNamespace(user_id="u", entry_id="e", marker="ä"),
+        SimpleNamespace(user_id="u", entry_id="e", marker="z"),
+        SimpleNamespace(user_id="u", entry_id="d", marker="ö"),
+    ]
+
+    ordered = sorted(rows, key=backfill._legacy_row_sort_key)
+
+    assert [(row.entry_id, row.marker) for row in ordered] == [
+        ("d", "ö"),
+        ("e", "z"),
+        ("e", "ä"),
+    ]

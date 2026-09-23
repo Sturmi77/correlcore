@@ -13,6 +13,7 @@ import re
 import uuid
 from collections import defaultdict
 from datetime import UTC, datetime
+from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy.engine import Connection
@@ -255,6 +256,12 @@ def _restore_forced_rls(conn: Connection, tables: tuple[str, ...]) -> None:
         conn.execute(sa.text(f"ALTER TABLE {name} FORCE ROW LEVEL SECURITY"))
 
 
+def _legacy_row_sort_key(row: Any) -> tuple[str, str, str]:
+    """Reproduce the retired service's UUID and Unicode code-point ordering."""
+
+    return (str(row.user_id), str(row.entry_id), row.marker)
+
+
 def _run_backfill(conn: Connection) -> None:
     """Convert all 049-era marker rows on Alembic's connection and transaction."""
 
@@ -270,10 +277,16 @@ def _run_backfill(conn: Connection) -> None:
     rows = conn.execute(
         sa.text(
             "SELECT m.user_id, m.entry_id, m.marker, e.note_visibility "
-            "FROM entry_note_markers m JOIN entries e ON e.id = m.entry_id "
-            "ORDER BY m.user_id, m.entry_id, m.marker"
+            "FROM entry_note_markers m JOIN entries e ON e.id = m.entry_id"
         )
     ).all()
+    # Match the retired Python service exactly. PostgreSQL text ordering follows
+    # the database collation, while ``sorted(str)`` uses Unicode code points;
+    # collision suffixes must remain stable when resuming a partial CLI run.
+    rows = sorted(
+        rows,
+        key=_legacy_row_sort_key,
+    )
     default_slugs = set(
         conn.execute(sa.text("SELECT slug FROM tags WHERE is_default = true")).scalars()
     )
