@@ -30,7 +30,7 @@
     "@capacitor/push-notifications": "8.1.2",
     "@lucide/svelte": "^1.46.0",
     "@sentry/browser": "^10.73.0",
-    "@sentry/node": "^10.73.0",
+    "@sentry/node": "^10.75.2",
     "dexie": "^4.4.5",
     "svelte-i18n": "^4.0.0"
   },
