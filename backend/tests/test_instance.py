@@ -1,6 +1,6 @@
 """Tests for the public instance descriptor endpoint (#734/#735).
 
-GET /api/v1/instance → { mode, registration_enabled, version }, public.
+GET /api/v1/instance includes mode and immutable release identity, public.
 """
 
 from __future__ import annotations
@@ -22,6 +22,31 @@ async def test_instance_defaults_to_selfhost() -> None:
     assert body["mode"] == "selfhost"
     assert body["registration_enabled"] is True
     assert isinstance(body["version"], str) and body["version"]
+    assert body["git_commit"] == "unknown"
+    assert body["api_image"] == ""
+    assert body["web_image"] == ""
+
+
+@pytest.mark.asyncio
+async def test_instance_reports_immutable_release_identity() -> None:
+    with (
+        patch("app.api.v1.endpoints.instance.settings.GIT_COMMIT", "a" * 40),
+        patch(
+            "app.api.v1.endpoints.instance.settings.IMAGE_DIGEST",
+            f"ghcr.io/example/api@sha256:{'b' * 64}",
+        ),
+        patch(
+            "app.api.v1.endpoints.instance.settings.WEB_IMAGE_DIGEST",
+            f"ghcr.io/example/web@sha256:{'c' * 64}",
+        ),
+    ):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            res = await client.get("/api/v1/instance")
+
+    assert res.status_code == 200
+    assert res.json()["git_commit"] == "a" * 40
+    assert res.json()["api_image"].endswith("b" * 64)
+    assert res.json()["web_image"].endswith("c" * 64)
 
 
 @pytest.mark.asyncio

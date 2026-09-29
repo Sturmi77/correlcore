@@ -698,7 +698,10 @@ async def test_candidate_generation_runs_in_thread_without_blocking_event_loop()
         task = asyncio.create_task(
             _generate_insight_candidates_in_thread([], [], [], as_of=date(2026, 5, 1))
         )
-        await asyncio.wait_for(calculation_started.wait(), timeout=0.02)
+        # Thread-pool startup can exceed 20 ms on Windows and shared runners.
+        # The assertion below checks the actual property: the coroutine is
+        # still pending while the synchronous calculation runs elsewhere.
+        await asyncio.wait_for(calculation_started.wait(), timeout=1.0)
         assert not task.done()
         assert await task == []
 

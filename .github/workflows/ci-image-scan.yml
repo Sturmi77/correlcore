@@ -11,8 +11,8 @@ name: Container Image Scan
 #
 # CRITICAL gates with exit-code 1: SARIF still reports CRITICAL,HIGH,MEDIUM
 # (exit-code 0 so upload always runs), then a follow-up step fails the job on
-# any CRITICAL finding. HIGH/MEDIUM stay visible in the Security tab without
-# blocking until the baseline is further triaged.
+# any fixed or unfixed CRITICAL finding. HIGH/MEDIUM stay visible in the
+# Security tab and require release-triage evidence.
 #
 # Scope: on push/PR this builds the image from source at the triggering commit
 # (same inputs as release-images.yml) and scans that — the pre-publish signal.
@@ -149,16 +149,11 @@ jobs:
             --exit-code 0 \
             "${{ matrix.ref }}"
 
-      # CRITICAL gating deferred until the web/api image baseline is clean
-      # (npm-bundled tar + esbuild Go stdlib CVEs still fire on current layers).
-      # SARIF upload above remains the source of truth; re-enable exit-code 1
-      # once Dependabot/rebuild clears CRITICAL findings.
-      - name: Report CRITICAL vulnerabilities (non-gating)
+      - name: Gate on CRITICAL vulnerabilities
         run: |
           trivy image \
             --severity CRITICAL \
-            --ignore-unfixed \
-            --exit-code 0 \
+            --exit-code 1 \
             "${{ matrix.ref }}"
 
       - name: Upload SARIF to code scanning

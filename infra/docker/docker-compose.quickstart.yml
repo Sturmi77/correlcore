@@ -50,6 +50,7 @@ x-api-env: &api-env
   DEV_VIEW_ENABLED: ${DEV_VIEW_ENABLED:-false}
   IMAGE_TAG: ${IMAGE_TAG:-latest}
   IMAGE_DIGEST: ${IMAGE_DIGEST:-}
+  WEB_IMAGE_DIGEST: ${WEB_IMAGE_DIGEST:-}
 
 services:
   migrate:

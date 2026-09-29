@@ -16,6 +16,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // Shared CI runners have failed while spawning Vitest's default worker
+    // pool. Keep the release gate deterministic and let worker-start failures
+    // fail the run instead of retrying or ignoring individual suites.
+    maxWorkers: process.env.CI ? 2 : undefined,
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{js,ts}'],
     // Coverage is only computed when `--coverage` is passed (pnpm test:coverage /

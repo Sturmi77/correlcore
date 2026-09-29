@@ -90,6 +90,10 @@ class Settings(BaseSettings):
     WORKER_STALE_AFTER_HOURS: int = 30
     IMAGE_TAG: str = "latest"
     IMAGE_DIGEST: str = ""
+    # The API exposes both immutable release image references through the
+    # public instance descriptor so release evidence can prove that staging
+    # ran the exact pair that was scanned.
+    WEB_IMAGE_DIGEST: str = ""
     GIT_COMMIT: str = "unknown"
     GIT_BRANCH: str = "unknown"
     BUILD_TIME: str = ""

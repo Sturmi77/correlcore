@@ -2941,6 +2941,10 @@ export interface components {
          * @description Non-sensitive, public deployment descriptor.
          */
         InstanceInfo: {
+            /** Api Image */
+            api_image: string;
+            /** Git Commit */
+            git_commit: string;
             /**
              * Mode
              * @enum {string}
@@ -2950,6 +2954,8 @@ export interface components {
             registration_enabled: boolean;
             /** Version */
             version: string;
+            /** Web Image */
+            web_image: string;
         };
         /** LivenessResponse */
         LivenessResponse: {

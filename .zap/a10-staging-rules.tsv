@@ -1,0 +1,4 @@
+# A10 scans the representative proxy-fronted staging deployment. No passive
+# or active rule is ignored: ZAP WARN and FAIL exit codes both block the job.
+# Format: <pluginId> <IGNORE|WARN|FAIL> <comment>, tab-separated when entries
+# are added. Temporary exceptions belong in a reviewed, expiring register.
