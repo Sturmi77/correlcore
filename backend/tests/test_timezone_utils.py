@@ -22,12 +22,12 @@ def test_resolve_zone_degrades_to_utc(value: str | None) -> None:
     assert resolve_zone(value) is UTC_ZONE
 
 
-def test_unknown_but_well_shaped_name_is_logged_verbatim(
+def test_unknown_but_well_shaped_name_is_not_logged_verbatim(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     with caplog.at_level(logging.INFO):
         resolve_zone("Mars/Olympus_Mons")
-    assert caplog.records[-1].timezone == "Mars/Olympus_Mons"  # type: ignore[attr-defined]
+    assert caplog.records[-1].timezone == "<invalid>"  # type: ignore[attr-defined]
 
 
 @pytest.mark.parametrize(
@@ -100,7 +100,7 @@ def test_expected_zone_path_os_errors_degrade_to_utc(
     monkeypatch.setattr(timezone_utils, "ZoneInfo", raise_zone_error)
     with caplog.at_level(logging.INFO):
         assert resolve_zone("Mars/Olympus_Mons") is UTC_ZONE
-    assert caplog.records[-1].timezone == "Mars/Olympus_Mons"  # type: ignore[attr-defined]
+    assert caplog.records[-1].timezone == "<invalid>"  # type: ignore[attr-defined]
 
 
 def test_unexpected_zone_filesystem_errors_are_not_suppressed(

@@ -537,7 +537,14 @@ async def test_tag_cooccurrence_exact_days_override_legacy_range(days: int) -> N
 
 @pytest.mark.parametrize("logged_days", [1, 14, 15])
 @pytest.mark.asyncio
-async def test_tag_cooccurrence_sparse_window_reports_observed_days(logged_days: int) -> None:
+async def test_tag_cooccurrence_sparse_window_reports_observed_days(
+    logged_days: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Test response metadata independently of spawned-worker startup latency.
+    # Process limits and statistical output have their own regression suites.
+    monkeypatch.setattr(
+        "app.services.stats_service.cooccurrence_runner.run", AsyncMock(return_value=[])
+    )
     user = make_user()
     end = date(2026, 3, 29)
     entries = [
@@ -554,7 +561,9 @@ async def test_tag_cooccurrence_sparse_window_reports_observed_days(logged_days:
 
     out = await get_tag_cooccurrence(db, user_id=user.id, range_="28d", as_of=end)
 
+    assert out.days == 28
     assert out.observed_days == logged_days
+    assert out.analysis_status == ("insufficient_data" if logged_days < 15 else "ok")
     assert out.window_too_short is (logged_days < 15)
     assert out.pairs == []
 

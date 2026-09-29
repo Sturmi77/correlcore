@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 UTC_ZONE = ZoneInfo("UTC")
 
 # `tz` arrives from a client query parameter, so it must never reach the log
-# verbatim (CodeQL py/log-injection). Two earlier attempts were not enough:
+# verbatim (CodeQL py/log-injection). The log now records only a constant.
+# Input shape validation remains useful before ZoneInfo path handling.
+# Two earlier attempts were not enough:
 # `re.sub` over the unsafe characters is not modelled as a sanitizer, and a
 # `fullmatch` against the IANA shape traded that alert for a polynomial-regex
 # one (py/polynomial-redos) because the segment class itself contains `+`.
@@ -75,8 +77,8 @@ def _is_expected_invalid_zone_error(exc: OSError) -> bool:
     return exc.errno in _INVALID_ZONE_ERRNOS or winerror in _INVALID_ZONE_WINERRORS
 
 
-def _invalid_zone(tz: str) -> ZoneInfo:
-    logger.info("timezone.unknown", extra={"timezone": _log_safe_tz(tz)})
+def _invalid_zone() -> ZoneInfo:
+    logger.info("timezone.unknown", extra={"timezone": _TZ_REJECTED})
     return UTC_ZONE
 
 
@@ -92,12 +94,12 @@ def resolve_zone(tz: str | None) -> ZoneInfo:
     # Reject path-like, control-character and oversized input before it reaches
     # platform path handling. `_log_safe_tz` uses the same bounded whitelist.
     if _log_safe_tz(tz) == _TZ_REJECTED:
-        return _invalid_zone(tz)
+        return _invalid_zone()
     try:
         return ZoneInfo(tz)
     except (ZoneInfoNotFoundError, ValueError):
-        return _invalid_zone(tz)
+        return _invalid_zone()
     except OSError as exc:
         if not _is_expected_invalid_zone_error(exc):
             raise
-        return _invalid_zone(tz)
+        return _invalid_zone()

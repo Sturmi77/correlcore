@@ -257,13 +257,13 @@ def build_insight_evidence(
             energy_prior_raw=ep,
             fatigue_recent=fr,
             fatigue_prior=fp,
-            stress_up=payload["stress_up"]
+            stress_up=bool(payload["stress_up"])
             if type(payload.get("stress_up")) is bool
             else sr is not None and sp is not None and sr > sp + 0.26,
-            energy_down=payload["energy_down"]
+            energy_down=bool(payload["energy_down"])
             if type(payload.get("energy_down")) is bool
             else er is not None and ep is not None and er < ep - 0.26,
-            fatigue_up=payload["fatigue_up"]
+            fatigue_up=bool(payload["fatigue_up"])
             if type(payload.get("fatigue_up")) is bool
             else fr is not None and fp is not None and fr / recent_n > fp / prior_n,
         )

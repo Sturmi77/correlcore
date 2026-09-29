@@ -561,6 +561,7 @@ async def get_tag_cooccurrence(
             min_count=min_count,
             pairs=[],
             window_too_short=True,
+            analysis_status="insufficient_data",
         )
 
     tag_result = await db.execute(
@@ -613,6 +614,8 @@ async def get_tag_cooccurrence(
     if window_too_short:
         return TagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
@@ -635,6 +638,8 @@ async def get_tag_cooccurrence(
     if limit_reason is not None:
         return TagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
@@ -667,6 +672,8 @@ async def get_tag_cooccurrence(
     except CooccurrenceBusyError:
         return TagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
@@ -676,6 +683,8 @@ async def get_tag_cooccurrence(
     except CooccurrenceTimeoutError:
         return TagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
@@ -685,6 +694,8 @@ async def get_tag_cooccurrence(
     except CooccurrenceWorkerError:
         return TagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
@@ -769,6 +780,7 @@ async def get_symptom_tag_cooccurrence(
             min_count=min_count,
             cells=[],
             window_too_short=True,
+            analysis_status="insufficient_data",
         )
 
     tag_result = await db.execute(
@@ -836,11 +848,14 @@ async def get_symptom_tag_cooccurrence(
     if len(daily_entries) < MIN_SYMPTOM_ANALYTICS_ENTRIES:
         return SymptomTagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
             cells=[],
             analysis_status="insufficient_data",
+            window_too_short=True,
         )
 
     symptom_refs = {
@@ -866,6 +881,8 @@ async def get_symptom_tag_cooccurrence(
     if limit_reason is not None:
         return SymptomTagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
@@ -898,6 +915,8 @@ async def get_symptom_tag_cooccurrence(
     except CooccurrenceBusyError:
         return SymptomTagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
@@ -907,6 +926,8 @@ async def get_symptom_tag_cooccurrence(
     except CooccurrenceTimeoutError:
         return SymptomTagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
@@ -916,6 +937,8 @@ async def get_symptom_tag_cooccurrence(
     except CooccurrenceWorkerError:
         return SymptomTagCooccurrenceResponse(
             range=range_,
+            observed_days=len(daily_entries),
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             min_count=min_count,
