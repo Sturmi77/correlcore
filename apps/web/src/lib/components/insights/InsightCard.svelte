@@ -27,7 +27,6 @@
   import InsightEvidence from './InsightEvidence.svelte';
   import NoteInsightEvidence from './NoteInsightEvidence.svelte';
   import WithWithoutDistribution from './WithWithoutDistribution.svelte';
-  import AdjustedEffects from './AdjustedEffects.svelte';
   import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
   import { isExploreEventsSubject } from '$lib/utils/exploreEventWindows';
   import {
@@ -664,7 +663,6 @@
             <dd>{insight.sample_n}</dd>
           </div>
         </dl>
-        <AdjustedEffects {insight} />
       </section>
     {/if}
   </article>

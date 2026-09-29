@@ -177,7 +177,7 @@ describe('/insights/report selection (#959)', () => {
     render(Page);
 
     await waitFor(() =>
-      expect(goto).toHaveBeenCalledWith('/auth/login?next=%2Finsights%2Freport%3Fsignal%3Da%252Fb')
+      expect(goto).toHaveBeenCalledWith('/auth/login?next=%2Finsights%2Freport%3Fsignal%3Da%2Fb')
     );
     expect(listLatestInsights).not.toHaveBeenCalled();
   });

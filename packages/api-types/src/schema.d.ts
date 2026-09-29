@@ -3491,6 +3491,13 @@ export interface components {
         };
         /** SymptomTagCooccurrenceResponse */
         SymptomTagCooccurrenceResponse: {
+            analysis_limit?: components["schemas"]["CooccurrenceAnalysisLimit"] | null;
+            /**
+             * Analysis Status
+             * @default ok
+             * @enum {string}
+             */
+            analysis_status: "ok" | "insufficient_data" | "limit_exceeded" | "busy" | "timeout" | "unavailable";
             /**
              * Analytics Disabled
              * @default false

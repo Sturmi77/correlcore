@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from collections import Counter
 from pathlib import Path
 
@@ -18,6 +19,14 @@ EXPECTED_CURRENT_PRS = Counter(
 def main() -> None:
     with REGISTER.open(encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
+
+    source = json.loads(REGISTER.with_name("A00_REVIEWREGISTER.raw.json").read_text(encoding="utf-8"))
+    source_by_url = {row["url"]: row for row in source}
+    for row in rows:
+        assert row["url"] in source_by_url, "unknown source review"
+        for key, value in source_by_url[row["url"]].items():
+            escaped = "'" + value if value and (value[0] in "=+-@\t\r\n" or value.lstrip().startswith(("=", "+", "-", "@"))) else value
+            assert row[key] == escaped, f"source field changed: {row['url']} {key}"
 
     assert len(rows) == EXPECTED_ROWS, f"expected {EXPECTED_ROWS} rows, got {len(rows)}"
     assert Counter(row["art"] for row in rows) == EXPECTED_KINDS

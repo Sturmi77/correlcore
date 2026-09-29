@@ -7,8 +7,7 @@
   import type { InsightMaturity } from '$lib/api/insights';
   import type { InsightReportRow } from '$lib/utils/insightReportRows';
   import InsightEvidence from './InsightEvidence.svelte';
-  import { matrixConfidencePercent, matrixRowTone } from '$lib/utils/insightMatrixRows';
-  import { insightRelation } from '$lib/utils/insightRelation';
+  import { matrixConfidencePercent, matrixEffectTone } from '$lib/utils/insightMatrixRows';
 
   export let rows: InsightReportRow[] = [];
   export let selectedIds: readonly string[] = [];
@@ -71,7 +70,7 @@
     <div
       class="report-table__row"
       role="row"
-      data-tone={matrixRowTone(row)}
+      data-tone={matrixEffectTone(row.displayEffect ?? row.effect ?? 0)}
       data-testid={`insight-report-row-${row.id}`}
     >
       <span role="cell" class="report-table__select">
@@ -84,8 +83,10 @@
           on:change={(event) => onToggle(row.id, event.currentTarget.checked)}
         />
       </span>
-      <span role="cell">{row.factor ?? $_('insights.report.missing')}</span>
-      <span role="cell">{metricLabel(row.metric)}</span>
+      <span role="cell"
+        >{row.factor ?? $_('insights.report.missing')} {row.relationGlyph ?? ''}</span
+      >
+      <span role="cell">{metricLabel(row.target ?? row.metric)}</span>
       <span role="cell" class="report-table__effect">
         <span class="report-table__effect-bar" style={`--effect: ${Math.min(1, Math.abs(effect))}`}
         ></span>

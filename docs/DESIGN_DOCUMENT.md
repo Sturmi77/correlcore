@@ -1383,19 +1383,13 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 ---
 
-### Historische M13-Planung — Fotos & Medien (post-SaaS)
+### M13 — Fotos & Medien (post-SaaS)
 
-> **Roadmap-Status (2026-09-23):** Dieser Abschnitt bewahrt die vorhandene
-> Medienplanung und ihre noch offenen Datenschutzanforderungen. [#715](https://github.com/Sturmi77/correlcore/issues/715)
-> priorisiert inzwischen strukturierte Ernährungsdaten als nächsten neuen
-> Korrelationsbereich und ersetzt Fotos für diesen Anwendungszweck. Ein eigener
-> Medien-Meilenstein ist derzeit nicht eingeplant; die bereits gelandete
-> EXIF-Strip-Foundation bleibt erhalten und darf ohne erneute Planung nicht als
-> vollständige Medienfunktion aktiviert werden.
+> **Roadmap-Status (2026-09-29):** M13 bleibt hinter M10 und M12 verschoben.
+> #715 priorisiert strukturierte Ernährungsdaten für den Korrelationspfad und
+> hebt den separaten Medien-Meilenstein nicht auf. Die EXIF-Strip-Foundation
+> ist vorhanden; Persistenz und Galerie sind weiterhin offen (siehe M13_NOTES.md).
 
-Historisch war dieser Meilenstein hinter M10 (public selfhost v1.0) und M12 (SaaS launch)
-verschoben, damit Kern-Tracking, Insights und Deployment ohne Photo-Storage-Komplexität
-ausgeliefert werden konnten.
 **Foundation (#28):** `POST /api/v1/media/photos` strips EXIF server-side; MinIO
 persist (`stored: false` stub) + gallery remain M13 exit work. See [`M13_NOTES.md`](M13_NOTES.md).
 

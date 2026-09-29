@@ -40,8 +40,8 @@ in die aktuelle 40-Punkte-Matrix übertragen und bleibt dort bis zur Paketabnahm
 | [#969](https://github.com/Sturmi77/correlcore/pull/969) |      6 | A05                                   | Einheitlicher Reportvertrag, sichere Auswahl und CSV-Empfängernachweis: [#989](https://github.com/Sturmi77/correlcore/issues/989). Kein Abschluss behauptet.                                             |
 | [#970](https://github.com/Sturmi77/correlcore/pull/970) |      5 | A07                                   | Fenster-/Leerzustandskorrekturen: [#981](https://github.com/Sturmi77/correlcore/issues/981), Implementierung [PR #995](https://github.com/Sturmi77/correlcore/pull/995).                                 |
 | [#971](https://github.com/Sturmi77/correlcore/pull/971) |      8 | A06/A08                               | Evidenzdarstellung [PR #994](https://github.com/Sturmi77/correlcore/pull/994) und Handoffs [PR #996](https://github.com/Sturmi77/correlcore/pull/996); finaler Journey-Nachweis bleibt Teil von A10/A12. |
-| [#972](https://github.com/Sturmi77/correlcore/pull/972) |     11 | Regression erhalten                   | Alle vier Inline-Threads sind auf GitHub gelöst. Rohminuten >12 h und die Deckkraftlegende sind durch die unten genannten Tests verankert.                                                               |
-| [#973](https://github.com/Sturmi77/correlcore/pull/973) |     23 | Regression erhalten, A05 bleibt offen | Alle acht Inline-Threads sind gelöst. Auswahl-, PDF-, Winner-, Fetch-Cap- und Query-Verträge sind durch die unten genannten Tests verankert. A05 erweitert diese Basis.                                  |
+| [#972](https://github.com/Sturmi77/correlcore/pull/972) |     11 | Regression erhalten                   | Alle vier Inline-Kommentarzeilen in zwei Threads sind auf GitHub gelöst. Rohminuten >12 h und die Deckkraftlegende sind durch die unten genannten Tests verankert.                                       |
+| [#973](https://github.com/Sturmi77/correlcore/pull/973) |     23 | Regression erhalten, A05 bleibt offen | Alle acht Inline-Kommentarzeilen in vier Threads sind gelöst. Auswahl-, PDF-, Winner-, Fetch-Cap- und Query-Verträge sind durch die unten genannten Tests verankert. A05 erweitert diese Basis.          |
 | [#974](https://github.com/Sturmi77/correlcore/pull/974) |      8 | A03/A06/A11/A12                       | Technische Fixes: PRs #992/#994. Dokumentstatus: dieser A11-Stand. Interview- und externe Abnahmen: [#986](https://github.com/Sturmi77/correlcore/issues/986).                                           |
 
 ## Erhaltene Regressionen aus #972/#973
@@ -69,7 +69,7 @@ und reale Empfänger-/Rendering-Prüfungen nicht.
   heutigen Implementierungsstand und die offenen A05/A06/A10/A12-Gates.
 - DESIGN_DOCUMENT §2.10 unterscheidet Berichtsexporte vom vollständigen
   DSGVO-Datenexport und nennt den offenen A05-Nachweis. Die frühere M13-Medienplanung
-  ist historisch; [#715](https://github.com/Sturmi77/correlcore/issues/715) priorisiert
+  bleibt als verschobener Meilenstein erhalten; [#715](https://github.com/Sturmi77/correlcore/issues/715) priorisiert
   strukturierte Ernährung für den Korrelationspfad.
 - `SECURITY.md` weist `1.9.x` als unterstützte Release-Linie aus.
 - #928, #930 und #931 waren durch PR #974 zu früh geschlossen. Sie wurden am

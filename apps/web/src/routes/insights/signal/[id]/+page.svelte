@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { displayMetricValue } from '$lib/utils/metrics';
   /**
    * /insights/signal/[id] — Ebene 2 verification surface (Phase 7 / ADR-0043).
    * Sentence → with/without (G2) → course/ESM → scatter (G1) behind disclosure.
@@ -210,16 +211,18 @@
       // left the section blank and made both Belastung CTAs look broken (#967).
       verificationUnsupported = !supportsInsightVerification(detail);
       verificationUnavailable = false;
-      const result = verificationUnsupported ? null : await fetchInsightVerification(id, trendWindowDaysToCooccurrence(days), {
-        days,
-        end_date: localIsoDate(new Date()),
-        signal: request.signal,
-      }).catch((err) => {
-        if (request.isCurrent() && err instanceof ApiError && err.status === 422)
-          verificationUnsupported = true;
-        else if (request.isCurrent()) verificationUnavailable = true;
-        return null;
-      });
+      const result = verificationUnsupported
+        ? null
+        : await fetchInsightVerification(id, trendWindowDaysToCooccurrence(days), {
+            days,
+            end_date: localIsoDate(new Date()),
+            signal: request.signal,
+          }).catch((err) => {
+            if (request.isCurrent() && err instanceof ApiError && err.status === 422)
+              verificationUnsupported = true;
+            else if (request.isCurrent()) verificationUnavailable = true;
+            return null;
+          });
       if (request.isCurrent()) verification = result;
     } catch (err) {
       if (!request.isCurrent()) return;
@@ -296,11 +299,7 @@
               })
             );
           }
-          if (
-            !request.isCurrent() ||
-            !request.isCurrent() ||
-            insight?.id !== id
-          ) {
+          if (!request.isCurrent() || !request.isCurrent() || insight?.id !== id) {
             return;
           }
           esmPartner = partner;
@@ -471,8 +470,14 @@
         <p class="signal-page__means" data-testid="signal-means">
           {$_('insights.signal.means', {
             values: {
-              withMean: verification.with_mean.toFixed(1),
-              withoutMean: verification.without_mean.toFixed(1),
+              withMean: (verification.metric === 'stress'
+                ? displayMetricValue('stress', verification.with_mean)
+                : verification.with_mean
+              ).toFixed(1),
+              withoutMean: (verification.metric === 'stress'
+                ? displayMetricValue('stress', verification.without_mean)
+                : verification.without_mean
+              ).toFixed(1),
               withN: verification.with_n,
               withoutN: verification.without_n,
             },

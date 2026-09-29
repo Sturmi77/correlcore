@@ -1,3 +1,5 @@
+import { insightEndpoints, insightRelation, relationPairLabel } from './insightRelation';
+import { displayEffectForMetric } from './metrics';
 import type { InsightResponse, InsightTier } from '$lib/api/insights';
 
 /** Canonical row consumed by the report table and every export renderer. */
@@ -6,8 +8,12 @@ export interface InsightReportRow {
   factor: string | null;
   factorType: string | null;
   metric: string;
+  target?: string;
   insightType: string;
   effect: number | null;
+  displayEffect?: number | null;
+  relationship?: string;
+  relationGlyph?: string;
   confidence: number | null;
   sampleWith: number | null;
   sampleWithout: number | null;
@@ -37,11 +43,19 @@ function nonEmptyString(payload: Record<string, unknown>, ...keys: string[]): st
 
 export function toInsightReportRow(insight: InsightResponse): InsightReportRow {
   const payload = insight.payload ?? {};
+  const endpoints = insightEndpoints(insight);
   return {
     id: insight.id,
-    factor: insight.subject_label,
+    factor: endpoints.feature,
     factorType: insight.subject_type,
     metric: insight.metric,
+    target: endpoints.target,
+    relationGlyph: insightRelation(insight).glyph,
+    relationship: relationPairLabel(insight, endpoints.feature, endpoints.target),
+    displayEffect:
+      insight.effect_size === null
+        ? null
+        : displayEffectForMetric(insight.metric, insight.effect_size),
     insightType: insight.insight_type,
     effect: insight.effect_size,
     confidence: insight.confidence,

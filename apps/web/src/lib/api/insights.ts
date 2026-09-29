@@ -128,7 +128,13 @@ export type CooccurrenceAnalysisStatus =
   'ok' | 'insufficient_data' | 'limit_exceeded' | 'busy' | 'timeout' | 'unavailable';
 
 export interface CooccurrenceAnalysisLimit {
-  reason: 'supplied_tags' | 'supplied_symptoms' | 'eligible_tags' | 'eligible_symptoms' | 'pair_count' | 'work_units';
+  reason:
+    | 'supplied_tags'
+    | 'supplied_symptoms'
+    | 'eligible_tags'
+    | 'eligible_symptoms'
+    | 'pair_count'
+    | 'work_units';
   eligible_tags: number;
   eligible_symptoms: number;
   pair_count: number;

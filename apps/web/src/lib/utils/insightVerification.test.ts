@@ -40,6 +40,7 @@ const verification: InsightVerificationResponse = {
 describe('scatter eligibility', () => {
   it('rejects composite, unsupported metrics and lagged targets', () => {
     expect(supportsInsightVerification(insight)).toBe(true);
+    expect(supportsInsightVerification({ ...insight, metric: 'mood' })).toBe(true);
     expect(supportsInsightVerification({ ...insight, subject_type: 'composite' })).toBe(false);
     expect(supportsInsightVerification({ ...insight, metric: 'belastung_composite' })).toBe(false);
     expect(

@@ -168,3 +168,27 @@ def test_shared_api_render_fixture_is_projected_from_persisted_payload() -> None
     stored.pop("statement")
     response = InsightResponse.model_validate(stored).model_dump(mode="json")
     assert response["evidence"] == fixture["evidence"]
+
+
+def test_belastung_threshold_uses_unrounded_decision_and_conservative_legacy_fallback() -> None:
+    payload = {
+        "recent_n": 14,
+        "prior_n": 14,
+        "stress_avg_recent": 3.25,
+        "stress_avg_prior": 3.0,
+        "energy_avg_recent": 2.75,
+        "energy_avg_prior": 3.0,
+    }
+    legacy = build_insight_evidence("belastung_pattern", "belastung_composite", payload, None)
+    assert isinstance(legacy, BelastungEvidence)
+    assert legacy.stress_up is False
+    assert legacy.energy_down is False
+    current = build_insight_evidence(
+        "belastung_pattern",
+        "belastung_composite",
+        {**payload, "stress_up": True, "energy_down": False},
+        None,
+    )
+    assert isinstance(current, BelastungEvidence)
+    assert current.stress_up is True
+    assert current.energy_down is False

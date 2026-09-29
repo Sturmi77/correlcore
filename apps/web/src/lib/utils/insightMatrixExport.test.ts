@@ -98,12 +98,16 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
       ...row,
       id: `insight-${index}`,
       factor: `Subject ${index}`,
+      relationship: `Subject ${index} <-> mood_score`,
     }));
   }
 
   it('labels stress coefficients in raw and display orientation', () => {
-    const pdf = buildMatrixPdfDocument([{ ...row, metric: 'stress', effect_size: 0.4 }], options);
-    expect(pdf).toContain('raw 0.40 | view -0.40');
+    const pdf = buildMatrixPdfDocument(
+      [{ ...row, metric: 'stress', effect: 0.4, displayEffect: -0.4 }],
+      options
+    );
+    expect(pdf).toContain('effect=0.40 | view=-0.40');
   });
 
   function pageCount(pdf: string): number {
@@ -186,12 +190,13 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
     expect(Number(disclaimerLine?.match(/Tf 40 (-?\d+) Td/)?.[1])).toBeGreaterThan(0);
   });
 
-  it('fits the documented number of lines per page', () => {
-    // title + subtitle + blank + rows + blank + disclaimer
-    const rowsThatFillOnePage = PDF_LINES_PER_PAGE - 5;
-
-    expect(pageCount(buildMatrixPdfDocument(rows(rowsThatFillOnePage), options))).toBe(1);
-    expect(pageCount(buildMatrixPdfDocument(rows(rowsThatFillOnePage + 1), options))).toBe(2);
+  it('paginates wrapped rows without exceeding the documented line budget', () => {
+    const pdf = buildMatrixPdfDocument(rows(50), options);
+    const streams = [...pdf.matchAll(/>>stream\n([\s\S]*?)\nendstream/g)];
+    expect(streams.length).toBeGreaterThan(1);
+    for (const [, body] of streams) {
+      expect([...body.matchAll(/Tf 40 /g)].length).toBeLessThanOrEqual(PDF_LINES_PER_PAGE);
+    }
   });
 });
 
@@ -247,7 +252,7 @@ describe('buildMatrixPdfDocument character set (#960)', () => {
   };
 
   function umlautRow(label: string): InsightReportRow {
-    return { ...row, factor: label };
+    return { ...row, factor: label, relationship: `${label} <-> mood_score` };
   }
 
   it('declares WinAnsi on the font', () => {
@@ -358,7 +363,7 @@ describe('report CSV export security and types (#989)', () => {
     expect(csv).toContain('"\'\r=1+1"');
     expect(csv).toContain('"\'\n=1+1"');
     expect(csv).toContain('""quoted"", comma; semicolon');
-    expect(csv).toMatch(/,-0\.4,0\.7,5,95,100,/);
+    expect(csv).toMatch(/,-0\.4,0\.4,0\.7,5,95,100,/);
     expect(csv).not.toContain("'-0.4");
   });
 

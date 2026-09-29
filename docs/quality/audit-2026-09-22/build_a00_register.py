@@ -20,6 +20,18 @@ PLAN = (AUDIT / "REMEDIATION_PLAN.md").read_text(encoding="utf-8")
 ARCHIVE = json.loads((AUDIT / "review-evidence.json").read_text(encoding="utf-8"))
 THREADS = json.loads((AUDIT / "review-threads-current.json").read_text(encoding="utf-8"))
 
+existing_path = os.environ.get("A00_EXISTING_WORKTREE")
+if not existing_path:
+    raise SystemExit("Set A00_EXISTING_WORKTREE to the pre-existing working tree")
+existing = Path(existing_path)
+changed = sorted(set(subprocess.check_output(
+    ["git", "-C", str(existing), "diff", "HEAD", "--name-only"], text=True,
+    stderr=subprocess.DEVNULL,
+).splitlines()) | set(subprocess.check_output(
+    ["git", "-C", str(existing), "ls-files", "--others", "--exclude-standard"], text=True,
+    stderr=subprocess.DEVNULL,
+).splitlines()))
+
 PACKAGE_ROLE = {
     "A00": "Release-Verantwortung", "A01": "Backend / Datenbank",
     "A02": "Backend / Security", "A03": "Backend + Frontend",
@@ -34,12 +46,12 @@ PACKAGE_ROLE = {
 # not a claim that the entire fix scope has already been proven.
 FILES = {
     "R1": "backend/migrations/env.py; backend/migrations/versions/048_add_tag_is_pinned.py; backend/migrations/versions/049_drop_entry_note_markers.py; backend/app/services/marker_tag_backfill_service.py",
-    "S1": "backend/app/api/v1/endpoints/stats.py; backend/app/services/stats_service.py",
+    "S1": "backend/app/api/v1/endpoints/insights.py; backend/app/services/stats_service.py",
     "R2": "backend/app/services/insight_sections.py; apps/web/src/lib/utils/insightSections.ts",
     "R3": "backend/app/services/insight_dismissal_service.py; backend/app/services/insight_service.py",
     "R4": "apps/web/src/lib/utils/insightMatrixExport.ts; apps/web/src/routes/insights/report/+page.svelte; backend/app/services/export_service.py",
     "S2": "apps/web/src/lib/utils/insightMatrixExport.ts; backend/app/services/export_service.py",
-    "R5": "apps/web/src/routes/insights/signal/[id]/+page.svelte; apps/web/src/lib/components/insights/SymptomCooccurrenceHeatmap.svelte; apps/web/src/lib/components/insights/SignalScatter.svelte",
+    "R5": "apps/web/src/routes/insights/signal/[id]/+page.svelte; apps/web/src/lib/components/insights/symptoms/SymptomCooccurrenceHeatmap.svelte; apps/web/src/lib/components/insights/SignalScatter.svelte",
     "R6": "apps/web/src/routes/insights/+page.svelte; apps/web/src/routes/trends/+page.svelte; apps/web/src/lib/components/trends/TrendsComparePanel.svelte",
     "R7": "apps/web/src/lib/components/insights/TagCooccurrenceHeatmap.svelte; backend/app/services/stats_service.py",
     "R8": "backend/app/services/insights/belastung.py; apps/web/src/lib/components/insights/BelastungOverlay.svelte",
@@ -47,7 +59,7 @@ FILES = {
     "Wartbarkeit": "backend/app/services/insight_service.py; apps/web/src/routes/insights/+page.svelte; apps/web/src/routes/insights/report/+page.svelte",
     "Tests": "backend/tests; apps/web/src; apps/web/tests/e2e",
     "Zu früher": "docs/frontend/INSIGHT_SURFACE_LAYERS_ROLLOUT_PLAN.md; docs/adr/0043-insight-surface-layers.md",
-    "Doku-": "DESIGN_DOCUMENT.md; docs/adr/0043-insight-surface-layers.md",
+    "Doku-": "docs/DESIGN_DOCUMENT.md; docs/adr/0043-insight-surface-layers.md",
     "Fehlende": ".github/workflows; backend/tests; apps/web/tests/e2e",
     "Nicht blockierende": ".github/workflows",
 }
@@ -134,23 +146,22 @@ for comment in ARCHIVE["comments"]:
         "kurztext": re.sub(r"\s+", " ", comment.get("body") or "")[:180].strip(),
     })
 
+def safe_cell(value: object) -> object:
+    if isinstance(value, str) and (value[:1] in ("=", "+", "-", "@", "\t", "\r", "\n") or value.lstrip().startswith(("=", "+", "-", "@"))):
+        return "'" + value
+    return value
+
 def write_csv(name: str, rows: list[dict]) -> None:
+    if name == "A00_REVIEWREGISTER.csv":
+        (AUDIT / name.replace(".csv", ".raw.json")).write_text(json.dumps(rows, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     with (AUDIT / name).open("w", encoding="utf-8", newline="") as out:
         writer = csv.DictWriter(out, fieldnames=list(rows[0]))
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows({key: safe_cell(value) for key, value in row.items()} for row in rows)
 
 write_csv("A00_BEFUNDREGISTER.csv", matrix)
 write_csv("A00_REVIEWREGISTER.csv", reviews)
 
-existing_path = os.environ.get("A00_EXISTING_WORKTREE")
-if not existing_path:
-    raise SystemExit("Set A00_EXISTING_WORKTREE to the pre-existing working tree")
-existing = Path(existing_path)
-changed = subprocess.check_output(
-    ["git", "-C", str(existing), "diff", "--name-only"], text=True,
-    stderr=subprocess.DEVNULL,
-).splitlines()
 
 def candidate_package(path: str) -> str:
     p = path.lower()
@@ -188,7 +199,7 @@ Stand: 22.09.2026. Audit-Basis: `71d1089ff77388cadf2253ac67d1471dfa99fa40`.
 
 ## Isolierter Implementierungsstand
 
-- Worktree-Branch: `codex/audit-a00-register`, erstellt aus `origin/main` = `{source_head}`.
+- Worktree-Branch: `codex/audit-a00-register`, historisch erstellt aus `origin/main` = `acd98492c77d8e053c37b9165698e243146060c1`. Generator-Ausführung auf `{source_head}` (kein historischer Baseline-Nachweis).
 - Lokaler `main` beim Start: `50ef171336edfd03f92466167fb81dd7e81e3b19` (älter als der abgerufene Remote-Main).
 - Vorhandener Arbeitsbranch: `feat/928-phase14-sleep-next-day` auf `2e8a7f8f5e4217c61a54b344b202e5aeb52fba73` mit {len(local_fixes)} modifizierten, nicht committeten Dateien und einem unversionierten Audit-Verzeichnis. Diese Änderungen wurden nicht als Release-Fix übernommen oder überschrieben. Urheber der nicht committeten Änderungen ist aus Git allein nicht bestimmbar; Arbeitsstand und Pfade siehe `A00_LOKALE_FIXES.csv`.
 - Dokumentationsquelle: der durch PR #987 versionierte Plan auf aktuellem Main sowie das zuvor unversionierte `AUDIT.md` und `review-evidence.json` aus dem vorhandenen Arbeitsstand. `review-threads-current.json` ist der aktuelle GraphQL-Abgleich.

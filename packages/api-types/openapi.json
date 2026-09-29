@@ -4927,6 +4927,29 @@
       },
       "SymptomTagCooccurrenceResponse": {
         "properties": {
+          "analysis_limit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CooccurrenceAnalysisLimit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "analysis_status": {
+            "default": "ok",
+            "enum": [
+              "ok",
+              "insufficient_data",
+              "limit_exceeded",
+              "busy",
+              "timeout",
+              "unavailable"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
           "analytics_disabled": {
             "default": false,
             "title": "Analytics Disabled",
@@ -5767,6 +5790,29 @@
       },
       "TagCooccurrenceResponse": {
         "properties": {
+          "analysis_limit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CooccurrenceAnalysisLimit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "analysis_status": {
+            "default": "ok",
+            "enum": [
+              "ok",
+              "insufficient_data",
+              "limit_exceeded",
+              "busy",
+              "timeout",
+              "unavailable"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
           "analytics_disabled": {
             "default": false,
             "title": "Analytics Disabled",

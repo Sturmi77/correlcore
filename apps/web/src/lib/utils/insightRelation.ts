@@ -27,3 +27,26 @@ export function relationPairLabel(
     relation.lagDays === null ? '' : ` (${relation.lagDays > 0 ? '+' : ''}${relation.lagDays}d)`;
   return `${feature} ${relation.glyph} ${target}${offset}`;
 }
+
+/** Resolve the actual two endpoints before adding a temporal or associative glyph. */
+export function insightEndpoints(insight: InsightResponse): { feature: string; target: string } {
+  const payload = insight.payload ?? {};
+  const label = (value: unknown): string | null => {
+    if (!value || typeof value !== 'object') return null;
+    const item = value as Record<string, unknown>;
+    for (const key of ['label', 'key', 'id']) {
+      if (typeof item[key] === 'string' && item[key]) return item[key] as string;
+    }
+    return null;
+  };
+  if (payload.method === 'lag') {
+    return { feature: label(payload.feature) ?? '—', target: label(payload.target) ?? '—' };
+  }
+  if (payload.kind === 'symptom_tag_cooccurrence') {
+    return {
+      feature: typeof payload.symptom_name === 'string' ? payload.symptom_name : '—',
+      target: typeof payload.tag_name === 'string' ? payload.tag_name : '—',
+    };
+  }
+  return { feature: insight.subject_label ?? '—', target: insight.metric };
+}

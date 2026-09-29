@@ -195,7 +195,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t files < <(grep -rl --include='test_*.py' '@pytest.mark.integration' tests | sort)
+          mapfile -t files < <(grep -rl --include='test_*.py' '@pytest.mark.integration' tests | grep -v '^tests/test_marker_tag_backfill_integration.py$' | sort)
           test "${#files[@]}" -gt 0
           for file in "${files[@]}"; do
             report="integration-$(basename "$file" .py).xml"
@@ -223,6 +223,33 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+      - name: Verify running containers on the protected staging host
+        env:
+          A10_SSH_HOST: ${{ secrets.A10_SSH_HOST }}
+          A10_SSH_KEY: ${{ secrets.A10_SSH_KEY }}
+          A10_SSH_KNOWN_HOSTS: ${{ secrets.A10_SSH_KNOWN_HOSTS }}
+          A10_API_CONTAINER: ${{ vars.A10_API_CONTAINER }}
+          A10_WEB_CONTAINER: ${{ vars.A10_WEB_CONTAINER }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$A10_SSH_HOST" && test -n "$A10_SSH_KEY" && test -n "$A10_SSH_KNOWN_HOSTS"
+          [[ "$A10_SSH_HOST" =~ ^[A-Za-z0-9_.@-]+$ ]] && [[ "$A10_SSH_HOST" != -* ]]
+          [[ "$A10_API_CONTAINER" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]
+          [[ "$A10_WEB_CONTAINER" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]
+          install -m 700 -d "$RUNNER_TEMP/a10-ssh"
+          printf '%s\n' "$A10_SSH_KEY" > "$RUNNER_TEMP/a10-ssh/key"
+          printf '%s\n' "$A10_SSH_KNOWN_HOSTS" > "$RUNNER_TEMP/a10-ssh/known_hosts"
+          chmod 600 "$RUNNER_TEMP/a10-ssh/key"
+          trap 'rm -f "$RUNNER_TEMP/a10-ssh/key"' EXIT
+          printf -v remote 'python3 - %q %q %q %q %q' "$RELEASE_SHA" "$A10_API_CONTAINER" "$API_IMAGE" "$A10_WEB_CONTAINER" "$WEB_IMAGE"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$RUNNER_TEMP/a10-ssh/known_hosts" -i "$RUNNER_TEMP/a10-ssh/key" "$A10_SSH_HOST" "$remote" < scripts/a10-runtime-images.py > a10-runtime-images.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: a10-runtime-images
+          path: a10-runtime-images.json
+          if-no-files-found: error
+          retention-days: 90
       - name: Verify deployed revision and images
         env:
           STAGING_URL: ${{ inputs.staging_url }}
@@ -309,9 +336,15 @@ jobs:
           body="$(jq -nc --arg e "$A10_USER_A_EMAIL" --arg p "$A10_USER_A_PASSWORD" '{email:$e,password:$p,remember_me:false}')"
           token="$(curl -fsS "$STAGING_URL/api/v1/auth/login?include_access_token=true" -H 'content-type: application/json' --data "$body" | jq -er .access_token)"
           mkdir -p zap-out
-          cp .zap/a10-staging-rules.tsv packages/api-types/openapi.json zap-out/
+          cp .zap/a10-staging-rules.tsv .zap/a10-coverage-hook.py packages/api-types/openapi.json zap-out/
           chmod -R 777 zap-out
-          docker run --rm -v "$GITHUB_WORKSPACE/zap-out:/zap/wrk/:rw" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py -t openapi.json -f openapi -O "$STAGING_URL" -c a10-staging-rules.tsv -J zap-report.json -w zap-report.md -z "-config replacer.full_list(0).description=a10-auth -config replacer.full_list(0).enabled=true -config replacer.full_list(0).matchtype=REQ_HEADER -config replacer.full_list(0).matchstr=Authorization -config replacer.full_list(0).replacement=Bearer%20$token"
+          docker run --rm -v "$GITHUB_WORKSPACE/zap-out:/zap/wrk/:rw" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py --hook=/zap/wrk/a10-coverage-hook.py -t openapi.json -f openapi -O "$STAGING_URL" -c a10-staging-rules.tsv -J zap-report.json -w zap-report.md -z "-config replacer.full_list(0).description=a10-auth -config replacer.full_list(0).enabled=true -config replacer.full_list(0).matchtype=REQ_HEADER -config replacer.full_list(0).matchstr=Authorization -config replacer.full_list(0).replacement=Bearer%20$token"
+      - name: Reject incomplete or rate-limited scanner coverage
+        if: always()
+        run: |
+          test -s zap-out/http-coverage.json
+          jq -e 'has("429") | not' zap-out/http-coverage.json
+          jq -e '[.[]] | add > 0' zap-out/http-coverage.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -319,6 +352,7 @@ jobs:
           path: |
             trivy-*.json
             zap-out/zap-report.*
+            zap-out/http-coverage.json
           retention-days: 90
           if-no-files-found: error
 

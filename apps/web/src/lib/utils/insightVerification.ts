@@ -1,6 +1,6 @@
 import type { InsightResponse, InsightVerificationResponse } from '$lib/api/insights';
 
-const SUPPORTED_METRICS = new Set(['mood_score', 'energy', 'stress', 'sleep_quality']);
+const SUPPORTED_METRICS = new Set(['mood', 'mood_score', 'energy', 'stress', 'sleep_quality']);
 
 /** Mirror the API's subject and metric limits before offering a scatter control. */
 export function supportsInsightVerification(insight: InsightResponse): boolean {

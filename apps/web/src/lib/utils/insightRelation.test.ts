@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { InsightResponse } from '$lib/api/insights';
-import { insightRelation, relationPairLabel } from './insightRelation';
+import { insightRelation, relationPairLabel, insightEndpoints } from './insightRelation';
 
 const base = {
   id: '1',
@@ -41,4 +41,19 @@ describe('insightRelation', () => {
       '↔'
     );
   });
+});
+
+it('uses the lag payload and composite endpoints instead of duplicating the target', () => {
+  expect(
+    insightEndpoints({
+      ...base,
+      payload: { method: 'lag', feature: { label: 'Sport' }, target: { label: 'Mood' } },
+    })
+  ).toEqual({ feature: 'Sport', target: 'Mood' });
+  expect(
+    insightEndpoints({
+      ...base,
+      payload: { kind: 'symptom_tag_cooccurrence', symptom_name: 'Fatigue', tag_name: 'Work' },
+    })
+  ).toEqual({ feature: 'Fatigue', target: 'Work' });
 });

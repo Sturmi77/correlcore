@@ -59,7 +59,11 @@ export function exportMatrixPng(
   measurementContext.font = '13px sans-serif';
   const prepared = rows.map((row) => ({
     row,
-    factorLines: wrapCanvasText(measurementContext, row.factor ?? labels.missing, 280),
+    factorLines: wrapCanvasText(
+      measurementContext,
+      row.relationship ?? row.factor ?? labels.missing,
+      280
+    ),
   }));
   const rowHeights = prepared.map(({ factorLines }) => Math.max(72, factorLines.length * 18 + 38));
   canvas.height = Math.max(
@@ -86,13 +90,13 @@ export function exportMatrixPng(
   let y = 94;
   prepared.forEach(({ row, factorLines }, index) => {
     const effect = row.effect ?? 0;
-    const tone = matrixEffectTone(effect);
+    const tone = matrixEffectTone(row.displayEffect ?? effect);
     ctx.fillStyle =
       tone === 'positive' ? colors.success : tone === 'negative' ? colors.error : colors.muted;
     ctx.fillRect(32, y - 18, Math.max(8, Math.abs(effect) * 210), 24);
     ctx.fillStyle = colors.text;
     factorLines.forEach((line, lineIndex) => ctx.fillText(line, 270, y + lineIndex * 18));
-    ctx.fillText(row.metric, 570, y, 170);
+    ctx.fillText(row.target ?? row.metric, 570, y, 170);
     ctx.fillText(row.effect === null ? labels.missing : row.effect.toFixed(2), 760, y);
     ctx.fillText(
       `${labels.with} ${row.sampleWith ?? labels.missing} / ${labels.without} ${row.sampleWithout ?? labels.missing}`,
@@ -254,7 +258,11 @@ export function buildMatrixPdfDocument(
         row.analysisWindowStart && row.analysisWindowEnd
           ? `${row.analysisWindowStart}–${row.analysisWindowEnd}`
           : missing;
-      const line = `${row.factor ?? missing} | ${row.metric} | ${labels.effect}=${row.effect === null ? missing : row.effect.toFixed(2)} | ${labels.with}=${row.sampleWith ?? missing} | ${labels.without}=${row.sampleWithout ?? missing} | ${labels.total}=${row.sampleTotal} | ${labels.confidence}=${conf} | ${labels.window}=${window}`;
+      const relation = (row.relationship ?? row.factor ?? missing)
+        .replaceAll('↔', '<->')
+        .replaceAll('→', '->')
+        .replaceAll('←', '<-');
+      const line = `${relation} | ${row.metric} | ${labels.effect}=${row.effect === null ? missing : row.effect.toFixed(2)} | view=${row.displayEffect == null ? missing : row.displayEffect.toFixed(2)} | ${labels.with}=${row.sampleWith ?? missing} | ${labels.without}=${row.sampleWithout ?? missing} | ${labels.total}=${row.sampleTotal} | ${labels.confidence}=${conf} | ${labels.window}=${window}`;
       return line.match(/.{1,105}(?:\s|$)|\S{1,105}/g) ?? [line];
     }),
     '',
@@ -371,6 +379,8 @@ function csvCell(cell: CsvCell): string {
 function reportRecords(rows: readonly InsightReportRow[]): Record<string, CsvCell>[] {
   return rows.map((row) => ({
     factor: { kind: 'text', value: row.factor },
+    relationship: { kind: 'text', value: row.relationship ?? null },
+    display_effect_size: { kind: 'number', value: row.displayEffect ?? null },
     factor_type: { kind: 'text', value: row.factorType },
     metric: { kind: 'text', value: row.metric },
     insight_type: { kind: 'text', value: row.insightType },

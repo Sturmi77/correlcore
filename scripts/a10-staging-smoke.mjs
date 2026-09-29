@@ -58,7 +58,10 @@ if (entriesB.some((entry) => idsA.has(entry.id))) {
 }
 
 // Exercise capture through a lossless update of an existing seeded entry.
-const source = entriesA[0];
+const today = new Date().toISOString().slice(0, 10);
+const source = entriesA.find((entry) => entry.entry_date === today);
+if (!source)
+  throw new Error('release-candidate user A needs a writable seeded entry dated today (UTC)');
 const update = {
   mood_score: source.mood_score,
   energy: source.energy,
@@ -95,8 +98,11 @@ const [shortWindow, longWindow, exportJson, insights] = await Promise.all([
 if (!shortWindow || !longWindow || !exportJson)
   throw new Error('analysis or export returned no data');
 
-const insight = insights.insights?.find(({ subject_type }) =>
-  ['tag', 'symptom'].includes(subject_type)
+const insight = insights.insights?.find(
+  ({ subject_type, metric, payload }) =>
+    ['tag', 'symptom'].includes(subject_type) &&
+    ['mood', 'mood_score', 'energy', 'stress', 'sleep_quality'].includes(metric) &&
+    payload?.method !== 'lag'
 );
 if (!insight?.id) {
   throw new Error('release-candidate user A needs a seeded tag or symptom insight');
