@@ -22,3 +22,4 @@
 10035	IGNORE	Strict-Transport-Security not set — Traefik stsSeconds/forceSTSHeader (HTTPS-only anyway)
 10038	IGNORE	Content Security Policy not set — Traefik injects CSP-Report-Only (#791)
 10063	IGNORE	Permissions Policy not set — Traefik permissionsPolicy
+90004	IGNORE	Cross-Origin-Resource-Policy missing — direct API uses an explicit CORS allowlist; browser header validation belongs to the Traefik-fronted scan
