@@ -5,11 +5,23 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      # Runs backend/tests/test_compose_web_healthchecks.py for Compose-only PRs.
+      - 'infra/docker/docker-compose.yml'
+      - 'infra/docker/docker-compose.quickstart.yml'
+      - 'infra/docker/docker-compose.user-test.yml'
+      - 'infra/dockge/compose.yaml'
+      - 'infra/dockhand/compose.yaml'
       - '.github/workflows/ci-api.yml'
   pull_request:
     branches: [main]
     paths:
       - 'backend/**'
+      # Runs backend/tests/test_compose_web_healthchecks.py for Compose-only PRs.
+      - 'infra/docker/docker-compose.yml'
+      - 'infra/docker/docker-compose.quickstart.yml'
+      - 'infra/docker/docker-compose.user-test.yml'
+      - 'infra/dockge/compose.yaml'
+      - 'infra/dockhand/compose.yaml'
       - '.github/workflows/ci-api.yml'
 
 concurrency:
