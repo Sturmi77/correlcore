@@ -81,6 +81,16 @@ describe('OptionalScaleSlider (#653 B6)', () => {
       expect(screen.getByText('Clear')).toBeTruthy();
     });
 
+    it('records the displayed default when its unchanged thumb is clicked', async () => {
+      render(OptionalScaleSlider, { props: { ...expandedProps, value: null } });
+
+      await fireEvent.click(screen.getByRole('slider'));
+
+      expect(screen.getByText('3')).toBeTruthy();
+      expect(screen.getByText('Clear')).toBeTruthy();
+      expect(screen.queryByText('–')).toBeNull();
+    });
+
     it('clearing a set value keeps the slider visible (stays expanded, not the add button)', async () => {
       render(OptionalScaleSlider, { props: { ...expandedProps, value: 4 } });
       await fireEvent.click(screen.getByText('Clear'));
