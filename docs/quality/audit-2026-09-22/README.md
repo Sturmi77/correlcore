@@ -29,3 +29,7 @@ Alle Arbeitspakete besitzen konkrete Maßnahmen, Regressionstests und Abschlussk
 [Status](A12_STATUS.md) · [Abnahmelaufplan](A12_ACCEPTANCE_RUNBOOK.md) · [maschinenlesbares Gate-Register](A12_ACCEPTANCE_REGISTER.json) · [Evidenzformat](a12-evidence/README.md)
 Für A01 beschreibt [der Upgrade- und Wiederanlaufplan](A01_UPGRADE.md) die
 Migration aus 046–048 und die erforderliche Backup-/Restore-Probe.
+
+## A11-Nachweise
+
+[Review- und Dokumentationsabschluss](A11_REVIEW_CLOSEOUT.md) · [verlustfreies Abschlussregister](A11_REVIEW_CLOSEOUT.csv)

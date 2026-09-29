@@ -4,8 +4,8 @@
 
 | Version                   | Support |
 | ------------------------- | ------- |
-| `1.0.x` (latest / `main`) | ✅      |
-| Older releases            | ❌      |
+| `1.9.x` (latest / `main`) | ✅      |
+| `< 1.9`                   | ❌      |
 
 ## Report a vulnerability
 

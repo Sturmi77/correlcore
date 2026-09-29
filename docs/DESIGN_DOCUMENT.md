@@ -297,7 +297,7 @@ keine inferenziellen Korrelationen.
 - Charts mobile-freundlich! Keine riesigen Dashboards.
 - Export als PNG/CSV/PDF für Arzt-Gespräche.
 
-**Entscheidung:** Chart-Implementierung via **Custom-SVG-Komponenten** in SvelteKit (D-002 entschieden — siehe §7). Export-Heimat ist die sekundäre Bericht-Route `/insights/report` (ADR-0043 Ebene 4): PNG und PDF clientseitig, CSV/JSON über die bestehenden Export-Endpunkte. Die Korrelations-/Berichtstabelle ist nicht mehr der Hub-Default (Phase 6 / D5); der Hub bleibt schlank (`stage_header` + `insight_feed`).
+**Entscheidung:** Chart-Implementierung via **Custom-SVG-Komponenten** in SvelteKit (D-002 entschieden — siehe §7). Export-Heimat ist die sekundäre Bericht-Route `/insights/report` (ADR-0043 Ebene 4): PNG und PDF sind clientseitig implementiert; CSV und JSON sind ebenfalls als Berichtsexporte vorhanden. Der gemeinsame, typisierte Auswahl- und Evidenzvertrag für alle vier Formate sowie der CSV-Empfängernachweis sind bis zum Abschluss von [Audit-Paket A05](https://github.com/Sturmi77/correlcore/issues/989) noch nicht abgenommen. Der vollständige DSGVO-Datenexport bleibt getrennt unter `/settings/data`. Die Korrelations-/Berichtstabelle ist nicht mehr der Hub-Default (Phase 6 / D5); der Hub bleibt schlank (`stage_header` + `insight_feed`).
 
 **Priorität:** MUST
 
@@ -1383,10 +1383,19 @@ konsistenten, releasefähigen UX-Stand bringen, ohne neue große Backend-Domäne
 
 ---
 
-### M13 — Fotos & Medien (post-SaaS)
+### Historische M13-Planung — Fotos & Medien (post-SaaS)
 
-Deferred past M10 (public selfhost v1.0) and M12 (SaaS launch) so core tracking,
-insights, and deployment paths ship without photo storage complexity.
+> **Roadmap-Status (2026-09-23):** Dieser Abschnitt bewahrt die vorhandene
+> Medienplanung und ihre noch offenen Datenschutzanforderungen. [#715](https://github.com/Sturmi77/correlcore/issues/715)
+> priorisiert inzwischen strukturierte Ernährungsdaten als nächsten neuen
+> Korrelationsbereich und ersetzt Fotos für diesen Anwendungszweck. Ein eigener
+> Medien-Meilenstein ist derzeit nicht eingeplant; die bereits gelandete
+> EXIF-Strip-Foundation bleibt erhalten und darf ohne erneute Planung nicht als
+> vollständige Medienfunktion aktiviert werden.
+
+Historisch war dieser Meilenstein hinter M10 (public selfhost v1.0) und M12 (SaaS launch)
+verschoben, damit Kern-Tracking, Insights und Deployment ohne Photo-Storage-Komplexität
+ausgeliefert werden konnten.
 **Foundation (#28):** `POST /api/v1/media/photos` strips EXIF server-side; MinIO
 persist (`stored: false` stub) + gallery remain M13 exit work. See [`M13_NOTES.md`](M13_NOTES.md).
 
@@ -1419,9 +1428,10 @@ persist (`stored: false` stub) + gallery remain M13 exit work. See [`M13_NOTES.m
 - E2E-Verschlüsselung opt-in
 - Kalender-Integration (ICS für Work-Context-Auto-Fill)
 - Zyklus-Tracking-Modul
-- Sharing-Features (Arzt-Report als PDF)
+- Sharing-Workflow jenseits des lokalen Downloads (z. B. direkter Versand eines Arzt-Reports)
 - Apple Watch / Wear OS Complication
-- PNG-Export aus Charts (für Arzt-Gespräch) — derzeit CSV/JSON verfügbar
+- Erweiterte, formatübergreifend abgenommene Berichtsexporte — PNG/PDF/CSV/JSON sind
+  implementiert; gemeinsamer Datenvertrag und Empfängernachweis bleiben in A05 offen
 
 ---
 
