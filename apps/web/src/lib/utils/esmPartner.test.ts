@@ -5,6 +5,7 @@ import type {
   TagCooccurrencePair,
 } from '$lib/api/insights';
 import type { SymptomHeatmapResponse, TagHeatmapResponse } from '$lib/api/stats';
+import type { WorkContextHeatmapResponse } from './workContextHeatmap';
 import {
   MAX_ESM_PARTNERS,
   candidatesFromSymptomTagCooccurrence,
@@ -263,6 +264,19 @@ describe('presence + window helpers', () => {
     end_date: '2026-05-14',
     symptoms: [],
   };
+  const workContextHeatmap: WorkContextHeatmapResponse = {
+    start_date: '2026-05-01',
+    end_date: '2026-05-14',
+    contexts: [
+      {
+        context: 'homeoffice',
+        days: [
+          { date: '2026-05-09', count: 1 },
+          { date: '2026-05-11', count: 1 },
+        ],
+      },
+    ],
+  };
 
   it('reads partner presence from heatmaps', () => {
     const partner: EsmPartner = { id: 't-coffee', label: 'Coffee', kind: 'tag' };
@@ -271,6 +285,17 @@ describe('presence + window helpers', () => {
       '2026-05-13',
     ]);
     expect(presenceDatesForPartner(null, tagHeatmap, symptomHeatmap)).toEqual([]);
+  });
+
+  it('preserves work-context partner presence', () => {
+    const partner: EsmPartner = {
+      id: 'homeoffice',
+      label: 'Home office',
+      kind: 'work_context',
+    };
+    expect(
+      presenceDatesForPartner(partner, tagHeatmap, symptomHeatmap, workContextHeatmap)
+    ).toEqual(['2026-05-09', '2026-05-11']);
   });
 
   it('lists partner hits inside an aligned window', () => {

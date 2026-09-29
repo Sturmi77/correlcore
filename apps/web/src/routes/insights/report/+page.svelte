@@ -27,6 +27,7 @@
   import InsightReportTable from '$lib/components/insights/InsightReportTable.svelte';
   import CorrelationHint from '$lib/components/insights/CorrelationHint.svelte';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
+  import { analysisPairQuery, parseAnalysisPair } from '$lib/utils/analysisPairHandoff';
 
   let insights: InsightResponse[] = [];
   let maturity: InsightMaturity | null = null;
@@ -42,6 +43,9 @@
   let selectionSeeded = false;
   let exportBusy: 'pdf' | 'png' | 'csv' | 'json' | null = null;
   let exportError: string | null = null;
+  $: carriedPair = parseAnalysisPair($page.url.searchParams);
+  $: carriedPairQuery = carriedPair ? analysisPairQuery(carriedPair) : '';
+  $: insightsBackHref = carriedPairQuery ? `/insights?${carriedPairQuery}` : '/insights';
 
   $: reportRows = buildMatrixDisplayRows(insights, { includeWeak: false }).strong;
   $: selectedRows = reportRows.filter((row) => selectedIds.includes(row.id));
@@ -184,7 +188,8 @@
 
   onMount(() => {
     if ($auth.status !== 'authenticated') {
-      void goto('/auth/login?next=/insights/report');
+      const next = `${$page.url.pathname}${$page.url.search}`;
+      void goto(`/auth/login?next=${encodeURIComponent(next)}`);
       return;
     }
     void loadReport();
@@ -200,7 +205,7 @@
   <ScreenHeader
     title={$_('insights.report.title')}
     subtitle={$_('insights.report.subtitle')}
-    back={{ href: '/insights', label: $_('nav.insights') }}
+    back={{ href: insightsBackHref, label: $_('nav.insights') }}
   />
 
   <div class="report-page__exports" role="group" aria-label={$_('insights.report.export_aria')}>

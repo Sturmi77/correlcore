@@ -33,6 +33,8 @@
   import EventAlignedSmallMultiplesSheet from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { TimeseriesPoint } from '$lib/api/stats';
+  import { fetchSymptomHeatmap, fetchTagHeatmap } from '$lib/api/stats';
+  import { listEntries } from '$lib/api/entries';
   import {
     insightMetricToChartKey,
     insightMetricToEntryField,
@@ -49,8 +51,20 @@
     supportsInsightVerification,
   } from '$lib/utils/insightVerification';
   import SignalLagEvidence from '$lib/components/insights/SignalLagEvidence.svelte';
-  import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
+  import {
+    isSmallMultiplesUnlocked,
+    SMALL_MULTIPLES_RADIUS,
+  } from '$lib/components/trends/smallMultiplesGate';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
+  import {
+    analysisPairQuery,
+    insightMatchesAnalysisPair,
+    parseAnalysisPair,
+    partnerForInsight,
+  } from '$lib/utils/analysisPairHandoff';
+  import { presenceDatesForPartner, type EsmPartner } from '$lib/utils/esmPartner';
+  import { buildWorkContextHeatmap } from '$lib/utils/workContextHeatmap';
+  import { shiftIsoDate } from '$lib/utils/isoDate';
 
   let insight: InsightResponse | null = null;
   let maturity: InsightMaturity | null = null;
@@ -75,6 +89,16 @@
   let esmPoints: TimeseriesPoint[] = [];
   let esmLag: number | null = null;
   let esmLoading = false;
+  let esmPartnerLoading = false;
+  let esmPartner: EsmPartner | null = null;
+  let esmPartnerPresence: string[] = [];
+  let esmPartnerUnavailable = false;
+  $: carriedPair = parseAnalysisPair($page.url.searchParams);
+  $: carriedPairQuery = carriedPair ? analysisPairQuery(carriedPair) : '';
+  $: if (mounted && $auth.status === 'anonymous') {
+    const next = `${$page.url.pathname}${$page.url.search}`;
+    void goto(`/auth/login?next=${encodeURIComponent(next)}`);
+  }
   let mounted = false;
   let loadedContext = '';
   let preferenceRequestActor: string | null = null;
@@ -165,9 +189,17 @@
     loading = true;
     error = null;
     verification = null;
+    insight = null;
+    maturity = null;
+    verificationUnsupported = false;
+    esmLoading = false;
+    esmPartnerLoading = false;
+    esmPartner = null;
+    esmPartnerPresence = [];
+    esmPartnerUnavailable = false;
     try {
       const [detail, latest] = await Promise.all([
-        fetchInsight(id),
+        fetchInsight(id, { signal: request.signal }),
         listLatestInsights({ limit: 1 }).catch(() => null),
       ]);
       if (!request.isCurrent()) return;
@@ -206,6 +238,10 @@
     const request = esmRequests.begin(`${actorId}:${id}:${days}`);
     esmOpen = true;
     esmLoading = true;
+    esmPartnerLoading = false;
+    esmPartner = null;
+    esmPartnerPresence = [];
+    esmPartnerUnavailable = false;
     try {
       const response = await fetchInsightEventWindows(id, trendWindowDaysToCooccurrence(days), {
         days,
@@ -219,11 +255,73 @@
       }));
       esmPoints = response.points;
       esmLag = response.lag_days ?? null;
+      // The primary visualization is complete. Open it while optional partner
+      // presence loads and let the sheet render its dedicated loading state.
+      esmLoading = false;
+
+      const partnerRef =
+        carriedPair && insightMatchesAnalysisPair(insight, carriedPair)
+          ? partnerForInsight(insight, carriedPair)
+          : null;
+      if (partnerRef && ['tag', 'symptom', 'work_context'].includes(partnerRef.kind)) {
+        esmPartnerLoading = true;
+        const partner: EsmPartner = {
+          id: partnerRef.id,
+          label: partnerRef.label ?? partnerRef.context ?? partnerRef.id,
+          kind: partnerRef.kind as EsmPartner['kind'],
+        };
+        const startDate = shiftIsoDate(response.start_date, -SMALL_MULTIPLES_RADIUS);
+        const endDate = shiftIsoDate(response.end_date, SMALL_MULTIPLES_RADIUS);
+        try {
+          let partnerPresence: string[];
+          if (partner.kind === 'tag') {
+            const heatmap = await fetchTagHeatmap({ start_date: startDate, end_date: endDate });
+            partnerPresence = presenceDatesForPartner(partner, heatmap, null);
+          } else if (partner.kind === 'symptom') {
+            const heatmap = await fetchSymptomHeatmap({ start_date: startDate, end_date: endDate });
+            partnerPresence = presenceDatesForPartner(partner, null, heatmap);
+          } else {
+            const entries = await listEntries({
+              start_date: startDate,
+              end_date: endDate,
+              limit: 500,
+            });
+            partnerPresence = presenceDatesForPartner(
+              partner,
+              null,
+              null,
+              buildWorkContextHeatmap(entries, {
+                start_date: startDate,
+                end_date: endDate,
+              })
+            );
+          }
+          if (
+            !request.isCurrent() ||
+            !request.isCurrent() ||
+            insight?.id !== id
+          ) {
+            return;
+          }
+          esmPartner = partner;
+          esmPartnerPresence = partnerPresence;
+        } catch {
+          if (!request.isCurrent() || !request.isCurrent()) return;
+          esmPartnerUnavailable = true;
+        } finally {
+          if (!!request.isCurrent() && request.isCurrent()) {
+            esmPartnerLoading = false;
+          }
+        }
+      }
     } catch {
       if (!request.isCurrent()) return;
       esmWindows = [];
       esmPoints = [];
       esmLag = null;
+      esmPartner = null;
+      esmPartnerPresence = [];
+      esmPartnerLoading = false;
     } finally {
       if (request.isCurrent()) esmLoading = false;
     }
@@ -231,13 +329,11 @@
 
   onMount(() => {
     mounted = true;
-    if ($auth.status !== 'authenticated') {
-      void goto(`/auth/login?next=${encodeURIComponent($page.url.pathname)}`);
-    }
     const unregister = registerPageRefresh(() => {
       if (actorId && insightId) void load(insightId, $analysisRange, actorId);
     });
     return () => {
+      mounted = false;
       unregister();
       detailRequests.cancel();
       esmRequests.cancel();
@@ -256,7 +352,10 @@
     subtitle={isNull
       ? `${$_('insights.signal.subtitle')} · ${$_('insights.card.null_badge')}`
       : $_('insights.signal.subtitle')}
-    back={{ href: '/insights', label: $_('insights.signal.back') }}
+    back={{
+      href: `/insights${carriedPairQuery ? `?${carriedPairQuery}` : ''}`,
+      label: $_('insights.signal.back'),
+    }}
   />
 
   {#if loading}
@@ -397,7 +496,7 @@
         </a>
         <a
           class="signal-page__chip"
-          href={`/insights/report?signal=${encodeURIComponent(insight.id)}`}
+          href={`/insights/report?signal=${encodeURIComponent(insight.id)}${carriedPairQuery ? `&${carriedPairQuery}` : ''}`}
           data-testid="signal-report-link"
         >
           {$_('insights.signal.remember_report')}
@@ -439,6 +538,11 @@
     points={esmPoints}
     metric={insight ? insightMetricToChartKey(insight.metric) : 'mood_avg'}
     lagOffset={esmLag}
+    partner={esmPartner}
+    partnerPresenceDates={esmPartnerPresence}
+    partnerCandidates={esmPartner ? [{ ...esmPartner, score: Number.MAX_SAFE_INTEGER }] : []}
+    partnerLoading={esmPartnerLoading}
+    partnerUnavailable={esmPartnerUnavailable}
     phase={maturity?.phase ?? null}
     on:close={() => {
       esmOpen = false;

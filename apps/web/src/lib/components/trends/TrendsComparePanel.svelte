@@ -72,6 +72,12 @@
   import CompareOverlayControls from './CompareOverlayControls.svelte';
   import type { CompareOverlayAvailability } from '$lib/utils/compareOverlayAvailability';
   import { dedupeEventMarkers, type EventMarker } from './EventMarkerLayer.svelte';
+  import {
+    analysisPairQuery,
+    createAnalysisPair,
+    type AnalysisPairHandoff,
+    type AnalysisSignalRef,
+  } from '$lib/utils/analysisPairHandoff';
 
   export let points: TimeseriesPoint[] = [];
   export let range: TimeseriesRange = 'week';
@@ -135,6 +141,7 @@
     checkQuestion: {
       windows: EventWindow[];
       label: string;
+      pair: AnalysisPairHandoff;
       /** The second pinned row — the other half of the question (#967). */
       partner: EsmPartner | null;
       partnerPresenceDates: string[];
@@ -231,26 +238,35 @@
     return row.days.filter((day) => isRowActiveOnDay(row, day.date)).map((day) => day.date);
   }
 
-  $: checkQuestionHref =
-    pinned.length >= 2
-      ? `/insights?signals=${pinned.slice(0, 2).map(encodeURIComponent).join(',')}`
-      : '/insights';
+  $: pinnedPair = (() => {
+    if (pinned.length < 2) return null;
+    const first = signalRefByRowId.get(pinned[0]);
+    const second = signalRefByRowId.get(pinned[1]);
+    if (!first || !second) return null;
+    const lagDays = lag1Highlight && lag1.canHighlight ? 1 : undefined;
+    return createAnalysisPair(
+      lagDays === undefined ? first : { ...first, lagDays },
+      lagDays === undefined ? second : { ...second, lagDays }
+    );
+  })();
+  $: checkQuestionHref = pinnedPair ? `/insights?${analysisPairQuery(pinnedPair)}` : '/insights';
 
   function openCheckQuestion(): void {
-    if (pinned.length < 2) return;
+    if (pinned.length < 2 || !pinnedPair) return;
     const firstRow = coincidenceRows.find((row) => row.id === pinned[0]);
     if (!firstRow) return;
     // The second pin is the other half of the question being checked. Reading
     // only pinned[0] meant changing it produced the identical sheet, so the
     // action never examined the selected pair (#967).
     const secondRow = coincidenceRows.find((row) => row.id === pinned[1]) ?? null;
-    const secondKind = secondRow ? (rowKindById.get(secondRow.id) ?? null) : null;
+    const secondRef = secondRow ? (signalRefByRowId.get(secondRow.id) ?? null) : null;
     dispatch('checkQuestion', {
       windows: datesToEventWindows(activeDatesForRow(firstRow), firstRow.label),
       label: firstRow.label,
+      pair: pinnedPair,
       partner:
-        secondRow && secondKind
-          ? { id: secondRow.id, label: secondRow.label, kind: secondKind }
+        secondRow && secondRef && secondRef.kind !== 'metric' && secondRef.kind !== 'unknown'
+          ? { id: secondRef.id, label: secondRow.label, kind: secondRef.kind }
           : null,
       partnerPresenceDates: secondRow ? activeDatesForRow(secondRow) : [],
     });
@@ -448,10 +464,28 @@
   // `kind` is carried alongside the rows (not on CoincidenceRow, which is shared
   // with the marker utilities) so the second pin can travel to the ESM as a
   // partner — it used to be read and then dropped (#967).
-  $: rowKindById = new Map<string, 'tag' | 'symptom'>([
-    ...(tagHeatmap?.tags ?? []).map((tag) => [tag.tag_id, 'tag' as const] as const),
+  $: signalRefByRowId = new Map<string, AnalysisSignalRef>([
+    ...(tagHeatmap?.tags ?? []).map(
+      (tag) => [tag.tag_id, { kind: 'tag', id: tag.tag_id, label: tag.name }] as const
+    ),
     ...(symptomHeatmap?.symptoms ?? []).map(
-      (symptom) => [symptom.symptom_id, 'symptom' as const] as const
+      (symptom) =>
+        [
+          symptom.symptom_id,
+          { kind: 'symptom', id: symptom.symptom_id, label: symptom.name },
+        ] as const
+    ),
+    ...(workContextHeatmap?.contexts ?? []).map(
+      (context) =>
+        [
+          `work_context:${context.context}`,
+          {
+            kind: 'work_context',
+            id: context.context,
+            context: context.context,
+            label: $_(`entry.work_context.${context.context}`),
+          },
+        ] as const
     ),
   ]);
 

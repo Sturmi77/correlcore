@@ -61,6 +61,22 @@ describe('insights API client', () => {
     expect(api.get).toHaveBeenCalledWith('/insights/latest?limit=3');
   });
 
+  it('repeats structured pair signals for the pre-cap lookup', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });
+
+    await listLatestInsights({
+      limit: 50,
+      pairSignals: [
+        { kind: 'tag', id: 'walk' },
+        { kind: 'metric', id: 'mood_score' },
+      ],
+    });
+
+    expect(api.get).toHaveBeenCalledWith(
+      '/insights/latest?limit=50&pair_signal=tag%3Awalk&pair_signal=metric%3Amood_score'
+    );
+  });
+
   it('lists insight history', async () => {
     const { listInsights } = await import('./insights');
     vi.mocked(api.get).mockResolvedValueOnce({ insight_maturity: insightMaturity, insights: [] });

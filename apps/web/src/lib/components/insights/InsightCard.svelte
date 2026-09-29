@@ -55,6 +55,8 @@
   export let showMaturityBadge = true;
   /** When false, hide the dismiss control (e.g. digest preview cards). */
   export let dismissable = true;
+  /** Structured Compare handoff retained through signal detail and report. */
+  export let detailQuery = '';
   /**
    * #853 V2: render the lag profile as a single peak marker instead of the
    * 7-day bars. Keeps the card short where height is tight (e.g. the mobile
@@ -591,7 +593,7 @@
     {#if canVerifySignal}
       <a
         class="insight-card__verify"
-        href={`/insights/signal/${insight.id}`}
+        href={`/insights/signal/${insight.id}${detailQuery ? `?${detailQuery}` : ''}`}
         data-testid="insight-card-verify"
       >
         {$_('insights.card.verify_action')}

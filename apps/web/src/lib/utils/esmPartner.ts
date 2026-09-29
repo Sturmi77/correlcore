@@ -12,6 +12,7 @@ import type {
   TagCooccurrencePair,
 } from '$lib/api/insights';
 import type { SymptomHeatmapResponse, TagHeatmapResponse } from '$lib/api/stats';
+import type { WorkContextHeatmapResponse } from '$lib/utils/workContextHeatmap';
 import { lagFeature, lagFeatureKind } from '$lib/utils/exploreEventWindows';
 import { SMALL_MULTIPLES_RADIUS } from '$lib/components/trends/smallMultiplesGate';
 
@@ -21,7 +22,7 @@ export const MAX_ESM_PARTNERS = 1;
 /** How many ranked candidates to offer in the override control. */
 export const ESM_PARTNER_CANDIDATE_LIMIT = 5;
 
-export type EsmPartnerKind = 'tag' | 'symptom';
+export type EsmPartnerKind = 'tag' | 'symptom' | 'work_context';
 
 export type EsmPartner = {
   id: string;
@@ -184,11 +185,15 @@ export function presenceDatesFromSymptomHeatmap(
 export function presenceDatesForPartner(
   partner: EsmPartner | null,
   tagHeatmap: TagHeatmapResponse | null | undefined,
-  symptomHeatmap: SymptomHeatmapResponse | null | undefined
+  symptomHeatmap: SymptomHeatmapResponse | null | undefined,
+  workContextHeatmap?: WorkContextHeatmapResponse | null
 ): string[] {
   if (!partner) return [];
   if (partner.kind === 'tag') return presenceDatesFromTagHeatmap(tagHeatmap, partner.id);
-  return presenceDatesFromSymptomHeatmap(symptomHeatmap, partner.id);
+  if (partner.kind === 'symptom')
+    return presenceDatesFromSymptomHeatmap(symptomHeatmap, partner.id);
+  const context = workContextHeatmap?.contexts.find((row) => row.context === partner.id);
+  return context?.days.filter((day) => day.count > 0).map((day) => day.date) ?? [];
 }
 
 function isoOffset(iso: string, deltaDays: number): string {
