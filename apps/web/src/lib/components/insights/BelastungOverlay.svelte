@@ -10,15 +10,37 @@
   export let analyticsEnabled = true;
 
   $: payload = insight.payload ?? {};
-  $: recentN = typeof payload.recent_n === 'number' ? payload.recent_n : insight.sample_n;
-  $: priorN = typeof payload.prior_n === 'number' ? payload.prior_n : 0;
+  $: evidence = insight.evidence?.family === 'belastung' ? insight.evidence : null;
+  $: changes = [
+    ...(evidence?.stress_up ? [$_('insights.belastung.change_stress')] : []),
+    ...(evidence?.energy_down ? [$_('insights.belastung.change_energy')] : []),
+    ...(evidence?.fatigue_up ? [$_('insights.belastung.change_fatigue')] : []),
+  ].join(', ');
+  $: displayStatement =
+    evidence && changes
+      ? $_('insights.belastung.comparison', { values: { changes } })
+      : $_('insights.belastung.insufficient');
+  $: recentN =
+    evidence?.recent_n ?? (typeof payload.recent_n === 'number' ? payload.recent_n : null);
+  $: priorN = evidence?.prior_n ?? (typeof payload.prior_n === 'number' ? payload.prior_n : null);
   $: fatigueRecent =
-    typeof payload.fatigue_days_recent === 'number' ? payload.fatigue_days_recent : 0;
-  $: fatiguePrior = typeof payload.fatigue_days_prior === 'number' ? payload.fatigue_days_prior : 0;
+    evidence?.fatigue_recent ??
+    (typeof payload.fatigue_days_recent === 'number' ? payload.fatigue_days_recent : null);
+  $: fatiguePrior =
+    evidence?.fatigue_prior ??
+    (typeof payload.fatigue_days_prior === 'number' ? payload.fatigue_days_prior : null);
   $: recoveryRecent =
-    typeof payload.recovery_days_recent === 'number' ? payload.recovery_days_recent : 0;
+    typeof payload.recovery_days_recent === 'number' ? payload.recovery_days_recent : null;
   $: recoveryPrior =
-    typeof payload.recovery_days_prior === 'number' ? payload.recovery_days_prior : 0;
+    typeof payload.recovery_days_prior === 'number' ? payload.recovery_days_prior : null;
+  $: hasFrequencies = [
+    fatigueRecent,
+    fatiguePrior,
+    recoveryRecent,
+    recoveryPrior,
+    recentN,
+    priorN,
+  ].every((value) => typeof value === 'number' && Number.isFinite(value));
   $: signalHref = `/insights/signal/${insight.id}`;
 </script>
 
@@ -36,21 +58,23 @@
   </header>
 
   <p class="belastung__statement" data-testid="belastung-statement">
-    {insight.statement}
+    {displayStatement}
   </p>
 
-  <p class="belastung__freq" data-testid="belastung-frequencies">
-    {$_('insights.belastung.freq', {
-      values: {
-        fatigueRecent,
-        recentN,
-        fatiguePrior,
-        priorN,
-        recoveryRecent,
-        recoveryPrior,
-      },
-    })}
-  </p>
+  {#if hasFrequencies}
+    <p class="belastung__freq" data-testid="belastung-frequencies">
+      {$_('insights.belastung.freq', {
+        values: {
+          fatigueRecent,
+          recentN,
+          fatiguePrior,
+          priorN,
+          recoveryRecent,
+          recoveryPrior,
+        },
+      })}
+    </p>
+  {/if}
 
   <div class="belastung__actions">
     <a

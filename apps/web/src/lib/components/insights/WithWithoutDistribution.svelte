@@ -9,9 +9,9 @@
   export let view: WithWithoutView;
   export let compact = false;
 
-  $: maxWith = Math.max(1, ...view.withDistribution);
-  $: maxWithout = Math.max(1, ...view.withoutDistribution);
-  $: levels = view.withDistribution.map((_, index) => view.scaleMin + index);
+  $: maxWith = Math.max(1, ...(view.withDistribution ?? []));
+  $: maxWithout = Math.max(1, ...(view.withoutDistribution ?? []));
+  $: levels = (view.withDistribution ?? []).map((_, index) => view.scaleMin + index);
 </script>
 
 <section
@@ -41,44 +41,46 @@
     })}
   </p>
 
-  <div class="ww__strips" role="img" aria-hidden="true">
-    <div class="ww__row">
-      <span class="ww__label">
-        {$_('insights.card.with_label', {
-          values: { subject: view.subjectLabel, n: view.withN },
-        })}
-      </span>
-      <div class="ww__bars">
-        {#each view.withDistribution as count, i}
-          <span
-            class="ww__bar ww__bar--with"
-            style={`height: ${Math.max(8, (count / maxWith) * 100)}%`}
-            title={`${levels[i]}: ${count}`}
-          ></span>
-        {/each}
+  {#if view.withDistribution && view.withoutDistribution}
+    <div class="ww__strips" role="img" aria-hidden="true">
+      <div class="ww__row">
+        <span class="ww__label">
+          {$_('insights.card.with_label', {
+            values: { subject: view.subjectLabel, n: view.withN },
+          })}
+        </span>
+        <div class="ww__bars">
+          {#each view.withDistribution as count, i}
+            <span
+              class="ww__bar ww__bar--with"
+              style={`height: ${Math.max(8, (count / maxWith) * 100)}%`}
+              title={`${levels[i]}: ${count}`}
+            ></span>
+          {/each}
+        </div>
+      </div>
+      <div class="ww__row">
+        <span class="ww__label">
+          {$_('insights.card.without_label', {
+            values: { subject: view.subjectLabel, n: view.withoutN },
+          })}
+        </span>
+        <div class="ww__bars">
+          {#each view.withoutDistribution as count, i}
+            <span
+              class="ww__bar ww__bar--without"
+              style={`height: ${Math.max(8, (count / maxWithout) * 100)}%`}
+              title={`${levels[i]}: ${count}`}
+            ></span>
+          {/each}
+        </div>
+      </div>
+      <div class="ww__scale">
+        <span>{view.scaleMin}</span>
+        <span>{view.scaleMax}</span>
       </div>
     </div>
-    <div class="ww__row">
-      <span class="ww__label">
-        {$_('insights.card.without_label', {
-          values: { subject: view.subjectLabel, n: view.withoutN },
-        })}
-      </span>
-      <div class="ww__bars">
-        {#each view.withoutDistribution as count, i}
-          <span
-            class="ww__bar ww__bar--without"
-            style={`height: ${Math.max(8, (count / maxWithout) * 100)}%`}
-            title={`${levels[i]}: ${count}`}
-          ></span>
-        {/each}
-      </div>
-    </div>
-    <div class="ww__scale">
-      <span>{view.scaleMin}</span>
-      <span>{view.scaleMax}</span>
-    </div>
-  </div>
+  {/if}
 
   <ul class="ww__meta">
     <li data-testid="with-without-overlap">

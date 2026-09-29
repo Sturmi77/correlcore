@@ -26,3 +26,8 @@ export function displayTimeseriesValue(key: TimeseriesMetricKey, raw: number): n
   if (!timeseriesMetricInvert(key)) return raw;
   return METRIC_SCALE_MIN + METRIC_SCALE_MAX - raw;
 }
+
+/** Sign of a coefficient on the positive-oriented display scale. Keep raw r in data/export. */
+export function displayEffectForMetric(metric: string, rawCoefficient: number): number {
+  return metric === 'stress' || metric === 'stress_changepoint' ? -rawCoefficient : rawCoefficient;
+}

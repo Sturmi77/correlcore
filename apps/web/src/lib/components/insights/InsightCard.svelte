@@ -38,6 +38,7 @@
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import { formatChangepointStatement } from '$lib/utils/changepointMarkers';
   import { lagProfileBars, type LagProfileBar } from '$lib/utils/lagInsight';
+  import { displayEffectForMetric } from '$lib/utils/metrics';
 
   export let insight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
@@ -337,8 +338,12 @@
   $: primaryConfounder = insight ? primaryInsightConfounder(insight) : null;
   $: isContextInsight = insight ? isCalendarContextInsight(insight) : false;
   $: title = insight ? buildTitle(insight) : '';
-  $: glyph = insight ? directionGlyph(insight.effect_size ?? 0) : '≈';
-  $: dirClass = insight ? directionClass(insight.effect_size ?? 0) : 'neutral';
+  $: glyph = insight
+    ? directionGlyph(displayEffectForMetric(insight.metric, insight.effect_size ?? 0))
+    : '≈';
+  $: dirClass = insight
+    ? directionClass(displayEffectForMetric(insight.metric, insight.effect_size ?? 0))
+    : 'neutral';
   $: expandLabel = expanded ? $_('insights.card.collapse_aria') : $_('insights.card.expand_aria');
   $: isInactiveTag =
     insight?.subject_type === 'tag' &&

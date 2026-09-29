@@ -1,7 +1,7 @@
 <script lang="ts">
   import { _, locale } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
-  import { buildMatrixDisplayRows, matrixEffectTone } from '$lib/utils/insightMatrixRows';
+  import { buildMatrixDisplayRows, matrixRowTone } from '$lib/utils/insightMatrixRows';
   import InsightEvidence from './InsightEvidence.svelte';
 
   export let insights: InsightResponse[] = [];
@@ -32,8 +32,8 @@
   );
   $: lastUpdatedLabel = lastUpdated ? formatUpdated(lastUpdated) : '';
 
-  function tone(effect: number): 'positive' | 'negative' | 'neutral' {
-    return matrixEffectTone(effect);
+  function tone(row: InsightResponse): 'positive' | 'negative' | 'neutral' {
+    return matrixRowTone(row);
   }
 
   /** Phase 1 / D3 — natural frequencies with two denominators when payload has them. */
@@ -122,7 +122,7 @@
       <div
         class="insight-matrix__row"
         role="row"
-        data-tone={tone(effect)}
+        data-tone={tone(row)}
         title={`${row.statement ?? ''} | ${freqLabel(row)}`}
       >
         <span role="cell">{row.subject_label ?? '-'}</span>

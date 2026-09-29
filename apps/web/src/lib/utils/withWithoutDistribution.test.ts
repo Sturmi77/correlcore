@@ -81,4 +81,78 @@ describe('withWithoutDistribution', () => {
       )
     ).toBeNull();
   });
+
+  it('keeps 5/95 group sizes and never fabricates a missing histogram', () => {
+    const view = parseWithWithoutView(
+      baseInsight({
+        sample_n: 100,
+        payload: {
+          tagged_count: 5,
+          untagged_count: 95,
+          with_good_count: 2,
+          without_good_count: 44,
+        },
+      })
+    );
+    expect(view?.withN).toBe(5);
+    expect(view?.withoutN).toBe(95);
+    expect(view?.withDistribution).toBeNull();
+    expect(view?.withoutDistribution).toBeNull();
+  });
+
+  it('uses typed API evidence and orients stress histograms and shift consistently', () => {
+    const view = parseWithWithoutView(
+      baseInsight({
+        insight_type: 'symptom_mood_association',
+        metric: 'stress',
+        evidence: {
+          family: 'association',
+          version: 1,
+          metric: 'stress',
+          outcome: 'association',
+          with_n: 5,
+          without_n: 95,
+          with_mean_raw: 5,
+          without_mean_raw: 2,
+          with_distribution: [0, 0, 0, 0, 5],
+          without_distribution: [0, 95, 0, 0, 0],
+          with_good_count: 0,
+          without_good_count: 95,
+        },
+        payload: { good_threshold: 2 },
+      })
+    );
+    expect(view?.withDistribution).toEqual([5, 0, 0, 0, 0]);
+    expect(view?.goodThreshold).toBe(4);
+    expect(view?.meanShift).toBe(-3);
+    expect(view?.withGood).toBe(0);
+    expect(view?.withoutGood).toBe(95);
+  });
+
+  it('does not display impossible group counts or malformed distributions', () => {
+    expect(
+      parseWithWithoutView(
+        baseInsight({
+          payload: {
+            tagged_count: 5,
+            untagged_count: 95,
+            with_good_count: 6,
+            without_good_count: 20,
+          },
+        })
+      )
+    ).toBeNull();
+    const view = parseWithWithoutView(
+      baseInsight({
+        payload: {
+          tagged_count: 5,
+          untagged_count: 95,
+          with_good_count: 2,
+          without_good_count: 20,
+          with_distribution: [0, 0, 0, 0, 4],
+        },
+      })
+    );
+    expect(view?.withDistribution).toBeNull();
+  });
 });

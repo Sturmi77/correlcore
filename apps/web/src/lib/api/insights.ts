@@ -7,6 +7,7 @@
  */
 
 import { api } from './client';
+import type { components } from '../../../../../packages/api-types/src/schema';
 
 // Generated OpenAPI shapes (issue #778) — re-exported so the contract drift
 // guard in ./contracts.generated.ts is part of the real import graph.
@@ -22,6 +23,9 @@ export type InsightType =
   | (string & {});
 export type InsightTier = 'none' | 'early' | 'preliminary' | 'developing' | 'robust';
 export type InsightMaturityPhase = 'collecting' | 'early_patterns' | 'provisional' | 'robust';
+
+/** Versioned API evidence union; incomplete historical rows may be null. */
+export type InsightEvidence = NonNullable<components['schemas']['InsightResponse']['evidence']>;
 
 export interface InsightMaturity {
   phase: InsightMaturityPhase;
@@ -48,6 +52,8 @@ export interface InsightResponse {
   statement: string | null;
   flags: Record<string, unknown>;
   payload: Record<string, unknown>;
+  /** Versioned family evidence; null for incomplete historical payloads. */
+  evidence?: InsightEvidence | null;
   generated_for_date: string;
   generated_at: string;
   created_at: string;
