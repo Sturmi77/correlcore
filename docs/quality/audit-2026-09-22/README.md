@@ -23,3 +23,7 @@ Alle Arbeitspakete besitzen konkrete Maßnahmen, Regressionstests und Abschlussk
 ## A00-Nachweise
 
 [Ausgangsstand und Status](A00_STATUS.md) · [Befundregister](A00_BEFUNDREGISTER.csv) · [Reviewregister](A00_REVIEWREGISTER.csv) · [lokale Fix-Kandidaten](A00_LOKALE_FIXES.csv)
+
+## A12-Nachweise
+
+[Status](A12_STATUS.md) · [Abnahmelaufplan](A12_ACCEPTANCE_RUNBOOK.md) · [maschinenlesbares Gate-Register](A12_ACCEPTANCE_REGISTER.json) · [Evidenzformat](a12-evidence/README.md)
