@@ -88,4 +88,23 @@ describe('buildLagHeatmapRows', () => {
 
     expect(rows.map((row) => row.id)).toEqual(['ok']);
   });
+
+  it('retains observed negative offsets and leaves unmeasured ones null', () => {
+    const negative = baseInsight({
+      payload: {
+        method: 'lag',
+        lag_days: -2,
+        feature: { kind: 'tag', key: 'tag:sport', name: 'Sport' },
+        target: { kind: 'metric', key: 'mood_score', name: 'Mood' },
+        lag_profile: [
+          { lag: -3, r: 0.1 },
+          { lag: -2, r: -0.4 },
+        ],
+      },
+    });
+    const row = buildLagHeatmapRows([negative])[0];
+    expect(row.cells).toHaveLength(7);
+    expect(row.cells.find((cell) => cell.lag === -2)).toEqual({ lag: -2, r: -0.4, active: true });
+    expect(row.cells.find((cell) => cell.lag === -1)?.r).toBeNull();
+  });
 });

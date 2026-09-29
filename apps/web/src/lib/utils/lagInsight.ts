@@ -90,7 +90,18 @@ export function lagProfileBars(insight: InsightResponse): LagProfileBar[] | null
   }
   if (byLag.size < 2) return null;
   const bars: LagProfileBar[] = [];
-  for (let lag = 1; lag <= LAG_PROFILE_MAX_DAYS; lag += 1) {
+  const lags = [
+    ...(Array.from(byLag.keys()).some((lag) => lag < 0)
+      ? Array.from(
+          { length: LAG_PROFILE_MAX_DAYS },
+          (_unused, index) => index - LAG_PROFILE_MAX_DAYS
+        )
+      : []),
+    ...(Array.from(byLag.keys()).some((lag) => lag > 0)
+      ? Array.from({ length: LAG_PROFILE_MAX_DAYS }, (_unused, index) => index + 1)
+      : []),
+  ];
+  for (const lag of lags) {
     // Absent lag → null, never 0. The backend only emits lags it could actually
     // measure; filling the gaps with zeros would render "not enough data" and
     // "no association" as the same bar.

@@ -10,16 +10,11 @@
   import { _ } from 'svelte-i18n';
   import type { InsightResponse } from '$lib/api/insights';
   import { StripCellMapper } from '$lib/charts/adapter';
-  import {
-    buildLagHeatmapRows,
-    LAG_HEATMAP_MAX_DAYS,
-    type LagHeatmapRow,
-  } from '$lib/utils/lagHeatmap';
+  import { buildLagHeatmapRows, type LagHeatmapRow } from '$lib/utils/lagHeatmap';
 
   export let insights: InsightResponse[] = [];
 
   const mapper = new StripCellMapper({ midpoint: 0, range: 2 });
-  const lags = Array.from({ length: LAG_HEATMAP_MAX_DAYS }, (_v, i) => i + 1);
 
   /** Translate core-metric identifiers (mood_score, energy, …) to display names. */
   function metricToken(value: string): string | null {
@@ -40,10 +35,15 @@
   function rowLabel(row: LagHeatmapRow): string {
     const feature = sideLabel(row.featureName, row.featureKey, row.featureKind);
     const target = sideLabel(row.targetName, row.targetKey, row.targetKind);
-    return `${feature} → ${target}`;
+    const glyph =
+      row.chosenLag === null || row.chosenLag === 0 ? '↔' : row.chosenLag < 0 ? '←' : '→';
+    return `${feature} ${glyph} ${target}`;
   }
 
   $: rows = buildLagHeatmapRows(insights).map((row) => ({ ...row, label: rowLabel(row) }));
+  $: lags = [...new Set(rows.flatMap((row) => row.cells.map((cell) => cell.lag)))].sort(
+    (a, b) => a - b
+  );
 
   // Screen readers treat role="img" as atomic, so the accessible name must
   // carry the data — summarise each pair's strongest lag alongside the layout.
@@ -84,18 +84,23 @@
 
     <div
       class="lag-heatmap__grid"
-      style={`grid-template-columns: minmax(96px, 1.4fr) repeat(${LAG_HEATMAP_MAX_DAYS}, minmax(0, 1fr))`}
+      style={`grid-template-columns: minmax(96px, 1.4fr) repeat(${lags.length}, minmax(0, 1fr))`}
       role="img"
       aria-label={gridAria}
     >
       <div class="lag-heatmap__corner" aria-hidden="true"></div>
       {#each lags as lag (lag)}
-        <div class="lag-heatmap__col-head" aria-hidden="true">+{lag}</div>
+        <div class="lag-heatmap__col-head" aria-hidden="true">{lag > 0 ? '+' : ''}{lag}</div>
       {/each}
 
       {#each rows as row (row.id)}
         <div class="lag-heatmap__row-label" aria-hidden="true" title={row.label}>{row.label}</div>
-        {#each row.cells as cell (cell.lag)}
+        {#each lags as lag (lag)}
+          {@const cell = row.cells.find((candidate) => candidate.lag === lag) ?? {
+            lag,
+            r: null,
+            active: false,
+          }}
           <div
             class="lag-heatmap__cell"
             class:lag-heatmap__cell--active={cell.active}
@@ -103,7 +108,9 @@
             data-lag={cell.lag}
             aria-hidden="true"
             style={cellStyle(cell.r)}
-            title={cell.r === null ? `+${cell.lag}d` : `+${cell.lag}d · r=${cell.r.toFixed(2)}`}
+            title={cell.r === null
+              ? `${cell.lag > 0 ? '+' : ''}${cell.lag}d`
+              : `${cell.lag > 0 ? '+' : ''}${cell.lag}d · r=${cell.r.toFixed(2)}`}
           ></div>
         {/each}
       {/each}

@@ -6,6 +6,12 @@
 import type { InsightResponse } from '$lib/api/insights';
 import { matrixConfidencePercent, matrixRowTone } from '$lib/utils/insightMatrixRows';
 import { displayEffectForMetric } from '$lib/utils/metrics';
+import { relationPairLabel } from '$lib/utils/insightRelation';
+
+function reportPairLabel(row: InsightResponse, ascii = false): string {
+  const label = relationPairLabel(row, row.subject_label ?? row.subject_type ?? '-', row.metric);
+  return ascii ? label.replace('↔', '<->').replace('→', '->').replace('←', '<-') : label;
+}
 
 function themeColor(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -41,7 +47,7 @@ export function exportMatrixPng(rows: readonly InsightResponse[], filename: stri
       tone === 'positive' ? colors.success : tone === 'negative' ? colors.error : colors.muted;
     ctx.fillRect(32, y - 18, Math.max(8, Math.abs(effect) * 280), 24);
     ctx.fillStyle = colors.text;
-    ctx.fillText(row.subject_label ?? row.metric, 332, y);
+    ctx.fillText(reportPairLabel(row), 332, y);
     ctx.fillText(
       `${effect.toFixed(2)} raw / ${displayEffectForMetric(row.metric, effect).toFixed(2)} view`,
       560,
@@ -182,7 +188,7 @@ export function buildMatrixPdfDocument(
     ...rows.map((row) => {
       const effect = row.effect_size ?? 0;
       const conf = matrixConfidencePercent(row.confidence);
-      return `${row.subject_label ?? '-'} | ${row.metric} | raw ${effect.toFixed(2)} | view ${displayEffectForMetric(row.metric, effect).toFixed(2)} | n=${row.sample_n} | ${conf}`;
+      return `${reportPairLabel(row, true)} | ${row.metric} | raw ${effect.toFixed(2)} | view ${displayEffectForMetric(row.metric, effect).toFixed(2)} | n=${row.sample_n} | ${conf}`;
     }),
     '',
     options.disclaimer,
@@ -287,6 +293,7 @@ function reportRecords(rows: readonly InsightResponse[]): Record<string, unknown
     subject: row.subject_label ?? '',
     subject_type: row.subject_type ?? '',
     metric: row.metric,
+    relationship: reportPairLabel(row),
     insight_type: row.insight_type,
     effect_size: row.effect_size ?? null,
     display_effect_size:
@@ -325,6 +332,7 @@ export function exportReportCsv(rows: readonly InsightResponse[], filename: stri
     'subject',
     'subject_type',
     'metric',
+    'relationship',
     'insight_type',
     'effect_size',
     'display_effect_size',

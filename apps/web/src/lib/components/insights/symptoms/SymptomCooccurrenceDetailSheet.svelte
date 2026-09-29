@@ -35,7 +35,7 @@
       <div>
         <p class="symptom-detail__eyebrow">{$_('insights.symptoms.detail_eyebrow')}</p>
         <h2 id="symptom-detail-title">
-          {cell.symptom.name} + {cell.tag.name}
+          {cell.symptom.name} ↔ {cell.tag.name}
         </h2>
       </div>
       <button
@@ -54,18 +54,6 @@
     {/if}
 
     <dl class="symptom-detail__metrics">
-      <div>
-        <dt>{$_('insights.symptoms.detail_lift')}</dt>
-        <dd>{cell.lift.toFixed(2)}</dd>
-      </div>
-      <div>
-        <dt>{$_('insights.symptoms.detail_phi')}</dt>
-        <dd>{cell.phi.toFixed(3)}</dd>
-      </div>
-      <div>
-        <dt>{$_('insights.symptoms.detail_jaccard')}</dt>
-        <dd>{cell.jaccard.toFixed(3)}</dd>
-      </div>
       <div>
         <dt>{$_('insights.symptoms.detail_co_count')}</dt>
         <dd>{cell.co_count}</dd>
