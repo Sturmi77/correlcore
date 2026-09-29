@@ -37,7 +37,7 @@ const CAUSAL =
  * containing one may use a causal verb — that is how you say "not a cause".
  */
 const DISCLAIMED =
-  /not a cause|not causes|does not mean|not a medical|no cause|bedeutet nicht|keine Ursache|nicht, dass|keine medizinische/i;
+  /not a cause|not causes|do(?:es)? not establish a cause|does not mean|not a medical|no cause|bedeutet nicht|keine Ursache|nicht, dass|keine medizinische/i;
 
 describe('no causal insight copy (#928 D4)', () => {
   it('states associations, not causes, in every locale string', () => {
