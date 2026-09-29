@@ -19,6 +19,7 @@
   export let data: SymptomTagCooccurrenceResponse | null = null;
   export let loading = false;
   export let error = false;
+  export let onRetry: (() => void) | null = null;
   export let phase: InsightMaturityPhase | null = null;
   export let sortMode: CooccurrenceSortMode = 'alphabetical';
   export let hideHeading = false;
@@ -337,6 +338,14 @@
     <p class="symptom-cooccurrence__empty" data-testid="symptom-cooccurrence-unavailable">
       {$_(`insights.symptoms.cooccurrence_status_${data?.analysis_status}`)}
     </p>
+    {#if onRetry && ['busy', 'timeout', 'unavailable'].includes(data?.analysis_status ?? '')}
+      <button
+        type="button"
+        class="analysis-retry"
+        data-testid="symptom-cooccurrence-retry"
+        on:click={onRetry}>{$_('insights.card.retry')}</button
+      >
+    {/if}
   {:else if symptoms.length > 0 && tags.length > 0}
     <div
       class="symptom-cooccurrence__scroller"
@@ -406,6 +415,15 @@
 </section>
 
 <style>
+  .analysis-retry {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border-chart);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
   .symptom-cooccurrence {
     display: grid;
     gap: var(--space-3);

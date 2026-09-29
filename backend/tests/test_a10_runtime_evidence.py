@@ -71,5 +71,25 @@ def test_scan_coverage_records_rate_limits_without_sensitive_messages(monkeypatc
     module.zap_pre_shutdown(
         SimpleNamespace(core=SimpleNamespace(messages=lambda **kwargs: messages))
     )
-    assert json.loads(output.call_args.args[0]) == {"429": 1, "200": 1}
+    assert json.loads(output.call_args.args[0])["statuses"] == {"429": 1, "200": 1}
+    assert json.loads(output.call_args.args[0])["passed"] is False
     assert "secret" not in output.call_args.args[0]
+
+
+@pytest.mark.parametrize(
+    "statuses,passed",
+    [([401, 403], False), ([200, 401], False), ([200, 200], True), ([429, 200], False)],
+)
+def test_authenticated_scan_requires_successful_protected_routes(statuses, passed):
+    module = load_script(".zap/a10-coverage-hook.py")
+    counts = {}
+    protected = dict.fromkeys(module.REQUIRED_PROTECTED_ROUTES, 0)
+    messages = [
+        {
+            "requestHeader": f"GET {path}?limit=10 HTTP/1.1",
+            "responseHeader": f"HTTP/1.1 {status} response",
+        }
+        for path, status in zip(module.REQUIRED_PROTECTED_ROUTES, statuses, strict=True)
+    ]
+    module.summarize_messages(messages, counts, protected)
+    assert module.coverage_passed({"statuses": counts, "protected": protected}) is passed

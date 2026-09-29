@@ -338,13 +338,12 @@ jobs:
           mkdir -p zap-out
           cp .zap/a10-staging-rules.tsv .zap/a10-coverage-hook.py packages/api-types/openapi.json zap-out/
           chmod -R 777 zap-out
-          docker run --rm -v "$GITHUB_WORKSPACE/zap-out:/zap/wrk/:rw" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py --hook=/zap/wrk/a10-coverage-hook.py -t openapi.json -f openapi -O "$STAGING_URL" -c a10-staging-rules.tsv -J zap-report.json -w zap-report.md -z "-config replacer.full_list(0).description=a10-auth -config replacer.full_list(0).enabled=true -config replacer.full_list(0).matchtype=REQ_HEADER -config replacer.full_list(0).matchstr=Authorization -config replacer.full_list(0).replacement=Bearer%20$token"
+          docker run --rm -v "$GITHUB_WORKSPACE/zap-out:/zap/wrk/:rw" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py --hook=/zap/wrk/a10-coverage-hook.py -t openapi.json -f openapi -O "$STAGING_URL" -c a10-staging-rules.tsv -J zap-report.json -w zap-report.md -z "-config replacer.full_list(0).description=a10-auth -config replacer.full_list(0).enabled=true -config replacer.full_list(0).matchtype=REQ_HEADER -config replacer.full_list(0).matchstr=Authorization -config replacer.full_list(0).replacement='Bearer $token'"
       - name: Reject incomplete or rate-limited scanner coverage
         if: always()
         run: |
           test -s zap-out/http-coverage.json
-          jq -e 'has("429") | not' zap-out/http-coverage.json
-          jq -e '[.[]] | add > 0' zap-out/http-coverage.json
+          jq -e '.passed == true and (.statuses | has("429") | not) and (.protected["/api/v1/entries"] > 0) and (.protected["/api/v1/insights/latest"] > 0)' zap-out/http-coverage.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:

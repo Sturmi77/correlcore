@@ -182,3 +182,12 @@ describe('SymptomCooccurrenceHeatmap', () => {
     expect(screen.getByLabelText(/insights.calendar_context_confounded_note/)).toBeTruthy();
   });
 });
+
+it('offers an explicit retry after the per-user worker is busy', async () => {
+  const retry = vi.fn();
+  render(SymptomCooccurrenceHeatmap, {
+    props: { data: { ...data, cells: [], analysis_status: 'busy' }, onRetry: retry },
+  });
+  await fireEvent.click(screen.getByTestId('symptom-cooccurrence-retry'));
+  expect(retry).toHaveBeenCalledOnce();
+});

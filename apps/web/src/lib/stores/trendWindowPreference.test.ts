@@ -19,7 +19,7 @@ async function tickQueue(): Promise<void> {
 }
 
 describe('trend window preference', () => {
-  it('serializes rapid 14 → 28 → 90 choices and saves the latest value', async () => {
+  it('serializes rapid 14 â†’ 28 â†’ 90 choices and saves the latest value', async () => {
     const first = deferred<TrendWindowDays>();
     const second = deferred<TrendWindowDays>();
     const write = vi.fn().mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
@@ -79,4 +79,17 @@ describe('trend window preference', () => {
     await tickQueue();
     expect(apply).toHaveBeenLastCalledWith(90, 'server');
   });
+});
+
+it('hydrates the new account before an aborted previous write settles', async () => {
+  const previous = deferred<TrendWindowDays>();
+  const apply = vi.fn();
+  const controller = createTrendWindowPreference(() => previous.promise, apply);
+  controller.select('user-1', 14);
+  controller.bind('user-2');
+  controller.hydrate('user-2', 90, controller.revision());
+  expect(apply).toHaveBeenLastCalledWith(90, 'server');
+  previous.resolve(14);
+  await tickQueue();
+  expect(apply).toHaveBeenLastCalledWith(90, 'server');
 });

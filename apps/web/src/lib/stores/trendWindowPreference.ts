@@ -16,12 +16,15 @@ export function createTrendWindowPreference(
   let desired: TrendWindowDays | null = null;
   let failed: TrendWindowDays | null = null;
   let running = false;
+  let actorEpoch = 0;
+  let runningEpoch: number | null = null;
   let revision = 0;
   let controller: AbortController | null = null;
 
   function bind(userId: string | null): void {
     if (actor === userId) return;
     actor = userId;
+    actorEpoch += 1;
     revision += 1;
     controller?.abort();
     confirmed = null;
@@ -32,7 +35,13 @@ export function createTrendWindowPreference(
   }
 
   function hydrate(userId: string, days: TrendWindowDays | undefined, startedAt: number): void {
-    if (actor !== userId || revision !== startedAt || running || desired !== null) return;
+    if (
+      actor !== userId ||
+      revision !== startedAt ||
+      (running && runningEpoch === actorEpoch) ||
+      desired !== null
+    )
+      return;
     confirmed = days ?? TREND_WINDOW_DAYS_DEFAULT;
     failed = null;
     status.set('idle');
@@ -45,12 +54,13 @@ export function createTrendWindowPreference(
     try {
       while (desired !== null && actor !== null) {
         const target = desired;
-        const requestActor = actor;
+        const requestEpoch = actorEpoch;
+        runningEpoch = requestEpoch;
         desired = null;
         controller = new AbortController();
         try {
           const saved = await write(target, controller.signal);
-          if (actor !== requestActor) continue;
+          if (actorEpoch !== requestEpoch) continue;
           confirmed = saved;
           failed = null;
           if (desired === null) {
@@ -58,7 +68,7 @@ export function createTrendWindowPreference(
             status.set('idle');
           }
         } catch {
-          if (actor !== requestActor) continue;
+          if (actorEpoch !== requestEpoch) continue;
           if (desired !== null) continue;
           failed = target;
           apply(confirmed ?? TREND_WINDOW_DAYS_DEFAULT, 'server');
@@ -68,6 +78,7 @@ export function createTrendWindowPreference(
     } finally {
       controller = null;
       running = false;
+      runningEpoch = null;
       // A new choice can arrive between the final loop check and `finally`.
       if (desired !== null && actor !== null) void drain();
     }

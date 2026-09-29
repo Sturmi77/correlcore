@@ -428,6 +428,25 @@ describe('/insights page analysis range', () => {
     vi.clearAllMocks();
   });
 
+  it('matches legacy pair links locally without sending unsupported unknown kinds', async () => {
+    testHelpers.setPageUrl('http://localhost/insights?signals=symptom-a,tag-b');
+    vi.mocked(listLatestInsights).mockResolvedValue({
+      insight_maturity: provisionalMaturity,
+      insights: [
+        insightResponse('legacy-pair', {
+          subject_type: 'composite',
+          subject_id: null,
+          payload: { kind: 'symptom_tag_cooccurrence', symptom_id: 'symptom-a', tag_id: 'tag-b' },
+        }),
+      ],
+    });
+    render(Page);
+    await waitFor(() => expect(screen.getByTestId('insights-carried-pair-focused')).toBeTruthy());
+    expect(
+      vi.mocked(listLatestInsights).mock.calls.every(([options]) => !options?.pairSignals)
+    ).toBe(true);
+  });
+
   it('focuses the feed only when one insight proves both carried signals', async () => {
     const pair = {
       version: 1,

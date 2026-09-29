@@ -700,7 +700,7 @@
         preferencesResult,
       ] = await Promise.allSettled([
         listLatestInsights({ limit: 50 }),
-        requestedPair
+        requestedPair && requestedPair.signals.every(({ kind }) => kind !== 'unknown')
           ? listLatestInsights({
               limit: 50,
               pairSignals: requestedPair.signals.map(({ kind, id }) => ({ kind, id })),
@@ -716,7 +716,15 @@
       ]);
 
       if (!request.isCurrent()) return;
-      if (requestedPair && pairResult.status === 'fulfilled' && pairResult.value) {
+      if (
+        requestedPair?.signals.some(({ kind }) => kind === 'unknown') &&
+        insightsResult.status === 'fulfilled'
+      ) {
+        // Legacy links have no type identity: match the loaded feed locally,
+        // as before A08, rather than emitting an invalid server filter.
+        carriedPairInsights = insightsResult.value.insights;
+        carriedPairLookupComplete = true;
+      } else if (requestedPair && pairResult.status === 'fulfilled' && pairResult.value) {
         carriedPairInsights = pairResult.value.insights;
         carriedPairLookupComplete = true;
       }
@@ -1407,7 +1415,11 @@
             -->
             <InlineAlert
               variant="info"
-              message={$_('insights.carried_signals_unmatched')}
+              message={$_(
+                carriedPair?.signals.some(({ kind }) => kind === 'unknown')
+                  ? 'insights.carried_signals_legacy_unmatched'
+                  : 'insights.carried_signals_unmatched'
+              )}
               testId="insights-carried-signals-unmatched"
             />
           {:else if carriedPairFocused}
@@ -1505,6 +1517,7 @@
               cooccurrence={symptomCooccurrence}
               cooccurrenceLoading={symptomCooccurrenceLoading}
               cooccurrenceError={symptomCooccurrenceError}
+              onCooccurrenceRetry={() => void loadSymptomCooccurrence()}
               phase={insightMaturity?.phase ?? null}
               loading={loading || symptomWindowLoading}
               pruneSparseAxes
@@ -1529,6 +1542,7 @@
               data={cooccurrence}
               loading={cooccurrenceLoading}
               error={cooccurrenceError}
+              onRetry={() => void loadCooccurrence()}
               range={cooccurrenceRange}
               showRangeSelector={false}
               sortMode={tagCooccurrenceSortMode}

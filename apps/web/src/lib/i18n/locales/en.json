@@ -1330,6 +1330,7 @@
   },
   "insights": {
     "carried_pair_focused": "Insights are focused on the selected pair.",
+    "carried_signals_legacy_unmatched": "No matching pair was found in the loaded observations. Select both signals again in Compare to search for that specific pair.",
     "carried_signals_unmatched": "No insight covers this pair yet \u2014 one appears once enough shared days are logged.",
     "page": {
       "title": "Insights",

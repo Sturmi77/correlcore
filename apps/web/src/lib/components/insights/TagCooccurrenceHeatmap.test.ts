@@ -306,3 +306,12 @@ describe('TagCooccurrenceHeatmap', () => {
     );
   });
 });
+
+it('offers an explicit retry after the per-user worker is busy', async () => {
+  const retry = vi.fn();
+  render(TagCooccurrenceHeatmap, {
+    props: { data: { ...data, pairs: [], analysis_status: 'busy' }, onRetry: retry },
+  });
+  await fireEvent.click(screen.getByTestId('tag-cooccurrence-retry'));
+  expect(retry).toHaveBeenCalledOnce();
+});

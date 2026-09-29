@@ -30,6 +30,7 @@
   export let cooccurrence: SymptomTagCooccurrenceResponse | null = null;
   export let cooccurrenceLoading = false;
   export let cooccurrenceError = false;
+  export let onCooccurrenceRetry: (() => void) | null = null;
   export let phase: InsightMaturityPhase | null = null;
   export let loading = false;
   export let pruneSparseAxes = true;
@@ -163,6 +164,7 @@
         data={cooccurrence}
         loading={cooccurrenceLoading}
         error={cooccurrenceError}
+        onRetry={onCooccurrenceRetry}
         {phase}
         sortMode={cooccurrenceSortMode}
         hideHeading={true}

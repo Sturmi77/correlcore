@@ -1330,6 +1330,7 @@
   },
   "insights": {
     "carried_pair_focused": "Die Erkenntnisse sind auf das ausgewählte Paar fokussiert.",
+    "carried_signals_legacy_unmatched": "In den geladenen Beobachtungen wurde kein passendes Paar gefunden. Wähle die beiden Signale im Vergleich erneut aus, um gezielt nach ihnen zu suchen.",
     "carried_signals_unmatched": "Zu diesem Paar gibt es noch keine Erkenntnis \u2014 sie entsteht, sobald genug gemeinsame Tage vorliegen.",
     "page": {
       "title": "Erkenntnisse",
