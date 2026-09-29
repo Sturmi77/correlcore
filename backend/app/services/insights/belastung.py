@@ -176,9 +176,10 @@ def _belastung_candidates(
         parts.append("more fatigue days")
     joined = ", ".join(parts) if parts else "a denser load pattern"
     statement = (
-        f"In the last two weeks, {joined} showed up more often together "
-        f"than in the two weeks before. This is a heuristic summary of your "
-        f"entries — not a medical assessment."
+        f"Compared with the previous two weeks, your entries show {joined} "
+        "in the last two weeks. These are separate changes in daily averages "
+        "and frequencies, not evidence that they occurred together. "
+        "This is a heuristic summary, not a medical assessment."
     )
 
     work_intense_days = (
@@ -212,8 +213,15 @@ def _belastung_candidates(
                 "kind": "belastung_pattern",
                 "heuristic": True,
                 "window_days": WINDOW_DAYS,
+                "recent_start": (as_of - timedelta(days=WINDOW_DAYS - 1)).isoformat(),
+                "recent_end": as_of.isoformat(),
+                "prior_start": (prior_end - timedelta(days=WINDOW_DAYS - 1)).isoformat(),
+                "prior_end": prior_end.isoformat(),
                 "recent_n": len(recent),
                 "prior_n": len(prior),
+                "stress_up": stress_up,
+                "energy_down": energy_down,
+                "fatigue_up": fatigue_up,
                 "stress_avg_recent": round(stress_recent, 2),
                 "stress_avg_prior": round(stress_prior, 2) if stress_prior is not None else None,
                 "energy_avg_recent": round(energy_recent, 2),

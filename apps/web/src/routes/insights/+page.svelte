@@ -13,6 +13,7 @@
   import InlineAlert from '$lib/components/common/InlineAlert.svelte';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { page } from '$app/stores';
   import { get } from 'svelte/store';
   import { _ } from 'svelte-i18n';
   import { auth } from '$lib/stores/auth';
@@ -83,11 +84,13 @@
   import { buildTagClusterMeta } from '$lib/utils/tagCooccurrenceMatrix';
   import { getDevPhaseFixture } from '$lib/dev/phaseFixtures';
   import { devForceVisualizations, devPhase } from '$lib/stores/devMode';
-  import { analysisRange, setAnalysisRange } from '$lib/stores/analysisRange';
+  import { analysisRange } from '$lib/stores/analysisRange';
+  import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
+  import TrendWindowSaveStatus from '$lib/components/analysis/TrendWindowSaveStatus.svelte';
   import { localIsoDate } from '$lib/utils/isoDate';
   import {
     coerceTrendWindowDays,
-    trendWindowDaysToTimeseriesRange,
+    trendWindowDaysToCooccurrence,
     type TrendWindowDays,
   } from '$lib/utils/trendWindowDays';
   import { dayEntryDatesFromIsoEntries } from '$lib/utils/insightQuality';
@@ -97,12 +100,11 @@
     canShowAdvancedAnalytics,
     canShowMatrixTab,
     canShowTagCooccurrence,
-    hasTagCooccurrenceData,
   } from '$lib/utils/insightAnalyticsGate';
   import { DESKTOP_SHELL_BREAKPOINT_PX } from '$lib/ui/surfaceContract';
   import AnalysisCrossLink from '$lib/components/analysis/AnalysisCrossLink.svelte';
-  import { timeseriesRangeToCooccurrence } from '$lib/utils/analysisRange';
   import { shiftIsoDate } from '$lib/utils/isoDate';
+  import { RequestGeneration } from '$lib/utils/requestGeneration';
   import type { TimeseriesPoint } from '$lib/api/stats';
   import type { MetricKey } from '$lib/utils/charts';
   import {
@@ -121,6 +123,14 @@
     type EsmPartnerCandidate,
   } from '$lib/utils/esmPartner';
   import {
+    analysisPairQuery,
+    insightMatchesAnalysisPair,
+    parseAnalysisPair,
+    partnerForInsight,
+    type AnalysisSignalRef,
+  } from '$lib/utils/analysisPairHandoff';
+  import { buildWorkContextHeatmap } from '$lib/utils/workContextHeatmap';
+  import {
     isSmallMultiplesUnlocked,
     SMALL_MULTIPLES_RADIUS,
   } from '$lib/components/trends/smallMultiplesGate';
@@ -130,6 +140,8 @@
   let showDismissedPanel = false;
   let loading = false;
   let insightsLoaded = false;
+  let carriedPairInsights: InsightResponse[] = [];
+  let carriedPairLookupComplete = false;
   let error: string | null = null;
   let insightMaturity: InsightMaturity | null = null;
   let lastSuccessfulInsightRunAt: string | null = null;
@@ -144,6 +156,7 @@
   let cooccurrenceRange: TagCooccurrenceRange = '30d';
   let cooccurrence: TagCooccurrenceResponse | null = null;
   let cooccurrenceLoading = false;
+  let cooccurrenceError = false;
   let tagClusters: TagClustersResponse | null = null;
   let tagClustersLoading = false;
   let cooccurrenceHistoryOpen = false;
@@ -164,6 +177,7 @@
   let symptomHeatmap: SymptomHeatmapResponse | null = null;
   let symptomCooccurrence: SymptomTagCooccurrenceResponse | null = null;
   let symptomCooccurrenceLoading = false;
+  let symptomCooccurrenceError = false;
   let cooccurrenceRequested = false;
   let cooccurrenceRequestId = 0;
   let symptomCooccurrenceRequested = false;
@@ -171,6 +185,7 @@
   let symptomWindowRequestId = 0;
   let symptomWindowLoading = false;
   let exploreEventsOpen = false;
+  let exploreEventsDataDays: TrendWindowDays | null = null;
   let exploreEventsInsight: InsightResponse | null = null;
   let exploreEventsWindows: EventWindow[] = [];
   let exploreEventsPoints: TimeseriesPoint[] = [];
@@ -182,10 +197,43 @@
   let exploreEventsPartnerCandidates: EsmPartnerCandidate[] = [];
   let exploreEventsPartnerPresence: string[] = [];
   let exploreEventsTagHeatmap: TagHeatmapResponse | null = null;
+  let exploreEventsSymptomHeatmap: SymptomHeatmapResponse | null = null;
+  let exploreEventsWorkContextHeatmap: ReturnType<typeof buildWorkContextHeatmap> | null = null;
   // #918: the sheet opens before partner data arrives — keep "still loading"
   // and "presence data failed" apart from "no partner exists".
   let exploreEventsPartnerLoading = false;
   let exploreEventsPartnerUnavailable = false;
+  const insightsRequest = new RequestGeneration();
+  const symptomWindowRequest = new RequestGeneration();
+  const cooccurrenceRequest = new RequestGeneration();
+  const symptomCooccurrenceRequest = new RequestGeneration();
+  const exploreEventsRequest = new RequestGeneration();
+  let lastInsightsActor: string | null = null;
+  $: insightsActor = $auth.status === 'authenticated' ? $auth.user.id : null;
+  $: if (insightsActor !== lastInsightsActor) {
+    const previousActor = lastInsightsActor;
+    lastInsightsActor = insightsActor;
+    trendWindowPreference.bind(insightsActor);
+    insightsRequest.cancel();
+    symptomWindowRequest.cancel();
+    cooccurrenceRequest.cancel();
+    symptomCooccurrenceRequest.cancel();
+    exploreEventsRequest.cancel();
+    if (previousActor !== null) {
+      insights = [];
+      dismissedItems = [];
+      cooccurrence = null;
+      symptomCooccurrence = null;
+      clearSymptomWindowData();
+      insightsLoaded = false;
+      loading = false;
+      cooccurrenceLoading = false;
+      symptomCooccurrenceLoading = false;
+      cooccurrenceRequested = false;
+      symptomCooccurrenceRequested = false;
+      lastWindowDaysForCooccurrence = null;
+    }
+  }
 
   function readCompactInsights(): boolean {
     if (!browser) return false;
@@ -203,8 +251,7 @@
   ];
 
   $: windowDays = $analysisRange;
-  $: insightsEffectiveRange = trendWindowDaysToTimeseriesRange(windowDays);
-  $: cooccurrenceRange = timeseriesRangeToCooccurrence(insightsEffectiveRange);
+  $: cooccurrenceRange = trendWindowDaysToCooccurrence(windowDays);
   $: tagClusterMeta = buildTagClusterMeta(tagClusters);
   $: analysisRangeDays = windowDays;
   $: symptomWindowDataMatchesRange = symptomWindowDataDays === windowDays;
@@ -222,7 +269,7 @@
   let symptomWindowDataDays: TrendWindowDays | null = null;
 
   function cooccurrenceApiRangeFor(days: TrendWindowDays): TagCooccurrenceRange {
-    return timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(days));
+    return trendWindowDaysToCooccurrence(days);
   }
 
   function trendWindowDateBounds(days: TrendWindowDays): { start_date: string; end_date: string } {
@@ -252,8 +299,10 @@
   }
 
   async function reloadSymptomWindowData(): Promise<void> {
-    if (get(auth).status !== 'authenticated') return;
+    const actor = get(auth);
+    if (actor.status !== 'authenticated') return;
     const requestedDays = windowDays;
+    const request = symptomWindowRequest.begin(`${actor.user.id}:${requestedDays}`);
     const requestId = ++symptomWindowRequestId;
     const { start_date, end_date } = trendWindowDateBounds(requestedDays);
     clearSymptomWindowData();
@@ -270,12 +319,17 @@
         listEntries({ start_date, end_date }),
         fetchSymptomHeatmap({ start_date, end_date }),
       ]);
-      if (requestId !== symptomWindowRequestId || requestedDays !== windowDays) return;
+      if (
+        !request.isCurrent() ||
+        requestId !== symptomWindowRequestId ||
+        requestedDays !== windowDays
+      )
+        return;
       applySymptomWindowData(entries, heatmap, requestedDays);
     } catch {
       // Keep the current range empty rather than mixing entries and heatmap from different windows.
     } finally {
-      if (requestId === symptomWindowRequestId) {
+      if (request.isCurrent() && requestId === symptomWindowRequestId) {
         symptomWindowLoading = false;
       }
     }
@@ -311,30 +365,53 @@
   ) {
     void reloadSymptomWindowData();
   }
+  $: if (exploreEventsOpen && exploreEventsInsight && exploreEventsDataDays !== windowDays) {
+    void openExploreEvents(exploreEventsInsight.id);
+  }
 
   function devFixtureKey(): string {
     return `${$devPhase.presetId}:${$devPhase.entryCount}:${$devPhase.onboardingCompleted}`;
   }
 
   async function loadCooccurrence(): Promise<void> {
-    if (get(auth).status !== 'authenticated') return;
+    const actor = get(auth);
+    if (actor.status !== 'authenticated') return;
     cooccurrenceRequested = true;
+    const requestedDays = windowDays;
+    const request = cooccurrenceRequest.begin(`${actor.user.id}:${requestedDays}`);
     const requestedRange = cooccurrenceRange;
     const requestId = ++cooccurrenceRequestId;
     cooccurrenceLoading = true;
+    cooccurrenceError = false;
     try {
       const nextCooccurrence = get(devForceVisualizations)
         ? getDevPhaseFixture(get(devPhase)).tagCooccurrenceByRange[requestedRange]
-        : await fetchTagCooccurrence({ range: requestedRange, min_count: 2 });
-      if (requestId === cooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+        : await fetchTagCooccurrence({
+            range: requestedRange,
+            days: requestedDays,
+            end_date: trendWindowDateBounds(requestedDays).end_date,
+            min_count: 2,
+            signal: request.signal,
+          });
+      if (
+        request.isCurrent() &&
+        requestId === cooccurrenceRequestId &&
+        requestedRange === cooccurrenceRange
+      ) {
         cooccurrence = nextCooccurrence;
+        cooccurrenceError = false;
       }
     } catch {
-      if (requestId === cooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+      if (
+        request.isCurrent() &&
+        requestId === cooccurrenceRequestId &&
+        requestedRange === cooccurrenceRange
+      ) {
         cooccurrence = null;
+        cooccurrenceError = true;
       }
     } finally {
-      if (requestId === cooccurrenceRequestId) {
+      if (request.isCurrent() && requestId === cooccurrenceRequestId) {
         cooccurrenceLoading = false;
       }
     }
@@ -357,27 +434,44 @@
   }
 
   async function loadSymptomCooccurrence(): Promise<void> {
-    if (get(auth).status !== 'authenticated') return;
+    const actor = get(auth);
+    if (actor.status !== 'authenticated') return;
     symptomCooccurrenceRequested = true;
+    const requestedDays = windowDays;
+    const request = symptomCooccurrenceRequest.begin(`${actor.user.id}:${requestedDays}`);
     const requestedRange = cooccurrenceRange;
     const requestId = ++symptomCooccurrenceRequestId;
     symptomCooccurrenceLoading = true;
+    symptomCooccurrenceError = false;
     try {
       const nextSymptomCooccurrence = get(devForceVisualizations)
         ? getDevPhaseFixture(get(devPhase)).symptomTagCooccurrenceByRange[requestedRange]
         : await fetchSymptomTagCooccurrence({
             range: requestedRange,
+            days: requestedDays,
+            end_date: trendWindowDateBounds(requestedDays).end_date,
             min_count: 3,
+            signal: request.signal,
           });
-      if (requestId === symptomCooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+      if (
+        request.isCurrent() &&
+        requestId === symptomCooccurrenceRequestId &&
+        requestedRange === cooccurrenceRange
+      ) {
         symptomCooccurrence = nextSymptomCooccurrence;
+        symptomCooccurrenceError = false;
       }
     } catch {
-      if (requestId === symptomCooccurrenceRequestId && requestedRange === cooccurrenceRange) {
+      if (
+        request.isCurrent() &&
+        requestId === symptomCooccurrenceRequestId &&
+        requestedRange === cooccurrenceRange
+      ) {
         symptomCooccurrence = null;
+        symptomCooccurrenceError = true;
       }
     } finally {
-      if (requestId === symptomCooccurrenceRequestId) {
+      if (request.isCurrent() && requestId === symptomCooccurrenceRequestId) {
         symptomCooccurrenceLoading = false;
       }
     }
@@ -569,9 +663,14 @@
   }
 
   async function loadInsights(): Promise<void> {
-    if (get(auth).status !== 'authenticated') return;
+    const actor = get(auth);
+    if (actor.status !== 'authenticated') return;
+    const request = insightsRequest.begin(`${actor.user.id}:${windowDays}`);
+    const preferenceRevision = trendWindowPreference.revision();
     loading = true;
     error = null;
+    carriedPairInsights = [];
+    carriedPairLookupComplete = false;
     try {
       const requestedDays = windowDays;
       if (get(devForceVisualizations)) {
@@ -591,17 +690,44 @@
       }
 
       const { start_date: startIso, end_date: todayIso } = trendWindowDateBounds(requestedDays);
-      const [insightsResult, symptomWindowResult, tagResult, defaultTagsResult, preferencesResult] =
-        await Promise.allSettled([
-          listLatestInsights({ limit: 50 }),
-          Promise.all([
-            listEntries({ start_date: startIso, end_date: todayIso }),
-            fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }),
-          ]),
-          listVisibleTags({ include_hidden: true }),
-          listDefaultTags(),
-          fetchUserPreferences(),
-        ]);
+      const requestedPair = parseAnalysisPair(get(page).url.searchParams);
+      const [
+        insightsResult,
+        pairResult,
+        symptomWindowResult,
+        tagResult,
+        defaultTagsResult,
+        preferencesResult,
+      ] = await Promise.allSettled([
+        listLatestInsights({ limit: 50 }),
+        requestedPair && requestedPair.signals.every(({ kind }) => kind !== 'unknown')
+          ? listLatestInsights({
+              limit: 50,
+              pairSignals: requestedPair.signals.map(({ kind, id }) => ({ kind, id })),
+            })
+          : Promise.resolve(null),
+        Promise.all([
+          listEntries({ start_date: startIso, end_date: todayIso }),
+          fetchSymptomHeatmap({ start_date: startIso, end_date: todayIso }),
+        ]),
+        listVisibleTags({ include_hidden: true }),
+        listDefaultTags(),
+        fetchUserPreferences(),
+      ]);
+
+      if (!request.isCurrent()) return;
+      if (
+        requestedPair?.signals.some(({ kind }) => kind === 'unknown') &&
+        insightsResult.status === 'fulfilled'
+      ) {
+        // Legacy links have no type identity: match the loaded feed locally,
+        // as before A08, rather than emitting an invalid server filter.
+        carriedPairInsights = insightsResult.value.insights;
+        carriedPairLookupComplete = true;
+      } else if (requestedPair && pairResult.status === 'fulfilled' && pairResult.value) {
+        carriedPairInsights = pairResult.value.insights;
+        carriedPairLookupComplete = true;
+      }
 
       if (insightsResult.status === 'fulfilled') {
         insights = insightsResult.value.insights;
@@ -617,6 +743,13 @@
 
       userPreferences =
         preferencesResult.status === 'fulfilled' ? preferencesResult.value : userPreferences;
+      if (preferencesResult.status === 'fulfilled') {
+        trendWindowPreference.hydrate(
+          actor.user.id,
+          preferencesResult.value.trend_window_days,
+          preferenceRevision
+        );
+      }
 
       if (requestedDays === windowDays) {
         if (symptomWindowResult.status === 'fulfilled') {
@@ -660,11 +793,13 @@
         insights = insights.filter((insight) => !dismissedSet.has(insight.id));
       }
       dismissedItems = await loadDismissedItems();
+      if (!request.isCurrent()) return;
       const dismissedInsightIds = new Set(dismissedItems.map((item) => item.insight.id));
       if (dismissedInsightIds.size > 0) {
         insights = insights.filter((insight) => !dismissedInsightIds.has(insight.id));
       }
     } catch (err) {
+      if (!request.isCurrent()) return;
       error = err instanceof Error ? err.message : $_('error.generic');
       if (insights.length === 0) {
         insightMaturity = null;
@@ -676,8 +811,10 @@
         inactiveTagIds = [];
       }
     } finally {
-      loading = false;
-      insightsLoaded = true;
+      if (request.isCurrent()) {
+        loading = false;
+        insightsLoaded = true;
+      }
     }
   }
 
@@ -703,22 +840,9 @@
   }
 
   onMount(() => {
-    // Read straight from the URL rather than the page store: this runs in unit
-    // tests too, where no SvelteKit runtime provides one.
-    if (browser) {
-      carriedSignalIds = (new URLSearchParams(window.location.search).get('signals') ?? '')
-        .split(',')
-        .map((id) => id.trim())
-        .filter(Boolean);
-    }
     mobileMedia = window.matchMedia?.(`(max-width: ${DESKTOP_SHELL_BREAKPOINT_PX - 1}px)`) ?? null;
     syncCompactInsights();
     mobileMedia?.addEventListener('change', syncCompactInsights);
-    void fetchUserPreferences()
-      .then((prefs) => analysisRange.hydrateFromServer(prefs.trend_window_days))
-      .catch(() => {
-        // Keep local cache when preferences are unavailable.
-      });
 
     const unregisterRefresh = registerPageRefresh(async () => {
       await loadInsights();
@@ -733,6 +857,11 @@
     });
 
     return () => {
+      insightsRequest.cancel();
+      symptomWindowRequest.cancel();
+      cooccurrenceRequest.cancel();
+      symptomCooccurrenceRequest.cancel();
+      exploreEventsRequest.cancel();
       unregisterRefresh();
       mobileMedia?.removeEventListener('change', syncCompactInsights);
     };
@@ -753,7 +882,7 @@
   $: showLagHeatmap = showAdvancedAnalytics && buildLagHeatmapRows(insights).length >= 2;
   $: showTagCooccurrencePanel =
     canShowTagCooccurrence(insightMaturity?.phase ?? null) &&
-    (cooccurrenceLoading || hasTagCooccurrenceData(cooccurrence));
+    (cooccurrenceLoading || cooccurrenceRequested || cooccurrenceError);
   /**
    * The Belastung composite has its own opt-in overlay, so it must not also ride
    * the ordinary feed: enabled users saw it twice, and users who switched the
@@ -761,26 +890,21 @@
    * disabling a preference does not delete what the worker already wrote (#957).
    */
   $: rankableInsights = insights.filter((insight) => insight.insight_type !== 'belastung_pattern');
-  $: filteredRankedInsights = rankInsights(rankableInsights);
+  $: carriedPair = parseAnalysisPair($page.url.searchParams);
+  $: carriedPairQuery = carriedPair ? analysisPairQuery(carriedPair) : '';
+  $: carriedMatches = carriedPair
+    ? carriedPairInsights.filter((insight) => insightMatchesAnalysisPair(insight, carriedPair!))
+    : [];
+  $: carriedPairSearchComplete = Boolean(
+    carriedPair && carriedPairLookupComplete && insightsLoaded && !loading && !error
+  );
+  $: carriedSignalsUnmatched = carriedPairSearchComplete && carriedMatches.length === 0;
+  $: carriedPairFocused = carriedPairSearchComplete && carriedMatches.length > 0;
+  $: focusedRankableInsights = carriedPairFocused ? carriedMatches : rankableInsights;
+  $: filteredRankedInsights = rankInsights(focusedRankableInsights);
   $: primaryMobileInsight = filteredRankedInsights[0] ?? null;
   $: remainingMobileInsights = filteredRankedInsights.slice(1);
-  /**
-   * `?signals=a,b` carries the pinned pair from Compare's "check this question".
-   * Without it the link landed on the bare hub and the hypothesis had to be
-   * found again among unrelated insights (#967).
-   */
-  let carriedSignalIds: string[] = [];
-
-  /** Insights whose subject is one of the carried signals. */
-  $: carriedMatches = carriedSignalIds.length
-    ? insights.filter(
-        (insight) => insight.subject_id && carriedSignalIds.includes(insight.subject_id)
-      )
-    : [];
-
-  $: carriedSignalsUnmatched =
-    carriedSignalIds.length > 0 && insightsLoaded && carriedMatches.length === 0;
-
+  /** Keep the structured Compare pair focused in the mobile lead and desktop feed. */
   $: feedInsights =
     compactInsights && primaryMobileInsight ? remainingMobileInsights : filteredRankedInsights;
   $: showInsightFeed =
@@ -863,9 +987,12 @@
       insights.find((row) => row.id === insightId) ??
       (primaryMobileInsight?.id === insightId ? primaryMobileInsight : null);
     if (!insight) return;
+    if ($auth.status !== 'authenticated') return;
 
     const requestId = ++exploreEventsRequestId;
     const capturedDays = windowDays;
+    exploreEventsDataDays = capturedDays;
+    const request = exploreEventsRequest.begin(`${$auth.user.id}:${insightId}:${capturedDays}`);
 
     exploreEventsInsight = insight;
     exploreEventsMetric = insightMetricToChartKey(insight.metric);
@@ -880,11 +1007,17 @@
     exploreEventsPartnerLoading = false;
     exploreEventsPartnerUnavailable = false;
     exploreEventsTagHeatmap = null;
+    exploreEventsSymptomHeatmap = null;
+    exploreEventsWorkContextHeatmap = null;
 
     try {
       if (get(devForceVisualizations)) {
         const fixture = getDevPhaseFixture(get(devPhase));
-        if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
+        if (
+          !request.isCurrent() ||
+          requestId !== exploreEventsRequestId ||
+          exploreEventsInsight?.id !== insightId
+        ) {
           return;
         }
         exploreEventsWindows =
@@ -895,16 +1028,17 @@
         const devLag = insight.payload?.lag_days;
         exploreEventsLagOffset = typeof devLag === 'number' ? devLag : null;
         exploreEventsTagHeatmap = fixture.tagHeatmap;
+        exploreEventsSymptomHeatmap = fixture.symptomHeatmap;
+        const fixtureBounds = trendWindowDateBounds(capturedDays);
+        exploreEventsWorkContextHeatmap = buildWorkContextHeatmap(fixture.entries, fixtureBounds);
         applyExploreEventsPartner(
           insight,
-          fixture.tagCooccurrenceByRange[
-            timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(capturedDays))
-          ] ?? null,
-          fixture.symptomTagCooccurrenceByRange[
-            timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(capturedDays))
-          ] ?? null,
+          fixture.tagCooccurrenceByRange[trendWindowDaysToCooccurrence(capturedDays)] ?? null,
+          fixture.symptomTagCooccurrenceByRange[trendWindowDaysToCooccurrence(capturedDays)] ??
+            null,
           fixture.tagHeatmap,
           fixture.symptomHeatmap,
+          exploreEventsWorkContextHeatmap,
           true
         );
         return;
@@ -912,9 +1046,18 @@
 
       const response = await fetchInsightEventWindows(
         insight.id,
-        timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(capturedDays))
+        trendWindowDaysToCooccurrence(capturedDays),
+        {
+          days: capturedDays,
+          end_date: trendWindowDateBounds(capturedDays).end_date,
+          signal: request.signal,
+        }
       );
-      if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
+      if (
+        !request.isCurrent() ||
+        requestId !== exploreEventsRequestId ||
+        exploreEventsInsight?.id !== insightId
+      ) {
         return;
       }
       exploreEventsWindows = response.events.map((event) => ({
@@ -926,9 +1069,19 @@
 
       exploreEventsLoading = false;
       exploreEventsPartnerLoading = true;
-      void ensureExploreEventsPartnerData(insight, requestId, insightId, capturedDays);
+      void ensureExploreEventsPartnerData(
+        insight,
+        requestId,
+        insightId,
+        capturedDays,
+        request.isCurrent
+      );
     } catch {
-      if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
+      if (
+        !request.isCurrent() ||
+        requestId !== exploreEventsRequestId ||
+        exploreEventsInsight?.id !== insightId
+      ) {
         return;
       }
       exploreEventsWindows = [];
@@ -940,7 +1093,11 @@
       exploreEventsPartnerLoading = false;
       exploreEventsPartnerUnavailable = false;
     } finally {
-      if (requestId === exploreEventsRequestId && exploreEventsInsight?.id === insightId) {
+      if (
+        request.isCurrent() &&
+        requestId === exploreEventsRequestId &&
+        exploreEventsInsight?.id === insightId
+      ) {
         exploreEventsLoading = false;
       }
     }
@@ -952,8 +1109,23 @@
     symptomCells: SymptomTagCooccurrenceResponse | null,
     tagHeatmap: TagHeatmapResponse | null,
     symptomHeatmapData: SymptomHeatmapResponse | null,
-    tagPresenceAvailable: boolean
+    workContextHeatmapData: ReturnType<typeof buildWorkContextHeatmap> | null,
+    presenceAvailable: boolean
   ): void {
+    const carriedPartner = fixedPartnerForInsight(insight);
+    if (carriedPartner) {
+      exploreEventsPartnerCandidates = [{ ...carriedPartner, score: Number.MAX_SAFE_INTEGER }];
+      exploreEventsPartner = presenceAvailable ? carriedPartner : null;
+      exploreEventsPartnerPresence = presenceAvailable
+        ? presenceDatesForPartner(
+            carriedPartner,
+            tagHeatmap,
+            symptomHeatmapData,
+            workContextHeatmapData
+          )
+        : [];
+      return;
+    }
     const subject = resolveEsmAlignSubject(insight);
     if (!subject) {
       exploreEventsPartnerCandidates = [];
@@ -966,7 +1138,7 @@
         ? candidatesFromTagCooccurrence(subject, tagPairs?.pairs ?? [])
         : candidatesFromSymptomTagCooccurrence(subject, symptomCells?.cells ?? []);
     exploreEventsPartnerCandidates = clampPartnerCandidates(ranked);
-    if (!tagPresenceAvailable) {
+    if (!presenceAvailable) {
       exploreEventsPartner = null;
       exploreEventsPartnerPresence = [];
       return;
@@ -975,79 +1147,138 @@
     exploreEventsPartnerPresence = presenceDatesForPartner(
       exploreEventsPartner,
       tagHeatmap,
-      symptomHeatmapData
+      symptomHeatmapData,
+      workContextHeatmapData
     );
+  }
+
+  function fixedPartnerForInsight(insight: InsightResponse): EsmPartner | null {
+    if (!carriedPair || !insightMatchesAnalysisPair(insight, carriedPair)) return null;
+    const ref: AnalysisSignalRef | null = partnerForInsight(insight, carriedPair);
+    if (!ref || !['tag', 'symptom', 'work_context'].includes(ref.kind)) return null;
+    return {
+      id: ref.id,
+      label: ref.label ?? ref.context ?? ref.id,
+      kind: ref.kind as EsmPartner['kind'],
+    };
   }
 
   async function ensureExploreEventsPartnerData(
     insight: InsightResponse,
     requestId: number,
     insightId: string,
-    days: TrendWindowDays
+    days: TrendWindowDays,
+    isCurrent: () => boolean
   ): Promise<void> {
     const subject = resolveEsmAlignSubject(insight);
-    if (!subject) {
+    const fixedPartner = fixedPartnerForInsight(insight);
+    if (!subject && !fixedPartner) {
       exploreEventsPartnerLoading = false;
       return;
     }
 
-    const needsTagPairs = subject.kind === 'tag';
-    const needsSymptomCells = subject.kind === 'symptom';
-    const apiRange = timeseriesRangeToCooccurrence(trendWindowDaysToTimeseriesRange(days));
+    const needsTagPairs = !fixedPartner && subject?.kind === 'tag';
+    const needsSymptomCells = !fixedPartner && subject?.kind === 'symptom';
+    const apiRange = trendWindowDaysToCooccurrence(days);
     const { start_date, end_date } = trendWindowDateBounds(days);
     const heatmapStart = shiftIsoDate(start_date, -SMALL_MULTIPLES_RADIUS);
     const heatmapEnd = shiftIsoDate(end_date, SMALL_MULTIPLES_RADIUS);
 
-    const tagHeatmapPromise = fetchTagHeatmap({ start_date: heatmapStart, end_date: heatmapEnd })
-      .then((data) => ({ ok: true as const, data }))
-      .catch(() => ({ ok: false as const, data: null }));
+    const tagHeatmapPromise =
+      !fixedPartner || fixedPartner.kind === 'tag'
+        ? fetchTagHeatmap({ start_date: heatmapStart, end_date: heatmapEnd })
+            .then((data) => ({ ok: true as const, data }))
+            .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null });
+    const symptomHeatmapPromise =
+      fixedPartner?.kind === 'symptom'
+        ? fetchSymptomHeatmap({ start_date: heatmapStart, end_date: heatmapEnd })
+            .then((data) => ({ ok: true as const, data }))
+            .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: visibleSymptomHeatmap ?? symptomHeatmap });
+    const workContextEntriesPromise =
+      fixedPartner?.kind === 'work_context'
+        ? listEntries({ start_date: heatmapStart, end_date: heatmapEnd, limit: 500 })
+            .then((data) => ({ ok: true as const, data }))
+            .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null });
 
-    const [tagPairsResult, symptomCellsResult, tagHeatmapResult] = await Promise.all([
+    const [
+      tagPairsResult,
+      symptomCellsResult,
+      tagHeatmapResult,
+      symptomHeatmapResult,
+      workContextEntriesResult,
+    ] = await Promise.all([
       needsTagPairs
-        ? cooccurrence && cooccurrence.range === apiRange
+        ? cooccurrence && cooccurrence.range === apiRange && cooccurrence.end_date === end_date
           ? Promise.resolve({ ok: true as const, data: cooccurrence })
-          : fetchTagCooccurrence({ range: apiRange })
+          : fetchTagCooccurrence({ range: apiRange, days, end_date })
               .then((data) => ({ ok: true as const, data }))
               .catch(() => ({ ok: false as const, data: null }))
         : Promise.resolve({ ok: true as const, data: null }),
       needsSymptomCells
-        ? symptomCooccurrence && symptomCooccurrence.range === apiRange
+        ? symptomCooccurrence &&
+          symptomCooccurrence.range === apiRange &&
+          symptomCooccurrence.end_date === end_date
           ? Promise.resolve({ ok: true as const, data: symptomCooccurrence })
-          : fetchSymptomTagCooccurrence({ range: apiRange })
+          : fetchSymptomTagCooccurrence({ range: apiRange, days, end_date })
               .then((data) => ({ ok: true as const, data }))
               .catch(() => ({ ok: false as const, data: null }))
         : Promise.resolve({ ok: true as const, data: null }),
       tagHeatmapPromise,
+      symptomHeatmapPromise,
+      workContextEntriesPromise,
     ]);
 
-    if (requestId !== exploreEventsRequestId || exploreEventsInsight?.id !== insightId) {
+    if (
+      !isCurrent() ||
+      requestId !== exploreEventsRequestId ||
+      exploreEventsInsight?.id !== insightId
+    ) {
       return;
     }
 
-    const tagPresenceAvailable = tagHeatmapResult.ok && tagHeatmapResult.data !== null;
+    const workContextHeatmapData = workContextEntriesResult.data
+      ? buildWorkContextHeatmap(workContextEntriesResult.data, {
+          start_date: heatmapStart,
+          end_date: heatmapEnd,
+        })
+      : null;
+    const presenceAvailable = fixedPartner
+      ? fixedPartner.kind === 'tag'
+        ? tagHeatmapResult.ok && tagHeatmapResult.data !== null
+        : fixedPartner.kind === 'symptom'
+          ? symptomHeatmapResult.ok && symptomHeatmapResult.data !== null
+          : workContextEntriesResult.ok && workContextHeatmapData !== null
+      : tagHeatmapResult.ok && tagHeatmapResult.data !== null;
     const candidatesAvailable = tagPairsResult.ok && symptomCellsResult.ok;
     exploreEventsTagHeatmap = tagHeatmapResult.data;
+    exploreEventsSymptomHeatmap = symptomHeatmapResult.data;
+    exploreEventsWorkContextHeatmap = workContextHeatmapData;
     exploreEventsPartnerLoading = false;
     applyExploreEventsPartner(
       insight,
       tagPairsResult.data,
       symptomCellsResult.data,
       tagHeatmapResult.data,
-      visibleSymptomHeatmap ?? symptomHeatmap,
-      tagPresenceAvailable
+      symptomHeatmapResult.data,
+      workContextHeatmapData,
+      presenceAvailable
     );
     // A failed candidate lookup produces zero candidates, which would otherwise
     // read as "no partner exists". A failed presence fetch only matters once a
     // partner could have been shown.
     exploreEventsPartnerUnavailable =
-      !candidatesAvailable || (!tagPresenceAvailable && exploreEventsPartnerCandidates.length > 0);
+      (!fixedPartner && !candidatesAvailable) ||
+      (!presenceAvailable && exploreEventsPartnerCandidates.length > 0);
   }
 
   function handleExplorePartnerChange(event: CustomEvent<{ partnerId: string | null }>): void {
     const nextId = event.detail.partnerId;
     const next =
       exploreEventsPartnerCandidates.find((candidate) => candidate.id === nextId) ?? null;
-    if (!exploreEventsTagHeatmap || !next) {
+    if (!next) {
       exploreEventsPartner = null;
       exploreEventsPartnerPresence = [];
       return;
@@ -1056,7 +1287,8 @@
     exploreEventsPartnerPresence = presenceDatesForPartner(
       exploreEventsPartner,
       exploreEventsTagHeatmap,
-      visibleSymptomHeatmap ?? symptomHeatmap
+      exploreEventsSymptomHeatmap ?? visibleSymptomHeatmap ?? symptomHeatmap,
+      exploreEventsWorkContextHeatmap
     );
   }
 
@@ -1103,15 +1335,14 @@
           analysisRangeOptions={analysisRangeControlOptions}
           on:rangeChange={(event) => {
             const nextDays = coerceTrendWindowDays(event.detail.value);
-            setAnalysisRange(nextDays);
-            void updateUserPreferences({ trend_window_days: nextDays }).catch(() => {
-              // Optimistic local window; server sync can retry on next visit.
-            });
+            if ($auth.status === 'authenticated')
+              trendWindowPreference.select($auth.user.id, nextDays);
           }}
         />
       {/if}
     </svelte:fragment>
   </ScreenHeader>
+  <TrendWindowSaveStatus />
   <p class="insights-page__history-link">
     <a href="/insights/history">{$_('insights.page.history_link')}</a>
     <span aria-hidden="true"> · </span>
@@ -1160,6 +1391,7 @@
           {#if compactInsights && !feedLoading && !error && primaryMobileInsight}
             <MobileInsightLead
               insight={primaryMobileInsight}
+              detailQuery={carriedPairQuery}
               maturity={insightMaturity}
               entryCount={visibleEntryCount}
               {inactiveTagIds}
@@ -1183,8 +1415,18 @@
             -->
             <InlineAlert
               variant="info"
-              message={$_('insights.carried_signals_unmatched')}
+              message={$_(
+                carriedPair?.signals.some(({ kind }) => kind === 'unknown')
+                  ? 'insights.carried_signals_legacy_unmatched'
+                  : 'insights.carried_signals_unmatched'
+              )}
               testId="insights-carried-signals-unmatched"
+            />
+          {:else if carriedPairFocused}
+            <InlineAlert
+              variant="info"
+              message={$_('insights.carried_pair_focused')}
+              testId="insights-carried-pair-focused"
             />
           {/if}
 
@@ -1196,6 +1438,7 @@
                 {/if}
                 <InsightFeed
                   insights={feedInsights}
+                  detailQuery={carriedPairQuery}
                   stalenessInsights={insights}
                   {lastSuccessfulInsightRunAt}
                   analyticsEnabled={userPreferences?.analytics_enabled !== false}
@@ -1222,6 +1465,7 @@
             {:else}
               <InsightFeed
                 insights={feedInsights}
+                detailQuery={carriedPairQuery}
                 stalenessInsights={insights}
                 {lastSuccessfulInsightRunAt}
                 analyticsEnabled={userPreferences?.analytics_enabled !== false}
@@ -1272,6 +1516,8 @@
               entries={visibleMoodEntries}
               cooccurrence={symptomCooccurrence}
               cooccurrenceLoading={symptomCooccurrenceLoading}
+              cooccurrenceError={symptomCooccurrenceError}
+              onCooccurrenceRetry={() => void loadSymptomCooccurrence()}
               phase={insightMaturity?.phase ?? null}
               loading={loading || symptomWindowLoading}
               pruneSparseAxes
@@ -1295,6 +1541,8 @@
             <TagCooccurrenceHeatmap
               data={cooccurrence}
               loading={cooccurrenceLoading}
+              error={cooccurrenceError}
+              onRetry={() => void loadCooccurrence()}
               range={cooccurrenceRange}
               showRangeSelector={false}
               sortMode={tagCooccurrenceSortMode}
@@ -1393,7 +1641,9 @@
       partnerUnavailable={exploreEventsPartnerUnavailable}
       on:partnerChange={handleExplorePartnerChange}
       on:close={() => {
+        exploreEventsRequest.cancel();
         exploreEventsOpen = false;
+        exploreEventsDataDays = null;
         exploreEventsInsight = null;
         exploreEventsPartner = null;
         exploreEventsPartnerCandidates = [];

@@ -333,6 +333,8 @@ def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
     assert tag_candidate.payload["with_good_count"] == 15
     assert tag_candidate.payload["without_good_count"] == 0
     assert tag_candidate.payload["outcome"] == "association"
+    assert tag_candidate.payload["analysis_window_start"] == "2026-04-01"
+    assert tag_candidate.payload["analysis_window_end"] == "2026-04-30"
 
 
 def test_null_association_candidates_for_overlapping_tag_mood() -> None:
@@ -698,7 +700,10 @@ async def test_candidate_generation_runs_in_thread_without_blocking_event_loop()
         task = asyncio.create_task(
             _generate_insight_candidates_in_thread([], [], [], as_of=date(2026, 5, 1))
         )
-        await asyncio.wait_for(calculation_started.wait(), timeout=0.02)
+        # Thread-pool startup can exceed 20 ms on Windows and shared runners.
+        # The assertion below checks the actual property: the coroutine is
+        # still pending while the synchronous calculation runs elsewhere.
+        await asyncio.wait_for(calculation_started.wait(), timeout=1.0)
         assert not task.done()
         assert await task == []
 

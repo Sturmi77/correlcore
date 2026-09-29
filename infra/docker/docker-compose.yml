@@ -41,6 +41,7 @@ x-api-env: &api-env
   MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-CHANGE_ME_MINIO_SECRET}
   IMAGE_TAG: ${IMAGE_TAG:-latest}
   IMAGE_DIGEST: ${IMAGE_DIGEST:-}
+  WEB_IMAGE_DIGEST: ${WEB_IMAGE_DIGEST:-}
   GLITCHTIP_DSN: ${GLITCHTIP_DSN:-}
   GLITCHTIP_ENVIRONMENT: ${APP_ENV:-production}
 
@@ -194,7 +195,7 @@ services:
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000 > /dev/null 2>&1 || exit 1']
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000 > /dev/null 2>&1 || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3

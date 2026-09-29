@@ -75,6 +75,62 @@ def rewrite_lag_dismissal_subject_key(subject_key: str) -> str | None:
     return None
 
 
+_CHANGEPOINT_SERIES_BY_METRIC = {
+    "mood_changepoint": "mood_score",
+    "stress_changepoint": "stress",
+    "energy_changepoint": "energy",
+}
+
+
+def canonical_dismissal_subject_key(subject_key: str) -> str:
+    """Normalize known historical key shapes without broadening subject scope.
+
+    This is the sole key transform for migration and all dismissal reads/writes.
+    Unknown shapes remain opaque so an accidental match cannot hide another
+    metric, series, or subject.
+    """
+    try:
+        payload = json.loads(subject_key)
+    except (ValueError, TypeError):
+        return subject_key
+    if not isinstance(payload, dict) or not all(
+        key in payload for key in ("insight_type", "metric", "subject_type", "subject")
+    ):
+        return subject_key
+    payload = dict(payload)
+    if not all(isinstance(payload[key], str) for key in ("insight_type", "metric", "subject_type")):
+        return subject_key
+    subject = payload["subject"]
+    if (
+        payload["insight_type"] == "symptom_cluster"
+        and isinstance(subject, list)
+        and len(subject) == 5
+        and subject[:2] == ["symptom_cluster", "lag"]
+    ):
+        payload["subject"] = subject[:4]
+    if (
+        payload["insight_type"] == "changepoint"
+        and payload["subject_type"] == "changepoint"
+        and payload["metric"] in _CHANGEPOINT_SERIES_BY_METRIC
+        and isinstance(subject, list)
+        and len(subject) == 3
+        and subject[0] == "subject"
+    ):
+        payload["subject"] = ["changepoint", _CHANGEPOINT_SERIES_BY_METRIC[payload["metric"]]]
+    if (
+        payload["insight_type"] in {"pointbiserial", "null_association"}
+        and payload["subject_type"] == "tag"
+        and isinstance(subject, list)
+        and len(subject) == 2
+        and isinstance(subject[0], str)
+        and subject[0] in {"tag_slug", "tag_label"}
+    ):
+        payload["insight_type"] = "pointbiserial"
+        if payload["metric"] in {"mood", "mood_avg", "mood_score"}:
+            payload["metric"] = "mood_score"
+    return json.dumps(payload, separators=(",", ":"), sort_keys=True, ensure_ascii=True)
+
+
 async def list_dismissed_subject_keys(
     db: AsyncSession,
     *,
@@ -83,7 +139,7 @@ async def list_dismissed_subject_keys(
     result = await db.execute(
         select(InsightDismissal.subject_key).where(InsightDismissal.user_id == user_id)
     )
-    return {row[0] for row in result.all()}
+    return {canonical_dismissal_subject_key(row[0]) for row in result.all()}
 
 
 async def migrate_uuid_prefs_to_subject_dismissals(
@@ -118,7 +174,9 @@ async def migrate_uuid_prefs_to_subject_dismissals(
     now = datetime.now(UTC)
 
     for insight in insights:
-        subject_key = insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
+        subject_key = canonical_dismissal_subject_key(
+            insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
+        )
         if subject_key not in existing:
             db.add(
                 InsightDismissal(
@@ -147,15 +205,21 @@ async def create_insight_dismissal(
 
     insight = await get_insight_by_id(db, user_id=user_id, insight_id=insight_id)
     tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, [insight])
-    subject_key = insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
-
-    result = await db.execute(
-        select(InsightDismissal).where(
-            InsightDismissal.user_id == user_id,
-            InsightDismissal.subject_key == subject_key,
-        )
+    subject_key = canonical_dismissal_subject_key(
+        insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
     )
-    row = result.scalar_one_or_none()
+
+    result = await db.execute(select(InsightDismissal).where(InsightDismissal.user_id == user_id))
+    matching = [
+        item
+        for item in result.scalars().all()
+        if canonical_dismissal_subject_key(item.subject_key) == subject_key
+    ]
+    row = next((item for item in matching if item.subject_key == subject_key), None)
+    row = row or (matching[0] if matching else None)
+    for duplicate in matching:
+        if duplicate is not row:
+            await db.delete(duplicate)
     now = datetime.now(UTC)
     if row is None:
         row = InsightDismissal(
@@ -179,6 +243,7 @@ async def create_insight_dismissal(
             row.insight_id = insight.id
             row.dismissed_at = now
     else:
+        row.subject_key = subject_key
         row.insight_id = insight.id
         row.dismissed_at = now
 
@@ -204,7 +269,13 @@ async def delete_insight_dismissal(
     row = result.scalar_one_or_none()
     if row is None:
         raise InsightDismissalNotFoundError(dismissal_id)
-    await db.delete(row)
+    target_key = canonical_dismissal_subject_key(row.subject_key)
+    all_result = await db.execute(
+        select(InsightDismissal).where(InsightDismissal.user_id == user_id)
+    )
+    for candidate in all_result.scalars().all():
+        if canonical_dismissal_subject_key(candidate.subject_key) == target_key:
+            await db.delete(candidate)
     await db.flush()
 
 
@@ -224,7 +295,13 @@ async def delete_insight_dismissal_by_insight_id(
     )
     row = result.scalar_one_or_none()
     if row is not None:
-        await db.delete(row)
+        target_key = canonical_dismissal_subject_key(row.subject_key)
+        all_result = await db.execute(
+            select(InsightDismissal).where(InsightDismissal.user_id == user_id)
+        )
+        for candidate in all_result.scalars().all():
+            if canonical_dismissal_subject_key(candidate.subject_key) == target_key:
+                await db.delete(candidate)
         await db.flush()
         await remove_dismissed_insight_keys(db, user_id=user_id, keys=[str(insight_id)])
         return
@@ -236,17 +313,14 @@ async def delete_insight_dismissal_by_insight_id(
         return
 
     tag_slugs_by_id = await _tag_slugs_for_legacy_insights(db, [insight])
-    subject_key = insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
-    result = await db.execute(
-        select(InsightDismissal).where(
-            InsightDismissal.user_id == user_id,
-            InsightDismissal.subject_key == subject_key,
-        )
+    subject_key = canonical_dismissal_subject_key(
+        insight_subject_key(insight, tag_slugs_by_id=tag_slugs_by_id)
     )
-    row = result.scalar_one_or_none()
-    if row is not None:
-        await db.delete(row)
-        await db.flush()
+    result = await db.execute(select(InsightDismissal).where(InsightDismissal.user_id == user_id))
+    for row in result.scalars().all():
+        if canonical_dismissal_subject_key(row.subject_key) == subject_key:
+            await db.delete(row)
+    await db.flush()
     await remove_dismissed_insight_keys(db, user_id=user_id, keys=[str(insight_id)])
 
 
@@ -285,7 +359,9 @@ async def list_insight_dismissals(
     by_id = {insight.id: insight for insight in insights}
     views: list[InsightDismissalView] = []
     for dismissal in dismissals:
-        matched: Insight | None = newest_by_subject.get(dismissal.subject_key)
+        matched: Insight | None = newest_by_subject.get(
+            canonical_dismissal_subject_key(dismissal.subject_key)
+        )
         if matched is None and dismissal.insight_id is not None:
             matched = by_id.get(dismissal.insight_id)
         if matched is not None and dismissal.insight_id != matched.id:

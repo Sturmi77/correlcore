@@ -8,9 +8,10 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.models.insight import InsightTier, InsightType
+from app.schemas.insight_evidence import InsightEvidence, build_insight_evidence
 from app.schemas.stats import TagCooccurrenceRange, TimeseriesPoint
 
 
@@ -56,10 +57,21 @@ class InsightResponse(BaseModel):
     statement: str | None = Field(default=None, validation_alias="statement_enc")
     flags: dict[str, Any] = Field(default_factory=dict)
     payload: dict[str, Any] = Field(default_factory=dict)
+    evidence: InsightEvidence | None = None
     generated_for_date: date_type
     generated_at: datetime
     created_at: datetime
     updated_at: datetime
+
+    @model_validator(mode="after")
+    def project_evidence(self) -> InsightResponse:
+        # Existing JSON is not rewritten. Older or incomplete rows keep their
+        # original payload while exposing no typed evidence.
+        if self.evidence is None:
+            self.evidence = build_insight_evidence(
+                self.insight_type.value, self.metric, self.payload, self.effect_size
+            )
+        return self
 
 
 class InsightWorkerRunSummary(BaseModel):
@@ -101,6 +113,7 @@ class InsightEventWindowsResponse(BaseModel):
     """Event onsets plus timeseries points for Explore-Events small multiples."""
 
     range: TagCooccurrenceRange
+    days: int | None = None
     start_date: date_type
     end_date: date_type
     events: list[InsightEventWindow] = Field(default_factory=list)
@@ -122,6 +135,7 @@ class InsightVerificationResponse(BaseModel):
     """With/without series for Layer-2 verification (Phase 7 / G1)."""
 
     range: TagCooccurrenceRange
+    days: int | None = None
     start_date: date_type
     end_date: date_type
     metric: str

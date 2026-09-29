@@ -1569,6 +1569,121 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** AssociationEvidence */
+        AssociationEvidence: {
+            /** Calendar Held Coefficient */
+            calendar_held_coefficient?: number | null;
+            /** Evidence End */
+            evidence_end?: string | null;
+            /** Evidence Start */
+            evidence_start?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            family: "association";
+            /** Lag Days */
+            lag_days?: number | null;
+            /** Metric */
+            metric: string;
+            /**
+             * Outcome
+             * @default unknown
+             * @enum {string}
+             */
+            outcome: "association" | "null" | "unknown";
+            /** Raw Coefficient */
+            raw_coefficient?: number | null;
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
+            /** Weekday Held Coefficient */
+            weekday_held_coefficient?: number | null;
+            /** With Distribution */
+            with_distribution?: number[] | null;
+            /** With Good Count */
+            with_good_count?: number | null;
+            /** With Mean Display */
+            with_mean_display?: number | null;
+            /** With Mean Raw */
+            with_mean_raw?: number | null;
+            /** With N */
+            with_n: number;
+            /** Without Distribution */
+            without_distribution?: number[] | null;
+            /** Without Good Count */
+            without_good_count?: number | null;
+            /** Without Mean Display */
+            without_mean_display?: number | null;
+            /** Without Mean Raw */
+            without_mean_raw?: number | null;
+            /** Without N */
+            without_n: number;
+        };
+        /** BelastungEvidence */
+        BelastungEvidence: {
+            /**
+             * Energy Down
+             * @default false
+             */
+            energy_down: boolean;
+            /** Energy Prior Raw */
+            energy_prior_raw?: number | null;
+            /** Energy Recent Raw */
+            energy_recent_raw?: number | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            family: "belastung";
+            /** Fatigue Prior */
+            fatigue_prior?: number | null;
+            /** Fatigue Recent */
+            fatigue_recent?: number | null;
+            /**
+             * Fatigue Up
+             * @default false
+             */
+            fatigue_up: boolean;
+            /** Joint Frequency Prior */
+            joint_frequency_prior?: number | null;
+            /** Joint Frequency Recent */
+            joint_frequency_recent?: number | null;
+            /** Prior End */
+            prior_end?: string | null;
+            /** Prior N */
+            prior_n: number;
+            /** Prior Start */
+            prior_start?: string | null;
+            /** Recent End */
+            recent_end?: string | null;
+            /** Recent N */
+            recent_n: number;
+            /** Recent Start */
+            recent_start?: string | null;
+            /** Stress Prior Display */
+            stress_prior_display?: number | null;
+            /** Stress Prior Raw */
+            stress_prior_raw?: number | null;
+            /** Stress Recent Display */
+            stress_recent_display?: number | null;
+            /** Stress Recent Raw */
+            stress_recent_raw?: number | null;
+            /**
+             * Stress Up
+             * @default false
+             */
+            stress_up: boolean;
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
+        };
         /**
          * BleedingLevel
          * @description Menstrual bleeding strength (ADR-0032). SHD — never log raw values.
@@ -1579,6 +1694,47 @@ export interface components {
         Body_upload_photo_api_v1_media_photos_post: {
             /** File */
             file: string;
+        };
+        /** ChangepointEvidence */
+        ChangepointEvidence: {
+            /** After Display */
+            after_display: number;
+            /** After Raw */
+            after_raw: number;
+            /** Before Display */
+            before_display: number;
+            /** Before Raw */
+            before_raw: number;
+            /** Boundary After */
+            boundary_after?: string | null;
+            /** Boundary Before */
+            boundary_before?: string | null;
+            /**
+             * Display Direction
+             * @enum {string}
+             */
+            display_direction: "higher" | "lower" | "unchanged";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            family: "changepoint";
+            /**
+             * Raw Direction
+             * @enum {string}
+             */
+            raw_direction: "higher" | "lower" | "unchanged";
+            /**
+             * Series
+             * @enum {string}
+             */
+            series: "mood_score" | "stress" | "energy";
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
         };
         /** ComponentModel */
         ComponentModel: {
@@ -1660,6 +1816,22 @@ export interface components {
             granted: boolean;
             /** Updated At */
             updated_at?: string | null;
+        };
+        /** CooccurrenceAnalysisLimit */
+        CooccurrenceAnalysisLimit: {
+            /** Eligible Symptoms */
+            eligible_symptoms: number;
+            /** Eligible Tags */
+            eligible_tags: number;
+            /** Pair Count */
+            pair_count: number;
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "supplied_tags" | "supplied_symptoms" | "eligible_tags" | "eligible_symptoms" | "pair_count" | "work_units";
+            /** Work Units */
+            work_units: number;
         };
         /**
          * CoverageMetric
@@ -2572,6 +2744,8 @@ export interface components {
          * @description Event onsets plus timeseries points for Explore-Events small multiples.
          */
         InsightEventWindowsResponse: {
+            /** Days */
+            days?: number | null;
             /**
              * End Date
              * Format: date
@@ -2587,7 +2761,7 @@ export interface components {
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
@@ -2608,6 +2782,8 @@ export interface components {
             created_at: string;
             /** Effect Size */
             effect_size?: number | null;
+            /** Evidence */
+            evidence?: (components["schemas"]["AssociationEvidence"] | components["schemas"]["ChangepointEvidence"] | components["schemas"]["BelastungEvidence"] | components["schemas"]["LagEvidence"]) | null;
             /** First Seen On */
             first_seen_on?: string | null;
             /** Flags */
@@ -2762,6 +2938,8 @@ export interface components {
             created_at: string;
             /** Effect Size */
             effect_size?: number | null;
+            /** Evidence */
+            evidence?: (components["schemas"]["AssociationEvidence"] | components["schemas"]["ChangepointEvidence"] | components["schemas"]["BelastungEvidence"] | components["schemas"]["LagEvidence"]) | null;
             /** Flags */
             flags?: {
                 [key: string]: unknown;
@@ -2875,6 +3053,8 @@ export interface components {
          * @description With/without series for Layer-2 verification (Phase 7 / G1).
          */
         InsightVerificationResponse: {
+            /** Days */
+            days?: number | null;
             /**
              * End Date
              * Format: date
@@ -2888,7 +3068,7 @@ export interface components {
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
@@ -2941,6 +3121,10 @@ export interface components {
          * @description Non-sensitive, public deployment descriptor.
          */
         InstanceInfo: {
+            /** Api Image */
+            api_image: string;
+            /** Git Commit */
+            git_commit: string;
             /**
              * Mode
              * @enum {string}
@@ -2950,6 +3134,36 @@ export interface components {
             registration_enabled: boolean;
             /** Version */
             version: string;
+            /** Web Image */
+            web_image: string;
+        };
+        /** LagEvidence */
+        LagEvidence: {
+            /** Corrected P */
+            corrected_p?: number | null;
+            /** Evidence End */
+            evidence_end?: string | null;
+            /** Evidence Start */
+            evidence_start?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            family: "lag";
+            /** Feature Key */
+            feature_key: string;
+            /** Lag Days */
+            lag_days: number;
+            /** Raw Coefficient */
+            raw_coefficient?: number | null;
+            /** Target Key */
+            target_key: string;
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
         };
         /** LivenessResponse */
         LivenessResponse: {
@@ -3277,8 +3491,22 @@ export interface components {
         };
         /** SymptomTagCooccurrenceResponse */
         SymptomTagCooccurrenceResponse: {
+            analysis_limit?: components["schemas"]["CooccurrenceAnalysisLimit"] | null;
+            /**
+             * Analysis Status
+             * @default ok
+             * @enum {string}
+             */
+            analysis_status: "ok" | "insufficient_data" | "limit_exceeded" | "busy" | "timeout" | "unavailable";
+            /**
+             * Analytics Disabled
+             * @default false
+             */
+            analytics_disabled: boolean;
             /** Cells */
             cells?: components["schemas"]["SymptomTagCooccurrenceCell"][];
+            /** Days */
+            days?: number | null;
             /**
              * End Date
              * Format: date
@@ -3287,15 +3515,25 @@ export interface components {
             /** Min Count */
             min_count: number;
             /**
+             * Observed Days
+             * @default 0
+             */
+            observed_days: number;
+            /**
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
              */
             start_date: string;
+            /**
+             * Window Too Short
+             * @default false
+             */
+            window_too_short: boolean;
         };
         /** SymptomTagCooccurrenceSymptomRef */
         SymptomTagCooccurrenceSymptomRef: {
@@ -3662,6 +3900,20 @@ export interface components {
         };
         /** TagCooccurrenceResponse */
         TagCooccurrenceResponse: {
+            analysis_limit?: components["schemas"]["CooccurrenceAnalysisLimit"] | null;
+            /**
+             * Analysis Status
+             * @default ok
+             * @enum {string}
+             */
+            analysis_status: "ok" | "insufficient_data" | "limit_exceeded" | "busy" | "timeout" | "unavailable";
+            /**
+             * Analytics Disabled
+             * @default false
+             */
+            analytics_disabled: boolean;
+            /** Days */
+            days?: number | null;
             /**
              * End Date
              * Format: date
@@ -3669,13 +3921,18 @@ export interface components {
             end_date: string;
             /** Min Count */
             min_count: number;
+            /**
+             * Observed Days
+             * @default 0
+             */
+            observed_days: number;
             /** Pairs */
             pairs?: components["schemas"]["TagCooccurrencePair"][];
             /**
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
@@ -5564,6 +5821,7 @@ export interface operations {
         parameters: {
             query?: {
                 range?: "week" | "month" | "quarter" | "year";
+                end_date?: string | null;
                 /** @description Exact window length in days. Takes precedence over `range`, which can only express 7/30/90/365 and therefore cannot carry the shared analysis window (14 | 28 | 90). */
                 days?: number | null;
             };
@@ -6338,6 +6596,8 @@ export interface operations {
                 limit?: number;
                 /** @description Restrict to these insight families before the row cap applies. Repeat the parameter for several families. */
                 insight_type?: string[] | null;
+                /** @description Structured kind:id identities that must all be present before the row cap. */
+                pair_signal?: string[] | null;
             };
             header?: {
                 authorization?: string | null;
@@ -6405,6 +6665,9 @@ export interface operations {
     get_symptom_tag_cooccurrence_endpoint_api_v1_insights_symptom_tag_cooccurrence_get: {
         parameters: {
             query?: {
+                /** @description Exact days; takes precedence over range */
+                days?: number | null;
+                end_date?: string | null;
                 min_count?: number;
                 range?: string;
             };
@@ -6474,6 +6737,9 @@ export interface operations {
     get_tag_cooccurrence_endpoint_api_v1_insights_tag_cooccurrence_get: {
         parameters: {
             query?: {
+                /** @description Exact days; takes precedence over range */
+                days?: number | null;
+                end_date?: string | null;
                 min_count?: number;
                 range?: string;
             };
@@ -6578,6 +6844,9 @@ export interface operations {
     get_insight_event_windows_endpoint_api_v1_insights__insight_id__event_windows_get: {
         parameters: {
             query?: {
+                /** @description Exact days; takes precedence over range */
+                days?: number | null;
+                end_date?: string | null;
                 range?: string;
             };
             header?: {
@@ -6615,6 +6884,9 @@ export interface operations {
     get_insight_verification_endpoint_api_v1_insights__insight_id__verification_get: {
         parameters: {
             query?: {
+                /** @description Exact days; takes precedence over range */
+                days?: number | null;
+                end_date?: string | null;
                 range?: string;
             };
             header?: {

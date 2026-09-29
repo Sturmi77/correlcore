@@ -8,7 +8,7 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from datetime import date as date_type
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, String, and_, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entry import Entry
@@ -36,7 +36,7 @@ from app.services.tag_service import visible_tag_predicate
 DEFAULT_INSIGHT_LIST_LIMIT = 50
 MAX_INSIGHT_LIST_LIMIT = 200
 DEFAULT_LATEST_INSIGHT_LIMIT = 10
-MAX_LATEST_INSIGHT_LIMIT = 50
+MAX_LATEST_INSIGHT_LIMIT = 100
 
 
 class InsightNotFoundError(Exception):
@@ -461,6 +461,7 @@ def newest_insight_per_subject_stmt(
     user_id: uuid.UUID,
     *,
     insight_types: Collection[str] | None = None,
+    pair_signals: Collection[tuple[str, str]] | None = None,
 ) -> Select[tuple[Insight]]:
     """Select the newest insight row per analytical subject for one user.
 
@@ -492,6 +493,32 @@ def newest_insight_per_subject_stmt(
         if insight_types is not None
         else []
     )
+    signal_filters = []
+    for kind, signal_id in pair_signals or ():
+        nested_matches = []
+        for field in ("feature", "target"):
+            item = Insight.payload[field]
+            nested_matches.append(
+                and_(
+                    item["kind"].astext == kind,
+                    or_(
+                        item["id"].astext == signal_id,
+                        item["key"].astext == signal_id,
+                        item["key"].astext == f"{kind}:{signal_id}",
+                        item["slug"].astext == signal_id,
+                    ),
+                )
+            )
+        direct_matches = [
+            and_(Insight.subject_type == kind, cast(Insight.subject_id, String) == signal_id),
+            Insight.payload[f"{kind}_id"].astext == signal_id,
+            *nested_matches,
+        ]
+        if kind == "metric":
+            direct_matches.append(Insight.metric == signal_id)
+        elif kind == "work_context":
+            direct_matches.append(Insight.payload["work_context"].astext == signal_id)
+        signal_filters.append(or_(*direct_matches))
     ranked = (
         select(
             Insight.id.label("id"),
@@ -508,13 +535,15 @@ def newest_insight_per_subject_stmt(
             )
             .label("subject_rank"),
         )
-        .where(Insight.user_id == user_id, *type_filter)
+        .where(Insight.user_id == user_id, *type_filter, *signal_filters)
         .subquery()
     )
     newest_ids = select(ranked.c.id).where(ranked.c.subject_rank == 1)
     return (
         select(Insight)
-        .where(Insight.user_id == user_id, Insight.id.in_(newest_ids), *type_filter)
+        .where(
+            Insight.user_id == user_id, Insight.id.in_(newest_ids), *type_filter, *signal_filters
+        )
         .order_by(Insight.generated_at.desc(), Insight.created_at.desc())
         .limit(MAX_INSIGHT_LIST_LIMIT)
     )
@@ -536,6 +565,7 @@ async def list_latest_insights(
     user_id: uuid.UUID,
     limit: int = DEFAULT_LATEST_INSIGHT_LIMIT,
     insight_types: Collection[str] | None = None,
+    pair_signals: Collection[tuple[str, str]] | None = None,
 ) -> list[Insight]:
     """Return the newest insight per analytical subject.
 
@@ -567,6 +597,7 @@ async def list_latest_insights(
         newest_insight_per_subject_stmt(
             user_id,
             insight_types=family_fetch_types(wanted_types) if wanted_types is not None else None,
+            pair_signals=pair_signals,
         )
     )
 
@@ -870,6 +901,8 @@ async def get_insight_event_windows(
     user_id: uuid.UUID,
     insight_id: uuid.UUID,
     range_: TagCooccurrenceRange,
+    days: int | None = None,
+    as_of: date_type | None = None,
 ) -> InsightEventWindowsResponse:
     insight = await get_visible_insight_by_id(db, user_id=user_id, insight_id=insight_id)
 
@@ -898,13 +931,15 @@ async def get_insight_event_windows(
 
     from datetime import UTC, date, datetime
 
-    as_of = datetime.now(UTC).date()
-    start_date, end_date = _cooccurrence_window(range_, as_of)
+    as_of = as_of or datetime.now(UTC).date()
+    start_date, end_date = _cooccurrence_window(range_, as_of, days)
+    window_days = (end_date - start_date).days + 1
     dates: list[date]
 
     if not await _analytics_enabled(db, user_id=user_id):
         return InsightEventWindowsResponse(
             range=range_,
+            days=window_days,
             start_date=start_date,
             end_date=end_date,
             events=[],
@@ -949,12 +984,15 @@ async def get_insight_event_windows(
         db,
         user_id=user_id,
         range_=cooccurrence_range_to_timeseries(range_),
+        days=window_days,
+        as_of=as_of,
     )
     # #809: occurrence = episode (contiguous presence days → one onset).
     episode_onsets = collapse_presence_dates_to_episodes(dates)
     events = [InsightEventWindow(onset=day, label=label) for day in episode_onsets]
     return InsightEventWindowsResponse(
         range=range_,
+        days=window_days,
         start_date=start_date,
         end_date=end_date,
         events=events,
@@ -992,19 +1030,27 @@ async def get_insight_verification(
     user_id: uuid.UUID,
     insight_id: uuid.UUID,
     range_: TagCooccurrenceRange,
+    days: int | None = None,
+    as_of: date_type | None = None,
 ) -> InsightVerificationResponse:
     """Day-level with/without series for Layer-2 scatter and uncertainty (Phase 7)."""
 
     insight = await get_visible_insight_by_id(db, user_id=user_id, insight_id=insight_id)
     if insight.subject_type not in {"tag", "symptom"}:
         raise InsightEventWindowsUnsupportedError(str(insight.subject_type))
+    if insight.metric not in {"mood", "mood_score", "energy", "stress", "sleep_quality"} or (
+        isinstance(insight.payload, dict) and insight.payload.get("method") == "lag"
+    ):
+        raise InsightEventWindowsUnsupportedError(str(insight.metric))
 
     from datetime import UTC, datetime
 
-    as_of = datetime.now(UTC).date()
-    start_date, end_date = _cooccurrence_window(range_, as_of)
+    as_of = as_of or datetime.now(UTC).date()
+    start_date, end_date = _cooccurrence_window(range_, as_of, days)
+    window_days = (end_date - start_date).days + 1
     empty = InsightVerificationResponse(
         range=range_,
+        days=window_days,
         start_date=start_date,
         end_date=end_date,
         metric=insight.metric,
@@ -1043,6 +1089,8 @@ async def get_insight_verification(
         db,
         user_id=user_id,
         range_=cooccurrence_range_to_timeseries(range_),
+        days=window_days,
+        as_of=as_of,
     )
     points: list[InsightVerificationPoint] = []
     with_values: list[float] = []
@@ -1066,6 +1114,7 @@ async def get_insight_verification(
     without_mean, without_se = _mean_and_se(without_values)
     return InsightVerificationResponse(
         range=range_,
+        days=window_days,
         start_date=start_date,
         end_date=end_date,
         metric=insight.metric,

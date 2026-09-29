@@ -22,6 +22,8 @@
 
   export let data: TagCooccurrenceResponse | null = null;
   export let loading = false;
+  export let error = false;
+  export let onRetry: (() => void) | null = null;
   export let range: TagCooccurrenceRange = '90d';
   export let showRangeSelector = true;
   export let minPairsForDisplay = 5;
@@ -125,6 +127,11 @@
   $: maxCount = matrix.counts.flat().reduce((peak, count) => Math.max(peak, count), 0);
   $: hasEnoughPairs = (data?.pairs?.length ?? 0) >= minPairsForDisplay;
   $: showSkeleton = loading && !data;
+  $: analysisUnavailable =
+    data?.analysis_status === 'limit_exceeded' ||
+    data?.analysis_status === 'busy' ||
+    data?.analysis_status === 'timeout' ||
+    data?.analysis_status === 'unavailable';
   $: interactiveCells = matrix.tags.flatMap((rowTag, rowIndex) =>
     matrix.tags.flatMap((colTag, colIndex) => {
       if (rowIndex === colIndex) return [];
@@ -448,6 +455,26 @@
       {/each}
       <span>{$_('insights.cooccurrence.more')}</span>
     </div>
+  {:else if !loading && error}
+    <div class="cooccurrence__empty" data-testid="cooccurrence-error">
+      <p>{$_('insights.cooccurrence.load_error')}</p>
+    </div>
+  {:else if !loading && data?.analytics_disabled}
+    <div class="cooccurrence__empty" data-testid="cooccurrence-opt-out">
+      <p>{$_('insights.cooccurrence.analytics_disabled')}</p>
+    </div>
+  {:else if !loading && analysisUnavailable}
+    <div class="cooccurrence__empty" data-testid="cooccurrence-analysis-unavailable">
+      <p>{$_(`insights.cooccurrence.status_${data?.analysis_status}`)}</p>
+      {#if onRetry && ['busy', 'timeout', 'unavailable'].includes(data?.analysis_status ?? '')}
+        <button
+          type="button"
+          class="analysis-retry"
+          data-testid="tag-cooccurrence-retry"
+          on:click={onRetry}>{$_('insights.card.retry')}</button
+        >
+      {/if}
+    </div>
   {:else if !loading && data?.window_too_short}
     <!--
       Distinct from "nothing found": the window holds fewer logged days than the
@@ -467,6 +494,15 @@
 </section>
 
 <style>
+  .analysis-retry {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border-chart);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
   .cooccurrence {
     display: flex;
     flex-direction: column;

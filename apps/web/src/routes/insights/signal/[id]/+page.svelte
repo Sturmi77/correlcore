@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { displayMetricValue } from '$lib/utils/metrics';
   /**
    * /insights/signal/[id] — Ebene 2 verification surface (Phase 7 / ADR-0043).
    * Sentence → with/without (G2) → course/ESM → scatter (G1) behind disclosure.
@@ -9,6 +10,12 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
+  import { analysisRange } from '$lib/stores/analysisRange';
+  import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
+  import { fetchUserPreferences } from '$lib/api/preferences';
+  import { localIsoDate } from '$lib/utils/isoDate';
+  import { trendWindowDaysToCooccurrence, type TrendWindowDays } from '$lib/utils/trendWindowDays';
+  import { RequestGeneration } from '$lib/utils/requestGeneration';
   import {
     fetchInsight,
     fetchInsightEventWindows,
@@ -23,9 +30,12 @@
   import InsightEvidence from '$lib/components/insights/InsightEvidence.svelte';
   import WithWithoutDistribution from '$lib/components/insights/WithWithoutDistribution.svelte';
   import SignalScatter from '$lib/components/insights/SignalScatter.svelte';
+  import AdjustedEffects from '$lib/components/insights/AdjustedEffects.svelte';
   import EventAlignedSmallMultiplesSheet from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { EventWindow } from '$lib/components/trends/EventAlignedSmallMultiplesSheet.svelte';
   import type { TimeseriesPoint } from '$lib/api/stats';
+  import { fetchSymptomHeatmap, fetchTagHeatmap } from '$lib/api/stats';
+  import { listEntries } from '$lib/api/entries';
   import {
     insightMetricToChartKey,
     insightMetricToEntryField,
@@ -35,15 +45,34 @@
   import { parseSameSituationView } from '$lib/utils/sameSituation';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import { isLagInsight, isSameDaySleepSpearman } from '$lib/utils/lagInsight';
+  import { relationPairLabel } from '$lib/utils/insightRelation';
+  import { formatSymptomTagStatement } from '$lib/utils/symptomTagStatement';
+  import {
+    hasUsableVerification,
+    supportsInsightVerification,
+  } from '$lib/utils/insightVerification';
   import SignalLagEvidence from '$lib/components/insights/SignalLagEvidence.svelte';
-  import { isSmallMultiplesUnlocked } from '$lib/components/trends/smallMultiplesGate';
+  import {
+    isSmallMultiplesUnlocked,
+    SMALL_MULTIPLES_RADIUS,
+  } from '$lib/components/trends/smallMultiplesGate';
   import { registerPageRefresh } from '$lib/stores/pageRefresh';
+  import {
+    analysisPairQuery,
+    insightMatchesAnalysisPair,
+    parseAnalysisPair,
+    partnerForInsight,
+  } from '$lib/utils/analysisPairHandoff';
+  import { presenceDatesForPartner, type EsmPartner } from '$lib/utils/esmPartner';
+  import { buildWorkContextHeatmap } from '$lib/utils/workContextHeatmap';
+  import { shiftIsoDate } from '$lib/utils/isoDate';
 
   let insight: InsightResponse | null = null;
   let maturity: InsightMaturity | null = null;
   let verification: InsightVerificationResponse | null = null;
   /** True when this subject cannot carry a day-level series (composite, metric). */
   let verificationUnsupported = false;
+  let verificationUnavailable = false;
 
   /** Raw enum values (`office`, `travel`) have translated labels — use them (#967). */
   function workContextLabel(value: string | null): string {
@@ -61,78 +90,253 @@
   let esmPoints: TimeseriesPoint[] = [];
   let esmLag: number | null = null;
   let esmLoading = false;
+  let esmPartnerLoading = false;
+  let esmPartner: EsmPartner | null = null;
+  let esmPartnerPresence: string[] = [];
+  let esmPartnerUnavailable = false;
+  $: carriedPair = parseAnalysisPair($page.url.searchParams);
+  $: carriedPairQuery = carriedPair ? analysisPairQuery(carriedPair) : '';
+  $: if (mounted && $auth.status === 'anonymous') {
+    const next = `${$page.url.pathname}${$page.url.search}`;
+    void goto(`/auth/login?next=${encodeURIComponent(next)}`);
+  }
+  let mounted = false;
+  let loadedContext = '';
+  let preferenceRequestActor: string | null = null;
+  let preferenceReadyActor: string | null = null;
+  const detailRequests = new RequestGeneration();
+  const esmRequests = new RequestGeneration();
 
   $: insightId = $page.params.id ?? '';
+  $: actorId = $auth.status === 'authenticated' ? $auth.user.id : null;
+  $: contextKey = `${actorId ?? ''}:${insightId}:${$analysisRange}`;
+  $: if (mounted && actorId && preferenceRequestActor !== actorId) {
+    void hydrateAnalysisWindow(actorId);
+  }
+  $: if (
+    mounted &&
+    actorId &&
+    preferenceReadyActor === actorId &&
+    insightId &&
+    contextKey !== loadedContext
+  ) {
+    loadedContext = contextKey;
+    void load(insightId, $analysisRange, actorId);
+  }
+  $: if (mounted && !actorId && loadedContext) {
+    loadedContext = '';
+    detailRequests.cancel();
+    esmRequests.cancel();
+    insight = null;
+    verification = null;
+    esmOpen = false;
+  }
+  $: if (mounted && !actorId && preferenceRequestActor) {
+    preferenceRequestActor = null;
+    preferenceReadyActor = null;
+    trendWindowPreference.bind(null);
+  }
+
+  async function hydrateAnalysisWindow(actor: string): Promise<void> {
+    preferenceRequestActor = actor;
+    preferenceReadyActor = null;
+    trendWindowPreference.bind(actor);
+    const revision = trendWindowPreference.revision();
+    try {
+      const preferences = await fetchUserPreferences();
+      trendWindowPreference.hydrate(actor, preferences.trend_window_days, revision);
+    } catch {
+      // The bound default/local value remains usable while preferences are offline.
+    } finally {
+      if (actorId === actor && preferenceRequestActor === actor) {
+        preferenceReadyActor = actor;
+      }
+    }
+  }
   $: withWithout = insight ? parseWithWithoutView(insight) : null;
   $: sameSituation = insight ? parseSameSituationView(insight) : null;
   $: isNull = insight ? isNullAssociation(insight) : false;
   $: isLag = insight ? isLagInsight(insight) : false;
   $: isSameDaySleep = insight ? isSameDaySleepSpearman(insight) : false;
-  $: title =
-    insight?.subject_label && insight.metric
-      ? `${insight.subject_label} → ${insight.metric}`
-      : $_('insights.signal.title_fallback');
+  function pairName(value: unknown): string | null {
+    if (!value || typeof value !== 'object') return null;
+    const record = value as Record<string, unknown>;
+    return typeof record.name === 'string' && record.name.length > 0 ? record.name : null;
+  }
+
+  $: title = insight
+    ? isLagInsight(insight)
+      ? relationPairLabel(
+          insight,
+          pairName(insight.payload?.feature) ??
+            insight.subject_label ??
+            $_('insights.signal.title_fallback'),
+          pairName(insight.payload?.target) ?? insight.metric
+        )
+      : insight.subject_label && insight.metric
+        ? relationPairLabel(insight, insight.subject_label, insight.metric)
+        : $_('insights.signal.title_fallback')
+    : $_('insights.signal.title_fallback');
   $: canOpenEsm =
     Boolean(insight && isExploreEventsSubject(insight)) &&
     isSmallMultiplesUnlocked(maturity?.phase ?? null);
   $: showUncertaintyRibbon = maturity?.phase !== 'robust';
+  $: verificationReady = hasUsableVerification(verification);
 
-  async function load(): Promise<void> {
-    if (!insightId) return;
+  async function load(id: string, days: TrendWindowDays, actor: string): Promise<void> {
+    const request = detailRequests.begin(`${actor}:${id}:${days}`);
+    esmRequests.cancel();
+    esmOpen = false;
     loading = true;
     error = null;
+    verification = null;
+    insight = null;
+    maturity = null;
+    verificationUnsupported = false;
+    esmLoading = false;
+    esmPartnerLoading = false;
+    esmPartner = null;
+    esmPartnerPresence = [];
+    esmPartnerUnavailable = false;
     try {
       const [detail, latest] = await Promise.all([
-        fetchInsight(insightId),
+        fetchInsight(id, { signal: request.signal }),
         listLatestInsights({ limit: 1 }).catch(() => null),
       ]);
+      if (!request.isCurrent()) return;
       insight = detail;
       maturity = latest?.insight_maturity ?? null;
       // Composite subjects (the Belastung overlay's own insight) have no
       // day-level presence series, so the endpoint answers 422. Swallowing that
       // left the section blank and made both Belastung CTAs look broken (#967).
-      verificationUnsupported = false;
-      verification = await fetchInsightVerification(insightId, '90d').catch((err) => {
-        if (err instanceof ApiError && err.status === 422) verificationUnsupported = true;
-        return null;
-      });
+      verificationUnsupported = !supportsInsightVerification(detail);
+      verificationUnavailable = false;
+      const result = verificationUnsupported
+        ? null
+        : await fetchInsightVerification(id, trendWindowDaysToCooccurrence(days), {
+            days,
+            end_date: localIsoDate(new Date()),
+            signal: request.signal,
+          }).catch((err) => {
+            if (request.isCurrent() && err instanceof ApiError && err.status === 422)
+              verificationUnsupported = true;
+            else if (request.isCurrent()) verificationUnavailable = true;
+            return null;
+          });
+      if (request.isCurrent()) verification = result;
     } catch (err) {
+      if (!request.isCurrent()) return;
       error = err instanceof Error ? err.message : $_('insights.signal.error');
       insight = null;
       verification = null;
     } finally {
-      loading = false;
+      if (request.isCurrent()) loading = false;
     }
   }
 
   async function openEsm(): Promise<void> {
-    if (!insight) return;
+    if (!insight || !actorId) return;
+    const id = insight.id;
+    const days = $analysisRange;
+    const request = esmRequests.begin(`${actorId}:${id}:${days}`);
     esmOpen = true;
     esmLoading = true;
+    esmPartnerLoading = false;
+    esmPartner = null;
+    esmPartnerPresence = [];
+    esmPartnerUnavailable = false;
     try {
-      const response = await fetchInsightEventWindows(insight.id, '90d');
+      const response = await fetchInsightEventWindows(id, trendWindowDaysToCooccurrence(days), {
+        days,
+        end_date: localIsoDate(new Date()),
+        signal: request.signal,
+      });
+      if (!request.isCurrent()) return;
       esmWindows = response.events.map((event) => ({
         onset: event.onset,
         label: event.label ?? undefined,
       }));
       esmPoints = response.points;
       esmLag = response.lag_days ?? null;
+      // The primary visualization is complete. Open it while optional partner
+      // presence loads and let the sheet render its dedicated loading state.
+      esmLoading = false;
+
+      const partnerRef =
+        carriedPair && insightMatchesAnalysisPair(insight, carriedPair)
+          ? partnerForInsight(insight, carriedPair)
+          : null;
+      if (partnerRef && ['tag', 'symptom', 'work_context'].includes(partnerRef.kind)) {
+        esmPartnerLoading = true;
+        const partner: EsmPartner = {
+          id: partnerRef.id,
+          label: partnerRef.label ?? partnerRef.context ?? partnerRef.id,
+          kind: partnerRef.kind as EsmPartner['kind'],
+        };
+        const startDate = shiftIsoDate(response.start_date, -SMALL_MULTIPLES_RADIUS);
+        const endDate = shiftIsoDate(response.end_date, SMALL_MULTIPLES_RADIUS);
+        try {
+          let partnerPresence: string[];
+          if (partner.kind === 'tag') {
+            const heatmap = await fetchTagHeatmap({ start_date: startDate, end_date: endDate });
+            partnerPresence = presenceDatesForPartner(partner, heatmap, null);
+          } else if (partner.kind === 'symptom') {
+            const heatmap = await fetchSymptomHeatmap({ start_date: startDate, end_date: endDate });
+            partnerPresence = presenceDatesForPartner(partner, null, heatmap);
+          } else {
+            const entries = await listEntries({
+              start_date: startDate,
+              end_date: endDate,
+              limit: 500,
+            });
+            partnerPresence = presenceDatesForPartner(
+              partner,
+              null,
+              null,
+              buildWorkContextHeatmap(entries, {
+                start_date: startDate,
+                end_date: endDate,
+              })
+            );
+          }
+          if (!request.isCurrent() || !request.isCurrent() || insight?.id !== id) {
+            return;
+          }
+          esmPartner = partner;
+          esmPartnerPresence = partnerPresence;
+        } catch {
+          if (!request.isCurrent() || !request.isCurrent()) return;
+          esmPartnerUnavailable = true;
+        } finally {
+          if (!!request.isCurrent() && request.isCurrent()) {
+            esmPartnerLoading = false;
+          }
+        }
+      }
     } catch {
+      if (!request.isCurrent()) return;
       esmWindows = [];
       esmPoints = [];
       esmLag = null;
+      esmPartner = null;
+      esmPartnerPresence = [];
+      esmPartnerLoading = false;
     } finally {
-      esmLoading = false;
+      if (request.isCurrent()) esmLoading = false;
     }
   }
 
   onMount(() => {
-    if ($auth.status !== 'authenticated') {
-      void goto(`/auth/login?next=${encodeURIComponent($page.url.pathname)}`);
-      return;
-    }
-    void load();
-    return registerPageRefresh(() => void load());
+    mounted = true;
+    const unregister = registerPageRefresh(() => {
+      if (actorId && insightId) void load(insightId, $analysisRange, actorId);
+    });
+    return () => {
+      mounted = false;
+      unregister();
+      detailRequests.cancel();
+      esmRequests.cancel();
+    };
   });
 </script>
 
@@ -147,7 +351,10 @@
     subtitle={isNull
       ? `${$_('insights.signal.subtitle')} · ${$_('insights.card.null_badge')}`
       : $_('insights.signal.subtitle')}
-    back={{ href: '/insights', label: $_('insights.signal.back') }}
+    back={{
+      href: `/insights${carriedPairQuery ? `?${carriedPairQuery}` : ''}`,
+      label: $_('insights.signal.back'),
+    }}
   />
 
   {#if loading}
@@ -157,7 +364,9 @@
   {:else if insight}
     <section class="signal-page__card" data-testid="signal-statement">
       <p class="signal-page__statement">
-        {stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')}
+        {formatSymptomTagStatement(insight, $_) ||
+          stripLegacyInsightStatementTails(insight.statement) ||
+          $_('home.insight.empty_statement')}
       </p>
       {#if isLag}
         <p class="signal-page__badge" data-testid="signal-zeitversatz-badge">
@@ -229,6 +438,8 @@
       </section>
     {/if}
 
+    <section class="signal-page__card"><AdjustedEffects {insight} /></section>
+
     <section class="signal-page__card">
       <div class="signal-page__row">
         <h2>{$_('insights.signal.course_heading')}</h2>
@@ -250,12 +461,23 @@
           testId="signal-verification-unsupported"
         />
       {/if}
-      {#if verification && verification.with_mean != null && verification.without_mean != null}
+      {#if verificationUnavailable}
+        <InlineAlert variant="info" message={$_('insights.signal.verification_unavailable')} />
+      {:else if !verificationUnsupported && verification && !verificationReady}
+        <InlineAlert variant="info" message={$_('insights.signal.verification_insufficient')} />
+      {/if}
+      {#if verificationReady && verification && verification.with_mean != null && verification.without_mean != null}
         <p class="signal-page__means" data-testid="signal-means">
           {$_('insights.signal.means', {
             values: {
-              withMean: verification.with_mean.toFixed(1),
-              withoutMean: verification.without_mean.toFixed(1),
+              withMean: (verification.metric === 'stress'
+                ? displayMetricValue('stress', verification.with_mean)
+                : verification.with_mean
+              ).toFixed(1),
+              withoutMean: (verification.metric === 'stress'
+                ? displayMetricValue('stress', verification.without_mean)
+                : verification.without_mean
+              ).toFixed(1),
               withN: verification.with_n,
               withoutN: verification.without_n,
             },
@@ -263,27 +485,29 @@
         </p>
       {/if}
       <div class="signal-page__actions">
-        <button
-          type="button"
-          class="signal-page__chip"
-          data-testid="signal-toggle-scatter"
-          aria-expanded={showScatter}
-          on:click={() => (showScatter = !showScatter)}
-        >
-          {showScatter ? $_('insights.signal.scatter_hide') : $_('insights.signal.scatter_show')}
-        </button>
+        {#if verificationReady}
+          <button
+            type="button"
+            class="signal-page__chip"
+            data-testid="signal-toggle-scatter"
+            aria-expanded={showScatter}
+            on:click={() => (showScatter = !showScatter)}
+          >
+            {showScatter ? $_('insights.signal.scatter_hide') : $_('insights.signal.scatter_show')}
+          </button>
+        {/if}
         <a class="signal-page__chip" href="/trends" data-testid="signal-pin-trends">
           {$_('insights.signal.pin_trends')}
         </a>
         <a
           class="signal-page__chip"
-          href={`/insights/report?signal=${encodeURIComponent(insight.id)}`}
+          href={`/insights/report?signal=${encodeURIComponent(insight.id)}${carriedPairQuery ? `&${carriedPairQuery}` : ''}`}
           data-testid="signal-report-link"
         >
           {$_('insights.signal.remember_report')}
         </a>
       </div>
-      {#if showScatter && verification}
+      {#if showScatter && verificationReady && verification}
         <SignalScatter
           points={verification.points}
           withMean={verification.with_mean}
@@ -319,6 +543,11 @@
     points={esmPoints}
     metric={insight ? insightMetricToChartKey(insight.metric) : 'mood_avg'}
     lagOffset={esmLag}
+    partner={esmPartner}
+    partnerPresenceDates={esmPartnerPresence}
+    partnerCandidates={esmPartner ? [{ ...esmPartner, score: Number.MAX_SAFE_INTEGER }] : []}
+    partnerLoading={esmPartnerLoading}
+    partnerUnavailable={esmPartnerUnavailable}
     phase={maturity?.phase ?? null}
     on:close={() => {
       esmOpen = false;

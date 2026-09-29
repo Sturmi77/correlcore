@@ -19,3 +19,17 @@
 | A12   | [#986 — Geräte-, Betriebs- und Nutzerabnahmen](https://github.com/Sturmi77/correlcore/issues/986)                        |
 
 Alle Arbeitspakete besitzen konkrete Maßnahmen, Regressionstests und Abschlusskriterien. Bestehende externe Aufgaben bleiben verknüpft. Dieser Dokumentationsstand behebt selbst keine Produktfehler.
+
+## A00-Nachweise
+
+[Ausgangsstand und Status](A00_STATUS.md) · [Befundregister](A00_BEFUNDREGISTER.csv) · [Reviewregister](A00_REVIEWREGISTER.csv) · [lokale Fix-Kandidaten](A00_LOKALE_FIXES.csv)
+
+## A12-Nachweise
+
+[Status](A12_STATUS.md) · [Abnahmelaufplan](A12_ACCEPTANCE_RUNBOOK.md) · [maschinenlesbares Gate-Register](A12_ACCEPTANCE_REGISTER.json) · [Evidenzformat](a12-evidence/README.md)
+Für A01 beschreibt [der Upgrade- und Wiederanlaufplan](A01_UPGRADE.md) die
+Migration aus 046–048 und die erforderliche Backup-/Restore-Probe.
+
+## A11-Nachweise
+
+[Review- und Dokumentationsabschluss](A11_REVIEW_CLOSEOUT.md) · [verlustfreies Abschlussregister](A11_REVIEW_CLOSEOUT.csv)

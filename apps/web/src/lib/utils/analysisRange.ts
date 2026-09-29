@@ -40,12 +40,14 @@ export function analysisDateWindow(
 export function cooccurrenceRangeToTimeseries(range: TagCooccurrenceRange): TimeseriesRange {
   switch (range) {
     case '7d':
+    case '14d':
       return 'week';
     case '90d':
       return 'quarter';
     case '1y':
       return 'year';
     case '30d':
+    case '28d':
     default:
       return 'month';
   }

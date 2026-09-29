@@ -7,6 +7,7 @@
  */
 
 import { api } from './client';
+import type { components } from '../../../../../packages/api-types/src/schema';
 
 // Generated OpenAPI shapes (issue #778) — re-exported so the contract drift
 // guard in ./contracts.generated.ts is part of the real import graph.
@@ -22,6 +23,9 @@ export type InsightType =
   | (string & {});
 export type InsightTier = 'none' | 'early' | 'preliminary' | 'developing' | 'robust';
 export type InsightMaturityPhase = 'collecting' | 'early_patterns' | 'provisional' | 'robust';
+
+/** Versioned API evidence union; incomplete historical rows may be null. */
+export type InsightEvidence = NonNullable<components['schemas']['InsightResponse']['evidence']>;
 
 export interface InsightMaturity {
   phase: InsightMaturityPhase;
@@ -48,6 +52,8 @@ export interface InsightResponse {
   statement: string | null;
   flags: Record<string, unknown>;
   payload: Record<string, unknown>;
+  /** Versioned family evidence; null for incomplete historical payloads. */
+  evidence?: InsightEvidence | null;
   generated_for_date: string;
   generated_at: string;
   created_at: string;
@@ -113,9 +119,27 @@ export interface LatestInsightListQuery extends InsightListQuery {
    * subjects occupying the first `limit` slots (#959).
    */
   insightTypes?: readonly string[];
+  /** Restrict before the row cap to insights containing every structured signal. */
+  pairSignals?: readonly { kind: string; id: string }[];
 }
 
-export type TagCooccurrenceRange = '7d' | '30d' | '90d' | '1y';
+export type TagCooccurrenceRange = '7d' | '14d' | '28d' | '30d' | '90d' | '1y';
+export type CooccurrenceAnalysisStatus =
+  'ok' | 'insufficient_data' | 'limit_exceeded' | 'busy' | 'timeout' | 'unavailable';
+
+export interface CooccurrenceAnalysisLimit {
+  reason:
+    | 'supplied_tags'
+    | 'supplied_symptoms'
+    | 'eligible_tags'
+    | 'eligible_symptoms'
+    | 'pair_count'
+    | 'work_units';
+  eligible_tags: number;
+  eligible_symptoms: number;
+  pair_count: number;
+  work_units: number;
+}
 
 export interface TagCooccurrenceTagRef {
   tag_id: string;
@@ -135,21 +159,29 @@ export interface TagCooccurrencePair {
 
 export interface TagCooccurrenceResponse {
   range: TagCooccurrenceRange;
+  days?: number | null;
   start_date: string;
   end_date: string;
   min_count: number;
   pairs: TagCooccurrencePair[];
+  analysis_status?: CooccurrenceAnalysisStatus;
+  analysis_limit?: CooccurrenceAnalysisLimit | null;
   /**
    * The window holds fewer logged days than the analysis needs. An empty
    * `pairs` then means "cannot be computed here", not "nothing found" — a 7-day
    * range can never reach the floor (#966).
    */
   window_too_short?: boolean;
+  analytics_disabled?: boolean;
+  observed_days?: number;
 }
 
 export interface TagCooccurrenceQuery {
   range?: TagCooccurrenceRange;
+  days?: number;
+  end_date?: string;
   min_count?: number;
+  signal?: AbortSignal;
 }
 
 export interface TagClusterMember {
@@ -224,10 +256,16 @@ export interface SymptomTagCooccurrenceCell {
 
 export interface SymptomTagCooccurrenceResponse {
   range: TagCooccurrenceRange;
+  days?: number | null;
   start_date: string;
   end_date: string;
   min_count: number;
   cells: SymptomTagCooccurrenceCell[];
+  window_too_short?: boolean;
+  analytics_disabled?: boolean;
+  observed_days?: number;
+  analysis_status?: CooccurrenceAnalysisStatus;
+  analysis_limit?: CooccurrenceAnalysisLimit | null;
 }
 
 function buildQuery(query: InsightListQuery): string {
@@ -246,6 +284,9 @@ function buildLatestQuery(query: LatestInsightListQuery): string {
   if (query.limit !== undefined) params.set('limit', String(query.limit));
   // Repeated `insight_type=` params — FastAPI reads them as a list.
   for (const type of query.insightTypes ?? []) params.append('insight_type', type);
+  for (const signal of query.pairSignals ?? []) {
+    params.append('pair_signal', `${signal.kind}:${signal.id}`);
+  }
   const qs = params.toString();
   return qs ? `?${qs}` : '';
 }
@@ -268,10 +309,13 @@ export async function fetchTagCooccurrence(
 ): Promise<TagCooccurrenceResponse> {
   const params = new URLSearchParams();
   if (query.range) params.set('range', query.range);
+  if (query.days !== undefined) params.set('days', String(query.days));
+  if (query.end_date) params.set('end_date', query.end_date);
   if (query.min_count !== undefined) params.set('min_count', String(query.min_count));
   const qs = params.toString();
   return api.get<TagCooccurrenceResponse>(
-    qs ? `/insights/tag-cooccurrence?${qs}` : '/insights/tag-cooccurrence'
+    qs ? `/insights/tag-cooccurrence?${qs}` : '/insights/tag-cooccurrence',
+    { signal: query.signal }
   );
 }
 
@@ -286,10 +330,13 @@ export async function fetchSymptomTagCooccurrence(
 ): Promise<SymptomTagCooccurrenceResponse> {
   const params = new URLSearchParams();
   if (query.range) params.set('range', query.range);
+  if (query.days !== undefined) params.set('days', String(query.days));
+  if (query.end_date) params.set('end_date', query.end_date);
   if (query.min_count !== undefined) params.set('min_count', String(query.min_count));
   const qs = params.toString();
   return api.get<SymptomTagCooccurrenceResponse>(
-    qs ? `/insights/symptom-tag-cooccurrence?${qs}` : '/insights/symptom-tag-cooccurrence'
+    qs ? `/insights/symptom-tag-cooccurrence?${qs}` : '/insights/symptom-tag-cooccurrence',
+    { signal: query.signal }
   );
 }
 
@@ -300,6 +347,7 @@ export interface InsightEventWindowResponse {
 
 export interface InsightEventWindowsResponse {
   range: TagCooccurrenceRange;
+  days?: number | null;
   start_date: string;
   end_date: string;
   events: InsightEventWindowResponse[];
@@ -316,17 +364,25 @@ export async function regenerateInsights(): Promise<InsightRegenerateResponse> {
 /** GET /insights/{id}/event-windows — ADR-0035 §6 explore-events data. */
 export async function fetchInsightEventWindows(
   insightId: string,
-  range: TagCooccurrenceRange
+  range: TagCooccurrenceRange,
+  options: { days?: number; end_date?: string; signal?: AbortSignal } = {}
 ): Promise<InsightEventWindowsResponse> {
   const params = new URLSearchParams({ range });
+  if (options.days !== undefined) params.set('days', String(options.days));
+  if (options.end_date) params.set('end_date', options.end_date);
   return api.get<InsightEventWindowsResponse>(
-    `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`
+    `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`,
+    { signal: options.signal }
   );
 }
 
 /** GET /insights/{id} — single insight for Layer-2 signal detail. */
-export async function fetchInsight(insightId: string): Promise<InsightResponse> {
-  return api.get<InsightResponse>(`/insights/${encodeURIComponent(insightId)}`);
+export async function fetchInsight(
+  insightId: string,
+  options?: { signal?: AbortSignal }
+): Promise<InsightResponse> {
+  const path = `/insights/${encodeURIComponent(insightId)}`;
+  return options ? api.get<InsightResponse>(path, options) : api.get<InsightResponse>(path);
 }
 
 export interface InsightVerificationPoint {
@@ -337,6 +393,7 @@ export interface InsightVerificationPoint {
 
 export interface InsightVerificationResponse {
   range: TagCooccurrenceRange;
+  days?: number | null;
   start_date: string;
   end_date: string;
   metric: string;
@@ -353,11 +410,15 @@ export interface InsightVerificationResponse {
 /** GET /insights/{id}/verification — with/without day series (Phase 7 / G1). */
 export async function fetchInsightVerification(
   insightId: string,
-  range: TagCooccurrenceRange = '90d'
+  range: TagCooccurrenceRange = '90d',
+  options: { days?: number; end_date?: string; signal?: AbortSignal } = {}
 ): Promise<InsightVerificationResponse> {
   const params = new URLSearchParams({ range });
+  if (options.days !== undefined) params.set('days', String(options.days));
+  if (options.end_date) params.set('end_date', options.end_date);
   return api.get<InsightVerificationResponse>(
-    `/insights/${encodeURIComponent(insightId)}/verification?${params}`
+    `/insights/${encodeURIComponent(insightId)}/verification?${params}`,
+    { signal: options.signal }
   );
 }
 

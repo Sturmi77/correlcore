@@ -5,11 +5,23 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      # Runs backend/tests/test_compose_web_healthchecks.py for Compose-only PRs.
+      - 'infra/docker/docker-compose.yml'
+      - 'infra/docker/docker-compose.quickstart.yml'
+      - 'infra/docker/docker-compose.user-test.yml'
+      - 'infra/dockge/compose.yaml'
+      - 'infra/dockhand/compose.yaml'
       - '.github/workflows/ci-api.yml'
   pull_request:
     branches: [main]
     paths:
       - 'backend/**'
+      # Runs backend/tests/test_compose_web_healthchecks.py for Compose-only PRs.
+      - 'infra/docker/docker-compose.yml'
+      - 'infra/docker/docker-compose.quickstart.yml'
+      - 'infra/docker/docker-compose.user-test.yml'
+      - 'infra/dockge/compose.yaml'
+      - 'infra/dockhand/compose.yaml'
       - '.github/workflows/ci-api.yml'
 
 concurrency:
@@ -202,19 +214,24 @@ jobs:
       - name: pytest -m integration (per-module processes)
         run: |
           set -euo pipefail
-          files=(
-            tests/test_health_readiness_integration.py
-            tests/test_digest_backfill_integration.py
-            tests/test_gdpr_delete_integration.py
-            tests/test_rls_isolation_integration.py
-            tests/test_m7_qa_seed_integration.py
-            tests/test_049_drop_entry_note_markers_integration.py
-            tests/test_password_reset.py
-            tests/test_sync_service.py
+          # The marker backfill suite intentionally targets the pre-049 schema;
+          # migration 049 has a separate head-compatible integration suite.
+          mapfile -t files < <(
+            grep -rl --include='test_*.py' '@pytest.mark.integration' tests |
+              grep -v '^tests/test_marker_tag_backfill_integration.py$' |
+              sort
           )
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::No integration test modules were discovered." >&2
+            exit 1
+          fi
+          echo "Discovered ${#files[@]} integration test modules."
           for f in "${files[@]}"; do
             echo "::group::pytest -m integration $f"
-            uv run --python 3.12 pytest "$f" -m integration -q --no-cov
+            report="integration-$(basename "$f" .py).xml"
+            uv run --python 3.12 pytest "$f" -m integration -q --no-cov \
+              --junitxml="$report"
+            uv run --python 3.12 python scripts/assert_junit_no_skips.py "$report"
             echo "::endgroup::"
           done
         env:
@@ -225,6 +242,14 @@ jobs:
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
           SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
+      - name: Upload integration reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-junit
+          path: backend/integration-*.xml
+          retention-days: 30
+          if-no-files-found: error
 
   migrations-smoke:
     name: Migrations smoke (alembic upgrade head)
@@ -277,3 +302,19 @@ jobs:
           SECRET_KEY: 'test-secret-key-min-32-bytes-long-padding'
           ENCRYPTION_KEY: 'SFt_zAqsk202KSZePwlHDy3TkhiHG1rFDBePciArND4='
           SLUG_HMAC_KEY: 'ci-slug-hmac-key-for-correlcore-tests-32b'
+      - name: Backup and restore migrated database
+        run: |
+          set -euo pipefail
+          pg_container='${{ job.services.postgres.id }}'
+          dump="$(mktemp)"
+          trap 'rm -f "$dump"' EXIT
+          docker exec "$pg_container" pg_dump -U correlcore -Fc correlcore > "$dump"
+          docker exec "$pg_container" createdb -U correlcore correlcore_restore
+          docker exec -i "$pg_container" pg_restore -U correlcore -d correlcore_restore < "$dump"
+          source_rev=$(docker exec "$pg_container" psql -U correlcore -d correlcore -Atc 'SELECT version_num FROM alembic_version')
+          restored_rev=$(docker exec "$pg_container" psql -U correlcore -d correlcore_restore -Atc 'SELECT version_num FROM alembic_version')
+          source_tags=$(docker exec "$pg_container" psql -U correlcore -d correlcore -Atc 'SELECT count(*) FROM tags')
+          restored_tags=$(docker exec "$pg_container" psql -U correlcore -d correlcore_restore -Atc 'SELECT count(*) FROM tags')
+          test "$source_rev" = "$restored_rev"
+          test "$source_tags" = "$restored_tags"
+          test "$restored_tags" -gt 0

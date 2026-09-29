@@ -12,10 +12,12 @@ from pydantic import BaseModel, Field
 from app.models.tag import TagCategory
 
 TimeseriesRange = Literal["week", "month", "quarter", "year"]
-TagCooccurrenceRange = Literal["7d", "30d", "90d", "1y"]
+TagCooccurrenceRange = Literal["7d", "14d", "28d", "30d", "90d", "1y"]
 
 COOCCURRENCE_RANGE_DAYS: dict[TagCooccurrenceRange, int] = {
     "7d": 7,
+    "14d": 14,
+    "28d": 28,
     "30d": 30,
     "90d": 90,
     "1y": 365,
@@ -173,17 +175,47 @@ class TagCooccurrencePair(BaseModel):
     pct_of_b: float = Field(ge=0, le=100)
 
 
+CooccurrenceAnalysisStatus = Literal[
+    "ok",
+    "insufficient_data",
+    "limit_exceeded",
+    "busy",
+    "timeout",
+    "unavailable",
+]
+
+
+class CooccurrenceAnalysisLimit(BaseModel):
+    reason: Literal[
+        "supplied_tags",
+        "supplied_symptoms",
+        "eligible_tags",
+        "eligible_symptoms",
+        "pair_count",
+        "work_units",
+    ]
+    eligible_tags: int = Field(ge=0)
+    eligible_symptoms: int = Field(ge=0)
+    pair_count: int = Field(ge=0)
+    work_units: int = Field(ge=0)
+
+
 class TagCooccurrenceResponse(BaseModel):
     range: TagCooccurrenceRange
+    days: int | None = None
     start_date: date_type
     end_date: date_type
     min_count: int = Field(ge=1)
     pairs: list[TagCooccurrencePair] = Field(default_factory=list)
+    analysis_status: CooccurrenceAnalysisStatus = "ok"
+    analysis_limit: CooccurrenceAnalysisLimit | None = None
     # True when the window holds fewer logged days than the analysis needs, so
     # an empty `pairs` means "cannot be computed here", not "nothing found".
     # A 7-day range can never reach the floor, so it returned an empty panel
     # with no explanation (#966).
     window_too_short: bool = False
+    analytics_disabled: bool = False
+    observed_days: int = 0
 
 
 class SymptomTagCooccurrenceSymptomRef(BaseModel):
@@ -209,10 +241,16 @@ class SymptomTagCooccurrenceCell(BaseModel):
 
 class SymptomTagCooccurrenceResponse(BaseModel):
     range: TagCooccurrenceRange
+    days: int | None = None
     start_date: date_type
     end_date: date_type
     min_count: int = Field(ge=1)
     cells: list[SymptomTagCooccurrenceCell] = Field(default_factory=list)
+    window_too_short: bool = False
+    analytics_disabled: bool = False
+    observed_days: int = 0
+    analysis_status: CooccurrenceAnalysisStatus = "ok"
+    analysis_limit: CooccurrenceAnalysisLimit | None = None
 
 
 class TagClusterMember(BaseModel):

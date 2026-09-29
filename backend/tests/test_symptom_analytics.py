@@ -252,6 +252,38 @@ async def test_symptom_tag_cooccurrence_service_applies_min_count_to_cells() -> 
 
 
 @pytest.mark.asyncio
+async def test_symptom_tag_reports_insufficient_data_before_work_limit(monkeypatch) -> None:
+    user = make_user()
+    symptom = make_symptom(user=None, is_default=True, slug="headache", name="Headache")
+    tag = make_tag(user, slug="stress", name="Stress", category=TagCategory.WORK)
+    start = date(2026, 1, 1)
+    entries = [make_entry(user, entry_date=start + timedelta(days=offset)) for offset in range(10)]
+    symptom_rows = [(entry.id, symptom) for entry in entries]
+    tag_rows = [(entry.id, tag) for entry in entries]
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _scalar_one_or_none_result(True),
+            _scalar_result(entries),
+            _row_result(tag_rows),
+            _row_result(symptom_rows),
+        ]
+    )
+    monkeypatch.setattr("app.services.stats_service.settings.COOCCURRENCE_MAX_PAIRS", 0)
+
+    response = await get_symptom_tag_cooccurrence(
+        db,
+        user_id=user.id,
+        range_="90d",
+        min_count=5,
+        as_of=date(2026, 2, 9),
+    )
+
+    assert response.analysis_status == "insufficient_data"
+    assert response.analysis_limit is None
+
+
+@pytest.mark.asyncio
 async def test_symptom_tag_cooccurrence_service_skips_when_analytics_disabled() -> None:
     user = make_user()
     db = MagicMock()

@@ -126,10 +126,10 @@ def _insight_worker_run_summary(run: WorkerRun | None) -> InsightWorkerRunSummar
 def _cooccurrence_range_query(
     range: str = Query(default="90d", alias="range"),
 ) -> TagCooccurrenceRange:
-    if range not in {"7d", "30d", "90d", "1y"}:
+    if range not in {"7d", "14d", "28d", "30d", "90d", "1y"}:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="range must be one of 7d, 30d, 90d, 1y",
+            detail="range must be one of 7d, 14d, 28d, 30d, 90d, 1y",
         )
     return range  # type: ignore[return-value]
 
@@ -224,6 +224,10 @@ async def list_latest_insights_endpoint(
             "Repeat the parameter for several families."
         ),
     ),
+    pair_signal: list[str] | None = Query(
+        default=None,
+        description="Structured kind:id identities that must all be present before the row cap.",
+    ),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> InsightListResponse:
@@ -237,11 +241,30 @@ async def list_latest_insights_endpoint(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"unknown insight_type: {', '.join(unknown)}",
             )
+    parsed_pair_signals: list[tuple[str, str]] = []
+    for raw in pair_signal or []:
+        kind, separator, signal_id = raw.partition(":")
+        if (
+            not separator
+            or kind not in {"tag", "symptom", "work_context", "metric"}
+            or not signal_id
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"invalid pair_signal: {raw}",
+            )
+        parsed_pair_signals.append((kind, signal_id))
+    if pair_signal is not None and len(parsed_pair_signals) != 2:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="pair_signal must be supplied exactly twice",
+        )
     insights = await list_latest_insights(
         db,
         user_id=user.id,
         limit=limit,
         insight_types=insight_type,
+        pair_signals=parsed_pair_signals or None,
     )
     insight_maturity = await get_insight_maturity(db, user_id=user.id)
     last_successful_run = await latest_successful_insight_run_at(db, user_id=user.id)
@@ -311,6 +334,10 @@ async def list_insight_history_endpoint(
 async def get_tag_cooccurrence_endpoint(
     request: Request,
     range: TagCooccurrenceRange = Depends(_cooccurrence_range_query),
+    days: int | None = Query(
+        default=None, ge=1, le=365, description="Exact days; takes precedence over range"
+    ),
+    end_date: date | None = Query(default=None),
     min_count: int = Query(default=2, ge=1, le=100),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
@@ -319,6 +346,8 @@ async def get_tag_cooccurrence_endpoint(
         db,
         user_id=user.id,
         range_=range,
+        days=days,
+        as_of=end_date,
         min_count=min_count,
     )
 
@@ -332,6 +361,10 @@ async def get_tag_cooccurrence_endpoint(
 async def get_symptom_tag_cooccurrence_endpoint(
     request: Request,
     range: TagCooccurrenceRange = Depends(_cooccurrence_range_query),
+    days: int | None = Query(
+        default=None, ge=1, le=365, description="Exact days; takes precedence over range"
+    ),
+    end_date: date | None = Query(default=None),
     min_count: int = Query(default=3, ge=1, le=100),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
@@ -340,6 +373,8 @@ async def get_symptom_tag_cooccurrence_endpoint(
         db,
         user_id=user.id,
         range_=range,
+        days=days,
+        as_of=end_date,
         min_count=min_count,
     )
 
@@ -586,6 +621,10 @@ async def get_insight_verification_endpoint(
     request: Request,
     insight_id: uuid.UUID,
     range: TagCooccurrenceRange = Depends(_cooccurrence_range_query),
+    days: int | None = Query(
+        default=None, ge=1, le=365, description="Exact days; takes precedence over range"
+    ),
+    end_date: date | None = Query(default=None),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> InsightVerificationResponse:
@@ -595,6 +634,8 @@ async def get_insight_verification_endpoint(
             user_id=user.id,
             insight_id=insight_id,
             range_=range,
+            days=days,
+            as_of=end_date,
         )
     except InsightNotFoundError as exc:
         raise HTTPException(
@@ -618,6 +659,10 @@ async def get_insight_event_windows_endpoint(
     request: Request,
     insight_id: uuid.UUID,
     range: TagCooccurrenceRange = Depends(_cooccurrence_range_query),
+    days: int | None = Query(
+        default=None, ge=1, le=365, description="Exact days; takes precedence over range"
+    ),
+    end_date: date | None = Query(default=None),
     user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_session),
 ) -> InsightEventWindowsResponse:
@@ -627,6 +672,8 @@ async def get_insight_event_windows_endpoint(
             user_id=user.id,
             insight_id=insight_id,
             range_=range,
+            days=days,
+            as_of=end_date,
         )
     except InsightNotFoundError as exc:
         raise HTTPException(

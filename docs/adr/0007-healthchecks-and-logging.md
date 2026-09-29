@@ -87,7 +87,7 @@ Jeder Long-Running-Service hat einen `healthcheck:`-Block:
 | Service    | Test                                              | Hinweis                            |
 | ---------- | ------------------------------------------------- | ---------------------------------- |
 | `api`      | `curl -sf http://localhost:8000/health/live`      | Liveness, kein Dep-Check           |
-| `web`      | `wget -qO- http://localhost:3000`                 | SvelteKit-Node-Server-Reachability |
+| `web`      | `wget -qO- http://127.0.0.1:3000`                 | SvelteKit-Node-Server-Reachability |
 | `postgres` | `pg_isready`                                      | Standard-Pattern                   |
 | `redis`    | `redis-cli -a $REDIS_PASSWORD ping`               | Auth-Variante                      |
 | `minio`    | `mc ready local`                                  | MinIO-Client                       |

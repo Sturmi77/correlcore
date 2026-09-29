@@ -18,6 +18,8 @@
 
   export let data: SymptomTagCooccurrenceResponse | null = null;
   export let loading = false;
+  export let error = false;
+  export let onRetry: (() => void) | null = null;
   export let phase: InsightMaturityPhase | null = null;
   export let sortMode: CooccurrenceSortMode = 'alphabetical';
   export let hideHeading = false;
@@ -111,8 +113,13 @@
   $: cellByKey = new Map(
     (data?.cells ?? []).map((cell) => [`${cell.symptom.symptom_id}:${cell.tag.tag_id}`, cell])
   );
-  $: showLift = phase === 'provisional' || phase === 'robust';
   $: showSkeleton = loading && !data;
+  $: analysisUnavailable =
+    data?.analysis_status === 'insufficient_data' ||
+    data?.analysis_status === 'limit_exceeded' ||
+    data?.analysis_status === 'busy' ||
+    data?.analysis_status === 'timeout' ||
+    data?.analysis_status === 'unavailable';
   $: interactiveCells = symptoms.flatMap((symptom, rowIndex) =>
     tags.flatMap((tag, colIndex) => {
       const cell = cellByKey.get(`${symptom.symptom_id}:${tag.tag_id}`);
@@ -182,18 +189,12 @@
   }
 
   function cellLevel(cell: SymptomTagCooccurrenceCell): string {
-    if (!showLift) return 'count';
     if (isConfoundedCell(cell)) return 'confounded';
-    if (cell.lift >= 2) return 'high-positive';
-    if (cell.lift >= 1.5) return 'positive';
-    if (cell.lift <= 0.5) return 'high-negative';
-    if (cell.lift <= 0.8) return 'negative';
-    return 'neutral';
+    return 'count';
   }
 
   function cellPrimaryLabel(cell: SymptomTagCooccurrenceCell): string {
-    if (!showLift) return String(cell.co_count);
-    return `${cell.lift.toFixed(1)}${cell.p_value_corrected < 0.1 ? '*' : ''}`;
+    return `${cell.co_count}/${cell.symptom_count}`;
   }
 
   function cellAriaLabel(
@@ -208,7 +209,7 @@
         co: cell.co_count,
         symptomDays: cell.symptom_count,
         tagDays: cell.tag_count,
-        lift: cell.lift.toFixed(2),
+        totalDays: cell.total_count,
       },
     });
     const noteKey = confounderNoteKey(cell.confounder);
@@ -265,7 +266,11 @@
   }
 </script>
 
-<section class="symptom-cooccurrence" data-loading={loading ? 'true' : 'false'}>
+<section
+  class="symptom-cooccurrence"
+  data-loading={loading ? 'true' : 'false'}
+  data-phase={phase ?? 'unknown'}
+>
   <header
     class="symptom-cooccurrence__header"
     class:symptom-cooccurrence__header--compact={hideHeading}
@@ -329,6 +334,18 @@
       <span></span>
       <span></span>
     </div>
+  {:else if !loading && analysisUnavailable}
+    <p class="symptom-cooccurrence__empty" data-testid="symptom-cooccurrence-unavailable">
+      {$_(`insights.symptoms.cooccurrence_status_${data?.analysis_status}`)}
+    </p>
+    {#if onRetry && ['busy', 'timeout', 'unavailable'].includes(data?.analysis_status ?? '')}
+      <button
+        type="button"
+        class="analysis-retry"
+        data-testid="symptom-cooccurrence-retry"
+        on:click={onRetry}>{$_('insights.card.retry')}</button
+      >
+    {/if}
   {:else if symptoms.length > 0 && tags.length > 0}
     <div
       class="symptom-cooccurrence__scroller"
@@ -361,9 +378,6 @@
                 on:keydown={(event) => handleCellKeydown(event, cellKey, rowIndex, colIndex)}
               >
                 <span class="symptom-cooccurrence__primary">{cellPrimaryLabel(cell)}</span>
-                {#if showLift}
-                  <sub class="symptom-cooccurrence__sub">{cell.co_count}</sub>
-                {/if}
               </button>
             {:else}
               <div
@@ -377,22 +391,39 @@
       </div>
     </div>
     <p class="symptom-cooccurrence__legend">
-      {showLift
-        ? $_('insights.symptoms.cooccurrence_lift_legend')
-        : $_('insights.symptoms.cooccurrence_count_legend')}
-      {#if showLift && symptoms.some((symptom) => tags.some((tag) => {
-            const cell = cellByKey.get(`${symptom.symptom_id}:${tag.tag_id}`);
-            return cell ? isConfoundedCell(cell) : false;
-          }))}
+      {$_('insights.symptoms.cooccurrence_count_legend')}
+      {#if symptoms.some((symptom) => tags.some((tag) => {
+          const cell = cellByKey.get(`${symptom.symptom_id}:${tag.tag_id}`);
+          return cell ? isConfoundedCell(cell) : false;
+        }))}
         {' '}{$_('insights.symptoms.cooccurrence_confounder_note')}
       {/if}
     </p>
   {:else if !loading}
-    <p class="symptom-cooccurrence__empty">{$_('insights.symptoms.cooccurrence_empty')}</p>
+    <p class="symptom-cooccurrence__empty" data-testid="symptom-cooccurrence-status">
+      {$_(
+        error
+          ? 'insights.symptoms.cooccurrence_load_error'
+          : data?.analytics_disabled
+            ? 'insights.symptoms.cooccurrence_analytics_disabled'
+            : data?.window_too_short
+              ? 'insights.symptoms.cooccurrence_window_too_short'
+              : 'insights.symptoms.cooccurrence_empty'
+      )}
+    </p>
   {/if}
 </section>
 
 <style>
+  .analysis-retry {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border-chart);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
   .symptom-cooccurrence {
     display: grid;
     gap: var(--space-3);

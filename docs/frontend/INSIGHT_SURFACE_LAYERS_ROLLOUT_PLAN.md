@@ -1,6 +1,15 @@
 # Umsetzungsplan: Insight Surface Layers
 
-**Stand:** 2026-09-22 · **Status:** Abgeschlossen · **Grundlage:** [ADR-0043](../adr/0043-insight-surface-layers.md)
+**Stand:** 2026-09-23 · **Status:** Implementierung in Audit-Nacharbeit, Abnahme offen · **Grundlage:** [ADR-0043](../adr/0043-insight-surface-layers.md)
+
+> **Statuskorrektur nach dem Release-Audit:** Die Häkchen in den Phasen 0–14 halten fest,
+> dass der jeweilige Codepfad bis PR #973 auf `main` gelandet war. Sie belegen keine
+> Release-Abnahme. Die Audit-Pakete
+> [A00–A12](../quality/audit-2026-09-22/README.md) prüfen und korrigieren diesen Stand.
+> Insbesondere sind A02 (begrenzte Analytics-Ausführung), A05 (einheitliche und sichere
+> Berichtsexporte), die finale CI-/Security-Prüfung A10 und die externen Geräte-, Betriebs-
+> und Nutzerabnahmen A12 offen. Der Rollout darf erst nach diesen Gates wieder als
+> abgeschlossen bezeichnet werden.
 
 Dieses Dokument führt die sechs offenen Analyse- und Feature-Issues im Bereich #875–#933 zu einer
 durchgehenden Umsetzungssequenz zusammen. Es ersetzt keine der Issues — es ordnet sie, macht die
@@ -212,12 +221,26 @@ Darstellung.
 - [x] Compare: beschrifteter Modus **Zeitversatz (+1 Tag bei Schlaf)** — keine stille Verschiebung, getrennt von Lag-1 **Abfolge**.
 - [x] `_sleep_spearman_candidates` bleibt taggleich und teilt nicht den Zeitversatz-Namen.
 
-## Abschluss
+## Historischer Abschlussvermerk aus PR #974
 
-Phasen 0–14 liegen auf `main` (#954 und Folge-PRs #964–#973). F1–F6 sind
-2026-09-22 mit Option A ratifiziert ([ADR-0043](../adr/0043-insight-surface-layers.md)
-Open Questions). Dieser Abschluss schließt #928, #930, #931, #875, #892, #933 und
-#958.
+Der folgende Abschnitt dokumentiert die am 22.09.2026 in PR #974 getroffene
+Fertigmeldung. Sie ist seit dem Audit **historischer Kontext und keine aktuelle
+Abnahmeaussage**. Phasen 0–14 lagen damals auf `main` (#954 und Folge-PRs #964–#973),
+und F1–F6 wurden mit Option A als Architekturentscheidung ratifiziert. Die technische
+und externe Abnahme ist weiterhin über [#975](https://github.com/Sturmi77/correlcore/issues/975),
+[A11](../quality/audit-2026-09-22/A11_REVIEW_CLOSEOUT.md) und A12 nachzuweisen.
+
+Die durch PR #974 geschlossenen Themen wurden am 23.09.2026 wieder geöffnet und
+besitzen weiterhin sichtbare Gates:
+
+- [#928](https://github.com/Sturmi77/correlcore/issues/928): A03, A06 und finale
+  Release-Abnahme.
+- [#930](https://github.com/Sturmi77/correlcore/issues/930): Interview-Validierung in
+  [#986](https://github.com/Sturmi77/correlcore/issues/986).
+- [#931](https://github.com/Sturmi77/correlcore/issues/931): A05-Exportvertrag und
+  visueller/Empfänger-Nachweis in [#989](https://github.com/Sturmi77/correlcore/issues/989).
+- [#776](https://github.com/Sturmi77/correlcore/issues/776): bleibt als Security- und
+  Qualitäts-Follow-up offen; A10 liefert die Release-Gates.
 
 ### #928 — umgesetzt vs. verworfen
 
@@ -229,9 +252,9 @@ Bewusst verworfen (keine Auslassungen): **G4 Forest-Plot**, **L7-Tab-Nachbau**
 (`mood` / `activities` / `health`). Multivariate als eigene Fläche: nein (Phase 12
 zeigt adjustierte Effekte nur als Layer-2-Disclosure).
 
-### Danach bewusst außerhalb dieses Plans
+### Offene Abnahme außerhalb der gelandeten Phasen
 
-- #930 H.4 Interview-Validierung (Forschung, kein Code).
-- CodeQL `py/log-injection`-Dismiss (Maintainer).
-- Drei Laufzeit-Prüfungen aus #958 (Mobile-Grid, Fensterwechsel-Race, Preference-PATCH)
-  und das Preferences-PK-Race — erst reproduzieren.
+- #930 H.4 Interview-Validierung in A12.
+- CodeQL `py/log-injection`-Bewertung durch eine berechtigte Maintainer-Rolle in A10.
+- Die Laufzeit-, Geräte- und Betriebsprüfungen aus A10/A12 auf dem finalen
+  Release-Kandidaten.

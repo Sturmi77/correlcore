@@ -37,7 +37,10 @@
   import type { InsightMaturity, InsightResponse } from '$lib/api/insights';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import { formatChangepointStatement } from '$lib/utils/changepointMarkers';
+  import { formatSymptomTagStatement } from '$lib/utils/symptomTagStatement';
   import { lagProfileBars, type LagProfileBar } from '$lib/utils/lagInsight';
+  import { displayEffectForMetric } from '$lib/utils/metrics';
+  import { relationPairLabel } from '$lib/utils/insightRelation';
 
   export let insight: InsightResponse | null = null;
   export let maturity: InsightMaturity | null = null;
@@ -51,6 +54,8 @@
   export let showMaturityBadge = true;
   /** When false, hide the dismiss control (e.g. digest preview cards). */
   export let dismissable = true;
+  /** Structured Compare handoff retained through signal detail and report. */
+  export let detailQuery = '';
   /**
    * #853 V2: render the lag profile as a single peak marker instead of the
    * 7-day bars. Keeps the card short where height is tight (e.g. the mobile
@@ -81,7 +86,9 @@
   $: withWithoutView = insight ? parseWithWithoutView(insight) : null;
   $: isNullResult = insight ? isNullAssociation(insight) : false;
   $: changepointStatement = insight ? formatChangepointStatement(insight, $_) : null;
+  $: symptomTagStatement = insight ? formatSymptomTagStatement(insight, $_) : null;
   $: displayStatement =
+    symptomTagStatement ||
     changepointStatement ||
     (insight
       ? stripLegacyInsightStatementTails(insight.statement) || $_('home.insight.empty_statement')
@@ -119,7 +126,6 @@
    * those, `↔` says "these two go together" without naming a direction that
    * was never computed.
    */
-  const RELATION_TEMPORAL = '→';
   const RELATION_SYMMETRIC = '↔';
 
   /**
@@ -265,7 +271,7 @@
     if (ins.insight_type === 'symptom_tag_cooccurrence') {
       const symptom = payloadString(ins, 'symptom_name') ?? 'Symptoms';
       const tag = payloadString(ins, 'tag_name') ?? ins.subject_label ?? 'Insight';
-      return `${symptom} + ${tag}`;
+      return relationPairLabel(ins, symptom, tag);
     }
     if (ins.insight_type === 'work_context_pattern') {
       const context = workContextLabel(ins) ?? ins.subject_label ?? $_('insights.context.fallback');
@@ -277,7 +283,7 @@
       return `${metricLabel(ins.metric)} ${RELATION_SYMMETRIC} ${weekday} + ${context}`;
     }
     if (ins.insight_type === 'symptom_cluster') {
-      const method = payloadString(ins, 'method');
+      const method = payloadString(ins, 'method') ?? (ins.flags?.method === 'lag' ? 'lag' : null);
       const target =
         payloadFeatureLabel(ins.payload?.target) ?? metricLabel(ins.metric) ?? ins.metric;
       if (method === 'lasso') {
@@ -304,10 +310,7 @@
             : featureKey === 'sleep_quality'
               ? $_('trends.metric.sleep_quality')
               : featureRaw;
-        const lagDays = payloadNumber(ins, 'lag_days');
-        const lagSuffix =
-          lagDays !== null ? ` (+${lagDays} ${$_('insights.card.lag_days_unit')})` : '';
-        return `${feature} ${RELATION_TEMPORAL} ${target}${lagSuffix}`;
+        return relationPairLabel(ins, feature, target);
       }
     }
     if (ins.metric === 'mood_sleep_minutes' || ins.metric === 'mood_sleep_quality') {
@@ -323,7 +326,7 @@
     // rest exactly as they were.
     const a = ins.metric ? metricLabel(ins.metric) : '?';
     const b = ins.subject_label ?? null;
-    return b ? `${a} ${RELATION_SYMMETRIC} ${b}` : a;
+    return b ? relationPairLabel(ins, a, b) : a;
   }
 
   function confounderNoteKey(confounder: InsightConfounder | null): string {
@@ -337,8 +340,12 @@
   $: primaryConfounder = insight ? primaryInsightConfounder(insight) : null;
   $: isContextInsight = insight ? isCalendarContextInsight(insight) : false;
   $: title = insight ? buildTitle(insight) : '';
-  $: glyph = insight ? directionGlyph(insight.effect_size ?? 0) : '≈';
-  $: dirClass = insight ? directionClass(insight.effect_size ?? 0) : 'neutral';
+  $: glyph = insight
+    ? directionGlyph(displayEffectForMetric(insight.metric, insight.effect_size ?? 0))
+    : '≈';
+  $: dirClass = insight
+    ? directionClass(displayEffectForMetric(insight.metric, insight.effect_size ?? 0))
+    : 'neutral';
   $: expandLabel = expanded ? $_('insights.card.collapse_aria') : $_('insights.card.expand_aria');
   $: isInactiveTag =
     insight?.subject_type === 'tag' &&
@@ -557,7 +564,7 @@
                           class="insight-card__lag-bar insight-card__lag-bar--pos"
                           data-testid="insight-card-lag-bar"
                           style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
-                          title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                          title={`${bar.lag > 0 ? '+' : ''}${bar.lag}d · r=${bar.r.toFixed(2)}`}
                         ></div>
                       {/if}
                     </div>
@@ -568,7 +575,7 @@
                           class="insight-card__lag-bar insight-card__lag-bar--neg"
                           data-testid="insight-card-lag-bar"
                           style={`height: ${lagBarHeight(bar.r)}%; background: ${accentColor}`}
-                          title={`+${bar.lag}d · r=${bar.r.toFixed(2)}`}
+                          title={`${bar.lag > 0 ? '+' : ''}${bar.lag}d · r=${bar.r.toFixed(2)}`}
                         ></div>
                       {/if}
                     </div>
@@ -585,7 +592,7 @@
     {#if canVerifySignal}
       <a
         class="insight-card__verify"
-        href={`/insights/signal/${insight.id}`}
+        href={`/insights/signal/${insight.id}${detailQuery ? `?${detailQuery}` : ''}`}
         data-testid="insight-card-verify"
       >
         {$_('insights.card.verify_action')}

@@ -150,6 +150,22 @@ describe('TagCooccurrenceHeatmap', () => {
     expect(screen.getByText('insights.cooccurrence.empty')).toBeTruthy();
   });
 
+  it.each([
+    [{ ...data, pairs: [], window_too_short: true }, false, 'window-too-short'],
+    [{ ...data, pairs: [], analytics_disabled: true }, false, 'opt-out'],
+    [null, true, 'error'],
+  ] as const)('shows the distinct %s status', (response, error, status) => {
+    render(TagCooccurrenceHeatmap, {
+      props: {
+        data: response ? { ...response, pairs: [...response.pairs] } : null,
+        error,
+        loading: false,
+        showRangeSelector: false,
+      },
+    });
+    expect(screen.getByTestId(`cooccurrence-${status}`)).toBeTruthy();
+  });
+
   it('shows loading skeleton', () => {
     render(TagCooccurrenceHeatmap, {
       props: { data: null, loading: true, range: '90d' },
@@ -289,4 +305,13 @@ describe('TagCooccurrenceHeatmap', () => {
       '"visible":5'
     );
   });
+});
+
+it('offers an explicit retry after the per-user worker is busy', async () => {
+  const retry = vi.fn();
+  render(TagCooccurrenceHeatmap, {
+    props: { data: { ...data, pairs: [], analysis_status: 'busy' }, onRetry: retry },
+  });
+  await fireEvent.click(screen.getByTestId('tag-cooccurrence-retry'));
+  expect(retry).toHaveBeenCalledOnce();
 });

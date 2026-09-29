@@ -175,6 +175,420 @@
         "title": "AdminUserListResponse",
         "type": "object"
       },
+      "AssociationEvidence": {
+        "properties": {
+          "calendar_held_coefficient": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Held Coefficient"
+          },
+          "evidence_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence End"
+          },
+          "evidence_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Start"
+          },
+          "family": {
+            "const": "association",
+            "default": "association",
+            "title": "Family",
+            "type": "string"
+          },
+          "lag_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lag Days"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "outcome": {
+            "default": "unknown",
+            "enum": [
+              "association",
+              "null",
+              "unknown"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "raw_coefficient": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Coefficient"
+          },
+          "version": {
+            "const": 1,
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          },
+          "weekday_held_coefficient": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weekday Held Coefficient"
+          },
+          "with_distribution": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "With Distribution"
+          },
+          "with_good_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "With Good Count"
+          },
+          "with_mean_display": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "With Mean Display"
+          },
+          "with_mean_raw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "With Mean Raw"
+          },
+          "with_n": {
+            "minimum": 1.0,
+            "title": "With N",
+            "type": "integer"
+          },
+          "without_distribution": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Without Distribution"
+          },
+          "without_good_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Without Good Count"
+          },
+          "without_mean_display": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Without Mean Display"
+          },
+          "without_mean_raw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Without Mean Raw"
+          },
+          "without_n": {
+            "minimum": 1.0,
+            "title": "Without N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "metric",
+          "with_n",
+          "without_n"
+        ],
+        "title": "AssociationEvidence",
+        "type": "object"
+      },
+      "BelastungEvidence": {
+        "properties": {
+          "energy_down": {
+            "default": false,
+            "title": "Energy Down",
+            "type": "boolean"
+          },
+          "energy_prior_raw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Energy Prior Raw"
+          },
+          "energy_recent_raw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Energy Recent Raw"
+          },
+          "family": {
+            "const": "belastung",
+            "default": "belastung",
+            "title": "Family",
+            "type": "string"
+          },
+          "fatigue_prior": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fatigue Prior"
+          },
+          "fatigue_recent": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fatigue Recent"
+          },
+          "fatigue_up": {
+            "default": false,
+            "title": "Fatigue Up",
+            "type": "boolean"
+          },
+          "joint_frequency_prior": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Joint Frequency Prior"
+          },
+          "joint_frequency_recent": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Joint Frequency Recent"
+          },
+          "prior_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior End"
+          },
+          "prior_n": {
+            "minimum": 1.0,
+            "title": "Prior N",
+            "type": "integer"
+          },
+          "prior_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior Start"
+          },
+          "recent_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent End"
+          },
+          "recent_n": {
+            "minimum": 1.0,
+            "title": "Recent N",
+            "type": "integer"
+          },
+          "recent_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Start"
+          },
+          "stress_prior_display": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stress Prior Display"
+          },
+          "stress_prior_raw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stress Prior Raw"
+          },
+          "stress_recent_display": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stress Recent Display"
+          },
+          "stress_recent_raw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stress Recent Raw"
+          },
+          "stress_up": {
+            "default": false,
+            "title": "Stress Up",
+            "type": "boolean"
+          },
+          "version": {
+            "const": 1,
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recent_n",
+          "prior_n"
+        ],
+        "title": "BelastungEvidence",
+        "type": "object"
+      },
       "BleedingLevel": {
         "description": "Menstrual bleeding strength (ADR-0032). SHD — never log raw values.",
         "enum": [
@@ -199,6 +613,100 @@
           "file"
         ],
         "title": "Body_upload_photo_api_v1_media_photos_post",
+        "type": "object"
+      },
+      "ChangepointEvidence": {
+        "properties": {
+          "after_display": {
+            "title": "After Display",
+            "type": "number"
+          },
+          "after_raw": {
+            "title": "After Raw",
+            "type": "number"
+          },
+          "before_display": {
+            "title": "Before Display",
+            "type": "number"
+          },
+          "before_raw": {
+            "title": "Before Raw",
+            "type": "number"
+          },
+          "boundary_after": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundary After"
+          },
+          "boundary_before": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundary Before"
+          },
+          "display_direction": {
+            "enum": [
+              "higher",
+              "lower",
+              "unchanged"
+            ],
+            "title": "Display Direction",
+            "type": "string"
+          },
+          "family": {
+            "const": "changepoint",
+            "default": "changepoint",
+            "title": "Family",
+            "type": "string"
+          },
+          "raw_direction": {
+            "enum": [
+              "higher",
+              "lower",
+              "unchanged"
+            ],
+            "title": "Raw Direction",
+            "type": "string"
+          },
+          "series": {
+            "enum": [
+              "mood_score",
+              "stress",
+              "energy"
+            ],
+            "title": "Series",
+            "type": "string"
+          },
+          "version": {
+            "const": 1,
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "series",
+          "before_raw",
+          "after_raw",
+          "before_display",
+          "after_display",
+          "raw_direction",
+          "display_direction"
+        ],
+        "title": "ChangepointEvidence",
         "type": "object"
       },
       "ComponentModel": {
@@ -370,6 +878,51 @@
           "granted"
         ],
         "title": "ConsentStatusItem",
+        "type": "object"
+      },
+      "CooccurrenceAnalysisLimit": {
+        "properties": {
+          "eligible_symptoms": {
+            "minimum": 0.0,
+            "title": "Eligible Symptoms",
+            "type": "integer"
+          },
+          "eligible_tags": {
+            "minimum": 0.0,
+            "title": "Eligible Tags",
+            "type": "integer"
+          },
+          "pair_count": {
+            "minimum": 0.0,
+            "title": "Pair Count",
+            "type": "integer"
+          },
+          "reason": {
+            "enum": [
+              "supplied_tags",
+              "supplied_symptoms",
+              "eligible_tags",
+              "eligible_symptoms",
+              "pair_count",
+              "work_units"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "work_units": {
+            "minimum": 0.0,
+            "title": "Work Units",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "reason",
+          "eligible_tags",
+          "eligible_symptoms",
+          "pair_count",
+          "work_units"
+        ],
+        "title": "CooccurrenceAnalysisLimit",
         "type": "object"
       },
       "CoverageMetric": {
@@ -2513,6 +3066,17 @@
       "InsightEventWindowsResponse": {
         "description": "Event onsets plus timeseries points for Explore-Events small multiples.",
         "properties": {
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
           "end_date": {
             "format": "date",
             "title": "End Date",
@@ -2546,6 +3110,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -2596,6 +3162,39 @@
               }
             ],
             "title": "Effect Size"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "association": "#/components/schemas/AssociationEvidence",
+                    "belastung": "#/components/schemas/BelastungEvidence",
+                    "changepoint": "#/components/schemas/ChangepointEvidence",
+                    "lag": "#/components/schemas/LagEvidence"
+                  },
+                  "propertyName": "family"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/AssociationEvidence"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ChangepointEvidence"
+                  },
+                  {
+                    "$ref": "#/components/schemas/BelastungEvidence"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LagEvidence"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
           },
           "first_seen_on": {
             "anyOf": [
@@ -2980,6 +3579,39 @@
             ],
             "title": "Effect Size"
           },
+          "evidence": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "association": "#/components/schemas/AssociationEvidence",
+                    "belastung": "#/components/schemas/BelastungEvidence",
+                    "changepoint": "#/components/schemas/ChangepointEvidence",
+                    "lag": "#/components/schemas/LagEvidence"
+                  },
+                  "propertyName": "family"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/AssociationEvidence"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ChangepointEvidence"
+                  },
+                  {
+                    "$ref": "#/components/schemas/BelastungEvidence"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LagEvidence"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          },
           "flags": {
             "additionalProperties": true,
             "title": "Flags",
@@ -3206,6 +3838,17 @@
       "InsightVerificationResponse": {
         "description": "With/without series for Layer-2 verification (Phase 7 / G1).",
         "properties": {
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
           "end_date": {
             "format": "date",
             "title": "End Date",
@@ -3225,6 +3868,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -3392,6 +4037,14 @@
       "InstanceInfo": {
         "description": "Non-sensitive, public deployment descriptor.",
         "properties": {
+          "api_image": {
+            "title": "Api Image",
+            "type": "string"
+          },
+          "git_commit": {
+            "title": "Git Commit",
+            "type": "string"
+          },
           "mode": {
             "enum": [
               "hosted",
@@ -3407,14 +4060,103 @@
           "version": {
             "title": "Version",
             "type": "string"
+          },
+          "web_image": {
+            "title": "Web Image",
+            "type": "string"
           }
         },
         "required": [
           "mode",
           "registration_enabled",
-          "version"
+          "version",
+          "git_commit",
+          "api_image",
+          "web_image"
         ],
         "title": "InstanceInfo",
+        "type": "object"
+      },
+      "LagEvidence": {
+        "properties": {
+          "corrected_p": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected P"
+          },
+          "evidence_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence End"
+          },
+          "evidence_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Start"
+          },
+          "family": {
+            "const": "lag",
+            "default": "lag",
+            "title": "Family",
+            "type": "string"
+          },
+          "feature_key": {
+            "title": "Feature Key",
+            "type": "string"
+          },
+          "lag_days": {
+            "minimum": 0.0,
+            "title": "Lag Days",
+            "type": "integer"
+          },
+          "raw_coefficient": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Coefficient"
+          },
+          "target_key": {
+            "title": "Target Key",
+            "type": "string"
+          },
+          "version": {
+            "const": 1,
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "target_key",
+          "feature_key",
+          "lag_days"
+        ],
+        "title": "LagEvidence",
         "type": "object"
       },
       "LivenessResponse": {
@@ -4185,12 +4927,51 @@
       },
       "SymptomTagCooccurrenceResponse": {
         "properties": {
+          "analysis_limit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CooccurrenceAnalysisLimit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "analysis_status": {
+            "default": "ok",
+            "enum": [
+              "ok",
+              "insufficient_data",
+              "limit_exceeded",
+              "busy",
+              "timeout",
+              "unavailable"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
+          "analytics_disabled": {
+            "default": false,
+            "title": "Analytics Disabled",
+            "type": "boolean"
+          },
           "cells": {
             "items": {
               "$ref": "#/components/schemas/SymptomTagCooccurrenceCell"
             },
             "title": "Cells",
             "type": "array"
+          },
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
           },
           "end_date": {
             "format": "date",
@@ -4202,9 +4983,16 @@
             "title": "Min Count",
             "type": "integer"
           },
+          "observed_days": {
+            "default": 0,
+            "title": "Observed Days",
+            "type": "integer"
+          },
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -4216,6 +5004,11 @@
             "format": "date",
             "title": "Start Date",
             "type": "string"
+          },
+          "window_too_short": {
+            "default": false,
+            "title": "Window Too Short",
+            "type": "boolean"
           }
         },
         "required": [
@@ -4997,6 +5790,45 @@
       },
       "TagCooccurrenceResponse": {
         "properties": {
+          "analysis_limit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CooccurrenceAnalysisLimit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "analysis_status": {
+            "default": "ok",
+            "enum": [
+              "ok",
+              "insufficient_data",
+              "limit_exceeded",
+              "busy",
+              "timeout",
+              "unavailable"
+            ],
+            "title": "Analysis Status",
+            "type": "string"
+          },
+          "analytics_disabled": {
+            "default": false,
+            "title": "Analytics Disabled",
+            "type": "boolean"
+          },
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
           "end_date": {
             "format": "date",
             "title": "End Date",
@@ -5005,6 +5837,11 @@
           "min_count": {
             "minimum": 1.0,
             "title": "Min Count",
+            "type": "integer"
+          },
+          "observed_days": {
+            "default": 0,
+            "title": "Observed Days",
             "type": "integer"
           },
           "pairs": {
@@ -5017,6 +5854,8 @@
           "range": {
             "enum": [
               "7d",
+              "14d",
+              "28d",
               "30d",
               "90d",
               "1y"
@@ -8643,7 +9482,7 @@
             "required": false,
             "schema": {
               "default": 100,
-              "maximum": 365,
+              "maximum": 500,
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
@@ -9378,6 +10217,23 @@
               ],
               "title": "Range",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
             }
           },
           {
@@ -11018,7 +11874,7 @@
             "required": false,
             "schema": {
               "default": 10,
-              "maximum": 50,
+              "maximum": 100,
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
@@ -11043,6 +11899,27 @@
               ],
               "description": "Restrict to these insight families before the row cap applies. Repeat the parameter for several families.",
               "title": "Insight Type"
+            }
+          },
+          {
+            "description": "Structured kind:id identities that must all be present before the row cap.",
+            "in": "query",
+            "name": "pair_signal",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Structured kind:id identities that must all be present before the row cap.",
+              "title": "Pair Signal"
             }
           },
           {
@@ -11175,6 +12052,43 @@
       "get": {
         "operationId": "get_symptom_tag_cooccurrence_endpoint_api_v1_insights_symptom_tag_cooccurrence_get",
         "parameters": [
+          {
+            "description": "Exact days; takes precedence over range",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact days; takes precedence over range",
+              "title": "Days"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
           {
             "in": "query",
             "name": "min_count",
@@ -11327,6 +12241,43 @@
       "get": {
         "operationId": "get_tag_cooccurrence_endpoint_api_v1_insights_tag_cooccurrence_get",
         "parameters": [
+          {
+            "description": "Exact days; takes precedence over range",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact days; takes precedence over range",
+              "title": "Days"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
           {
             "in": "query",
             "name": "min_count",
@@ -11565,6 +12516,43 @@
             }
           },
           {
+            "description": "Exact days; takes precedence over range",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact days; takes precedence over range",
+              "title": "Days"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
             "in": "query",
             "name": "range",
             "required": false,
@@ -11647,6 +12635,43 @@
               "format": "uuid",
               "title": "Insight Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "Exact days; takes precedence over range",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 365,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exact days; takes precedence over range",
+              "title": "Days"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
             }
           },
           {

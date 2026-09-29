@@ -29,6 +29,9 @@ class InstanceInfo(BaseModel):
     mode: Literal["hosted", "selfhost"]
     registration_enabled: bool
     version: str
+    git_commit: str
+    api_image: str
+    web_image: str
 
 
 @router.get(
@@ -47,4 +50,7 @@ async def instance_info() -> InstanceInfo:
         mode="hosted" if settings.DEPLOYMENT_MODE == "hosted" else "selfhost",
         registration_enabled=settings.REGISTRATION_ENABLED,
         version=settings.APP_VERSION,
+        git_commit=settings.GIT_COMMIT,
+        api_image=settings.IMAGE_DIGEST,
+        web_image=settings.WEB_IMAGE_DIGEST,
     )

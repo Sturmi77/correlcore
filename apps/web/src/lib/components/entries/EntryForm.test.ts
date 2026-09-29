@@ -177,6 +177,26 @@ function deltaWithPrevious(
   };
 }
 
+function entryWithSleepQuality(sleepQuality: number | null): EntryResponse {
+  return {
+    id: 'existing-entry',
+    user_id: 'user-1',
+    entry_date: '2026-06-02',
+    slot: 'day',
+    mood_score: 3,
+    energy: 3,
+    stress: 3,
+    cycle_day: null,
+    sleep_minutes: null,
+    sleep_quality: sleepQuality,
+    source: 'direct',
+    work_context: 'homeoffice',
+    note: null,
+    created_at: '2026-06-02T12:00:00Z',
+    updated_at: '2026-06-02T12:00:00Z',
+  };
+}
+
 describe('EntryForm smart defaults', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -232,7 +252,7 @@ describe('EntryForm smart defaults', () => {
     );
   });
 
-  it('persists sleep quality at its default without a manual change (no longer optional)', async () => {
+  it('keeps an unrated sleep quality null when another field changes', async () => {
     vi.mocked(fetchEntryDelta).mockResolvedValue({
       today: null,
       previous: null,
@@ -243,13 +263,12 @@ describe('EntryForm smart defaults', () => {
     render(EntryForm, { props: { initialDate: '2026-06-02' } });
     await flushAsync();
 
-    // Sleep quality renders as a regular scale slider carrying the neutral
-    // default, not behind an "add rating" affordance.
+    // The visible thumb may sit at the neutral position, but the readout and
+    // payload must remain explicitly unrated until the user interacts.
     const sleepSlider = screen.getByLabelText('entry.sleep_quality.label');
     expect(sleepSlider.getAttribute('aria-valuenow')).toBe('3');
+    expect(screen.getByText('–')).toBeTruthy();
 
-    // Editing an unrelated field (never the sleep slider) still persists the
-    // untouched sleep-quality value instead of leaving it null.
     await fireEvent.click(screen.getByLabelText('entry.mood_increment'));
     await flushAsync();
     await vi.advanceTimersByTimeAsync(801);
@@ -260,10 +279,62 @@ describe('EntryForm smart defaults', () => {
       expect.objectContaining({
         entry_date: '2026-06-02',
         slot: 'day',
-        sleep_quality: 3,
+        sleep_quality: null,
       })
     );
   });
+
+  it('persists an explicit neutral sleep-quality rating of 3', async () => {
+    vi.mocked(fetchEntryDelta).mockResolvedValue({
+      today: null,
+      previous: null,
+      delta: { mood: null, energy: null, stress: null },
+      shared_tags: [],
+    });
+
+    render(EntryForm, { props: { initialDate: '2026-06-02' } });
+    await flushAsync();
+
+    await fireEvent.click(screen.getByLabelText('entry.sleep_quality.label'));
+    await flushAsync();
+    await vi.advanceTimersByTimeAsync(801);
+    await flushAsync();
+
+    expect(submitEntry).toHaveBeenCalledTimes(1);
+    expect(submitEntry).toHaveBeenCalledWith(expect.objectContaining({ sleep_quality: 3 }));
+  });
+
+  it.each([null, 1, 3, 5] as const)(
+    'hydrates and preserves sleep_quality=%s through an unrelated edit',
+    async (sleepQuality) => {
+      const entry = entryWithSleepQuality(sleepQuality);
+      vi.mocked(listEntries).mockResolvedValue([entry]);
+      vi.mocked(fetchEntryDelta).mockResolvedValue({
+        today: null,
+        previous: null,
+        delta: { mood: null, energy: null, stress: null },
+        shared_tags: [],
+      });
+      vi.mocked(updateEntry).mockResolvedValue(entry);
+
+      render(EntryForm, { props: { initialDate: '2026-06-02' } });
+      await flushAsync();
+
+      const sleepSlider = screen.getByLabelText('entry.sleep_quality.label');
+      expect(sleepSlider.getAttribute('aria-valuenow')).toBe(String(sleepQuality ?? 3));
+      if (sleepQuality === null) expect(screen.getByText('–')).toBeTruthy();
+
+      await fireEvent.click(screen.getByLabelText('entry.mood_increment'));
+      await flushAsync();
+      await vi.advanceTimersByTimeAsync(801);
+      await flushAsync();
+
+      expect(updateEntry).toHaveBeenCalledWith(
+        'existing-entry',
+        expect.objectContaining({ sleep_quality: sleepQuality })
+      );
+    }
+  );
 });
 
 describe.skip('EntryForm slot changes (#630: re-enable with SHOW_ENTRY_TIME_SLOTS)', () => {

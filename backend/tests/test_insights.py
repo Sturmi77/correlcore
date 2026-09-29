@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, date, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import AsyncClient
@@ -724,14 +724,20 @@ async def test_latest_insights_endpoint_uses_latest_service(
             ),
         ):
             response = await async_client.get(
-                "/api/v1/insights/latest?limit=3",
+                "/api/v1/insights/latest?limit=3&pair_signal=tag%3Awalk&pair_signal=metric%3Amood_score",
                 cookies={"access_token": "valid.access.token"},
             )
     finally:
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    latest.assert_awaited_once()
+    latest.assert_awaited_once_with(
+        ANY,
+        user_id=user.id,
+        limit=3,
+        insight_types=None,
+        pair_signals=[("tag", "walk"), ("metric", "mood_score")],
+    )
     body = response.json()
     assert body["insights"][0]["insight_type"] == "weekday_pattern"
     assert body["insight_maturity"]["phase"] == "robust"

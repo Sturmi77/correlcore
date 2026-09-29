@@ -2,13 +2,16 @@ import { describe, expect, it, vi } from 'vitest';
 import type { InsightResponse } from '$lib/api/insights';
 import {
   buildMatrixPdfDocument,
+  exportReportCsv,
   exportMatrixPdf,
   PDF_LINES_PER_PAGE,
   reportExportFilename,
+  serializeReportCsv,
   toWinAnsi,
 } from './insightMatrixExport';
+import { toInsightReportRow, type InsightReportRow } from './insightReportRows';
 
-const row: InsightResponse = {
+const apiRow: InsightResponse = {
   id: 'insight-1',
   user_id: 'user-1',
   insight_type: 'pointbiserial',
@@ -28,6 +31,7 @@ const row: InsightResponse = {
   created_at: '2026-05-12T03:00:00Z',
   updated_at: '2026-05-12T03:00:00Z',
 };
+const row = toInsightReportRow(apiRow);
 
 describe('reportExportFilename', () => {
   it('names report files by kind and date', () => {
@@ -89,13 +93,22 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
     disclaimer: 'Associations in your entries, not a cause.',
   };
 
-  function rows(count: number): InsightResponse[] {
+  function rows(count: number): InsightReportRow[] {
     return Array.from({ length: count }, (_, index) => ({
       ...row,
       id: `insight-${index}`,
-      subject_label: `Subject ${index}`,
+      factor: `Subject ${index}`,
+      relationship: `Subject ${index} <-> mood_score`,
     }));
   }
+
+  it('labels stress coefficients in raw and display orientation', () => {
+    const pdf = buildMatrixPdfDocument(
+      [{ ...row, metric: 'stress', effect: 0.4, displayEffect: -0.4 }],
+      options
+    );
+    expect(pdf).toContain('effect=0.40 | view=-0.40');
+  });
 
   function pageCount(pdf: string): number {
     return Number(pdf.match(/\/Type \/Pages [^>]*\/Count (\d+)/)?.[1] ?? 0);
@@ -106,6 +119,7 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
 
     expect(pageCount(pdf)).toBe(1);
     expect(pdf).toContain(options.disclaimer);
+    expect(pdf).toContain('Subject 0 <-> mood_score');
   });
 
   it('breaks a full selection across pages instead of dropping the overflow', () => {
@@ -176,12 +190,13 @@ describe('buildMatrixPdfDocument pagination (#959)', () => {
     expect(Number(disclaimerLine?.match(/Tf 40 (-?\d+) Td/)?.[1])).toBeGreaterThan(0);
   });
 
-  it('fits the documented number of lines per page', () => {
-    // title + subtitle + blank + rows + blank + disclaimer
-    const rowsThatFillOnePage = PDF_LINES_PER_PAGE - 5;
-
-    expect(pageCount(buildMatrixPdfDocument(rows(rowsThatFillOnePage), options))).toBe(1);
-    expect(pageCount(buildMatrixPdfDocument(rows(rowsThatFillOnePage + 1), options))).toBe(2);
+  it('paginates wrapped rows without exceeding the documented line budget', () => {
+    const pdf = buildMatrixPdfDocument(rows(50), options);
+    const streams = [...pdf.matchAll(/>>stream\n([\s\S]*?)\nendstream/g)];
+    expect(streams.length).toBeGreaterThan(1);
+    for (const [, body] of streams) {
+      expect([...body.matchAll(/Tf 40 /g)].length).toBeLessThanOrEqual(PDF_LINES_PER_PAGE);
+    }
   });
 });
 
@@ -236,8 +251,8 @@ describe('buildMatrixPdfDocument character set (#960)', () => {
     charsetNote: 'Hinweis: Einzelne Zeichen konnten nicht dargestellt werden.',
   };
 
-  function umlautRow(label: string): InsightResponse {
-    return { ...row, subject_label: label };
+  function umlautRow(label: string): InsightReportRow {
+    return { ...row, factor: label, relationship: `${label} <-> mood_score` };
   }
 
   it('declares WinAnsi on the font', () => {
@@ -269,7 +284,7 @@ describe('buildMatrixPdfDocument character set (#960)', () => {
     const rows = Array.from({ length: 120 }, (_, index) => ({
       ...row,
       id: `i${index}`,
-      subject_label: `Frühstück Nr. ${index} — Büro/Großraum ÄÖÜäöüß`,
+      factor: `Frühstück Nr. ${index} — Büro/Großraum ÄÖÜäöüß`,
     }));
     const pdf = buildMatrixPdfDocument(rows, options);
 
@@ -311,5 +326,73 @@ describe('buildMatrixPdfDocument character set (#960)', () => {
 
     expect(pdf).toContain('????');
     expect(pdf).not.toContain('Hinweis');
+  });
+});
+
+describe('report CSV export security and types (#989)', () => {
+  const formulaLabels = [
+    '=1+1',
+    '+SUM(A1:A2)',
+    '-1+2',
+    '@SUM(A1:A2)',
+    '\t=1+1',
+    '\r=1+1',
+    '\n=1+1',
+    '"quoted", comma; semicolon',
+  ];
+  const rows = formulaLabels.map((factor, index) => ({
+    ...row,
+    id: `csv-${index}`,
+    factor,
+    effect: index === 0 ? -0.4 : row.effect,
+    sampleWith: 5,
+    sampleWithout: 95,
+    sampleTotal: 100,
+    analysisWindowStart: '2026-01-01',
+    analysisWindowEnd: '2026-04-10',
+  }));
+
+  it('neutralizes formula-leading text after control bytes while keeping numbers numeric', () => {
+    const csv = serializeReportCsv(rows);
+
+    expect(csv).toContain("'=1+1");
+    expect(csv).toContain("'+SUM(A1:A2)");
+    expect(csv).toContain("'-1+2");
+    expect(csv).toContain("'@SUM(A1:A2)");
+    expect(csv).toContain("'\t=1+1");
+    expect(csv).toContain('"\'\r=1+1"');
+    expect(csv).toContain('"\'\n=1+1"');
+    expect(csv).toContain('""quoted"", comma; semicolon');
+    expect(csv).toMatch(/,-0\.4,0\.4,0\.7,5,95,100,/);
+    expect(csv).not.toContain("'-0.4");
+  });
+
+  it('uses the hardened serializer in the real CSV download path', async () => {
+    let downloaded: Blob | undefined;
+    const click = vi.fn();
+    const createElement = vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+      if (tag === 'a') {
+        return { click, remove: vi.fn() } as unknown as HTMLAnchorElement;
+      }
+      return document.createElementNS('http://www.w3.org/1999/xhtml', tag);
+    });
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn((blob: Blob) => {
+        downloaded = blob;
+        return 'blob:csv';
+      }),
+      revokeObjectURL: vi.fn(),
+    });
+    const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
+
+    exportReportCsv(rows, 'report.csv');
+
+    expect(click).toHaveBeenCalledOnce();
+    expect(downloaded?.type).toBe('text/csv;charset=utf-8');
+    expect(await downloaded?.text()).toBe(serializeReportCsv(rows));
+
+    createElement.mockRestore();
+    appendChild.mockRestore();
+    vi.unstubAllGlobals();
   });
 });

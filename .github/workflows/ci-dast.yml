@@ -30,12 +30,9 @@ name: DAST (OWASP ZAP)
 # app-layer findings. Follow-up: scan the full Traefik-fronted stack (and the
 # web UI) for header/UI coverage.
 #
-# Non-gating for FINDINGS, gating for OPERATIONAL failure: `-I` keeps ZAP from
-# failing the build on alerts (same report-only posture as CodeQL/Trivy), but
-# the scan step still fails if ZAP itself did not run (image pull, networking,
-# schema import, or startup error) or produced no report — otherwise a broken
-# scheduled control would silently pass forever. Tighten specific rules to FAIL
-# in the rules file once the baseline is triaged.
+# Findings and operational failures are gating. Proxy-owned header alerts are
+# explicitly ignored in the rules file for this direct-API topology; every
+# other ZAP warning or failure blocks the job.
 
 on:
   push:
@@ -166,9 +163,6 @@ jobs:
       - name: Run ZAP API scan
         run: |
           set -uo pipefail
-          # -I => findings (WARN) never fail the scan; exit is 0 on a clean or
-          # warnings-only run, non-zero only if a rule is set to FAIL (none are)
-          # or ZAP could not run (bad args, import/startup/networking error).
           set +e
           docker run --rm --network host \
             -v "$GITHUB_WORKSPACE/zap-out:/zap/wrk/:rw" \
@@ -179,24 +173,19 @@ jobs:
               -c api-scan-rules.tsv \
               -r zap-report.html \
               -w zap-report.md \
-              -J zap-report.json \
-              -I
+              -J zap-report.json
           zap_exit=$?
           set -e
           echo "ZAP exit code: ${zap_exit}"
-          # Gate on operational failure only: a report must exist (scanner ran)
-          # and the exit code must be within ZAP's findings range (0=pass,
-          # 1=FAIL-rule, 2=WARN — all "it ran"). Anything else (125 pull fail,
-          # ZAP crash) fails the job so the control can't rot silently.
           if [ ! -s zap-out/zap-report.json ]; then
             echo "::error::ZAP produced no report — operational failure." >&2
             exit 1
           fi
-          if [ "${zap_exit}" -gt 2 ]; then
-            echo "::error::ZAP exited ${zap_exit} — operational failure (not findings)." >&2
+          if [ "${zap_exit}" -ne 0 ]; then
+            echo "::error::ZAP findings or an operational failure blocked the scan (exit ${zap_exit})." >&2
             exit 1
           fi
-          echo "Scan ran; findings are report-only (non-gating)."
+          echo "Scan completed without non-ignored findings."
 
       - name: Publish scan summary
         if: always()

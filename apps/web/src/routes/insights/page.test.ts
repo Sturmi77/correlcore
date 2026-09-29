@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
-import { fetchTagCooccurrence } from '$lib/api/insights';
+import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
+import { fetchTagCooccurrence, listLatestInsights, type InsightResponse } from '$lib/api/insights';
 import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
 import { listEntries, type EntryResponse } from '$lib/api/entries';
 import Page from './+page.svelte';
@@ -11,7 +12,7 @@ type Deferred<T> = {
   resolve: (value: T) => void;
 };
 
-type TagCooccurrenceRange = '7d' | '30d' | '90d' | '1y';
+type TagCooccurrenceRange = '7d' | '14d' | '28d' | '30d' | '90d' | '1y';
 
 const testHelpers = vi.hoisted(() => {
   function deferred<T>(): Deferred<T> {
@@ -48,6 +49,39 @@ const testHelpers = vi.hoisted(() => {
     }[];
   }>[] = [];
 
+  let pageValue = {
+    url: new URL('http://localhost/insights'),
+    params: {},
+    route: { id: '/insights' },
+    status: 200,
+    error: null,
+    data: {},
+    form: null,
+    state: {},
+  };
+  const pageSubscribers = new Set<(value: typeof pageValue) => void>();
+  const pageStore = {
+    subscribe(run: (value: typeof pageValue) => void) {
+      pageSubscribers.add(run);
+      run(pageValue);
+      return () => pageSubscribers.delete(run);
+    },
+  };
+  function setPageUrl(url: string): void {
+    pageValue = { ...pageValue, url: new URL(url) };
+    pageSubscribers.forEach((run) => run(pageValue));
+  }
+  let lastFeedProps: Record<string, unknown> = {};
+  let lastMobileProps: Record<string, unknown> = {};
+  function captureFeedProps(props: Record<string, unknown>): string {
+    lastFeedProps = props;
+    return `insight-feed:entries:${props.entryCount ?? 0}`;
+  }
+  function captureMobileProps(props: Record<string, unknown>): string {
+    lastMobileProps = props;
+    return 'mobile-insight-lead';
+  }
+
   function mockComponent(testId: string, renderText?: (props: Record<string, unknown>) => string) {
     return function MockComponent(anchor: Element | Comment, props: Record<string, unknown> = {}) {
       const el = document.createElement('div');
@@ -77,7 +111,21 @@ const testHelpers = vi.hoisted(() => {
     };
   }
 
-  return { deferred, mockComponent, tagCooccurrenceRequests };
+  return {
+    captureFeedProps,
+    captureMobileProps,
+    deferred,
+    get lastFeedProps() {
+      return lastFeedProps;
+    },
+    get lastMobileProps() {
+      return lastMobileProps;
+    },
+    mockComponent,
+    pageStore,
+    setPageUrl,
+    tagCooccurrenceRequests,
+  };
 });
 
 function tagCooccurrenceResponse(range: TagCooccurrenceRange) {
@@ -137,6 +185,40 @@ function symptomHeatmapResponse(startDate: string): SymptomHeatmapResponse {
   };
 }
 
+const provisionalMaturity = {
+  phase: 'provisional' as const,
+  phase_index: 3 as const,
+  current_entries: 20,
+  next_phase_at: 30,
+  next_phase_label: 'Robust Insights',
+  entries_until_next: 10,
+  user_message_key: 'maturity.provisional.description',
+};
+
+function insightResponse(id: string, overrides: Partial<InsightResponse> = {}): InsightResponse {
+  return {
+    id,
+    user_id: 'user-1',
+    insight_type: 'correlation',
+    subject_type: 'tag',
+    subject_id: 'tag-a',
+    subject_label: 'Tag A',
+    metric: 'mood_score',
+    statement: id,
+    confidence: 0.8,
+    effect_size: 0.5,
+    sample_n: 20,
+    tier: 'developing',
+    flags: {},
+    payload: {},
+    generated_for_date: '2026-05-31',
+    generated_at: '2026-05-31T00:00:00Z',
+    created_at: '2026-05-31T00:00:00Z',
+    updated_at: '2026-05-31T00:00:00Z',
+    ...overrides,
+  } as InsightResponse;
+}
+
 async function flushPromises(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
@@ -148,6 +230,10 @@ vi.mock('svelte-i18n', async () => {
     _: readable((key: string) => key),
   };
 });
+
+vi.mock('$app/stores', () => ({
+  page: testHelpers.pageStore,
+}));
 
 vi.mock('$lib/stores/auth', async () => {
   const { readable } = await import('svelte/store');
@@ -200,6 +286,7 @@ vi.mock('$lib/api/preferences', () => ({
     dismissed_insight_keys: [],
     reached_milestone_keys: [],
     last_seen_insight_at: null,
+    trend_window_days: 14,
     // Explicit all-on so range/reload tests still mount optional tool sections.
     insight_sections_version: 2,
     insight_sections: [
@@ -285,10 +372,7 @@ vi.mock('$lib/api/insights', () => ({
 }));
 
 vi.mock('$lib/components/insights/InsightFeed.svelte', () => ({
-  default: testHelpers.mockComponent(
-    'insight-feed',
-    (props: Record<string, unknown>) => `insight-feed:entries:${props.entryCount ?? 0}`
-  ),
+  default: testHelpers.mockComponent('insight-feed', testHelpers.captureFeedProps),
 }));
 vi.mock('$lib/components/insights/DismissedInsightsSection.svelte', () => ({
   default: testHelpers.mockComponent('dismissed-insights-section'),
@@ -300,7 +384,7 @@ vi.mock('$lib/components/insights/InsightStageHeader.svelte', () => ({
   default: testHelpers.mockComponent('insight-stage-header'),
 }));
 vi.mock('$lib/components/insights/MobileInsightLead.svelte', () => ({
-  default: testHelpers.mockComponent('mobile-insight-lead'),
+  default: testHelpers.mockComponent('mobile-insight-lead', testHelpers.captureMobileProps),
 }));
 vi.mock('$lib/components/insights/CooccurrenceEntrySheet.svelte', () => ({
   default: testHelpers.mockComponent('cooccurrence-entry-sheet'),
@@ -336,21 +420,141 @@ describe('/insights page analysis range', () => {
   beforeEach(() => {
     testHelpers.tagCooccurrenceRequests.length = 0;
     localStorage.clear();
+    testHelpers.setPageUrl('http://localhost/insights');
     setAnalysisRange(14);
+    trendWindowPreference.bind(null);
+    trendWindowPreference.bind('user-1');
+    trendWindowPreference.hydrate('user-1', 14, trendWindowPreference.revision());
     vi.clearAllMocks();
+  });
+
+  it('matches legacy pair links locally without sending unsupported unknown kinds', async () => {
+    testHelpers.setPageUrl('http://localhost/insights?signals=symptom-a,tag-b');
+    vi.mocked(listLatestInsights).mockResolvedValue({
+      insight_maturity: provisionalMaturity,
+      insights: [
+        insightResponse('legacy-pair', {
+          subject_type: 'composite',
+          subject_id: null,
+          payload: { kind: 'symptom_tag_cooccurrence', symptom_id: 'symptom-a', tag_id: 'tag-b' },
+        }),
+      ],
+    });
+    render(Page);
+    await waitFor(() => expect(screen.getByTestId('insights-carried-pair-focused')).toBeTruthy());
+    expect(
+      vi.mocked(listLatestInsights).mock.calls.every(([options]) => !options?.pairSignals)
+    ).toBe(true);
+  });
+
+  it('focuses the feed only when one insight proves both carried signals', async () => {
+    const pair = {
+      version: 1,
+      signals: [
+        { kind: 'symptom', id: 'symptom-a', label: 'Symptom A' },
+        { kind: 'tag', id: 'tag-b', label: 'Tag B' },
+      ],
+    };
+    testHelpers.setPageUrl(
+      `http://localhost/insights?${new URLSearchParams({ pair: JSON.stringify(pair) })}`
+    );
+    const exactPairResponse = {
+      insight_maturity: provisionalMaturity,
+      insights: [
+        insightResponse('exact-pair', {
+          subject_type: 'composite',
+          subject_id: null,
+          subject_label: 'Symptom A + Tag B',
+          payload: {
+            kind: 'symptom_tag_cooccurrence',
+            symptom_id: 'symptom-a',
+            symptom_name: 'Symptom A',
+            tag_id: 'tag-b',
+            tag_name: 'Tag B',
+          },
+        }),
+        insightResponse('only-one-pin', {
+          subject_id: 'tag-b',
+          subject_label: 'Tag B',
+        }),
+      ],
+    };
+    vi.mocked(listLatestInsights)
+      .mockResolvedValueOnce(exactPairResponse)
+      .mockResolvedValueOnce(exactPairResponse);
+
+    render(Page);
+
+    await waitFor(() => expect(screen.getByTestId('insights-carried-pair-focused')).toBeTruthy());
+    const focusedIds = [
+      ...(((testHelpers.lastMobileProps.insight as InsightResponse | undefined)?.id
+        ? [testHelpers.lastMobileProps.insight as InsightResponse]
+        : []) as InsightResponse[]),
+      ...((testHelpers.lastFeedProps.insights as InsightResponse[] | undefined) ?? []),
+    ].map((insight) => insight.id);
+    expect(focusedIds).toEqual(['exact-pair']);
+    expect(
+      testHelpers.lastMobileProps.detailQuery ?? testHelpers.lastFeedProps.detailQuery
+    ).toContain('pair=');
+  });
+
+  it('shows no pair match only after a successful search', async () => {
+    const pair = {
+      version: 1,
+      signals: [
+        { kind: 'tag', id: 'missing-a' },
+        { kind: 'tag', id: 'missing-b' },
+      ],
+    };
+    testHelpers.setPageUrl(
+      `http://localhost/insights?${new URLSearchParams({ pair: JSON.stringify(pair) })}`
+    );
+    vi.mocked(listLatestInsights).mockResolvedValueOnce({
+      insight_maturity: provisionalMaturity,
+      insights: [insightResponse('unrelated')],
+    });
+
+    render(Page);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('insights-carried-signals-unmatched')).toBeTruthy()
+    );
+  });
+
+  it('keeps API failures separate from a semantic no-match result', async () => {
+    const pair = {
+      version: 1,
+      signals: [
+        { kind: 'tag', id: 'tag-a' },
+        { kind: 'tag', id: 'tag-b' },
+      ],
+    };
+    testHelpers.setPageUrl(
+      `http://localhost/insights?${new URLSearchParams({ pair: JSON.stringify(pair) })}`
+    );
+    vi.mocked(listLatestInsights).mockRejectedValueOnce(new Error('offline'));
+
+    render(Page);
+
+    await waitFor(() => expect(testHelpers.lastFeedProps.error).toBe('offline'));
+    expect(screen.queryByTestId('insights-carried-signals-unmatched')).toBeNull();
   });
 
   it('reloads requested analytics on range change and ignores stale co-occurrence responses', async () => {
     render(Page);
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '7d', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith(
+        expect.objectContaining({ range: '14d', days: 14, min_count: 2 })
+      );
     });
 
     await fireEvent.click(screen.getByTestId('insights-range-90'));
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '90d', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith(
+        expect.objectContaining({ range: '90d', days: 90, min_count: 2 })
+      );
     });
 
     testHelpers.tagCooccurrenceRequests[1]?.resolve(tagCooccurrenceResponse('90d'));
@@ -358,13 +562,13 @@ describe('/insights page analysis range', () => {
     await waitFor(() => {
       expect(screen.getAllByText('90d tag a').length).toBeGreaterThan(0);
     });
-    expect(screen.queryByText('7d tag a')).toBeNull();
+    expect(screen.queryByText('14d tag a')).toBeNull();
 
-    testHelpers.tagCooccurrenceRequests[0]?.resolve(tagCooccurrenceResponse('7d'));
+    testHelpers.tagCooccurrenceRequests[0]?.resolve(tagCooccurrenceResponse('14d'));
     await flushPromises();
 
     expect(screen.getAllByText('90d tag a').length).toBeGreaterThan(0);
-    expect(screen.queryByText('7d tag a')).toBeNull();
+    expect(screen.queryByText('14d tag a')).toBeNull();
   });
 
   it('reloads symptom analytics for the selected analysis range', async () => {
@@ -471,17 +675,21 @@ describe('/insights page analysis range', () => {
     expect(screen.queryByText('insight-feed:entries:1')).toBeNull();
   });
 
-  it('refetches co-occurrence when switching from week to month API windows', async () => {
+  it('refetches co-occurrence when switching from 14 to 28 days', async () => {
     render(Page);
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '7d', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith(
+        expect.objectContaining({ range: '14d', days: 14, min_count: 2 })
+      );
     });
 
     await fireEvent.click(screen.getByTestId('insights-range-28'));
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '30d', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith(
+        expect.objectContaining({ range: '28d', days: 28, min_count: 2 })
+      );
     });
 
     expect(fetchTagCooccurrence).toHaveBeenCalledTimes(2);
