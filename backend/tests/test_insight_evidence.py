@@ -41,9 +41,14 @@ def test_association_evidence_preserves_unequal_groups_and_missing_histogram() -
     assert build_insight_evidence("pointbiserial", "mood_score", {"tagged_count": 5}, None) is None
 
     null_evidence = build_insight_evidence(
-        "null_association", "stress",
-        {"tagged_count": 5, "untagged_count": 95, "outcome": "null",
-         "calendar_held_coefficient": 0.1},
+        "null_association",
+        "stress",
+        {
+            "tagged_count": 5,
+            "untagged_count": 95,
+            "outcome": "null",
+            "calendar_held_coefficient": 0.1,
+        },
         0.2,
     )
     assert isinstance(null_evidence, AssociationEvidence)
