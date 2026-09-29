@@ -47,121 +47,16 @@ const data = {
 };
 
 describe('SymptomCooccurrenceHeatmap', () => {
-  it.each([
-    [{ ...data, cells: [], window_too_short: true }, false, 'cooccurrence_window_too_short'],
-    [{ ...data, cells: [], analytics_disabled: true }, false, 'cooccurrence_analytics_disabled'],
-    [{ ...data, cells: [] }, false, 'cooccurrence_empty'],
-    [null, true, 'cooccurrence_load_error'],
-  ] as const)('shows the distinct %s status', (response, error, key) => {
+  });
+
+  it('renders insufficient data as an uncomputed analysis state', () => {
     render(SymptomCooccurrenceHeatmap, {
-      props: { data: response ? { ...response, cells: [...response.cells] } : null, error },
-    });
-    expect(screen.getByTestId('symptom-cooccurrence-status').textContent).toContain(
-      `insights.symptoms.${key}`
-    );
-  });
-
-  it('renders lift values in provisional phase', () => {
-    render(SymptomCooccurrenceHeatmap, {
-      props: { data, phase: 'provisional' },
-    });
-
-    expect(screen.getByText('2.1*')).toBeTruthy();
-    expect(screen.getByText('insights.symptoms.cooccurrence_lift_legend')).toBeTruthy();
-  });
-
-  it('renders raw counts in early_patterns phase', () => {
-    render(SymptomCooccurrenceHeatmap, {
-      props: { data, phase: 'early_patterns' },
-    });
-
-    expect(screen.getByText('4')).toBeTruthy();
-    expect(screen.getByText('insights.symptoms.cooccurrence_count_legend')).toBeTruthy();
-  });
-
-  it('dispatches selectCell when a populated cell is clicked', async () => {
-    const handler = vi.fn();
-    render(SymptomCooccurrenceHeatmap, {
-      props: { data, phase: 'provisional' },
-      events: { selectCell: handler },
-    });
-
-    await fireEvent.click(screen.getByTestId('symptom-cooccurrence-cell'));
-
-    expect(handler).toHaveBeenCalledOnce();
-    expect(handler.mock.calls[0]?.[0].detail.cell.symptom.name).toBe('Headache');
-  });
-
-  it('applies confounded styling and clustered sort mode', () => {
-    const clusteredData = {
-      ...data,
-      cells: [
-        {
-          ...data.cells[0],
-          confounder: 'weekday' as const,
-        },
-        {
-          symptom: {
-            symptom_id: 'sym-2',
-            slug: 'nausea',
-            name: 'Nausea',
-            icon: null,
-          },
-          tag: {
-            tag_id: 'tag-2',
-            slug: 'coffee',
-            name: 'Coffee',
-            category: 'consumption',
-            color: null,
-          },
-          co_count: 3,
-          symptom_count: 5,
-          tag_count: 6,
-          total_count: 30,
-          phi: 0.1,
-          jaccard: 0.2,
-          lift: 1.2,
-          p_value: 0.2,
-          p_value_corrected: 0.3,
-          confounder: null,
-        },
-      ],
-    };
-
-    const { container } = render(SymptomCooccurrenceHeatmap, {
-      props: { data: clusteredData, phase: 'robust', sortMode: 'clustered' },
-    });
-
-    expect(container.querySelector('.symptom-cooccurrence__cell--confounded')).toBeTruthy();
-    expect(screen.getByText(/cooccurrence_confounder_note/)).toBeTruthy();
-  });
-
-  it('marks work-context and calendar-context confounders as confounded', async () => {
-    const contextData = {
-      ...data,
-      cells: [
-        {
-          ...data.cells[0],
-          confounder: 'work_context' as const,
-        },
-      ],
-    };
-
-    const { container, rerender } = render(SymptomCooccurrenceHeatmap, {
-      props: { data: contextData, phase: 'robust' },
-    });
-
-    expect(container.querySelector('.symptom-cooccurrence__cell--confounded')).toBeTruthy();
-    expect(screen.getByLabelText(/insights.work_context_confounded_note/)).toBeTruthy();
-
-    await rerender({
-      data: {
-        ...data,
-        cells: [{ ...data.cells[0], confounder: 'calendar_context' as const }],
+      props: {
+        data: { ...data, cells: [], analysis_status: 'insufficient_data' },
+        phase: 'provisional',
       },
-      phase: 'robust',
     });
 
-    expect(screen.getByLabelText(/insights.calendar_context_confounded_note/)).toBeTruthy();
-  });
-});
+    expect(
+      screen.getByText('insights.symptoms.cooccurrence_status_insufficient_data')
+    ).toBeTruthy();

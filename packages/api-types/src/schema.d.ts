@@ -1817,6 +1817,22 @@ export interface components {
             /** Updated At */
             updated_at?: string | null;
         };
+        /** CooccurrenceAnalysisLimit */
+        CooccurrenceAnalysisLimit: {
+            /** Eligible Symptoms */
+            eligible_symptoms: number;
+            /** Eligible Tags */
+            eligible_tags: number;
+            /** Pair Count */
+            pair_count: number;
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "supplied_tags" | "supplied_symptoms" | "eligible_tags" | "eligible_symptoms" | "pair_count" | "work_units";
+            /** Work Units */
+            work_units: number;
+        };
         /**
          * CoverageMetric
          * @description A neutral coverage ratio over the rolling window (no streak record).
@@ -3475,11 +3491,21 @@ export interface components {
         };
         /** SymptomTagCooccurrenceResponse */
         SymptomTagCooccurrenceResponse: {
+<<<<<<< HEAD
             /**
              * Analytics Disabled
              * @default false
              */
             analytics_disabled: boolean;
+=======
+            analysis_limit?: components["schemas"]["CooccurrenceAnalysisLimit"] | null;
+            /**
+             * Analysis Status
+             * @default ok
+             * @enum {string}
+             */
+            analysis_status: "ok" | "insufficient_data" | "limit_exceeded" | "busy" | "timeout" | "unavailable";
+>>>>>>> origin/codex/audit-a02-analytics-limits
             /** Cells */
             cells?: components["schemas"]["SymptomTagCooccurrenceCell"][];
             /** Days */
@@ -3877,6 +3903,13 @@ export interface components {
         };
         /** TagCooccurrenceResponse */
         TagCooccurrenceResponse: {
+            analysis_limit?: components["schemas"]["CooccurrenceAnalysisLimit"] | null;
+            /**
+             * Analysis Status
+             * @default ok
+             * @enum {string}
+             */
+            analysis_status: "ok" | "insufficient_data" | "limit_exceeded" | "busy" | "timeout" | "unavailable";
             /**
              * Analytics Disabled
              * @default false

@@ -175,6 +175,31 @@ class TagCooccurrencePair(BaseModel):
     pct_of_b: float = Field(ge=0, le=100)
 
 
+CooccurrenceAnalysisStatus = Literal[
+    "ok",
+    "insufficient_data",
+    "limit_exceeded",
+    "busy",
+    "timeout",
+    "unavailable",
+]
+
+
+class CooccurrenceAnalysisLimit(BaseModel):
+    reason: Literal[
+        "supplied_tags",
+        "supplied_symptoms",
+        "eligible_tags",
+        "eligible_symptoms",
+        "pair_count",
+        "work_units",
+    ]
+    eligible_tags: int = Field(ge=0)
+    eligible_symptoms: int = Field(ge=0)
+    pair_count: int = Field(ge=0)
+    work_units: int = Field(ge=0)
+
+
 class TagCooccurrenceResponse(BaseModel):
     range: TagCooccurrenceRange
     days: int | None = None
@@ -182,6 +207,8 @@ class TagCooccurrenceResponse(BaseModel):
     end_date: date_type
     min_count: int = Field(ge=1)
     pairs: list[TagCooccurrencePair] = Field(default_factory=list)
+    analysis_status: CooccurrenceAnalysisStatus = "ok"
+    analysis_limit: CooccurrenceAnalysisLimit | None = None
     # True when the window holds fewer logged days than the analysis needs, so
     # an empty `pairs` means "cannot be computed here", not "nothing found".
     # A 7-day range can never reach the floor, so it returned an empty panel
@@ -219,52 +246,5 @@ class SymptomTagCooccurrenceResponse(BaseModel):
     end_date: date_type
     min_count: int = Field(ge=1)
     cells: list[SymptomTagCooccurrenceCell] = Field(default_factory=list)
-    window_too_short: bool = False
-    analytics_disabled: bool = False
-    observed_days: int = 0
-
-
-class TagClusterMember(BaseModel):
-    kind: Literal["tag", "symptom"]
-    signal_id: uuid.UUID
-    slug: str
-    name: str
-    icon: str | None = None
-    category: str | None = None
-    color: str | None = None
-
-
-class TagClusterGroup(BaseModel):
-    cluster_id: int = Field(ge=1)
-    label: str
-    tags: list[TagCooccurrenceTagRef] = Field(default_factory=list)
-    members: list[TagClusterMember] = Field(default_factory=list)
-    cluster_kind: Literal["tags_only", "mixed"] = "tags_only"
-    strength: float = Field(ge=0, le=1)
-
-
-TagClusterMaturity = Literal["early", "provisional", "robust"]
-TagClusterMode = Literal["pair", "kmeans"]
-
-
-class TagClustersResponse(BaseModel):
-    status: Literal["ok", "insufficient_data"]
-    entry_count: int = Field(ge=0)
-    active_tag_count: int = Field(ge=0)
-    active_signal_count: int = Field(ge=0)
-    window_days: int = Field(ge=1)
-    k: int | None = Field(default=None, ge=1)
-    reason: str | None = None
-    cluster_kind: Literal["tags_only", "mixed"] = "tags_only"
-    cluster_maturity: TagClusterMaturity | None = None
-    cluster_mode: TagClusterMode | None = None
-    entries_until_robust: int | None = Field(default=None, ge=0)
-    silhouette_score: float | None = None
-    clusters: list[TagClusterGroup] = Field(default_factory=list)
-    # Transparency (#706): how many groups are shown after the strength floor +
-    # display cap, how many active signals ended up in no shown group, and the
-    # sample-size-aware floor that was applied (so clients can derive strength
-    # bands without duplicating the calibrated constants).
-    shown_cluster_count: int = Field(default=0, ge=0)
-    omitted_signal_count: int = Field(default=0, ge=0)
-    strength_floor: float = Field(default=0.0, ge=0, le=1)
+    analysis_status: CooccurrenceAnalysisStatus = "ok"
+    analysis_limit: CooccurrenceAnalysisLimit | None = None
