@@ -295,9 +295,7 @@ describe('EntryForm smart defaults', () => {
     render(EntryForm, { props: { initialDate: '2026-06-02' } });
     await flushAsync();
 
-    await fireEvent.input(screen.getByLabelText('entry.sleep_quality.label'), {
-      target: { value: '3' },
-    });
+    await fireEvent.click(screen.getByLabelText('entry.sleep_quality.label'));
     await flushAsync();
     await vi.advanceTimersByTimeAsync(801);
     await flushAsync();

@@ -84,6 +84,12 @@
   function onRangeInput(event: Event): void {
     value = clamp(Number((event.currentTarget as HTMLInputElement).value));
   }
+
+  function activateDisplayedValue(): void {
+    // Clicking/tapping the thumb at its already displayed default position does
+    // not fire the input event, because the native range value has not changed.
+    if (value === null) value = sliderPos;
+  }
 </script>
 
 <div class="scale">
@@ -127,6 +133,7 @@
         step="1"
         value={sliderPos}
         on:input={onRangeInput}
+        on:click={activateDisplayedValue}
         data-testid={testId}
         aria-valuemin={min}
         aria-valuemax={max}
