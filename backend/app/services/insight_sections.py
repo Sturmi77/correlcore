@@ -115,19 +115,13 @@ def normalize_insight_sections(
     )
 
 
-def _section_map(sections: Sequence[SectionPreference]) -> dict[str, bool]:
-    return {section["key"]: section["enabled"] for section in sections}
-
-
-def _same_layout(
-    left: Sequence[SectionPreference],
-    right: Sequence[SectionPreference],
-) -> bool:
-    if len(left) != len(right):
-        return False
-    return all(
-        a["key"] == b["key"] and a["enabled"] == b["enabled"]
-        for a, b in zip(left, right, strict=True)
+def _is_exact_legacy_layout(stored: Sequence[object]) -> bool:
+    """Compare the raw stored array before normalization changes locked flags."""
+    return len(stored) == len(LEGACY_DEFAULT_INSIGHT_SECTIONS) and all(
+        isinstance(raw, dict)
+        and raw.get("key") == default["key"]
+        and raw.get("enabled") is default["enabled"]
+        for raw, default in zip(stored, LEGACY_DEFAULT_INSIGHT_SECTIONS, strict=True)
     )
 
 
@@ -154,32 +148,14 @@ def migrate_insight_sections_to_current(
     if not normalized:
         return None, CURRENT_INSIGHT_SECTIONS_VERSION, True
 
-    merged_legacy_shape = merge_sections(
-        normalized,
-        defaults=LEGACY_DEFAULT_INSIGHT_SECTIONS,
-        valid_keys=VALID_INSIGHT_SECTION_KEYS,
-        locked_keys=LOCKED_INSIGHT_SECTION_KEYS,
-    )
-
-    if _same_layout(merged_legacy_shape, LEGACY_DEFAULT_INSIGHT_SECTIONS):
-        # Saved defaults (or equivalent) → replace with slim defaults.
+    if _is_exact_legacy_layout(stored):
+        # Only the complete, ordered, unchanged v1 template is known to be inherited.
         return (
             [section.copy() for section in DEFAULT_INSIGHT_SECTIONS],
             CURRENT_INSIGHT_SECTIONS_VERSION,
             True,
         )
 
-    legacy_enabled = _section_map(LEGACY_DEFAULT_INSIGHT_SECTIONS)
-    new_defaults = _section_map(DEFAULT_INSIGHT_SECTIONS)
-    migrated: list[SectionPreference] = []
-    for section in merged_legacy_shape:
-        key = section["key"]
-        enabled = section["enabled"]
-        if key in SHRINK_INSIGHT_SECTION_KEYS and enabled == legacy_enabled.get(key, True):
-            # Still carrying the old default "on" → apply slim default.
-            enabled = new_defaults.get(key, False)
-        if key in LOCKED_INSIGHT_SECTION_KEYS:
-            enabled = True
-        migrated.append({"key": key, "enabled": enabled})
-
-    return migrated, CURRENT_INSIGHT_SECTIONS_VERSION, True
+    # A partial, reordered, or changed layout is user state. Keep every explicit
+    # flag and its order; append missing known keys using today's defaults.
+    return merge_insight_sections(normalized), CURRENT_INSIGHT_SECTIONS_VERSION, True

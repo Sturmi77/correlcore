@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+import pytest
+
 from app.services.insight_sections import (
     CURRENT_INSIGHT_SECTIONS_VERSION,
     DEFAULT_INSIGHT_SECTIONS,
@@ -97,7 +102,7 @@ def test_migrate_replaces_exact_legacy_defaults() -> None:
     assert sections == DEFAULT_INSIGHT_SECTIONS
 
 
-def test_migrate_preserves_explicit_off_while_shrinking_inherited_ons() -> None:
+def test_migrate_preserves_explicit_off_and_other_enabled_flags() -> None:
     stored = [
         {"key": "stage_header", "enabled": True},
         {"key": "correlation_matrix", "enabled": True},
@@ -114,7 +119,7 @@ def test_migrate_preserves_explicit_off_while_shrinking_inherited_ons() -> None:
     assert sections is not None
     by_key = {item["key"]: item["enabled"] for item in sections}
     assert by_key["lag_heatmap"] is False
-    assert by_key["correlation_matrix"] is False
+    assert by_key["correlation_matrix"] is True
     assert by_key["insight_feed"] is True
 
 
@@ -132,3 +137,19 @@ def test_migrate_empty_only_bumps_version() -> None:
     assert dirty is True
     assert sections is None
     assert version == CURRENT_INSIGHT_SECTIONS_VERSION
+
+
+_CASES = json.loads(
+    (
+        Path(__file__).resolve().parents[2] / "tests/fixtures/insight_sections_migration.json"
+    ).read_text()
+)
+
+
+@pytest.mark.parametrize("case", _CASES, ids=lambda case: case["name"])
+def test_layout_migration_shared_fixtures(case: dict[str, object]) -> None:
+    stored = [{"key": key, "enabled": enabled} for key, enabled in case["stored"]]
+    expected = [{"key": key, "enabled": enabled} for key, enabled in case["expected"]]
+    sections, version, dirty = migrate_insight_sections_to_current(stored, version=1)
+    assert (sections, version, dirty) == (expected, 2, True)
+    assert migrate_insight_sections_to_current(sections, version=version) == (expected, 2, False)

@@ -62,12 +62,6 @@ const insightSectionUtils = createSectionUtils<InsightSectionKey>({
   lockedKeys: LOCKED_INSIGHT_SECTION_KEYS,
 });
 
-const legacySectionUtils = createSectionUtils<InsightSectionKey>({
-  validKeys: VALID_INSIGHT_SECTION_KEYS,
-  defaults: LEGACY_DEFAULT_INSIGHT_SECTIONS,
-  lockedKeys: LOCKED_INSIGHT_SECTION_KEYS,
-});
-
 export function mergeInsightSections(
   stored: InsightSectionPreference[] | null | undefined
 ): InsightSectionPreference[] {
@@ -123,8 +117,7 @@ export function migrateInsightSectionsToCurrent(
   }
 
   const normalized = normalizeInsightSectionsForSave(stored);
-  const legacyMerged = legacySectionUtils.merge(normalized);
-  if (sameLayout(legacyMerged, LEGACY_DEFAULT_INSIGHT_SECTIONS)) {
+  if (sameLayout(stored, LEGACY_DEFAULT_INSIGHT_SECTIONS)) {
     return {
       sections: DEFAULT_INSIGHT_SECTIONS.map((section) => ({ ...section })),
       version: CURRENT_INSIGHT_SECTIONS_VERSION,
@@ -132,24 +125,9 @@ export function migrateInsightSectionsToCurrent(
     };
   }
 
-  const legacyEnabled = new Map(
-    LEGACY_DEFAULT_INSIGHT_SECTIONS.map((section) => [section.key, section.enabled])
-  );
-  const newDefaults = new Map(
-    DEFAULT_INSIGHT_SECTIONS.map((section) => [section.key, section.enabled])
-  );
-  const shrink = new Set(SHRINK_INSIGHT_SECTION_KEYS);
-  const migrated = legacyMerged.map((section) => {
-    let enabled = section.enabled;
-    if (shrink.has(section.key) && enabled === legacyEnabled.get(section.key)) {
-      enabled = newDefaults.get(section.key) ?? false;
-    }
-    if (insightSectionUtils.isLocked(section.key)) enabled = true;
-    return { key: section.key, enabled };
-  });
-
   return {
-    sections: migrated,
+    // Preserve explicit order and flags. Missing known keys get current defaults.
+    sections: insightSectionUtils.merge(normalized),
     version: CURRENT_INSIGHT_SECTIONS_VERSION,
     dirty: true,
   };

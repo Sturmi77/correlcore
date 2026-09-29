@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import migrationCases from '../../../../../tests/fixtures/insight_sections_migration.json';
 import {
   CURRENT_INSIGHT_SECTIONS_VERSION,
   DEFAULT_INSIGHT_SECTIONS,
@@ -99,7 +100,7 @@ describe('migrateInsightSectionsToCurrent (Phase 6)', () => {
     expect(result.sections).toEqual(DEFAULT_INSIGHT_SECTIONS);
   });
 
-  it('shrinks inherited ons but keeps an explicit off', () => {
+  it('keeps all enabled flags on a customized layout', () => {
     const result = migrateInsightSectionsToCurrent(
       [
         { key: 'stage_header', enabled: true },
@@ -116,7 +117,7 @@ describe('migrateInsightSectionsToCurrent (Phase 6)', () => {
     expect(result.dirty).toBe(true);
     const byKey = new Map(result.sections?.map((section) => [section.key, section.enabled]));
     expect(byKey.get('lag_heatmap')).toBe(false);
-    expect(byKey.get('correlation_matrix')).toBe(false);
+    expect(byKey.get('correlation_matrix')).toBe(true);
     expect(byKey.get('insight_feed')).toBe(true);
   });
 
@@ -126,6 +127,21 @@ describe('migrateInsightSectionsToCurrent (Phase 6)', () => {
       sections: null,
       version: CURRENT_INSIGHT_SECTIONS_VERSION,
       dirty: true,
+    });
+  });
+
+  it.each(migrationCases)('matches shared fixture $name', ({ stored, expected }) => {
+    const asSections = (pairs: (string | boolean)[][]) =>
+      pairs.map(([key, enabled]) => ({
+        key: key as InsightSectionKey,
+        enabled: enabled as boolean,
+      }));
+    const result = migrateInsightSectionsToCurrent(asSections(stored), 1);
+    expect(result).toEqual({ sections: asSections(expected), version: 2, dirty: true });
+    expect(migrateInsightSectionsToCurrent(result.sections, result.version)).toEqual({
+      sections: asSections(expected),
+      version: 2,
+      dirty: false,
     });
   });
 });

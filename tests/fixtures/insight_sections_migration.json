@@ -1,0 +1,135 @@
+[
+  {
+    "name": "exact_default",
+    "stored": [
+      ["stage_header", true],
+      ["correlation_matrix", true],
+      ["insight_feed", true],
+      ["lag_heatmap", true],
+      ["dismissed", true],
+      ["symptom_analytics", true],
+      ["tag_groups", true],
+      ["tag_cooccurrence", true]
+    ],
+    "expected": [
+      ["stage_header", true],
+      ["insight_feed", true],
+      ["correlation_matrix", false],
+      ["lag_heatmap", false],
+      ["dismissed", false],
+      ["symptom_analytics", false],
+      ["tag_groups", false],
+      ["tag_cooccurrence", false]
+    ]
+  },
+  {
+    "name": "reordered_only",
+    "stored": [
+      ["correlation_matrix", true],
+      ["stage_header", true],
+      ["insight_feed", true],
+      ["lag_heatmap", true],
+      ["dismissed", true],
+      ["symptom_analytics", true],
+      ["tag_groups", true],
+      ["tag_cooccurrence", true]
+    ],
+    "expected": [
+      ["correlation_matrix", true],
+      ["stage_header", true],
+      ["insight_feed", true],
+      ["lag_heatmap", true],
+      ["dismissed", true],
+      ["symptom_analytics", true],
+      ["tag_groups", true],
+      ["tag_cooccurrence", true]
+    ]
+  },
+  {
+    "name": "flag_changed",
+    "stored": [
+      ["stage_header", true],
+      ["correlation_matrix", true],
+      ["insight_feed", true],
+      ["lag_heatmap", false],
+      ["dismissed", true],
+      ["symptom_analytics", true],
+      ["tag_groups", true],
+      ["tag_cooccurrence", true]
+    ],
+    "expected": [
+      ["stage_header", true],
+      ["correlation_matrix", true],
+      ["insight_feed", true],
+      ["lag_heatmap", false],
+      ["dismissed", true],
+      ["symptom_analytics", true],
+      ["tag_groups", true],
+      ["tag_cooccurrence", true]
+    ]
+  },
+  {
+    "name": "partial",
+    "stored": [
+      ["tag_groups", true],
+      ["insight_feed", true]
+    ],
+    "expected": [
+      ["tag_groups", true],
+      ["insight_feed", true],
+      ["stage_header", true],
+      ["correlation_matrix", false],
+      ["lag_heatmap", false],
+      ["dismissed", false],
+      ["symptom_analytics", false],
+      ["tag_cooccurrence", false]
+    ]
+  },
+  {
+    "name": "unknown_key",
+    "stored": [
+      ["stage_header", true],
+      ["correlation_matrix", true],
+      ["insight_feed", true],
+      ["lag_heatmap", true],
+      ["dismissed", true],
+      ["symptom_analytics", true],
+      ["tag_groups", true],
+      ["tag_cooccurrence", true],
+      ["future_tool", true]
+    ],
+    "expected": [
+      ["stage_header", true],
+      ["correlation_matrix", true],
+      ["insight_feed", true],
+      ["lag_heatmap", true],
+      ["dismissed", true],
+      ["symptom_analytics", true],
+      ["tag_groups", true],
+      ["tag_cooccurrence", true]
+    ]
+  },
+  {
+    "name": "locked_flag_changed",
+    "stored": [
+      ["stage_header", true],
+      ["correlation_matrix", true],
+      ["insight_feed", false],
+      ["lag_heatmap", true],
+      ["dismissed", true],
+      ["symptom_analytics", true],
+      ["tag_groups", true],
+      ["tag_cooccurrence", true]
+    ],
+    "expected": [
+      ["stage_header", true],
+      ["correlation_matrix", true],
+      ["insight_feed", true],
+      ["lag_heatmap", true],
+      ["dismissed", true],
+      ["symptom_analytics", true],
+      ["tag_groups", true],
+      ["tag_cooccurrence", true]
+    ]
+  }
+]
