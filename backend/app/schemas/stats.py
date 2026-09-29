@@ -246,5 +246,54 @@ class SymptomTagCooccurrenceResponse(BaseModel):
     end_date: date_type
     min_count: int = Field(ge=1)
     cells: list[SymptomTagCooccurrenceCell] = Field(default_factory=list)
+    window_too_short: bool = False
+    analytics_disabled: bool = False
+    observed_days: int = 0
     analysis_status: CooccurrenceAnalysisStatus = "ok"
     analysis_limit: CooccurrenceAnalysisLimit | None = None
+
+
+class TagClusterMember(BaseModel):
+    kind: Literal["tag", "symptom"]
+    signal_id: uuid.UUID
+    slug: str
+    name: str
+    icon: str | None = None
+    category: str | None = None
+    color: str | None = None
+
+
+class TagClusterGroup(BaseModel):
+    cluster_id: int = Field(ge=1)
+    label: str
+    tags: list[TagCooccurrenceTagRef] = Field(default_factory=list)
+    members: list[TagClusterMember] = Field(default_factory=list)
+    cluster_kind: Literal["tags_only", "mixed"] = "tags_only"
+    strength: float = Field(ge=0, le=1)
+
+
+TagClusterMaturity = Literal["early", "provisional", "robust"]
+TagClusterMode = Literal["pair", "kmeans"]
+
+
+class TagClustersResponse(BaseModel):
+    status: Literal["ok", "insufficient_data"]
+    entry_count: int = Field(ge=0)
+    active_tag_count: int = Field(ge=0)
+    active_signal_count: int = Field(ge=0)
+    window_days: int = Field(ge=1)
+    k: int | None = Field(default=None, ge=1)
+    reason: str | None = None
+    cluster_kind: Literal["tags_only", "mixed"] = "tags_only"
+    cluster_maturity: TagClusterMaturity | None = None
+    cluster_mode: TagClusterMode | None = None
+    entries_until_robust: int | None = Field(default=None, ge=0)
+    silhouette_score: float | None = None
+    clusters: list[TagClusterGroup] = Field(default_factory=list)
+    # Transparency (#706): how many groups are shown after the strength floor +
+    # display cap, how many active signals ended up in no shown group, and the
+    # sample-size-aware floor that was applied (so clients can derive strength
+    # bands without duplicating the calibrated constants).
+    shown_cluster_count: int = Field(default=0, ge=0)
+    omitted_signal_count: int = Field(default=0, ge=0)
+    strength_floor: float = Field(default=0.0, ge=0, le=1)

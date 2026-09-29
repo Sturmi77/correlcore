@@ -56,3 +56,203 @@
   $: trendDates = heatmap ? trendDatesForHeatmap(heatmap.start_date, heatmap.end_date) : [];
   $: showCooccurrencePanel =
     canShowSymptomCooccurrence(phase) &&
+    (cooccurrenceLoading || cooccurrenceError || cooccurrence !== null);
+</script>
+
+<section class="symptom-analytics" aria-labelledby="symptom-analytics-heading">
+  <header class="symptom-analytics__header">
+    <div>
+      <h2 id="symptom-analytics-heading">{$_('insights.symptoms.heading')}</h2>
+      <p>{$_('insights.symptoms.body')}</p>
+    </div>
+  </header>
+
+  <div class="symptom-analytics__heatmap-shell">
+    <ComparisonHeatmap
+      tagHeatmap={null}
+      symptomHeatmap={heatmap}
+      showTags={false}
+      showSymptoms={true}
+      {loading}
+      {dates}
+      {axisLayout}
+      {pruneSparseAxes}
+      headingKey="insights.symptoms.heatmap_heading"
+      emptyKey="insights.symptoms.empty"
+      on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+    />
+  </div>
+
+  {#if heatmap && visibleCalendars.length > 0}
+    <section class="symptom-analytics__subsection" aria-labelledby="symptom-calendar-heading">
+      <header class="symptom-analytics__subheader">
+        <h3 id="symptom-calendar-heading">{$_('insights.symptoms.calendar_heading')}</h3>
+        {#if eligibleSymptoms.length > SYMPTOM_CALENDAR_MAX_VISIBLE}
+          <button
+            type="button"
+            class="symptom-analytics__toggle"
+            on:click={() => (showAllCalendars = !showAllCalendars)}
+          >
+            {showAllCalendars
+              ? $_('insights.symptoms.show_fewer')
+              : $_('insights.symptoms.show_all_calendars')}
+          </button>
+        {/if}
+      </header>
+      <div class="symptom-analytics__stack">
+        {#each visibleCalendars as symptom (symptom.symptom_id)}
+          <SymptomCalendarHeatmap
+            {symptom}
+            startDate={heatmap.start_date}
+            endDate={heatmap.end_date}
+            {phase}
+            on:selectDate={(event) => dispatch('selectDate', { date: event.detail.date })}
+          />
+        {/each}
+      </div>
+    </section>
+  {/if}
+
+  {#if heatmap && visibleTrendSymptoms.length > 0}
+    <section class="symptom-analytics__subsection" aria-labelledby="symptom-trend-heading">
+      <header class="symptom-analytics__subheader">
+        <h3 id="symptom-trend-heading">{$_('insights.symptoms.trend_heading')}</h3>
+        {#if eligibleSymptoms.length > SYMPTOM_TREND_MAX_VISIBLE}
+          <button
+            type="button"
+            class="symptom-analytics__toggle"
+            on:click={() => (showAllTrends = !showAllTrends)}
+          >
+            {showAllTrends
+              ? $_('insights.symptoms.show_fewer')
+              : $_('insights.symptoms.show_all_trends')}
+          </button>
+        {/if}
+      </header>
+      <div class="symptom-analytics__stack">
+        {#each visibleTrendSymptoms as symptom (symptom.symptom_id)}
+          <SymptomTrendOverlay
+            symptomName={symptom.name}
+            data={buildSymptomTrendSeries(trendDates, symptomPresenceByDate(symptom), moodByDate)}
+            {phase}
+          />
+        {/each}
+      </div>
+    </section>
+  {/if}
+
+  {#if showCooccurrencePanel}
+    <section class="symptom-analytics__subsection" aria-labelledby="symptom-cooccurrence-heading">
+      <header class="symptom-analytics__subheader">
+        <h3 id="symptom-cooccurrence-heading">{$_('insights.symptoms.cooccurrence_heading')}</h3>
+        {#if phase === 'robust'}
+          <button
+            type="button"
+            class="symptom-analytics__toggle"
+            on:click={() =>
+              (cooccurrenceSortMode =
+                cooccurrenceSortMode === 'alphabetical' ? 'clustered' : 'alphabetical')}
+          >
+            {cooccurrenceSortMode === 'clustered'
+              ? $_('insights.symptoms.cooccurrence_sort_alphabetical')
+              : $_('insights.symptoms.cooccurrence_sort_clustered')}
+          </button>
+        {/if}
+      </header>
+      <SymptomCooccurrenceHeatmap
+        data={cooccurrence}
+        loading={cooccurrenceLoading}
+        error={cooccurrenceError}
+        {phase}
+        sortMode={cooccurrenceSortMode}
+        hideHeading={true}
+        {pruneSparseAxes}
+        on:selectCell={(event) => dispatch('selectCell', event.detail)}
+      />
+    </section>
+  {/if}
+</section>
+
+<style>
+  .symptom-analytics {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-chart);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-chart-bg);
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .symptom-analytics__heatmap-shell {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+
+  .symptom-analytics__subsection {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .symptom-analytics__header,
+  .symptom-analytics__subheader {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    align-items: baseline;
+  }
+
+  .symptom-analytics__header h2,
+  .symptom-analytics__header p,
+  .symptom-analytics__subheader h3 {
+    margin: 0;
+  }
+
+  .symptom-analytics__header h2 {
+    font-size: var(--text-lg);
+  }
+
+  .symptom-analytics__header p {
+    margin-top: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .symptom-analytics__stack {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .symptom-analytics__toggle {
+    border: none;
+    background: none;
+    color: var(--color-primary);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .symptom-analytics__toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 480px) {
+    .symptom-analytics {
+      padding: var(--space-3);
+      gap: var(--space-3);
+    }
+
+    .symptom-analytics__subheader {
+      flex-wrap: wrap;
+      align-items: center;
+    }
+  }
+</style>

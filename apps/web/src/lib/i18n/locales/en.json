@@ -1540,8 +1540,814 @@
       "cooccurrence_lift_legend": "Lift values; * means FDR-adjusted p < 0.10.",
       "cooccurrence_count_legend": "Shared entry counts until enough data is available for lift.",
       "cooccurrence_empty": "No stable symptom-tag patterns in this range yet.",
+      "cooccurrence_load_error": "Symptom and tag patterns could not be loaded. Try again.",
+      "cooccurrence_analytics_disabled": "Analytics are disabled for this account.",
+      "cooccurrence_window_too_short": "This period has too few logged days to compute symptom and tag pairs.",
       "cooccurrence_status_limit_exceeded": "This range contains too many signals to analyse safely. Choose a shorter range or hide unused tags.",
       "cooccurrence_status_insufficient_data": "This range contains too few logged days to compute symptom-tag patterns. Choose a longer range.",
       "cooccurrence_status_busy": "An analysis is already running. Try again shortly.",
       "cooccurrence_status_timeout": "The analysis reached its time limit. Choose a shorter range and try again.",
       "cooccurrence_status_unavailable": "The analysis is temporarily unavailable. Try again shortly.",
+      "cooccurrence_sort_clustered": "Cluster by similarity",
+      "cooccurrence_sort_alphabetical": "Sort A–Z",
+      "cooccurrence_confounder_note": "Dashed cells may reflect calendar or work-context overlap rather than a direct link.",
+      "cooccurrence_cell_base_rate": "{symptom} + {tag}: lift {lift}, {co} of {symptomDays} symptom days and {tagDays} tag days",
+      "cooccurrence_density_label": "Heatmap density",
+      "cooccurrence_density_showing": "{visibleRows}×{visibleCols} / {totalRows}×{totalCols}",
+      "cooccurrence_density_decrease": "Show fewer overlapping rows and columns",
+      "cooccurrence_density_increase": "Show more overlapping rows and columns",
+      "detail_eyebrow": "Symptom × tag pattern",
+      "detail_lift": "Lift",
+      "detail_phi": "Phi",
+      "detail_jaccard": "Jaccard",
+      "detail_co_count": "Shared days",
+      "detail_symptom_days": "Symptom days",
+      "detail_tag_days": "Tag days",
+      "detail_total_days": "Days in range",
+      "detail_base_rate": "{co} shared days out of {symptom} symptom days and {tag} tag days.",
+      "detail_methodology": "How we calculate this",
+      "calendar_heading": "Symptom calendar",
+      "calendar_occurrences": "{count} occurrences in this range",
+      "calendar_correlation_note": "Correlations for this symptom appear in the patterns below.",
+      "calendar_aria": "Symptom calendar for {name}",
+      "calendar_cell_aria": "{date}, {name}: {state}",
+      "calendar_present": "present",
+      "calendar_absent": "absent",
+      "calendar_legend": "Calendar legend",
+      "calendar_how_to_read": "Each cell is one day. Darker cells mean the symptom was logged that day; tap a cell to review entries.",
+      "trend_heading": "Symptom and mood trends",
+      "trend_subtitle": "Rolling {window}-day view across the last {days} days",
+      "trend_aria": "Symptom frequency and mood trend for {name}",
+      "trend_freq": "Freq",
+      "trend_mood": "Mood",
+      "trend_empty": "Not enough overlapping entries to chart this symptom yet.",
+      "show_all_calendars": "Show all calendars",
+      "show_all_trends": "Show all trends",
+      "show_fewer": "Show fewer"
+    },
+    "tag_groups": {
+      "heading": "Tag groups",
+      "card_title": "Around {name}",
+      "subtitle": "Tags that often appear together",
+      "subtitle_mixed": "Signals that often appear together",
+      "subtitle_pair": "Tags that often appear together — first co-occurrence pairs from your entries",
+      "subtitle_kmeans_provisional": "Preliminary tag groups — patterns may still change with more entries",
+      "loading": "Loading tag groups",
+      "empty": "No tag groups available yet. Keep logging entries with tags.",
+      "insufficient_below_pair": "{entries} entries tracked · {remaining} more until first co-occurrence patterns ({target} days)",
+      "insufficient_below_provisional": "{entries} entries tracked · {remaining} more until preliminary groups ({target} days)",
+      "insufficient_below_robust": "{entries} entries tracked · {remaining} more until full tag groups ({target} days)",
+      "insufficient_tags": "{entries} entries tracked · need at least {target} active tags or symptoms (currently {tags})",
+      "insufficient_generic": "{entries} entries and {tags} active signals are not enough for tag groups yet.",
+      "strength": "{value}% shared pattern",
+      "strength_band": {
+        "weak": "loosely linked",
+        "medium": "linked",
+        "strong": "strongly linked"
+      },
+      "strength_detail": "{value}% of days shared",
+      "omitted": "Showing the {shown} strongest groups. {omitted} more tags aren't in a clear group yet.",
+      "badge": {
+        "early": "First patterns · {entries} entries",
+        "early_tooltip": "Based on co-occurring tag pairs. Patterns may change as more entries are added.",
+        "provisional": "Provisional · {entries} entries",
+        "provisional_tooltip": "Preliminary grouping from limited history. Patterns may shift with more data."
+      }
+    },
+    "confidence_label": {
+      "early_signal": "Early signal",
+      "emerging_pattern": "Emerging pattern",
+      "moderate_finding": "Moderate finding",
+      "strong_finding": "Strong finding",
+      "very_strong_finding": "Very strong finding"
+    },
+    "context": {
+      "badge": "Context",
+      "fallback": "Context",
+      "weekday": "Weekday",
+      "work_context": "Work context"
+    },
+    "card": {
+      "expand": "Show details",
+      "collapse": "Hide details",
+      "expand_aria": "Expand details for this insight",
+      "collapse_aria": "Collapse details for this insight",
+      "dismiss_aria": "Hide insight \"{title}\"",
+      "disclaimer_link": "What does this mean?",
+      "sample_meta": "Based on {n} entries \u00b7 {days} days",
+      "freq_split": "avg {withAvg} on {withN} days with {tag} · avg {withoutAvg} on {withoutN} days without",
+      "meta_r": "r (Pearson)",
+      "meta_rho": "\u03c1 (Spearman)",
+      "meta_p": "p-value",
+      "meta_confidence": "Confidence",
+      "meta_effect": "Effect size",
+      "meta_type": "Method",
+      "meta_sample": "Entries",
+      "export_csv": "Export data (CSV)",
+      "loading_aria": "Loading insight",
+      "error_body": "This insight could not be loaded.",
+      "retry": "Retry",
+      "inactive_tag_badge": "Tag inactive",
+      "inactive_tag_hint": "This tag is no longer used for new calculations.",
+      "cluster_features": "Multiple factors",
+      "lag_days_unit": "days",
+      "lag_profile_label": "Association by time offset (days)",
+      "lag_profile_aria": "Association strength by time offset; strongest at +{days} days ({direction})",
+      "lag_profile_unmeasured": "+{days} days: too few day pairs — not measured",
+      "lag_peak_marker": "Strongest at +{days} days ({direction})",
+      "lag_profile_direction_positive": "same direction",
+      "lag_profile_direction_negative": "opposite direction",
+      "lag_profile_direction_mixed": "mixed directions",
+      "null_badge": "No pattern",
+      "verify_action": "Check this association →",
+      "with_without_aria": "Distribution with and without {subject}",
+      "with_without_title": "With and without {subject}",
+      "with_without_subtitle": "How the days spread — not only the average",
+      "with_without_freq": "Good on {withGood} of {withN} days with {subject} · good on {withoutGood} of {withoutN} days without",
+      "with_label": "with {subject} · {n} days",
+      "without_label": "without · {n} days",
+      "overlap_low": "Overlap: low",
+      "overlap_high": "Overlap: high",
+      "overlap_unknown": "Overlap: not yet clear",
+      "mean_shift": "Shift: {shift} points"
+    },
+    "signal": {
+      "title_fallback": "Signal detail",
+      "subtitle": "One hypothesis · last 90 days",
+      "back": "Insights",
+      "loading": "Loading signal…",
+      "error": "This signal could not be loaded.",
+      "non_causal": "An association in your entries — not a cause.",
+      "zeitversatz_badge": "Time offset (not same calendar day)",
+      "same_day_badge": "Same calendar day",
+      "verification_unsupported": "This composite analysis has no day-level series \u2014 the numbers above come straight from the analysis.",
+      "lag_heading": "Association by delay",
+      "lag_hint": "Bars show correlation strength for each delay in days. The highlighted bar is the selected peak — not a forecast.",
+      "lag_freq": "Days high in {feature}: good days on {highGood} of {highN} · days low in {feature}: {lowGood} of {lowN} (outcome +{days} days).",
+      "lag_good_rule_gte": "“Good” here means: {target} {threshold} or higher.",
+      "lag_good_rule_lte": "“Good” here means: {target} {threshold} or lower.",
+      "lag_unmeasured_note": "Empty columns: too few day pairs at that delay — not measured, not “no association”.",
+      "lag_feature_fallback": "feature",
+      "same_situation_show": "Same work situation ▾",
+      "same_situation_hide": "Same work situation ▴",
+      "same_work_context_freq": "Also on days with the same work situation ({context}): good on {withGood} of {withN} with {subject} · {withoutGood} of {withoutN} without",
+      "same_situation_stays": "The association still shows up inside that situation — still not a cause.",
+      "same_situation_gone": "Inside that situation the days look similar — a valid non-result for this check.",
+      "course_heading": "Course around these days",
+      "means": "Average with: {withMean} ({withN} days) · without: {withoutMean} ({withoutN} days)",
+      "scatter_show": "Show scatter plot ▾",
+      "scatter_hide": "Hide scatter plot ▴",
+      "scatter_aria": "Scatter of values with and without {subject}",
+      "scatter_with": "with",
+      "scatter_without": "without",
+      "scatter_privacy": "Individual days stay on this device account. Avoid sharing screenshots that show rare patterns.",
+      "pin_trends": "Open in Trends →",
+      "remember_report": "Remember for report",
+      "next_heading": "What next?",
+      "next_body": "No pattern is still an answer. You can keep logging, compare another window, or look at a different question.",
+      "next_log": "Log today",
+      "next_compare": "Compare in Trends",
+      "next_other": "Other insights"
+    },
+    "belastung": {
+      "aria": "Load and recovery summary",
+      "title": "Load pattern of the last 14 days",
+      "subtitle": "Optional area · enabled in Settings",
+      "heuristic_badge": "Hint, not a score",
+      "comparison": "Compared with the previous two weeks, your entries show {changes}. These are separate changes in daily averages or frequencies; they do not establish that the signals occurred together.",
+      "change_stress": "higher average stress",
+      "change_energy": "lower average energy",
+      "change_fatigue": "more fatigue days",
+      "insufficient": "There are not enough comparable entries to describe a change in load.",
+      "freq": "Fatigue on {fatigueRecent} of {recentN} days · before on {fatiguePrior} of {priorN}. Recovery days: {recoveryRecent} of {recentN} · before {recoveryPrior} of {priorN}.",
+      "cta_intensity": "Check work intensity →",
+      "cta_sleep": "Check sleep → next day →",
+      "disclaimer": "This is not a medical assessment or diagnosis. CorrelCore shows patterns in your own entries. If load keeps affecting you, talk to a clinician. These data stay with you — never with an employer.",
+      "analytics_off": "Turn analysis back on in Settings to refresh this summary."
+    },
+    "lag_heatmap": {
+      "title": "Time-offset patterns",
+      "subtitle": "Association strength per pair and time offset (1–7 days). Not a causal claim.",
+      "aria": "Time-offset association heatmap: rows are pairs, columns are days of time offset",
+      "row_summary": "{pair}: strongest at +{lag} days (r {r})",
+      "legend_neg": "opposite",
+      "legend_pos": "aligned"
+    },
+    "disclaimer": {
+      "modal_title": "What does this insight mean?",
+      "close_aria": "Close explanation",
+      "got_it": "Got it",
+      "section1_title": "What is a correlation?",
+      "section1_body": "CorrelCore measures statistical correlations \u2014 patterns that appear together in your data. A correlation does not mean one thing causes the other.",
+      "section2_title": "What does the confidence bar mean?",
+      "section2_body": "The bar shows how consistent and reliable the pattern is, based on the number of entries and the strength of the association. More data means higher confidence.",
+      "section3_title": "What is the minimum data requirement?",
+      "section3_body": "CorrelCore needs at least 30 entries with both variables present to show an insight. The \u201cBased on N entries\u201d subtext shows the exact sample size.",
+      "section4_title": "Which statistical method is used?",
+      "section4_body": "Depending on the data type: Spearman rank correlation (ordinal \u00d7 ordinal), point-biserial correlation (binary \u00d7 continuous), or Pearson r (continuous \u00d7 continuous). The expanded card shows the exact method and coefficient.",
+      "section5_title": "How should I read symptom Lift values?",
+      "section5_body": "Lift compares how often a symptom and tag appear together with what you would expect if they were independent. Lift = 1 means no unusual overlap, Lift > 1 means they co-occur more often than expected, and Lift < 1 means less often. An asterisk (*) marks pairs that remain notable after false-discovery-rate correction."
+    },
+    "energy_mood_positive": "Your energy level and mood show a clear association (r={r}, based on {n} days). On higher-energy days, your mood tends to be higher in your data.",
+    "energy_mood_negative": "Your energy level and mood show an unexpected association (r={r}, based on {n} days). Higher energy tends to line up with lower mood in your data.",
+    "stress_mood": "Stress and mood show a clear association (r={r}, based on {n} days). This is a data pattern, not a medical statement.",
+    "weekday_confounded_note": "Note: this pattern occurs primarily on specific weekdays.",
+    "work_context_confounded_note": "Note: this pattern may mainly reflect your work situation.",
+    "calendar_context_confounded_note": "Note: this pattern may mainly reflect calendar or work-context overlap.",
+    "changepoint": {
+      "series_mood_score": "mood",
+      "series_stress": "stress",
+      "series_energy": "energy",
+      "direction_higher": "higher",
+      "direction_lower": "lower",
+      "direction_unchanged": "unchanged",
+      "statement": "Level shift in {series} between {date} and {shiftDate}: average moved from {before} to {after} ({direction}). Not a forecast.",
+      "statement_stress": "Raw stress between {date} and {shiftDate}: average moved from {before} to {after} ({direction}). On the chart's positive-oriented scale, that is {displayBefore} to {displayAfter}. Not a forecast.",
+      "marker_label": "Level shift · {series}",
+      "marker_description": "{before} → {after} (around {date})"
+    },
+    "note_evidence": {
+      "soft_prompt": "Add notes to better understand patterns in your data.",
+      "lead_signal": "On days with note signal \"{signal}\", your mood averaged {delta} points different from your note-day average.",
+      "meta": "Basis: {days} days · Confidence: {confidence}",
+      "examples_prefix": "Examples:",
+      "confidence_low": "Low",
+      "confidence_medium": "Medium",
+      "confidence_high": "High"
+    }
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "continue": "Continue",
+    "finish": "Done",
+    "skip_question": "Skip this question",
+    "guided": {
+      "title": "Set up your tracking",
+      "intro": "Choose a few tags that describe your usual context. You can change everything later.",
+      "progress": "Onboarding progress",
+      "tags_title": "Pick useful tags",
+      "tags_body": "Start with a small set. Free-text tags are always available.",
+      "habit_hint": "Tags like Walk or Meditation can be marked as build or reduce habits in the next step or later under Settings → Tags to track adherence in Trends.",
+      "custom": "Custom tag",
+      "custom_invalid": "Please choose a slightly longer name (at least 2 letters or digits).",
+      "add_tag": "Add tag",
+      "summary_title": "Ready to start",
+      "summary_body": "{count} tags selected.",
+      "start": "Start tracking",
+      "back": "Back"
+    },
+    "goals": {
+      "title": "Set goals",
+      "intro": "Optional: turn a picked tag into a habit by setting a goal — build or reduce, with a weekly frequency.",
+      "optional_hint": "All optional. Without a goal it stays a plain tag; you can change goals anytime in Settings. Offline, only tags are saved — set goals afterwards in Settings.",
+      "type_label": "Goal for {name}",
+      "frequency_label": "per week",
+      "frequency_aria": "Weekly frequency for {name}"
+    },
+    "concepts": {
+      "title": "Tag, habit or symptom?",
+      "intro": "You attach all three to a daily entry — CorrelCore analyses them differently.",
+      "tag_term": "Tag",
+      "tag_body": "A context label for a day — e.g. Walk, Alcohol, Meeting. No target, no schedule. CorrelCore looks at what co-occurs and how it relates to your metrics.",
+      "habit_term": "Habit",
+      "habit_body": "A behavior you want to build or reduce — with a target frequency. CorrelCore shows your adherence over time and how it relates to your metrics. A habit is really just a tag with a goal — you can set that during onboarding or later in Settings.",
+      "symptom_term": "Symptom",
+      "symptom_body": "Something you experience physically or mentally — e.g. headache, rumination. CorrelCore looks for associations with mood and energy.",
+      "cycle_term": "Cycle day",
+      "cycle_body": "Optional: log your cycle day (1–35). CorrelCore treats it like a metric and looks for links with mood, sleep and more.",
+      "info_label": "What do tag, habit and symptom mean?",
+      "info_close": "Close"
+    },
+    "cycle_step": {
+      "title": "Cycle tracking",
+      "body": "Optional: log your cycle day (1–35). CorrelCore treats it like a metric and looks for links with mood, sleep and more. No prediction, no medical advice.",
+      "tag_hint": "The cycle also has its own tags like Cycle, Period or PMS that you can pick in the previous step.",
+      "toggle_label": "Enable cycle function",
+      "toggle_hint_on": "On: the cycle-day field appears in every daily entry.",
+      "toggle_hint_off": "Off: no cycle-day field. You can re-enable the function later under Settings."
+    },
+    "retro": {
+      "title": "How were the last few days?",
+      "body": "Optional: rough memory is fine. It helps CorrelCore calibrate early patterns faster."
+    },
+    "profile": {
+      "title": "What should CorrelCore look for?",
+      "body": "Every question is optional. The examples after this are general research notes, not personal insights.",
+      "sleep": "How many hours do you typically sleep?",
+      "work": "How do you typically work?",
+      "work_office": "Office",
+      "work_hybrid": "Hybrid",
+      "work_remote": "Remote",
+      "other": "Other",
+      "sport": "How often do you exercise?",
+      "sport_rarely": "Rarely",
+      "sport_daily": "Daily",
+      "curiosity": "What are you most curious about?",
+      "curiosity_work": "Work-life balance",
+      "curiosity_sleep": "Energy and sleep",
+      "curiosity_sport": "Habits and sport",
+      "curiosity_wellbeing": "General wellbeing",
+      "show_previews": "Show examples",
+      "preview_heading": "What CorrelCore can later check in your data",
+      "preview_label": "General research finding"
+    },
+    "maturity_intro": {
+      "title": "How your insights grow",
+      "intro": "CorrelCore finds patterns in your data over time. The first days build your foundation — insights grow with you.",
+      "tag_hint": "Next, pick tags you will reuse often — later patterns need that repetition.",
+      "cta": "Continue to tags",
+      "close": "Close",
+      "footer": "Statements stay descriptive, not a diagnosis.",
+      "thumb_alt": "Preview of insights in phase {n}",
+      "collecting": {
+        "expectation": "We are building your foundation. No patterns yet.",
+        "example": "Entry history and counts — no insight cards.",
+        "not_yet": "No insight cards, no correlations"
+      },
+      "early_patterns": {
+        "expectation": "Early hints appear. Observe; do not conclude.",
+        "example": "“Mondays currently line up with lower mood than your overall average.”",
+        "not_yet": "No tag↔mood correlations"
+      },
+      "provisional": {
+        "expectation": "Relationships emerge — with explicit uncertainty.",
+        "example": "“Days tagged Walk currently line up with higher mood scores in your data.”",
+        "not_yet": "Not yet “confirmed” or “stable”"
+      },
+      "robust": {
+        "expectation": "More stable patterns you can act on.",
+        "example": "Insight card labeled “Stable · n entries”.",
+        "not_yet": "Richer patterns need more days"
+      }
+    }
+  },
+  "error": {
+    "title": "Error",
+    "generic": "Something went wrong.",
+    "network": "Could not reach the server. Check your connection and API URL.",
+    "network_capacitor": "API request failed. Check the API URL (must end with …/api/v1). For http:// selfhost the app must allow mixed content (WebView is https://localhost) — Tailscale alone is not enough.",
+    "upstream": "The API is temporarily unreachable. Try again shortly.",
+    "server": "The server reported an error. Please try again later.",
+    "validation": "The request was invalid. Please check your input.",
+    "session_not_persisted": "Your request succeeded, but the browser could not save the session. Make sure the site is opened over HTTPS and that cookies are allowed for this site, then sign in again.",
+    "not_found": "Page not found.",
+    "back_home": "Back to home"
+  },
+  "status": {
+    "title": "System status",
+    "checking": "Checking...",
+    "api_error": "Could not reach the API:",
+    "retry": "Retry",
+    "components": "Components",
+    "auto_refresh": "Auto-refreshes every 30 s",
+    "unknown_error": "Unknown error"
+  },
+  "dev": {
+    "title": "Developer View",
+    "eyebrow": "Runtime diagnostics",
+    "subtitle": "Verify the deployed GitHub commit, image tag and optional OCI digest.",
+    "tabs": {
+      "aria": "Developer view sections",
+      "version": "Version",
+      "runtime": "Runtime",
+      "workers": "Workers",
+      "db": "Database",
+      "devviz": "Dev visualization"
+    },
+    "backend_unavailable_title": "Backend developer endpoint not available.",
+    "backend_unavailable_body": "DEV_VIEW_ENABLED is false on the server. Runtime diagnostics are unavailable in this environment. The Developer View was opened because you enabled the manual toggle in Settings.",
+    "back_settings": "Back to Settings",
+    "loading": "Loading runtime details...",
+    "retry": "Retry",
+    "error_load": "Developer information could not be loaded.",
+    "version_identity": "Version identity",
+    "github_commit": "GitHub Commit",
+    "copy_commit": "Copy GitHub commit",
+    "container_image": "Container Image",
+    "refresh": "Refresh developer information",
+    "image_tag": "Image Tag",
+    "image_digest": "Image Digest",
+    "digest_missing": "Digest not provided",
+    "copy": "Copy",
+    "copied": "Copied",
+    "image_hash": "Image Hash",
+    "build_time": "Build Time",
+    "not_provided": "Not provided",
+    "runtime": "Runtime",
+    "db_migration": "DB Migration",
+    "unavailable": "Unavailable",
+    "uptime": "Uptime",
+    "infrastructure": "Infrastructure",
+    "health": "Health",
+    "ready": "ready",
+    "not_ready": "not ready",
+    "connected": "connected",
+    "down": "down",
+    "services": "Stack services",
+    "services_hint": "Reachability from the API process. This is not Docker HEALTHCHECK status (no Docker socket in the API container).",
+    "component_status": {
+      "ok": "ok",
+      "degraded": "degraded",
+      "down": "down",
+      "unavailable": "unavailable"
+    },
+    "containers": "Docker containers",
+    "containers_hint": "Engine state when reachable (TCP proxy or host docker CLI). Clean migrate exits are listed as none.",
+    "container_issue": {
+      "none": "ok",
+      "unhealthy": "unhealthy",
+      "stopped": "stopped"
+    },
+    "db_pool_size": "DB Pool Size",
+    "db_checked_out": "DB Checked Out",
+    "na": "n/a",
+    "auto_refresh": "Auto-refreshes every 30 seconds. Last loaded from",
+    "commit_copied": "Commit copied.",
+    "action_failed": "Action failed.",
+    "workers": {
+      "title": "Workers / Insights",
+      "subtitle": "Validate GUI insight surfaces against the last pipeline runs for this environment.",
+      "card_daily_bundle": "Last daily bundle",
+      "card_fleet_insights": "Last fleet insights",
+      "card_user_insights": "Last run for you",
+      "status": "Status",
+      "trigger": "Trigger",
+      "finished": "When",
+      "duration": "Duration",
+      "running": "running…",
+      "result": "Result",
+      "none": "No runs recorded yet.",
+      "history": "Recent runs",
+      "when": "When",
+      "kind": "Kind",
+      "regenerate_me": "Regenerate my insights",
+      "run_fleet": "Run fleet insights",
+      "busy": "Working…",
+      "regenerate_done": "Regenerated {count} insights for your account.",
+      "fleet_done": "Fleet run generated {count} insights."
+    },
+    "db": {
+      "title": "Database backup",
+      "subtitle": "Local development dumps in {dir}. Not for production ops (ops_ready=false).",
+      "unavailable": "Database dump/restore is only available when APP_ENV=development.",
+      "encryption_note": "Usable restores require the same ENCRYPTION_KEY that produced the dump.",
+      "empty": "No dumps yet.",
+      "create": "Create dump",
+      "restore": "Restore",
+      "restore_confirm": "Restore {name}? This overwrites the local development database."
+    }
+  },
+  "auth": {
+    "common": {
+      "email_label": "Email address",
+      "email_placeholder": "you@example.com",
+      "password_label": "Password",
+      "password_placeholder": "At least 12 characters",
+      "display_name_label": "Display name (optional)",
+      "display_name_placeholder": "What should we call you?",
+      "submit_busy": "Please wait\u2026",
+      "back_to_login": "Back to sign in"
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Welcome back.",
+      "submit": "Sign in",
+      "no_account": "No account yet?",
+      "register_link": "Create one now",
+      "forgot_password": "Forgot password?",
+      "remember_me": "Stay signed in",
+      "remember_me_hint": "Keep me signed in on this device until I log out.",
+      "error_invalid": "Email or password is incorrect.",
+      "error_unverified": "Please verify your email address first.",
+      "error_rate_limit": "Too many attempts. Please try again in a minute.",
+      "api_base_toggle": "API server",
+      "api_base_hint": "Self-hosted Android builds need the full API URL (ending with /api/v1) before sign-in.",
+      "error_api_base_required": "Enter your API server URL below (must end with /api/v1) before signing in."
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Privacy-first correlation analysis for your wellbeing.",
+      "submit": "Sign up",
+      "have_account": "Already have an account?",
+      "login_link": "Sign in here",
+      "password_hint": "At least 12 characters, one letter and one digit.",
+      "strength_empty": "",
+      "strength_very_weak": "Very weak",
+      "strength_weak": "Weak",
+      "strength_good": "Good",
+      "strength_strong": "Strong",
+      "success_redirect": "Account created \u2014 redirecting\u2026",
+      "error_duplicate": "This email address is already registered.",
+      "error_weak_password": "The password does not meet the minimum requirements.",
+      "privacy_note": "By registering you agree to the processing of your health data under GDPR Art. 9(2)(a)."
+    },
+    "check_email": {
+      "title": "Check your inbox",
+      "body": "We have sent a verification email to {email}. Please click the link in that email to activate your account.",
+      "ttl_hint": "The link is valid for 24 hours.",
+      "spam_hint": "Mail not in your inbox? Please check the spam folder.",
+      "resend_link": "Resend verification email",
+      "open_mail_app": "Open mail app"
+    },
+    "verify": {
+      "title": "Verify email address",
+      "body": "Click the button below to confirm your email address and activate your account.",
+      "submit": "Verify email",
+      "success_title": "Email verified",
+      "success_body": "Your account is active. Taking you to your first entry…",
+      "error_title": "Verification failed",
+      "error_body": "The link is invalid or has expired. Please request a new verification email.",
+      "session_error_title": "Email verified — session not saved",
+      "session_error_body": "Your email is confirmed, but the browser could not save the session cookie. Sign in with your email and password. Make sure the site is opened over HTTPS and that cookies are allowed.",
+      "missing_token": "No verification token found in the URL.",
+      "go_to_login": "Sign in",
+      "go_to_resend": "Request new email"
+    },
+    "resend": {
+      "title": "Resend verification email",
+      "body": "Enter your email address. If a matching unverified account exists, we will send a fresh verification email.",
+      "submit": "Resend email",
+      "success": "If the email is registered and unverified, a new verification mail has been sent.",
+      "error_rate_limit": "Too many requests. Please try again in a minute."
+    },
+    "forgot": {
+      "title": "Forgot password",
+      "body": "Enter your email address. If a matching verified account exists, we will send a password reset link.",
+      "submit": "Send reset link",
+      "success": "If the email is registered, a password reset mail has been sent.",
+      "error_rate_limit": "Too many requests. Please try again in a minute."
+    },
+    "reset": {
+      "title": "Set a new password",
+      "body": "Choose a new password for your account. The link from your email is single-use.",
+      "submit": "Update password",
+      "password_confirm": "Confirm password",
+      "password_confirm_placeholder": "Repeat your new password",
+      "password_mismatch": "Passwords do not match.",
+      "error_title": "Reset failed",
+      "error_invalid": "The link is invalid or has expired. Please request a new reset email.",
+      "error_weak_password": "The password does not meet the minimum requirements.",
+      "missing_token": "No reset token found in the URL.",
+      "go_to_forgot": "Request new reset email"
+    },
+    "logout": {
+      "label": "Sign out"
+    }
+  },
+  "health_connect": {
+    "page_title": "Health Connect",
+    "page_subtitle": "How CorrelCore reads sleep and heart-rate data on Android",
+    "intro": "On Android, CorrelCore can read a limited set of data from Health Connect — the on-device store where apps like Fitbit, Samsung Health or Garmin can write your metrics. Nothing is read without your explicit consent.",
+    "data": {
+      "sleep": "Sleep sessions (duration and timing)",
+      "heart_rate": "Heart-rate records"
+    },
+    "data_note": "These are the only two data types CorrelCore requests. Movement profiles, location and steps are never read — the limit is enforced in the app, not just here.",
+    "sections": {
+      "what": {
+        "heading": "What is read",
+        "body": "Only sleep sessions and heart-rate records, and only for the time ranges you import. CorrelCore uses them to enrich your own correlations (for example sleep versus mood)."
+      },
+      "why": {
+        "heading": "Why",
+        "body": "So wearable-recorded sleep and heart rate can inform your insights without re-typing them by hand. This is analysis of your own data — never a diagnosis."
+      },
+      "ondevice": {
+        "heading": "Stays on your device path",
+        "body": "Health Connect is an on-device Android store. Data flows from Health Connect into your CorrelCore instance only; no third-party cloud is involved."
+      },
+      "control": {
+        "heading": "You stay in control",
+        "body": "You grant a one-time consent, then approve the Health Connect permission. You can revoke either at any time in Settings, and deleting your account removes imported data."
+      }
+    },
+    "status": {
+      "android_only": "Health Connect import is only available in the CorrelCore Android app.",
+      "unavailable": "Health Connect is not available on this device. Install or enable it, then return here.",
+      "needs_consent": "Grant the Health Connect consent in Settings first, then come back to connect.",
+      "granted": "Health Connect access is granted. Sleep and heart-rate data can be imported."
+    },
+    "actions": {
+      "grant": "Grant Health Connect access",
+      "sync": "Sync sleep now",
+      "open_settings": "Open Settings",
+      "back": "Back to Settings"
+    },
+    "toggle": {
+      "sleep_sync": "Import sleep from Health Connect",
+      "sleep_sync_hint": "When off, no sleep is imported. Values already imported stay; you can edit or clear them like any manual entry."
+    },
+    "sync": {
+      "ok": "Sleep sync complete.",
+      "no_consent": "Grant the Health Connect consent first.",
+      "unavailable": "Health Connect is not available on this device.",
+      "no_data": "No sleep records found for the last 7 days.",
+      "sync_disabled": "Sleep import is turned off. Turn on the toggle below to sync.",
+      "no_matching_entries": "Sleep data found, but no matching day entries. Log mood entries for those days first — import only fills existing entries.",
+      "already_up_to_date": "Sleep is already set for the matched days (manual or a prior import). Existing values are never overwritten.",
+      "error_network": "Sleep sync failed: server unreachable. Check your connection and API URL.",
+      "error_forbidden": "Sleep sync rejected: Health Connect consent is missing or revoked. Grant it again in Settings.",
+      "error_unauthorized": "Sleep sync rejected: session expired. Please sign in again.",
+      "error_not_found": "Sleep import is not available on this server. Upgrade the instance to v1.2.1 or newer.",
+      "error_server": "Sleep sync failed: server error. Check that migrations 037/038 have been applied.",
+      "error": "Sleep sync failed. Check your connection and try again.",
+      "last_synced": "Last synced: {when}",
+      "summary": "{updated} newly filled · {existing} already set (manual kept) · {missing} without an entry",
+      "days_heading": "Sleep found for these days"
+    }
+  },
+  "privacy": {
+    "page_title": "Privacy policy",
+    "page_subtitle": "How this CorrelCore installation handles your data",
+    "intro": "This policy applies to your use of this CorrelCore instance. For selfhosted deployments, the instance operator is the data controller. Full legal text is also in docs/PRIVACY.md in the repository.",
+    "back_settings": "Back to Settings",
+    "back_home": "Back to home",
+    "sections": {
+      "controller": {
+        "heading": "Who is responsible?",
+        "body": "On a selfhosted instance, the person or organisation running the server is the controller under GDPR. CorrelCore is the software; it does not process your data on a central cloud by default."
+      },
+      "data": {
+        "heading": "What data is processed?",
+        "body": "Mood, energy, stress, symptoms, optional notes, tags, habits, and account data (email, display name). Health-related fields are encrypted at rest. No third-party ad or analytics trackers are used."
+      },
+      "legal": {
+        "heading": "Legal basis",
+        "body": "Health diary data is processed on the basis of your consent (Art. 6(1)(a) and Art. 9(2)(a) GDPR). Account functions rely on contract performance. You can withdraw consent by disabling analysis or deleting your account."
+      },
+      "security": {
+        "heading": "Security",
+        "body": "TLS in transit, app-level encryption for sensitive fields, row-level security, rate limiting, and structured logs without plaintext health data. Backups are the operator's responsibility; encrypted restic backups are recommended."
+      },
+      "rights": {
+        "heading": "Your rights",
+        "body": "Access and portability: export ZIP/JSON/CSV in Settings. Erasure: delete account in Settings (password required). Object to analysis: turn off \"Analysis enabled\". Restriction (Art. 18): contact your instance operator — see DSGVO.md."
+      },
+      "sharing": {
+        "heading": "Third parties",
+        "body": "Health data is not sent to cloud LLMs, ad networks, or external analytics. Optional selfhosted error tracking (GlitchTip) must not include plaintext health fields."
+      },
+      "retention": {
+        "heading": "Retention",
+        "body": "Entries remain until you delete them or your account. Generated insights use a rolling window. Unverified accounts may be removed after seven days."
+      },
+      "changes": {
+        "heading": "Changes",
+        "body": "This policy is updated when processing changes materially. The in-app page and docs/PRIVACY.md in the repository are the authoritative sources for selfhost users."
+      },
+      "contact": {
+        "heading": "Contact",
+        "body": "Privacy requests: contact your instance operator. Security issues: see SECURITY.md in the repository."
+      }
+    }
+  },
+  "landing": {
+    "badge": "Self-hosted · v{version}",
+    "badge_hosted": "Hosted · v{version}",
+    "hero_title": "Understand why some days are good — and others aren't.",
+    "hero_subtitle": "Log 60 seconds a day. The analysis shows which factors — sleep, stress, work situation — relate to mood and energy — on your instance, with no third-party tracking.",
+    "hero_micro": "Associations are ranked by how confident they are, and at what delay they show up.",
+    "cta_register": "Create account",
+    "cta_login": "Log in",
+    "cta_selfhost": "Self-host",
+    "cta_docs": "Documentation",
+    "lang_toggle": "Switch language to {locale}",
+    "example_data": "Sample data",
+    "paths_heading": "Two ways in",
+    "paths": {
+      "try": {
+        "title": "Try it",
+        "body": "Create an account, do the daily check-in, let patterns emerge. No app store required.",
+        "cta": "Create account"
+      },
+      "try_closed": {
+        "body": "This instance is not accepting new accounts right now. If you already have one, you can log in.",
+        "cta": "Log in"
+      },
+      "host": {
+        "title": "Run it yourself",
+        "body": "Docker Compose on a NAS, VPS, or spare machine. Your data stays with you.",
+        "cta": "Open the install guide"
+      }
+    },
+    "checkin": {
+      "today": "Today",
+      "duration": "about 60 seconds",
+      "caption": "The daily check-in: mood, energy, stress, sleep, tags.",
+      "mood": "Mood",
+      "energy": "Energy",
+      "stress": "Stress",
+      "sleep": "Sleep",
+      "tags": "Tags",
+      "symptoms": "Symptoms"
+    },
+    "previews_heading": "What you get from it",
+    "preview_card": "One observation in plain language — not a dashboard of raw scores.",
+    "preview_lag": "Not just whether, but when: poor sleep here shows up in mood about two days later.",
+    "trust": {
+      "privacy": "Privacy-first",
+      "notelemetry": "No telemetry",
+      "offline": "Offline-capable",
+      "license": "AGPL open source"
+    },
+    "journey_heading": "Insights grow with your data",
+    "journey_body": "From the first entry to stronger patterns: CorrelCore ranks every insight by data maturity. Early on you mostly build the foundation — not full insights yet. No gamification: just evidence that gets stronger over time.",
+    "weekday_heading": "Why some days are better",
+    "weekday_caption": "Average mood by weekday, with that day's standout signal.",
+    "weekday_legend_best": "Highest mood",
+    "weekday_legend_worst": "Lowest mood",
+    "demo": {
+      "walk": "Walk",
+      "meetings": "Meetings",
+      "caffeine": "Caffeine",
+      "headache": "Headache",
+      "fatigue": "Fatigue",
+      "friday": "Friday",
+      "home_office": "Home office",
+      "alcohol": "Alcohol",
+      "stmt_walk_mood": "Days with a walk tend to show higher mood.",
+      "stmt_lag_sleep_mood": "Poor sleep quality tends to lower mood about two days later.",
+      "stmt_lag_walk_energy": "A walk tends to raise energy the next day.",
+      "stmt_weekday_friday": "Fridays tend to show the highest mood."
+    },
+    "android_heading": "Android app",
+    "android_body": "A signed APK from GitHub Releases. Obtainium can auto-update it — no app store required.",
+    "android_download": "Download APK",
+    "android_obtainium": "Get it with Obtainium (auto-updates)",
+    "android_sha256": "Every release ships SHA256SUMS.txt so you can verify the download.",
+    "selfhost_title": "For self-hosters",
+    "selfhost_body": "CorrelCore runs on your own server. No account with us, no telemetry, no third-party analytics.",
+    "selfhost_ops": {
+      "runtime": "Docker Compose; PostgreSQL 16 and Redis",
+      "data": "Persistent volumes; backups covered in the install guide",
+      "edge": "Reverse proxy and TLS (Nginx or Traefik)",
+      "hardware": "x86 and ARM, including NAS",
+      "updates": "Pull the image, restart Compose"
+    },
+    "docker_label": "docker compose -f docker-compose.quickstart.yml up -d",
+    "tech_github": "View source on GitHub",
+    "faq_heading": "Questions",
+    "faq": {
+      "1": {
+        "q": "Is this a medical tool?",
+        "a": "No. CorrelCore is not a medical diagnostic tool. All insights are for personal reflection only — they show associations, not causes."
+      },
+      "2": {
+        "q": "Do I need to self-host it?",
+        "a_hosted": "No. You can create an account here, or run your own instance — both are supported.",
+        "a_selfhost": "This instance is self-hosted. There is also a hosted option at correlcore.com if you would rather not operate it yourself."
+      },
+      "3": {
+        "q": "What if I only have a few days of data?",
+        "a": "Early on (collecting) there are no insight cards yet — by design. Later, insights are labeled by maturity (\"First patterns\" through \"Robust\") so you know how much to trust a correlation."
+      },
+      "4": {
+        "q": "Can I export my data?",
+        "a": "Yes. Your entries are yours; data export is available at any time from Settings."
+      }
+    },
+    "footer": {
+      "nav_label": "Legal and resources",
+      "privacy": "Privacy",
+      "impressum": "Impressum",
+      "docs": "Documentation",
+      "source": "Source code"
+    }
+  },
+  "impressum": {
+    "page_title": "Impressum / Legal notice",
+    "page_subtitle": "Information according to § 5 TMG (DE) and § 5 ECG (AT)",
+    "intro": "CorrelCore is selfhosted software. The person or organisation operating this instance is the legal publisher for this website. The sections below apply to operators in Germany and Austria.",
+    "back_home": "Back to home",
+    "sections": {
+      "operator": {
+        "heading": "Service provider (Betreiber)",
+        "body": "The operator of this CorrelCore instance is responsible for this website.\n\nIf you are a visitor: contact details are provided by your instance operator (see Impressum link on their deployment or support channel).\n\nIf you operate an instance: replace this page content or publish operator name, address, and contact on your deployment before going public."
+      },
+      "contact": {
+        "heading": "Contact",
+        "body": "Email and postal contact must be reachable without undue delay (TMG § 5 Abs. 1 Nr. 2; ECG § 5 Abs. 1).\n\nSoftware project (no instance operation): github.com/Sturmi77/correlcore"
+      },
+      "register": {
+        "heading": "Commercial register / VAT",
+        "body": "If the operator is a registered business, list register, registration number, and VAT ID here. Private non-commercial selfhost operators may state \"not applicable\"."
+      },
+      "content": {
+        "heading": "Responsible for content",
+        "body": "Responsible for editorial content under § 55 Abs. 2 RStV (DE) / MedienG (AT): the instance operator named above."
+      },
+      "dispute": {
+        "heading": "EU dispute resolution",
+        "body": "The European Commission provides a platform for online dispute resolution (ODR): https://ec.europa.eu/consumers/odr\n\nWe are not obliged or willing to participate in dispute resolution before a consumer arbitration board unless required by law."
+      },
+      "liability": {
+        "heading": "Liability for content and links",
+        "body": "Operators are responsible for their own instance content. CorrelCore software is provided under AGPL-3.0 without warranty. External links are the responsibility of the operator maintaining them."
+      },
+      "software": {
+        "heading": "About the software",
+        "body": "CorrelCore is open-source correlation-analysis software for personal wellbeing. It is not a medical device. Insights are for personal reflection only.\n\nRepository: github.com/Sturmi77/correlcore"
+      }
+    }
+  }
+}

@@ -849,3 +849,782 @@
   $: showLagHeatmap = showAdvancedAnalytics && buildLagHeatmapRows(insights).length >= 2;
   $: showTagCooccurrencePanel =
     canShowTagCooccurrence(insightMaturity?.phase ?? null) &&
+    (cooccurrenceLoading || cooccurrenceRequested || cooccurrenceError);
+  /**
+   * The Belastung composite has its own opt-in overlay, so it must not also ride
+   * the ordinary feed: enabled users saw it twice, and users who switched the
+   * opt-in back off kept seeing the stored rows as a regular insight, because
+   * disabling a preference does not delete what the worker already wrote (#957).
+   */
+  $: rankableInsights = insights.filter((insight) => insight.insight_type !== 'belastung_pattern');
+  $: filteredRankedInsights = rankInsights(rankableInsights);
+  $: primaryMobileInsight = filteredRankedInsights[0] ?? null;
+  $: remainingMobileInsights = filteredRankedInsights.slice(1);
+  /**
+   * `?signals=a,b` carries the pinned pair from Compare's "check this question".
+   * Without it the link landed on the bare hub and the hypothesis had to be
+   * found again among unrelated insights (#967).
+   */
+  let carriedSignalIds: string[] = [];
+
+  /** Insights whose subject is one of the carried signals. */
+  $: carriedMatches = carriedSignalIds.length
+    ? insights.filter(
+        (insight) => insight.subject_id && carriedSignalIds.includes(insight.subject_id)
+      )
+    : [];
+
+  $: carriedSignalsUnmatched =
+    carriedSignalIds.length > 0 && insightsLoaded && carriedMatches.length === 0;
+
+  $: feedInsights =
+    compactInsights && primaryMobileInsight ? remainingMobileInsights : filteredRankedInsights;
+  $: showInsightFeed =
+    feedInsights.length > 0 ||
+    feedLoading ||
+    Boolean(error) ||
+    !compactInsights ||
+    Boolean(primaryMobileInsight);
+  $: enableExploreEvents = isSmallMultiplesUnlocked(insightMaturity?.phase ?? null);
+
+  // #821/#823: configurable section order/visibility. `insight_feed` is locked
+  // (always enabled) but reorderable; the readiness `stage_header` is now a
+  // regular section (hideable + reorderable). User config is an AND-gate on top
+  // of the existing phase/data gates below.
+  $: enabledInsightSectionKeys = resolveEnabledInsightSections(
+    mergeInsightSections(userPreferences?.insight_sections ?? null)
+  ).map((section) => section.key);
+  $: stageHeaderEnabled = enabledInsightSectionKeys.includes('stage_header');
+  $: dismissedSectionEnabled = enabledInsightSectionKeys.includes('dismissed');
+  $: enabledSectionSet = new Set(enabledInsightSectionKeys);
+  $: hiddenToolKeys = INSIGHT_TOOL_SECTION_KEYS.filter((key) => !enabledSectionSet.has(key));
+  $: showToolsRow =
+    hiddenToolKeys.length > 0 || (!dismissedSectionEnabled && dismissedItems.length > 0);
+  // The milestone belongs to the stage_header section, so hiding that section
+  // hides the milestone everywhere. On mobile-with-primary the milestone-only
+  // strip lives inside MobileInsightLead (gated by showLeadMilestone), and the
+  // standalone header suppresses its own copy there to avoid a duplicate.
+  $: showLeadMilestone = showMaturityMilestone && stageHeaderEnabled;
+  $: showStageMilestone =
+    showMaturityMilestone && stageHeaderEnabled && !(compactInsights && primaryMobileInsight);
+  $: belastungInsight =
+    insights.find((insight) => insight.insight_type === 'belastung_pattern') ?? null;
+  $: showBelastungOverlay =
+    Boolean(userPreferences?.belastung_overlay_enabled) &&
+    userPreferences?.analytics_enabled !== false &&
+    Boolean(belastungInsight);
+
+  /**
+   * Load only what the hub is actually going to render.
+   *
+   * This used to fire all three requests for every user in an advanced maturity
+   * phase, regardless of which sections were enabled. After the Phase 6 shrink
+   * the optional tools are off by default, so the common case paid for
+   * co-occurrence, tag-cluster and symptom-co-occurrence queries whose
+   * components never mounted — exactly the cost that shrink set out to remove
+   * (#957). Each load now follows its own section.
+   */
+  function ensureAnalyticsLoaded(): void {
+    if (
+      enabledSectionSet.has('tag_cooccurrence') &&
+      !cooccurrenceRequested &&
+      !cooccurrenceLoading
+    ) {
+      void loadCooccurrence();
+    }
+    if (enabledSectionSet.has('tag_groups') && !tagClusters && !tagClustersLoading) {
+      void loadTagClusters();
+    }
+    if (
+      enabledSectionSet.has('symptom_analytics') &&
+      !symptomCooccurrenceRequested &&
+      !symptomCooccurrenceLoading
+    ) {
+      void loadSymptomCooccurrence();
+    }
+  }
+
+  // Re-runs when a section is switched on, so enabling a tool still loads it.
+  $: if (
+    showAdvancedAnalytics &&
+    $auth.status === 'authenticated' &&
+    insightsLoaded &&
+    enabledSectionSet
+  ) {
+    ensureAnalyticsLoaded();
+  }
+
+  async function openExploreEvents(insightId: string): Promise<void> {
+    const insight =
+      insights.find((row) => row.id === insightId) ??
+      (primaryMobileInsight?.id === insightId ? primaryMobileInsight : null);
+    if (!insight) return;
+    if ($auth.status !== 'authenticated') return;
+
+    const requestId = ++exploreEventsRequestId;
+    const capturedDays = windowDays;
+    exploreEventsDataDays = capturedDays;
+    const request = exploreEventsRequest.begin(`${$auth.user.id}:${insightId}:${capturedDays}`);
+
+    exploreEventsInsight = insight;
+    exploreEventsMetric = insightMetricToChartKey(insight.metric);
+    exploreEventsOpen = true;
+    exploreEventsLoading = true;
+    exploreEventsWindows = [];
+    exploreEventsPoints = [];
+    exploreEventsLagOffset = null;
+    exploreEventsPartner = null;
+    exploreEventsPartnerCandidates = [];
+    exploreEventsPartnerPresence = [];
+    exploreEventsPartnerLoading = false;
+    exploreEventsPartnerUnavailable = false;
+    exploreEventsTagHeatmap = null;
+
+    try {
+      if (get(devForceVisualizations)) {
+        const fixture = getDevPhaseFixture(get(devPhase));
+        if (
+          !request.isCurrent() ||
+          requestId !== exploreEventsRequestId ||
+          exploreEventsInsight?.id !== insightId
+        ) {
+          return;
+        }
+        exploreEventsWindows =
+          insight.payload?.method === 'lag'
+            ? devLagEventWindowsFromHeatmaps(insight, fixture.tagHeatmap, fixture.symptomHeatmap)
+            : devEventWindowsFromHeatmaps(insight, fixture.tagHeatmap, fixture.symptomHeatmap);
+        exploreEventsPoints = fixture.timeseries.points;
+        const devLag = insight.payload?.lag_days;
+        exploreEventsLagOffset = typeof devLag === 'number' ? devLag : null;
+        exploreEventsTagHeatmap = fixture.tagHeatmap;
+        applyExploreEventsPartner(
+          insight,
+          fixture.tagCooccurrenceByRange[trendWindowDaysToCooccurrence(capturedDays)] ?? null,
+          fixture.symptomTagCooccurrenceByRange[trendWindowDaysToCooccurrence(capturedDays)] ??
+            null,
+          fixture.tagHeatmap,
+          fixture.symptomHeatmap,
+          true
+        );
+        return;
+      }
+
+      const response = await fetchInsightEventWindows(
+        insight.id,
+        trendWindowDaysToCooccurrence(capturedDays),
+        {
+          days: capturedDays,
+          end_date: trendWindowDateBounds(capturedDays).end_date,
+          signal: request.signal,
+        }
+      );
+      if (
+        !request.isCurrent() ||
+        requestId !== exploreEventsRequestId ||
+        exploreEventsInsight?.id !== insightId
+      ) {
+        return;
+      }
+      exploreEventsWindows = response.events.map((event) => ({
+        onset: event.onset,
+        label: event.label ?? undefined,
+      }));
+      exploreEventsPoints = response.points;
+      exploreEventsLagOffset = response.lag_days ?? null;
+
+      exploreEventsLoading = false;
+      exploreEventsPartnerLoading = true;
+      void ensureExploreEventsPartnerData(
+        insight,
+        requestId,
+        insightId,
+        capturedDays,
+        request.isCurrent
+      );
+    } catch {
+      if (
+        !request.isCurrent() ||
+        requestId !== exploreEventsRequestId ||
+        exploreEventsInsight?.id !== insightId
+      ) {
+        return;
+      }
+      exploreEventsWindows = [];
+      exploreEventsPoints = [];
+      exploreEventsLagOffset = null;
+      exploreEventsPartner = null;
+      exploreEventsPartnerCandidates = [];
+      exploreEventsPartnerPresence = [];
+      exploreEventsPartnerLoading = false;
+      exploreEventsPartnerUnavailable = false;
+    } finally {
+      if (
+        request.isCurrent() &&
+        requestId === exploreEventsRequestId &&
+        exploreEventsInsight?.id === insightId
+      ) {
+        exploreEventsLoading = false;
+      }
+    }
+  }
+
+  function applyExploreEventsPartner(
+    insight: InsightResponse,
+    tagPairs: TagCooccurrenceResponse | null,
+    symptomCells: SymptomTagCooccurrenceResponse | null,
+    tagHeatmap: TagHeatmapResponse | null,
+    symptomHeatmapData: SymptomHeatmapResponse | null,
+    tagPresenceAvailable: boolean
+  ): void {
+    const subject = resolveEsmAlignSubject(insight);
+    if (!subject) {
+      exploreEventsPartnerCandidates = [];
+      exploreEventsPartner = null;
+      exploreEventsPartnerPresence = [];
+      return;
+    }
+    const ranked =
+      subject.kind === 'tag'
+        ? candidatesFromTagCooccurrence(subject, tagPairs?.pairs ?? [])
+        : candidatesFromSymptomTagCooccurrence(subject, symptomCells?.cells ?? []);
+    exploreEventsPartnerCandidates = clampPartnerCandidates(ranked);
+    if (!tagPresenceAvailable) {
+      exploreEventsPartner = null;
+      exploreEventsPartnerPresence = [];
+      return;
+    }
+    exploreEventsPartner = pickDefaultPartner(exploreEventsPartnerCandidates);
+    exploreEventsPartnerPresence = presenceDatesForPartner(
+      exploreEventsPartner,
+      tagHeatmap,
+      symptomHeatmapData
+    );
+  }
+
+  async function ensureExploreEventsPartnerData(
+    insight: InsightResponse,
+    requestId: number,
+    insightId: string,
+    days: TrendWindowDays,
+    isCurrent: () => boolean
+  ): Promise<void> {
+    const subject = resolveEsmAlignSubject(insight);
+    if (!subject) {
+      exploreEventsPartnerLoading = false;
+      return;
+    }
+
+    const needsTagPairs = subject.kind === 'tag';
+    const needsSymptomCells = subject.kind === 'symptom';
+    const apiRange = trendWindowDaysToCooccurrence(days);
+    const { start_date, end_date } = trendWindowDateBounds(days);
+    const heatmapStart = shiftIsoDate(start_date, -SMALL_MULTIPLES_RADIUS);
+    const heatmapEnd = shiftIsoDate(end_date, SMALL_MULTIPLES_RADIUS);
+
+    const tagHeatmapPromise = fetchTagHeatmap({ start_date: heatmapStart, end_date: heatmapEnd })
+      .then((data) => ({ ok: true as const, data }))
+      .catch(() => ({ ok: false as const, data: null }));
+
+    const [tagPairsResult, symptomCellsResult, tagHeatmapResult] = await Promise.all([
+      needsTagPairs
+        ? cooccurrence && cooccurrence.range === apiRange && cooccurrence.end_date === end_date
+          ? Promise.resolve({ ok: true as const, data: cooccurrence })
+          : fetchTagCooccurrence({ range: apiRange, days, end_date })
+              .then((data) => ({ ok: true as const, data }))
+              .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null }),
+      needsSymptomCells
+        ? symptomCooccurrence &&
+          symptomCooccurrence.range === apiRange &&
+          symptomCooccurrence.end_date === end_date
+          ? Promise.resolve({ ok: true as const, data: symptomCooccurrence })
+          : fetchSymptomTagCooccurrence({ range: apiRange, days, end_date })
+              .then((data) => ({ ok: true as const, data }))
+              .catch(() => ({ ok: false as const, data: null }))
+        : Promise.resolve({ ok: true as const, data: null }),
+      tagHeatmapPromise,
+    ]);
+
+    if (
+      !isCurrent() ||
+      requestId !== exploreEventsRequestId ||
+      exploreEventsInsight?.id !== insightId
+    ) {
+      return;
+    }
+
+    const tagPresenceAvailable = tagHeatmapResult.ok && tagHeatmapResult.data !== null;
+    const candidatesAvailable = tagPairsResult.ok && symptomCellsResult.ok;
+    exploreEventsTagHeatmap = tagHeatmapResult.data;
+    exploreEventsPartnerLoading = false;
+    applyExploreEventsPartner(
+      insight,
+      tagPairsResult.data,
+      symptomCellsResult.data,
+      tagHeatmapResult.data,
+      visibleSymptomHeatmap ?? symptomHeatmap,
+      tagPresenceAvailable
+    );
+    // A failed candidate lookup produces zero candidates, which would otherwise
+    // read as "no partner exists". A failed presence fetch only matters once a
+    // partner could have been shown.
+    exploreEventsPartnerUnavailable =
+      !candidatesAvailable || (!tagPresenceAvailable && exploreEventsPartnerCandidates.length > 0);
+  }
+
+  function handleExplorePartnerChange(event: CustomEvent<{ partnerId: string | null }>): void {
+    const nextId = event.detail.partnerId;
+    const next =
+      exploreEventsPartnerCandidates.find((candidate) => candidate.id === nextId) ?? null;
+    if (!exploreEventsTagHeatmap || !next) {
+      exploreEventsPartner = null;
+      exploreEventsPartnerPresence = [];
+      return;
+    }
+    exploreEventsPartner = { id: next.id, label: next.label, kind: next.kind };
+    exploreEventsPartnerPresence = presenceDatesForPartner(
+      exploreEventsPartner,
+      exploreEventsTagHeatmap,
+      visibleSymptomHeatmap ?? symptomHeatmap
+    );
+  }
+
+  async function dismissMaturityMilestone(key: string): Promise<void> {
+    const reached = new Set(userPreferences?.reached_milestone_keys ?? []);
+    reached.add(key);
+    const optimistic = {
+      ...(userPreferences ?? {
+        user_id: '',
+        analytics_enabled: true,
+        digest_enabled: true,
+        onboarding_retro_completed: false,
+        onboarding_profile_completed: false,
+        onboarding_maturity_intro_seen: false,
+        cycle_tracking_enabled: true,
+        dismissed_insight_keys: [],
+        last_seen_insight_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+      reached_milestone_keys: [...reached],
+    };
+    userPreferences = optimistic;
+    try {
+      userPreferences = await updateUserPreferences({
+        reached_milestone_keys: optimistic.reached_milestone_keys,
+      });
+    } catch {
+      // Optimistic dismissal for this session.
+    }
+  }
+</script>
+
+<svelte:head>
+  <title>{$_('insights.page.title')} - {$_('app.name')}</title>
+</svelte:head>
+
+<main class="insights-page screen-stack screen-stack--tight">
+  <ScreenHeader title={$_('insights.page.title')} subtitle={$_('insights.page.subtitle')} sticky>
+    <svelte:fragment slot="controls">
+      {#if $auth.status === 'authenticated'}
+        <InsightsAnalysisToolbar
+          analysisRange={$analysisRange}
+          analysisRangeOptions={analysisRangeControlOptions}
+          on:rangeChange={(event) => {
+            const nextDays = coerceTrendWindowDays(event.detail.value);
+            if ($auth.status === 'authenticated')
+              trendWindowPreference.select($auth.user.id, nextDays);
+          }}
+        />
+      {/if}
+    </svelte:fragment>
+  </ScreenHeader>
+  <TrendWindowSaveStatus />
+  <p class="insights-page__history-link">
+    <a href="/insights/history">{$_('insights.page.history_link')}</a>
+    <span aria-hidden="true"> · </span>
+    <a href="/insights/report" data-testid="insights-report-link"
+      >{$_('insights.page.report_link')}</a
+    >
+  </p>
+
+  {#if $auth.status !== 'authenticated'}
+    <Panel variant="bordered">
+      <p>{$_('insights.page.auth_required')}</p>
+      <Button href="/auth/login" variant="primary" size="sm">
+        {$_('auth.login.submit')}
+      </Button>
+    </Panel>
+  {:else}
+    <!-- Configurable sections in stored order (#821/#823). Each still respects
+         its existing phase/data gate; user visibility is an additional AND-gate.
+         The readiness stage header (#823) is now a regular section here; the
+         milestone-only strip still lives inside MobileInsightLead, so
+         showStageMilestone suppresses the duplicate on mobile-with-primary. -->
+    {#if showBelastungOverlay && belastungInsight}
+      <BelastungOverlay
+        insight={belastungInsight}
+        analyticsEnabled={userPreferences?.analytics_enabled !== false}
+      />
+    {/if}
+
+    {#each enabledInsightSectionKeys as sectionKey (sectionKey)}
+      {#if sectionKey === 'stage_header'}
+        {#if insightMaturity}
+          <InsightStageHeader
+            maturity={insightMaturity}
+            showMilestone={showStageMilestone}
+            on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
+          />
+        {/if}
+      {:else if sectionKey === 'correlation_matrix'}
+        {#if showMatrix}
+          <section class="insights-page__matrix" data-testid="insights-matrix-section">
+            <InsightMatrix {insights} />
+          </section>
+        {/if}
+      {:else if sectionKey === 'insight_feed'}
+        <div class="insights-page__feed" data-testid="insight-section-insight_feed">
+          {#if compactInsights && !feedLoading && !error && primaryMobileInsight}
+            <MobileInsightLead
+              insight={primaryMobileInsight}
+              maturity={insightMaturity}
+              entryCount={visibleEntryCount}
+              {inactiveTagIds}
+              showMilestone={showLeadMilestone}
+              {enableExploreEvents}
+              on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
+              on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+              on:dismissMilestone={(event) => void dismissMaturityMilestone(event.detail.key)}
+              on:openDisclaimer={() => (disclaimerOpen = true)}
+            />
+          {/if}
+
+          {#if !compactInsights && primaryMobileInsight}
+            <AnalysisCrossLink insight={primaryMobileInsight} direction="to-trends" />
+          {/if}
+
+          {#if carriedSignalsUnmatched}
+            <!--
+              The pair came from Compare, but no generated insight covers it yet.
+              Saying so beats dropping the user into an unfiltered hub (#967).
+            -->
+            <InlineAlert
+              variant="info"
+              message={$_('insights.carried_signals_unmatched')}
+              testId="insights-carried-signals-unmatched"
+            />
+          {/if}
+
+          {#if showInsightFeed}
+            {#if compactInsights && primaryMobileInsight}
+              <section class="insights-page__more" data-testid="mobile-insights-more">
+                {#if feedInsights.length > 0}
+                  <h2>{$_('insights.mobile.more_heading')}</h2>
+                {/if}
+                <InsightFeed
+                  insights={feedInsights}
+                  stalenessInsights={insights}
+                  {lastSuccessfulInsightRunAt}
+                  analyticsEnabled={userPreferences?.analytics_enabled !== false}
+                  hideContent={feedInsights.length === 0}
+                  totalInsightCount={insights.length}
+                  maturity={insightMaturity}
+                  entryCount={visibleEntryCount}
+                  {analysisRangeDays}
+                  {inactiveTagIds}
+                  dismissedCount={dismissedItems.length}
+                  {enableExploreEvents}
+                  {regenerateBusy}
+                  {regenerateMessage}
+                  {regenerateError}
+                  showContext={false}
+                  showMaturityBadge={false}
+                  on:retry={loadInsights}
+                  on:regenerate={() => void handleRegenerateInsights()}
+                  on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
+                  on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+                  on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
+                />
+              </section>
+            {:else}
+              <InsightFeed
+                insights={feedInsights}
+                stalenessInsights={insights}
+                {lastSuccessfulInsightRunAt}
+                analyticsEnabled={userPreferences?.analytics_enabled !== false}
+                totalInsightCount={insights.length}
+                maturity={insightMaturity}
+                loading={feedLoading}
+                {error}
+                entryCount={visibleEntryCount}
+                {analysisRangeDays}
+                {inactiveTagIds}
+                dismissedCount={dismissedItems.length}
+                {enableExploreEvents}
+                {regenerateBusy}
+                {regenerateMessage}
+                {regenerateError}
+                showMaturityBadge={!pageMaturityChrome}
+                on:retry={loadInsights}
+                on:regenerate={() => void handleRegenerateInsights()}
+                on:dismiss={(event) => void handleDismissInsight(event.detail.id)}
+                on:exploreEvents={(event) => void openExploreEvents(event.detail.id)}
+                on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
+              />
+            {/if}
+          {/if}
+        </div>
+      {:else if sectionKey === 'lag_heatmap'}
+        {#if showLagHeatmap}
+          <section class="insights-page__lag-heatmap" data-testid="insights-lag-heatmap-section">
+            <LagCorrelationHeatmap {insights} />
+          </section>
+        {/if}
+      {:else if sectionKey === 'dismissed'}
+        <DismissedInsightsSection
+          items={dismissedItems}
+          maturity={insightMaturity}
+          {inactiveTagIds}
+          on:undismiss={(event) =>
+            void handleUndismissInsight(event.detail.id, event.detail.dismissalId)}
+        />
+      {:else if sectionKey === 'symptom_analytics'}
+        {#if showAdvancedAnalytics && showSymptomAnalytics}
+          <div
+            class="insights-page__analytics-block"
+            data-testid="insight-section-symptom_analytics"
+          >
+            <SymptomAnalyticsSection
+              heatmap={visibleSymptomHeatmap}
+              entries={visibleMoodEntries}
+              cooccurrence={symptomCooccurrence}
+              cooccurrenceLoading={symptomCooccurrenceLoading}
+              cooccurrenceError={symptomCooccurrenceError}
+              phase={insightMaturity?.phase ?? null}
+              loading={loading || symptomWindowLoading}
+              pruneSparseAxes
+              on:selectDate={(event) => void openSymptomHistory(event.detail.date)}
+              on:selectCell={(event) => openSymptomDetail(event.detail.cell)}
+            />
+          </div>
+        {/if}
+      {:else if sectionKey === 'tag_groups'}
+        {#if showAdvancedAnalytics}
+          <div class="insights-page__analytics-block" data-testid="insight-section-tag_groups">
+            <TagGroupsSection data={tagClusters} loading={tagClustersLoading} />
+          </div>
+        {/if}
+      {:else if sectionKey === 'tag_cooccurrence'}
+        {#if showAdvancedAnalytics && showTagCooccurrencePanel}
+          <div
+            class="insights-page__analytics-block"
+            data-testid="insight-section-tag_cooccurrence"
+          >
+            <TagCooccurrenceHeatmap
+              data={cooccurrence}
+              loading={cooccurrenceLoading}
+              error={cooccurrenceError}
+              range={cooccurrenceRange}
+              showRangeSelector={false}
+              sortMode={tagCooccurrenceSortMode}
+              enableClusterSort={insightMaturity?.phase === 'robust'}
+              clusterMeta={tagClusterMeta}
+              bind:focusedClusterId={focusedTagClusterId}
+              pruneSparseAxes
+              on:sortModeChange={(event) => (tagCooccurrenceSortMode = event.detail.sortMode)}
+              on:selectPair={(event) => void openCooccurrenceHistory(event)}
+            />
+          </div>
+        {/if}
+      {/if}
+    {/each}
+
+    {#if showToolsRow}
+      <nav
+        class="insights-page__tools"
+        data-testid="insights-tools-row"
+        aria-label={$_('insights.page.tools_aria')}
+      >
+        <p class="insights-page__tools-label">{$_('insights.page.tools_heading')}</p>
+        <div class="insights-page__tools-links">
+          {#if hiddenToolKeys.includes('correlation_matrix')}
+            <a href="/insights/report">{$_('insights.page.report_link')}</a>
+          {/if}
+          {#if !dismissedSectionEnabled && dismissedItems.length > 0}
+            <button
+              type="button"
+              class="insights-page__tools-button"
+              data-testid="insights-dismissed-link"
+              on:click={() => (showDismissedPanel = !showDismissedPanel)}
+            >
+              {$_('insights.page.dismissed_link', { values: { count: dismissedItems.length } })}
+            </button>
+          {/if}
+          {#if hiddenToolKeys.some((key) => key !== 'correlation_matrix')}
+            <a href="/settings/insights" data-testid="insights-tools-settings-link">
+              {$_('insights.page.tools_settings_link')}
+            </a>
+          {/if}
+        </div>
+      </nav>
+      {#if showDismissedPanel && !dismissedSectionEnabled}
+        <DismissedInsightsSection
+          items={dismissedItems}
+          maturity={insightMaturity}
+          {inactiveTagIds}
+          on:undismiss={(event) =>
+            void handleUndismissInsight(event.detail.id, event.detail.dismissalId)}
+        />
+      {/if}
+    {/if}
+
+    <CooccurrenceEntrySheet
+      open={cooccurrenceHistoryOpen}
+      title={cooccurrenceHistoryTitle}
+      loading={cooccurrenceHistoryLoading}
+      error={cooccurrenceHistoryError}
+      details={cooccurrenceHistoryDetails}
+      on:close={() => (cooccurrenceHistoryOpen = false)}
+    />
+
+    <EntryHistorySheet
+      open={symptomHistoryOpen}
+      date={symptomHistoryDate}
+      loading={symptomHistoryLoading}
+      error={symptomHistoryError}
+      details={symptomHistoryDetails}
+      on:close={() => (symptomHistoryOpen = false)}
+    />
+
+    <SymptomCooccurrenceDetailSheet
+      open={symptomDetailOpen}
+      cell={symptomDetailCell}
+      on:close={() => (symptomDetailOpen = false)}
+      on:openDisclaimer={() => {
+        symptomDetailOpen = false;
+        disclaimerOpen = true;
+      }}
+    />
+
+    <CorrelationDisclaimer open={disclaimerOpen} on:close={() => (disclaimerOpen = false)} />
+
+    <EventAlignedSmallMultiplesSheet
+      open={exploreEventsOpen && !exploreEventsLoading}
+      events={exploreEventsWindows}
+      points={exploreEventsPoints}
+      metric={exploreEventsMetric}
+      lagOffset={exploreEventsLagOffset}
+      phase={exploreEventsInsight ? (insightMaturity?.phase ?? null) : null}
+      partner={exploreEventsPartner}
+      partnerPresenceDates={exploreEventsPartnerPresence}
+      partnerCandidates={exploreEventsPartnerCandidates}
+      partnerLoading={exploreEventsPartnerLoading}
+      partnerUnavailable={exploreEventsPartnerUnavailable}
+      on:partnerChange={handleExplorePartnerChange}
+      on:close={() => {
+        exploreEventsRequest.cancel();
+        exploreEventsOpen = false;
+        exploreEventsDataDays = null;
+        exploreEventsInsight = null;
+        exploreEventsPartner = null;
+        exploreEventsPartnerCandidates = [];
+        exploreEventsPartnerPresence = [];
+        exploreEventsPartnerLoading = false;
+        exploreEventsPartnerUnavailable = false;
+        exploreEventsTagHeatmap = null;
+      }}
+    />
+  {/if}
+</main>
+
+<style>
+  .insights-page {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* #571: correlation matrix sits inline & prominent; keep wide content scrolling
+     inside the matrix, not the page. */
+  .insights-page__history-link {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
+  .insights-page__tools {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: var(--space-2);
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .insights-page__tools-label {
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .insights-page__tools-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.85rem;
+    font-size: var(--text-sm);
+  }
+
+  .insights-page__tools-links a,
+  .insights-page__tools-button {
+    color: var(--color-primary);
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .insights-page__matrix {
+    min-width: 0;
+    max-width: 100%;
+    /* Extra clearance so the last matrix rows clear the fixed bottom nav (#628). */
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  /* #821: analytics blocks are individually orderable now (no shared panel).
+     Keep each block from forcing page-level horizontal scroll; wide charts
+     scroll inside themselves. */
+  .insights-page__feed,
+  .insights-page__analytics-block {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .insights-page__feed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--screen-gap-tight, var(--space-3));
+  }
+
+  .insights-page__analytics-block {
+    overflow-x: hidden;
+  }
+
+  .insights-page__analytics-block > :global(*) {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .insights-page__more {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .insights-page__more h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+  }
+</style>

@@ -3491,21 +3491,11 @@ export interface components {
         };
         /** SymptomTagCooccurrenceResponse */
         SymptomTagCooccurrenceResponse: {
-<<<<<<< HEAD
             /**
              * Analytics Disabled
              * @default false
              */
             analytics_disabled: boolean;
-=======
-            analysis_limit?: components["schemas"]["CooccurrenceAnalysisLimit"] | null;
-            /**
-             * Analysis Status
-             * @default ok
-             * @enum {string}
-             */
-            analysis_status: "ok" | "insufficient_data" | "limit_exceeded" | "busy" | "timeout" | "unavailable";
->>>>>>> origin/codex/audit-a02-analytics-limits
             /** Cells */
             cells?: components["schemas"]["SymptomTagCooccurrenceCell"][];
             /** Days */

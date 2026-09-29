@@ -4927,35 +4927,10 @@
       },
       "SymptomTagCooccurrenceResponse": {
         "properties": {
-<<<<<<< HEAD
           "analytics_disabled": {
             "default": false,
             "title": "Analytics Disabled",
             "type": "boolean"
-=======
-          "analysis_limit": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CooccurrenceAnalysisLimit"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "analysis_status": {
-            "default": "ok",
-            "enum": [
-              "ok",
-              "insufficient_data",
-              "limit_exceeded",
-              "busy",
-              "timeout",
-              "unavailable"
-            ],
-            "title": "Analysis Status",
-            "type": "string"
->>>>>>> origin/codex/audit-a02-analytics-limits
           },
           "cells": {
             "items": {
@@ -5792,7 +5767,6 @@
       },
       "TagCooccurrenceResponse": {
         "properties": {
-<<<<<<< HEAD
           "analytics_disabled": {
             "default": false,
             "title": "Analytics Disabled",
@@ -5802,35 +5776,12 @@
             "anyOf": [
               {
                 "type": "integer"
-=======
-          "analysis_limit": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CooccurrenceAnalysisLimit"
->>>>>>> origin/codex/audit-a02-analytics-limits
               },
               {
                 "type": "null"
               }
-<<<<<<< HEAD
             ],
             "title": "Days"
-=======
-            ]
-          },
-          "analysis_status": {
-            "default": "ok",
-            "enum": [
-              "ok",
-              "insufficient_data",
-              "limit_exceeded",
-              "busy",
-              "timeout",
-              "unavailable"
-            ],
-            "title": "Analysis Status",
-            "type": "string"
->>>>>>> origin/codex/audit-a02-analytics-limits
           },
           "end_date": {
             "format": "date",

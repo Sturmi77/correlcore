@@ -121,5 +121,366 @@ export interface LatestInsightListQuery extends InsightListQuery {
   insightTypes?: readonly string[];
 }
 
+export type TagCooccurrenceRange = '7d' | '14d' | '28d' | '30d' | '90d' | '1y';
+export type CooccurrenceAnalysisStatus =
+  'ok' | 'insufficient_data' | 'limit_exceeded' | 'busy' | 'timeout' | 'unavailable';
+
+export interface CooccurrenceAnalysisLimit {
+  reason: 'supplied_tags' | 'supplied_symptoms' | 'eligible_tags' | 'eligible_symptoms' | 'pair_count' | 'work_units';
+  eligible_tags: number;
+  eligible_symptoms: number;
+  pair_count: number;
+  work_units: number;
+}
+
+export interface TagCooccurrenceTagRef {
+  tag_id: string;
+  slug: string;
+  name: string;
+  category: string;
+  color: string | null;
+}
+
+export interface TagCooccurrencePair {
+  tag_a: TagCooccurrenceTagRef;
+  tag_b: TagCooccurrenceTagRef;
+  count: number;
+  pct_of_a: number;
+  pct_of_b: number;
+}
+
+export interface TagCooccurrenceResponse {
+  range: TagCooccurrenceRange;
+  days?: number | null;
+  start_date: string;
+  end_date: string;
+  min_count: number;
+  pairs: TagCooccurrencePair[];
   analysis_status?: CooccurrenceAnalysisStatus;
   analysis_limit?: CooccurrenceAnalysisLimit | null;
+  /**
+   * The window holds fewer logged days than the analysis needs. An empty
+   * `pairs` then means "cannot be computed here", not "nothing found" — a 7-day
+   * range can never reach the floor (#966).
+   */
+  window_too_short?: boolean;
+  analytics_disabled?: boolean;
+  observed_days?: number;
+}
+
+export interface TagCooccurrenceQuery {
+  range?: TagCooccurrenceRange;
+  days?: number;
+  end_date?: string;
+  min_count?: number;
+  signal?: AbortSignal;
+}
+
+export interface TagClusterMember {
+  kind: 'tag' | 'symptom';
+  signal_id: string;
+  slug: string;
+  name: string;
+  icon?: string | null;
+  category?: string | null;
+  color?: string | null;
+}
+
+export interface TagClusterGroup {
+  cluster_id: number;
+  label: string;
+  tags: TagCooccurrenceTagRef[];
+  members: TagClusterMember[];
+  cluster_kind: 'tags_only' | 'mixed';
+  strength: number;
+}
+
+export interface TagClustersResponse {
+  status: 'ok' | 'insufficient_data';
+  entry_count: number;
+  active_tag_count: number;
+  active_signal_count: number;
+  window_days: number;
+  k: number | null;
+  reason: string | null;
+  cluster_kind: 'tags_only' | 'mixed';
+  cluster_maturity?: 'early' | 'provisional' | 'robust' | null;
+  cluster_mode?: 'pair' | 'kmeans' | null;
+  entries_until_robust?: number | null;
+  silhouette_score?: number | null;
+  clusters: TagClusterGroup[];
+  /** #706: transparency + client-side strength bands (defaulted for old backends). */
+  shown_cluster_count?: number;
+  omitted_signal_count?: number;
+  strength_floor?: number;
+}
+
+export interface InsightRegenerateResponse {
+  status: 'ok';
+  generated_for_date: string;
+  insight_count: number;
+  tag_clusters_status: 'ok' | 'insufficient_data';
+  trigger_source: string;
+}
+
+export interface SymptomTagCooccurrenceSymptomRef {
+  symptom_id: string;
+  slug: string;
+  name: string;
+  icon: string | null;
+}
+
+export type SymptomTagCooccurrenceConfounder = 'weekday' | 'work_context' | 'calendar_context';
+
+export interface SymptomTagCooccurrenceCell {
+  symptom: SymptomTagCooccurrenceSymptomRef;
+  tag: TagCooccurrenceTagRef;
+  phi: number;
+  jaccard: number;
+  lift: number;
+  co_count: number;
+  symptom_count: number;
+  tag_count: number;
+  total_count: number;
+  p_value_corrected: number;
+  confounder: SymptomTagCooccurrenceConfounder | null;
+}
+
+export interface SymptomTagCooccurrenceResponse {
+  range: TagCooccurrenceRange;
+  days?: number | null;
+  start_date: string;
+  end_date: string;
+  min_count: number;
+  cells: SymptomTagCooccurrenceCell[];
+  window_too_short?: boolean;
+  analytics_disabled?: boolean;
+  observed_days?: number;
+  analysis_status?: CooccurrenceAnalysisStatus;
+  analysis_limit?: CooccurrenceAnalysisLimit | null;
+}
+
+function buildQuery(query: InsightListQuery): string {
+  const params = new URLSearchParams();
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
+/**
+ * Separate builder rather than a branch in `buildQuery`: `/insights` physically
+ * cannot emit `insight_type` this way, instead of merely being typed not to.
+ */
+function buildLatestQuery(query: LatestInsightListQuery): string {
+  const params = new URLSearchParams();
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
+  // Repeated `insight_type=` params — FastAPI reads them as a list.
+  for (const type of query.insightTypes ?? []) params.append('insight_type', type);
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
+/** GET /insights/latest - list latest generated insights by analytical subject. */
+export async function listLatestInsights(
+  query: LatestInsightListQuery = {}
+): Promise<InsightListResponse> {
+  return api.get<InsightListResponse>(`/insights/latest${buildLatestQuery(query)}`);
+}
+
+/** GET /insights - chronological insight history (newest-first, no subject dedupe). */
+export async function listInsights(query: InsightListQuery = {}): Promise<InsightListResponse> {
+  return api.get<InsightListResponse>(`/insights${buildQuery(query)}`);
+}
+
+/** GET /insights/tag-cooccurrence - tag pair counts for the co-occurrence heatmap (M5.1). */
+export async function fetchTagCooccurrence(
+  query: TagCooccurrenceQuery = {}
+): Promise<TagCooccurrenceResponse> {
+  const params = new URLSearchParams();
+  if (query.range) params.set('range', query.range);
+  if (query.days !== undefined) params.set('days', String(query.days));
+  if (query.end_date) params.set('end_date', query.end_date);
+  if (query.min_count !== undefined) params.set('min_count', String(query.min_count));
+  const qs = params.toString();
+  return api.get<TagCooccurrenceResponse>(
+    qs ? `/insights/tag-cooccurrence?${qs}` : '/insights/tag-cooccurrence',
+    { signal: query.signal }
+  );
+}
+
+/** GET /insights/tag-clusters - M7 tag groups that often appear together. */
+export async function fetchTagClusters(): Promise<TagClustersResponse> {
+  return api.get<TagClustersResponse>('/insights/tag-clusters');
+}
+
+/** GET /insights/symptom-tag-cooccurrence - symptom x tag lift cells for M7. */
+export async function fetchSymptomTagCooccurrence(
+  query: TagCooccurrenceQuery = {}
+): Promise<SymptomTagCooccurrenceResponse> {
+  const params = new URLSearchParams();
+  if (query.range) params.set('range', query.range);
+  if (query.days !== undefined) params.set('days', String(query.days));
+  if (query.end_date) params.set('end_date', query.end_date);
+  if (query.min_count !== undefined) params.set('min_count', String(query.min_count));
+  const qs = params.toString();
+  return api.get<SymptomTagCooccurrenceResponse>(
+    qs ? `/insights/symptom-tag-cooccurrence?${qs}` : '/insights/symptom-tag-cooccurrence',
+    { signal: query.signal }
+  );
+}
+
+export interface InsightEventWindowResponse {
+  onset: string;
+  label: string | null;
+}
+
+export interface InsightEventWindowsResponse {
+  range: TagCooccurrenceRange;
+  days?: number | null;
+  start_date: string;
+  end_date: string;
+  events: InsightEventWindowResponse[];
+  points: import('./stats').TimeseriesPoint[];
+  /** #488: lag insights align on the feature; the outcome is expected at +lag_days. */
+  lag_days?: number | null;
+}
+
+/** POST /insights/regenerate — on-demand insight + tag-cluster regeneration (M10.1). */
+export async function regenerateInsights(): Promise<InsightRegenerateResponse> {
+  return api.post<InsightRegenerateResponse>('/insights/regenerate');
+}
+
+/** GET /insights/{id}/event-windows — ADR-0035 §6 explore-events data. */
+export async function fetchInsightEventWindows(
+  insightId: string,
+  range: TagCooccurrenceRange,
+  options: { days?: number; end_date?: string; signal?: AbortSignal } = {}
+): Promise<InsightEventWindowsResponse> {
+  const params = new URLSearchParams({ range });
+  if (options.days !== undefined) params.set('days', String(options.days));
+  if (options.end_date) params.set('end_date', options.end_date);
+  return api.get<InsightEventWindowsResponse>(
+    `/insights/${encodeURIComponent(insightId)}/event-windows?${params}`,
+    { signal: options.signal }
+  );
+}
+
+/** GET /insights/{id} — single insight for Layer-2 signal detail. */
+export async function fetchInsight(insightId: string): Promise<InsightResponse> {
+  return api.get<InsightResponse>(`/insights/${encodeURIComponent(insightId)}`);
+}
+
+export interface InsightVerificationPoint {
+  date: string;
+  value: number;
+  present: boolean;
+}
+
+export interface InsightVerificationResponse {
+  range: TagCooccurrenceRange;
+  days?: number | null;
+  start_date: string;
+  end_date: string;
+  metric: string;
+  subject_label: string | null;
+  points: InsightVerificationPoint[];
+  with_mean: number | null;
+  without_mean: number | null;
+  with_se: number | null;
+  without_se: number | null;
+  with_n: number;
+  without_n: number;
+}
+
+/** GET /insights/{id}/verification — with/without day series (Phase 7 / G1). */
+export async function fetchInsightVerification(
+  insightId: string,
+  range: TagCooccurrenceRange = '90d',
+  options: { days?: number; end_date?: string; signal?: AbortSignal } = {}
+): Promise<InsightVerificationResponse> {
+  const params = new URLSearchParams({ range });
+  if (options.days !== undefined) params.set('days', String(options.days));
+  if (options.end_date) params.set('end_date', options.end_date);
+  return api.get<InsightVerificationResponse>(
+    `/insights/${encodeURIComponent(insightId)}/verification?${params}`,
+    { signal: options.signal }
+  );
+}
+
+export async function fetchLatestInsightDigest(): Promise<InsightDigestResponse> {
+  return api.get<InsightDigestResponse>('/insights/digest/latest');
+}
+
+export type InsightHistoryVisibility = 'active' | 'dismissed' | 'all';
+
+export interface InsightHistoryItem extends InsightResponse {
+  visibility: 'active' | 'dismissed';
+  subject_key: string;
+  first_seen_on: string | null;
+  last_seen_on: string | null;
+  observation_count: number | null;
+}
+
+export interface InsightHistoryResponse {
+  insights: InsightHistoryItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface InsightHistoryQuery {
+  status?: InsightHistoryVisibility;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}
+
+/** GET /insights/history — chronological timeline / archive (#601 Phase 2). */
+export async function listInsightHistory(
+  query: InsightHistoryQuery = {}
+): Promise<InsightHistoryResponse> {
+  const params = new URLSearchParams();
+  if (query.status) params.set('status', query.status);
+  if (query.from) params.set('from', query.from);
+  if (query.to) params.set('to', query.to);
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
+  if (query.offset !== undefined) params.set('offset', String(query.offset));
+  const qs = params.toString();
+  return api.get<InsightHistoryResponse>(qs ? `/insights/history?${qs}` : '/insights/history');
+}
+
+export interface InsightDismissalResponse {
+  id: string;
+  subject_key: string;
+  insight_id: string | null;
+  dismissed_at: string;
+  created_at: string;
+  insight: InsightResponse | null;
+}
+
+export interface InsightDismissalListResponse {
+  dismissals: InsightDismissalResponse[];
+}
+
+/** GET /insights/dismissals — subject-stable hidden insights. */
+export async function listInsightDismissals(): Promise<InsightDismissalListResponse> {
+  return api.get<InsightDismissalListResponse>('/insights/dismissals');
+}
+
+/** POST /insights/dismissals — hide by insight id (subject-stable). */
+export async function createInsightDismissal(insightId: string): Promise<InsightDismissalResponse> {
+  return api.post<InsightDismissalResponse>('/insights/dismissals', {
+    insight_id: insightId,
+  });
+}
+
+/** DELETE /insights/dismissals/{id} — undo hide. */
+export async function deleteInsightDismissal(dismissalId: string): Promise<void> {
+  await api.delete(`/insights/dismissals/${encodeURIComponent(dismissalId)}`);
+}
+
+/** DELETE /insights/dismissals/by-insight/{id} — undo by insight id. */
+export async function deleteInsightDismissalByInsightId(insightId: string): Promise<void> {
+  await api.delete(`/insights/dismissals/by-insight/${encodeURIComponent(insightId)}`);
+}
