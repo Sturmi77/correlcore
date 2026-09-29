@@ -333,6 +333,8 @@ def test_bivariate_candidates_include_spearman_and_pointbiserial() -> None:
     assert tag_candidate.payload["with_good_count"] == 15
     assert tag_candidate.payload["without_good_count"] == 0
     assert tag_candidate.payload["outcome"] == "association"
+    assert tag_candidate.payload["analysis_window_start"] == "2026-04-01"
+    assert tag_candidate.payload["analysis_window_end"] == "2026-04-30"
 
 
 def test_null_association_candidates_for_overlapping_tag_mood() -> None:
