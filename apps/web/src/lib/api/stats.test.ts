@@ -17,7 +17,9 @@ describe('stats API client', () => {
   it('fetches time-series by range', async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ range: 'month', points: [] });
     await fetchTimeseries('month');
-    expect(api.get).toHaveBeenCalledWith('/entries/stats/timeseries?range=month');
+    expect(api.get).toHaveBeenCalledWith('/entries/stats/timeseries?range=month', {
+      signal: undefined,
+    });
   });
 
   it('serializes heatmap filters', async () => {

@@ -2728,6 +2728,8 @@ export interface components {
          * @description Event onsets plus timeseries points for Explore-Events small multiples.
          */
         InsightEventWindowsResponse: {
+            /** Days */
+            days?: number | null;
             /**
              * End Date
              * Format: date
@@ -2743,7 +2745,7 @@ export interface components {
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
@@ -3035,6 +3037,8 @@ export interface components {
          * @description With/without series for Layer-2 verification (Phase 7 / G1).
          */
         InsightVerificationResponse: {
+            /** Days */
+            days?: number | null;
             /**
              * End Date
              * Format: date
@@ -3048,7 +3052,7 @@ export interface components {
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
@@ -3471,8 +3475,15 @@ export interface components {
         };
         /** SymptomTagCooccurrenceResponse */
         SymptomTagCooccurrenceResponse: {
+            /**
+             * Analytics Disabled
+             * @default false
+             */
+            analytics_disabled: boolean;
             /** Cells */
             cells?: components["schemas"]["SymptomTagCooccurrenceCell"][];
+            /** Days */
+            days?: number | null;
             /**
              * End Date
              * Format: date
@@ -3481,15 +3492,25 @@ export interface components {
             /** Min Count */
             min_count: number;
             /**
+             * Observed Days
+             * @default 0
+             */
+            observed_days: number;
+            /**
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
              */
             start_date: string;
+            /**
+             * Window Too Short
+             * @default false
+             */
+            window_too_short: boolean;
         };
         /** SymptomTagCooccurrenceSymptomRef */
         SymptomTagCooccurrenceSymptomRef: {
@@ -3857,19 +3878,31 @@ export interface components {
         /** TagCooccurrenceResponse */
         TagCooccurrenceResponse: {
             /**
+             * Analytics Disabled
+             * @default false
+             */
+            analytics_disabled: boolean;
+            /** Days */
+            days?: number | null;
+            /**
              * End Date
              * Format: date
              */
             end_date: string;
             /** Min Count */
             min_count: number;
+            /**
+             * Observed Days
+             * @default 0
+             */
+            observed_days: number;
             /** Pairs */
             pairs?: components["schemas"]["TagCooccurrencePair"][];
             /**
              * Range
              * @enum {string}
              */
-            range: "7d" | "30d" | "90d" | "1y";
+            range: "7d" | "14d" | "28d" | "30d" | "90d" | "1y";
             /**
              * Start Date
              * Format: date
@@ -5758,6 +5791,7 @@ export interface operations {
         parameters: {
             query?: {
                 range?: "week" | "month" | "quarter" | "year";
+                end_date?: string | null;
                 /** @description Exact window length in days. Takes precedence over `range`, which can only express 7/30/90/365 and therefore cannot carry the shared analysis window (14 | 28 | 90). */
                 days?: number | null;
             };
@@ -6599,6 +6633,9 @@ export interface operations {
     get_symptom_tag_cooccurrence_endpoint_api_v1_insights_symptom_tag_cooccurrence_get: {
         parameters: {
             query?: {
+                /** @description Exact days; takes precedence over range */
+                days?: number | null;
+                end_date?: string | null;
                 min_count?: number;
                 range?: string;
             };
@@ -6668,6 +6705,9 @@ export interface operations {
     get_tag_cooccurrence_endpoint_api_v1_insights_tag_cooccurrence_get: {
         parameters: {
             query?: {
+                /** @description Exact days; takes precedence over range */
+                days?: number | null;
+                end_date?: string | null;
                 min_count?: number;
                 range?: string;
             };
@@ -6772,6 +6812,9 @@ export interface operations {
     get_insight_event_windows_endpoint_api_v1_insights__insight_id__event_windows_get: {
         parameters: {
             query?: {
+                /** @description Exact days; takes precedence over range */
+                days?: number | null;
+                end_date?: string | null;
                 range?: string;
             };
             header?: {
@@ -6809,6 +6852,9 @@ export interface operations {
     get_insight_verification_endpoint_api_v1_insights__insight_id__verification_get: {
         parameters: {
             query?: {
+                /** @description Exact days; takes precedence over range */
+                days?: number | null;
+                end_date?: string | null;
                 range?: string;
             };
             header?: {

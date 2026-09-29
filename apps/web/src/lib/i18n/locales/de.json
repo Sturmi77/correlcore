@@ -476,6 +476,8 @@
     }
   },
   "trends": {
+    "range_save_error": "Der Zeitraum konnte nicht gespeichert werden. Die zuletzt gespeicherte Auswahl ist wieder aktiv.",
+    "range_retry": "Erneut speichern",
     "title": "Trends",
     "subtitle": "Zeitreihe, Tracking-Konsistenz und Tag-H\u00e4ufigkeiten f\u00fcr deinen Verlauf.",
     "auth_required": "Bitte melde dich an, um deine Trends zu sehen.",
@@ -1494,6 +1496,8 @@
       "weak_note": "Diese Zusammenhänge liegen unter der Verlässlichkeitsschwelle und können sich mit mehr Daten noch ändern."
     },
     "cooccurrence": {
+      "load_error": "Die Muster konnten nicht geladen werden. Versuche es erneut.",
+      "analytics_disabled": "Analysen sind für dieses Konto deaktiviert.",
       "window_too_short": "F\u00fcr diesen Zeitraum liegen zu wenige erfasste Tage vor, um Paare zu berechnen. W\u00e4hle einen l\u00e4ngeren Zeitraum.",
       "heading": "Muster",
       "subtitle": "Wie oft Tags gemeinsam auf demselben Entry vorkommen.",
@@ -1503,7 +1507,7 @@
       "range_1y": "1J",
       "aria": "Tag-Co-Occurrence-Matrix",
       "loading": "Co-Occurrence-Muster werden geladen",
-      "empty": "Noch nicht genug gemeinsame Tag-Paare. Tracke weiter Entries mit mehreren Tags.",
+      "empty": "Für diesen Zeitraum wurden keine stabilen Tag-Paare gefunden.",
       "legend": "Co-Occurrence-Intensitaet",
       "less": "Weniger",
       "more": "Mehr",
@@ -1532,6 +1536,9 @@
       "cooccurrence_lift_legend": "Lift-Werte; * bedeutet FDR-korrigiertes p < 0.10.",
       "cooccurrence_count_legend": "Gemeinsame Entry-Anzahl, bis genug Daten fuer Lift vorhanden sind.",
       "cooccurrence_empty": "Noch keine stabilen Symptom-Tag-Muster in diesem Zeitraum.",
+      "cooccurrence_load_error": "Die Symptom-Tag-Muster konnten nicht geladen werden. Versuche es erneut.",
+      "cooccurrence_analytics_disabled": "Analysen sind für dieses Konto deaktiviert.",
+      "cooccurrence_window_too_short": "Für diesen Zeitraum liegen zu wenige erfasste Tage vor, um Symptom-Tag-Paare zu berechnen.",
       "cooccurrence_sort_clustered": "Nach Aehnlichkeit clustern",
       "cooccurrence_sort_alphabetical": "Alphabetisch sortieren",
       "cooccurrence_confounder_note": "Gestrichelte Zellen koennen Kalender- oder Arbeitskontext-Ueberlappungen statt direkter Zusammenhaenge zeigen.",

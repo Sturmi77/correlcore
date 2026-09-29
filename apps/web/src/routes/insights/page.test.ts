@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setAnalysisRange } from '$lib/stores/analysisRange';
+import { trendWindowPreference } from '$lib/stores/trendWindowPreference';
 import { fetchTagCooccurrence } from '$lib/api/insights';
 import { fetchSymptomHeatmap, type SymptomHeatmapResponse } from '$lib/api/stats';
 import { listEntries, type EntryResponse } from '$lib/api/entries';
@@ -11,7 +12,7 @@ type Deferred<T> = {
   resolve: (value: T) => void;
 };
 
-type TagCooccurrenceRange = '7d' | '30d' | '90d' | '1y';
+type TagCooccurrenceRange = '7d' | '14d' | '28d' | '30d' | '90d' | '1y';
 
 const testHelpers = vi.hoisted(() => {
   function deferred<T>(): Deferred<T> {
@@ -200,6 +201,7 @@ vi.mock('$lib/api/preferences', () => ({
     dismissed_insight_keys: [],
     reached_milestone_keys: [],
     last_seen_insight_at: null,
+    trend_window_days: 14,
     // Explicit all-on so range/reload tests still mount optional tool sections.
     insight_sections_version: 2,
     insight_sections: [
@@ -337,6 +339,9 @@ describe('/insights page analysis range', () => {
     testHelpers.tagCooccurrenceRequests.length = 0;
     localStorage.clear();
     setAnalysisRange(14);
+    trendWindowPreference.bind(null);
+    trendWindowPreference.bind('user-1');
+    trendWindowPreference.hydrate('user-1', 14, trendWindowPreference.revision());
     vi.clearAllMocks();
   });
 
@@ -344,13 +349,17 @@ describe('/insights page analysis range', () => {
     render(Page);
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '7d', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith(
+        expect.objectContaining({ range: '14d', days: 14, min_count: 2 })
+      );
     });
 
     await fireEvent.click(screen.getByTestId('insights-range-90'));
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '90d', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith(
+        expect.objectContaining({ range: '90d', days: 90, min_count: 2 })
+      );
     });
 
     testHelpers.tagCooccurrenceRequests[1]?.resolve(tagCooccurrenceResponse('90d'));
@@ -358,13 +367,13 @@ describe('/insights page analysis range', () => {
     await waitFor(() => {
       expect(screen.getAllByText('90d tag a').length).toBeGreaterThan(0);
     });
-    expect(screen.queryByText('7d tag a')).toBeNull();
+    expect(screen.queryByText('14d tag a')).toBeNull();
 
-    testHelpers.tagCooccurrenceRequests[0]?.resolve(tagCooccurrenceResponse('7d'));
+    testHelpers.tagCooccurrenceRequests[0]?.resolve(tagCooccurrenceResponse('14d'));
     await flushPromises();
 
     expect(screen.getAllByText('90d tag a').length).toBeGreaterThan(0);
-    expect(screen.queryByText('7d tag a')).toBeNull();
+    expect(screen.queryByText('14d tag a')).toBeNull();
   });
 
   it('reloads symptom analytics for the selected analysis range', async () => {
@@ -471,17 +480,21 @@ describe('/insights page analysis range', () => {
     expect(screen.queryByText('insight-feed:entries:1')).toBeNull();
   });
 
-  it('refetches co-occurrence when switching from week to month API windows', async () => {
+  it('refetches co-occurrence when switching from 14 to 28 days', async () => {
     render(Page);
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '7d', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith(
+        expect.objectContaining({ range: '14d', days: 14, min_count: 2 })
+      );
     });
 
     await fireEvent.click(screen.getByTestId('insights-range-28'));
 
     await waitFor(() => {
-      expect(fetchTagCooccurrence).toHaveBeenCalledWith({ range: '30d', min_count: 2 });
+      expect(fetchTagCooccurrence).toHaveBeenCalledWith(
+        expect.objectContaining({ range: '28d', days: 28, min_count: 2 })
+      );
     });
 
     expect(fetchTagCooccurrence).toHaveBeenCalledTimes(2);

@@ -77,7 +77,8 @@ export async function fetchUserPreferences(): Promise<UserPreferencesResponse> {
 }
 
 export async function updateUserPreferences(
-  payload: UserPreferencesUpdate
+  payload: UserPreferencesUpdate,
+  options: { signal?: AbortSignal } = {}
 ): Promise<UserPreferencesResponse> {
-  return api.patch<UserPreferencesResponse>('/user/preferences', payload);
+  return api.patch<UserPreferencesResponse>('/user/preferences', payload, options);
 }
