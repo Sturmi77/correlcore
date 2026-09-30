@@ -38,5 +38,5 @@ Nach Abschluss der Basisintegration folgt Z1 des [Produkt-Ausführungsplans](../
 Der [Desktop-Retest gegen `main`](QA_RETEST_2026-09-30.md) bestätigt mehrere der am 24.09. gemeldeten
 Befunde als behoben (Berichtsauswahl, natürliche Häufigkeiten, adjustierte Stressrichtung,
 Tagesfenster). Offen bleiben Sprachmischung, die Fensterbezeichnung „letzte 90 Tage“, gemischte
-Fenster auf der Detailseite und der Export bei leerer Auswahl. Die A10-/A12-Gates sind davon
+Fenster auf der Detailseite. Die A10-/A12-Gates sind davon
 unberührt.

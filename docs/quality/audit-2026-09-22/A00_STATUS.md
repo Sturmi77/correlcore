@@ -28,6 +28,6 @@ Dieses A00-Register ist eine nachvollziehbare Ausgangsbasis. Es bestätigt noch 
 Die Pakete A01–A12 sind seit der Integration (#1015) auf `main` enthalten; das Register oben
 bleibt bewusst die Ausgangsbasis (Fix-Commit und Release-CI leer, bis ein vollständiger
 A10-Lauf auf dem finalen Kandidaten vorliegt). Den aktuellen Desktop-Nachweis liefert der
-[Retest vom 30.09.2026](QA_RETEST_2026-09-30.md): AUD-07, -08, -12, -14/-24, -16 und -28 sind im
-Desktop-Weg bestanden; Sprachmischung (A09), Fensterbezeichnung (A07), gemischte Fenster auf der
-Detailseite und der Export bei leerer Auswahl sind offen, mehrere Zeilen sind nicht geprüft.
+[Retest vom 30.09.2026](QA_RETEST_2026-09-30.md): AUD-07, -08, -12 und -24 sind im
+Desktop-Weg bestanden; AUD-16 und -28 nur teilweise. Sprachmischung (A09), Fensterbezeichnung (A07)
+und gemischte Fenster auf der Detailseite sind offen, mehrere Zeilen (u. a. AUD-14) sind nicht geprüft.
