@@ -21,13 +21,15 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWTError
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.crypto import generate_dek, wrap_dek
 from app.core.security import (
+    JWT_DECODE_OPTIONS,
     create_access_token,
     create_refresh_token,
     hash_password,
@@ -488,8 +490,9 @@ async def refresh_tokens(
             refresh_token,
             settings.SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
+            options=JWT_DECODE_OPTIONS,
         )
-    except JWTError as exc:
+    except PyJWTError as exc:
         raise AuthError("Invalid or expired refresh token") from exc
 
     if payload.get("type") != "refresh":
@@ -537,12 +540,13 @@ async def logout_user(
             refresh_token,
             settings.SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
+            options=JWT_DECODE_OPTIONS,
         )
         user_id_str = payload.get("sub", "")
         jti = payload.get("jti", "")
         if user_id_str and jti:
             await token_store.revoke(user_id_str, jti)
             logger.info("user logged out", extra={"user_id": user_id_str})
-    except JWTError:
+    except PyJWTError:
         # Token already expired — logout is still successful from user's POV
         pass

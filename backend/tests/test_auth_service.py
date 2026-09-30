@@ -14,8 +14,8 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import jwt
 import pytest
-from jose import jwt
 
 from app.core.config import settings
 from app.core.security import create_refresh_token

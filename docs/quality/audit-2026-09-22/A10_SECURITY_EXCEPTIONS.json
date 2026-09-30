@@ -2,13 +2,6 @@
   "schemaVersion": 1,
   "exceptions": [
     {
-      "id": "PYSEC-2026-1325",
-      "owner": "security-maintainers",
-      "expiresOn": "2026-10-31",
-      "scope": "backend dependency audit only",
-      "reason": "python-jose pulls ecdsa, while CorrelCore only permits HS256 JWTs; no fixed ecdsa release is available"
-    },
-    {
       "id": "PYSEC-2026-3721",
       "owner": "release-maintainers",
       "expiresOn": "2026-10-31",

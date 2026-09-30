@@ -27,7 +27,7 @@ import uuid
 from collections.abc import AsyncIterator
 
 from fastapi import Cookie, Depends, Header, HTTPException, status
-from jose import JWTError
+from jwt import PyJWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -74,7 +74,7 @@ def _credentials_exception(reason: str) -> HTTPException:
 async def _resolve_user(token: str, db: AsyncSession) -> User:
     try:
         payload = decode_token(token)
-    except JWTError as exc:
+    except PyJWTError as exc:
         raise _credentials_exception("jwt_invalid_or_expired") from exc
 
     if payload.get("type") != "access":

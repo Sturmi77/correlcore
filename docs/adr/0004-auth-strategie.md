@@ -9,7 +9,7 @@
 
 - **Authentik** ist im Stack als optionales Docker-Compose-Profile definiert und war ursprünglich für alle Phasen als Auth-Lösung vorgesehen.
 - **Authentik-Ressourcenbedarf:** ~500 MB RAM + eigene PostgreSQL-Instanz → zu schwergewichtig für den Selfhost-Betrieb in Phase 1. Viele Selfhost-User akzeptieren nicht, eine zweite Datenbank ausschließlich für Auth betreiben zu müssen.
-- **FastAPI** kann sauber eine vollständige native JWT-Auth-Lösung implementieren: `python-jose` für JWT, Refresh-Token-Rotation, sichere Cookie-Flags.
+- **FastAPI** kann sauber eine vollständige native JWT-Auth-Lösung implementieren: `PyJWT` für JWT, Refresh-Token-Rotation, sichere Cookie-Flags.
 - **Für SaaS-Phase (M12+)** ist Authentik für SSO, SAML 2.0 und LDAP-Integration sinnvoll und deckt Enterprise-Anforderungen ab.
 - Ziel: Schlanker Selfhost-Stack in Phase 1, späterer Migration Path zu Authentik ohne Breaking Changes.
 
@@ -19,7 +19,7 @@
 
 ### Phase 1 – Native JWT Auth in FastAPI (Selfhost, bis M10)
 
-- **JWT-Generierung:** `python-jose` mit HS256 (symmetrisch, kein Key-Infrastruktur-Overhead)
+- **JWT-Generierung:** `PyJWT` mit HS256 (symmetrisch, kein Key-Infrastruktur-Overhead). Ursprünglich `python-jose`; ersetzt am 30.09.2026, weil es die nicht behebbare Abhängigkeit `ecdsa` (CVE-2024-23342) mitbrachte.
 - **Refresh-Token-Rotation:** Redis-backed, 30 Tage TTL; bei jeder Nutzung wird ein neues Refresh-Token ausgestellt, das alte invalidiert
 - **Cookie-Flags:** `HttpOnly`, `Secure`, `SameSite=Strict` – kein Token-Zugriff via JavaScript, CSRF-Schutz
 - **Rate-Limiting:** Max. 5 Login-Versuche / Minute pro IP via SlowAPI; nach 10 Fehlversuchen temporärer Account-Lock
