@@ -1,4 +1,5 @@
 import type { InsightResponse } from '$lib/api/insights';
+import { localizeMetricKey, type Translate } from './metricLabels';
 
 export type InsightRelation = {
   glyph: '↔' | '→' | '←';
@@ -28,14 +29,25 @@ export function relationPairLabel(
   return `${feature} ${relation.glyph} ${target}${offset}`;
 }
 
-/** Resolve the actual two endpoints before adding a temporal or associative glyph. */
-export function insightEndpoints(insight: InsightResponse): { feature: string; target: string } {
+/**
+ * Resolve the actual two endpoints before adding a temporal or associative glyph.
+ * With a translator, core metric keys (`stress`, `mood_score`, …) are shown by
+ * their localised name; tag and symptom names are user data and stay as they are.
+ */
+export function insightEndpoints(
+  insight: InsightResponse,
+  t?: Translate
+): { feature: string; target: string } {
   const payload = insight.payload ?? {};
   const label = (value: unknown): string | null => {
     if (!value || typeof value !== 'object') return null;
     const item = value as Record<string, unknown>;
     for (const key of ['label', 'key', 'id']) {
-      if (typeof item[key] === 'string' && item[key]) return item[key] as string;
+      if (typeof item[key] === 'string' && item[key]) {
+        return item.kind === 'metric'
+          ? localizeMetricKey(item[key] as string, t)
+          : (item[key] as string);
+      }
     }
     return null;
   };
@@ -48,5 +60,17 @@ export function insightEndpoints(insight: InsightResponse): { feature: string; t
       target: typeof payload.tag_name === 'string' ? payload.tag_name : '—',
     };
   }
-  return { feature: insight.subject_label ?? '—', target: insight.metric };
+  if (typeof payload.left_metric === 'string' && typeof payload.right_metric === 'string') {
+    return {
+      feature: localizeMetricKey(payload.left_metric, t),
+      target: localizeMetricKey(payload.right_metric, t),
+    };
+  }
+  return {
+    feature:
+      insight.subject_type === 'metric' && insight.subject_label
+        ? localizeMetricKey(insight.subject_label, t)
+        : (insight.subject_label ?? '—'),
+    target: localizeMetricKey(insight.metric, t),
+  };
 }

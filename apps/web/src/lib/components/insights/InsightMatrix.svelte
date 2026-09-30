@@ -126,8 +126,8 @@
         data-tone={tone(row)}
         title={`${row.statement ?? ''} | ${freqLabel(row)}`}
       >
-        <span role="cell">{insightEndpoints(row).feature} {insightRelation(row).glyph}</span>
-        <span role="cell">{insightEndpoints(row).target}</span>
+        <span role="cell">{insightEndpoints(row, $_).feature} {insightRelation(row).glyph}</span>
+        <span role="cell">{insightEndpoints(row, $_).target}</span>
         <span role="cell" class="insight-matrix__effect">
           <span
             class="insight-matrix__effect-bar"

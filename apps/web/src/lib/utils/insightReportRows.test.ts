@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { InsightResponse } from '$lib/api/insights';
-import { toInsightReportRow } from './insightReportRows';
+import { buildInsightReportRows, toInsightReportRow } from './insightReportRows';
 
 const insight: InsightResponse = {
   id: 'a',
@@ -48,5 +48,20 @@ describe('InsightReportRow', () => {
     expect(row.sampleWithout).toBeNull();
     expect(row.analysisWindowStart).toBeNull();
     expect(row.analysisWindowEnd).toBeNull();
+  });
+});
+
+describe('InsightReportRow language', () => {
+  const t = (key: string) => (key === 'trends.metric.mood' ? 'Stimmung' : key);
+
+  it('exports the localised metric name in target and relationship', () => {
+    const row = toInsightReportRow(insight, t);
+    expect(row.target).toBe('Stimmung');
+    expect(row.relationship).toBe('Frühstück, Büro; "lang" ↔ Stimmung');
+  });
+
+  it('does not pass the array index on as a translator when building rows', () => {
+    const [row] = buildInsightReportRows([insight]);
+    expect(row.target).toBe('mood_score');
   });
 });

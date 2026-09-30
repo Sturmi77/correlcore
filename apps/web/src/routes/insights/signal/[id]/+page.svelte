@@ -45,7 +45,8 @@
   import { parseSameSituationView } from '$lib/utils/sameSituation';
   import { stripLegacyInsightStatementTails } from '$lib/utils/stripLegacyInsightStatementTails';
   import { isLagInsight, isSameDaySleepSpearman } from '$lib/utils/lagInsight';
-  import { relationPairLabel } from '$lib/utils/insightRelation';
+  import { insightEndpoints, relationPairLabel } from '$lib/utils/insightRelation';
+  import { localizeMetricKey } from '$lib/utils/metricLabels';
   import { formatSymptomTagStatement } from '$lib/utils/symptomTagStatement';
   import {
     hasUsableVerification,
@@ -158,12 +159,26 @@
   $: isNull = insight ? isNullAssociation(insight) : false;
   $: isLag = insight ? isLagInsight(insight) : false;
   $: isSameDaySleep = insight ? isSameDaySleepSpearman(insight) : false;
+  function payloadDate(ins: InsightResponse | null, key: string): string | null {
+    const value = ins?.payload?.[key];
+    return typeof value === 'string' && value.length > 0 ? value : null;
+  }
   function pairName(value: unknown): string | null {
     if (!value || typeof value !== 'object') return null;
     const record = value as Record<string, unknown>;
+    if (record.kind === 'metric' && typeof (record.key ?? record.name) === 'string') {
+      return localizeMetricKey((record.key ?? record.name) as string, $_);
+    }
     return typeof record.name === 'string' && record.name.length > 0 ? record.name : null;
   }
 
+  $: windowStart = payloadDate(insight, 'analysis_window_start');
+  $: windowEnd = payloadDate(insight, 'analysis_window_end');
+  $: signalSubtitle =
+    windowStart && windowEnd
+      ? $_('insights.signal.subtitle_window', { values: { start: windowStart, end: windowEnd } })
+      : $_('insights.signal.subtitle');
+  $: endpoints = insight ? insightEndpoints(insight, $_) : { feature: '', target: '' };
   $: title = insight
     ? isLagInsight(insight)
       ? relationPairLabel(
@@ -171,10 +186,10 @@
           pairName(insight.payload?.feature) ??
             insight.subject_label ??
             $_('insights.signal.title_fallback'),
-          pairName(insight.payload?.target) ?? insight.metric
+          pairName(insight.payload?.target) ?? localizeMetricKey(insight.metric, $_)
         )
       : insight.subject_label && insight.metric
-        ? relationPairLabel(insight, insight.subject_label, insight.metric)
+        ? relationPairLabel(insight, endpoints.feature, endpoints.target)
         : $_('insights.signal.title_fallback')
     : $_('insights.signal.title_fallback');
   $: canOpenEsm =
@@ -348,9 +363,7 @@
   <ScreenHeader
     sticky
     {title}
-    subtitle={isNull
-      ? `${$_('insights.signal.subtitle')} · ${$_('insights.card.null_badge')}`
-      : $_('insights.signal.subtitle')}
+    subtitle={isNull ? `${signalSubtitle} · ${$_('insights.card.null_badge')}` : signalSubtitle}
     back={{
       href: `/insights${carriedPairQuery ? `?${carriedPairQuery}` : ''}`,
       label: $_('insights.signal.back'),
@@ -480,6 +493,8 @@
               ).toFixed(1),
               withN: verification.with_n,
               withoutN: verification.without_n,
+              start: verification.start_date,
+              end: verification.end_date,
             },
           })}
         </p>

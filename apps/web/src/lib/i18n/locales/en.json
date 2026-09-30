@@ -1677,7 +1677,8 @@
     },
     "signal": {
       "title_fallback": "Signal detail",
-      "subtitle": "One hypothesis · last 90 days",
+      "subtitle": "One hypothesis",
+      "subtitle_window": "One hypothesis · analysis period {start} – {end}",
       "back": "Insights",
       "loading": "Loading signal…",
       "error": "This signal could not be loaded.",
@@ -1711,7 +1712,7 @@
       "same_situation_stays": "The association still shows up inside that situation — still not a cause.",
       "same_situation_gone": "Inside that situation the days look similar — a valid non-result for this check.",
       "course_heading": "Course around these days",
-      "means": "Average with: {withMean} ({withN} days) · without: {withoutMean} ({withoutN} days)",
+      "means": "Average with: {withMean} ({withN} days) · without: {withoutMean} ({withoutN} days) · course {start} – {end}",
       "scatter_show": "Show scatter plot ▾",
       "scatter_hide": "Hide scatter plot ▴",
       "scatter_aria": "Scatter of values with and without {subject}",

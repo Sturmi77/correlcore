@@ -1677,7 +1677,8 @@
     },
     "signal": {
       "title_fallback": "Signal-Detail",
-      "subtitle": "Eine Hypothese · letzte 90 Tage",
+      "subtitle": "Eine Hypothese",
+      "subtitle_window": "Eine Hypothese · Analysezeitraum {start} – {end}",
       "back": "Erkenntnisse",
       "loading": "Signal wird geladen…",
       "error": "Dieses Signal konnte nicht geladen werden.",
@@ -1711,7 +1712,7 @@
       "same_situation_stays": "Der Zusammenhang zeigt sich auch in dieser Situation — weiterhin keine Ursache.",
       "same_situation_gone": "In dieser Situation sehen die Tage aehnlich aus — ein gueltiges Nicht-Ergebnis fuer diesen Check.",
       "course_heading": "Verlauf um diese Tage",
-      "means": "Mittelwert mit: {withMean} ({withN} Tage) · ohne: {withoutMean} ({withoutN} Tage)",
+      "means": "Mittelwert mit: {withMean} ({withN} Tage) · ohne: {withoutMean} ({withoutN} Tage) · Verlauf {start} – {end}",
       "scatter_show": "Punktwolke anzeigen ▾",
       "scatter_hide": "Punktwolke ausblenden ▴",
       "scatter_aria": "Punktwolke der Werte mit und ohne {subject}",
