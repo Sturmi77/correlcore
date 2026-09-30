@@ -1,397 +1,1424 @@
 <!doctype html>
 <html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Insight Value – Signaltypen Runde 3</title>
-<style>
-:root{
-  --color-bg:#171614;--color-fg:#f5f3ef;--color-surface:#221f1c;--color-surface-2:#2c2925;
-  --color-muted:#a8a39c;--color-border:#3a352f;--color-primary:#7c6af5;--color-primary-hover:#9587ff;
-  --color-primary-highlight:#2b2742;--color-success:#4ade80;--color-success-highlight:#1f3327;
-  --color-warning:#fbbf24;--color-warning-highlight:#2b2414;--color-info:#60a5fa;--color-info-highlight:#1c2a3f;
-  --color-mood:#7c6af5;--radius-md:.5rem;--radius-lg:.75rem;--radius-xl:1rem;--radius-full:9999px;
-}
-:root[data-theme=light]{
-  --color-bg:#fafaf7;--color-fg:#1c1a17;--color-surface:#fff;--color-surface-2:#f1efe9;--color-muted:#6b6660;--color-border:#d8d3cb;
-  --color-primary:#5b49d6;--color-primary-hover:#4a3ab8;--color-primary-highlight:#ece9fc;--color-success:#15803d;
-  --color-success-highlight:#e3f5e9;--color-warning:#a16207;--color-warning-highlight:#fdf3d7;--color-info:#1d4ed8;--color-info-highlight:#e4ecfd;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--color-bg);color:var(--color-fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-header.top{position:sticky;top:0;z-index:20;background:var(--color-bg);border-bottom:1px solid var(--color-border);padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-header.top h1{font-size:1rem;margin:0;flex:1 1 240px}
-.seg{display:inline-flex;border:1px solid var(--color-border);border-radius:var(--radius-full);overflow:hidden}
-.seg button{background:none;border:0;color:var(--color-muted);padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem}
-.seg button[aria-pressed=true]{background:var(--color-primary-highlight);color:var(--color-fg)}
-.layout{max-width:1180px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:32px;align-items:start}
-@media(max-width:900px){.layout{grid-template-columns:1fr}}
-.phone{width:100%;max-width:400px;margin:0 auto;border:1px solid var(--color-border);border-radius:28px;background:var(--color-bg);overflow:hidden;position:sticky;top:70px;box-shadow:0 8px 30px #0006}
-@media(max-width:900px){.phone{position:static}}
-.screen{height:760px;max-height:calc(100vh - 100px);overflow-y:auto;position:relative;padding:14px 14px 70px}
-.nav{display:flex;border-top:1px solid var(--color-border);background:var(--color-surface);font-size:.7rem;color:var(--color-muted)}
-.nav span{flex:1;text-align:center;padding:8px 0}.nav .on{color:var(--color-fg);font-weight:600}
-h3.pg{font-size:1.15rem;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
-.card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:14px;overflow-wrap:anywhere;margin-bottom:12px}
-.card.small{padding:10px 12px}
-.eyebrow{font-size:.75rem;color:var(--color-muted);margin:0 0 6px}
-.headline{font-size:1.15rem;line-height:1.3;font-weight:650;margin:0 0 8px}
-.meta{font-size:.78rem;color:var(--color-muted);margin:6px 0}
-.evid{font-size:.85rem;margin:6px 0}
-.caveat{font-size:.85rem;margin:8px 0;padding:8px 10px;border-radius:var(--radius-md);background:var(--color-surface-2);border-left:3px solid var(--color-muted)}
-.chip{display:inline-flex;gap:6px;align-items:center;font-size:.75rem;padding:2px 10px;border-radius:var(--radius-full);border:1px solid currentColor;margin-bottom:8px}
-.chip.pattern{color:var(--color-primary-hover);background:var(--color-primary-highlight)}
-.chip.none{color:var(--color-info);background:var(--color-info-highlight)}
-.chip.lack{color:var(--color-warning);background:var(--color-warning-highlight)}
-.btn{display:inline-block;border:1px solid var(--color-primary);background:var(--color-primary);color:#fff;border-radius:var(--radius-md);padding:8px 14px;font:inherit;font-size:.9rem;cursor:pointer}
-.btn.sec{background:none;color:var(--color-fg);border-color:var(--color-border)}
-.btn.link{background:none;border:0;color:var(--color-primary-hover);padding:8px 4px;text-decoration:underline}
-.btn[disabled]{opacity:.4;cursor:not-allowed}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
-.nextstep{font-size:.85rem;margin:8px 0 0}
-.bars{margin:8px 0}
-.bars .b{display:grid;grid-template-columns:96px 1fr 96px;gap:8px;align-items:center;font-size:.8rem;margin:5px 0}
-.bars .trk{height:12px;background:var(--color-surface-2);border-radius:6px;overflow:hidden;border:1px solid var(--color-border)}
-.bars .trk span{display:block;height:100%;background:var(--color-mood)}
-.bars .b>span:last-child{text-align:right;font-variant-numeric:tabular-nums}
-.tabsrow{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}
-.q{flex:0 0 auto;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);border-radius:var(--radius-full);padding:6px 12px;font:inherit;font-size:.82rem;cursor:pointer;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
-.q[aria-pressed=true]{border-color:var(--color-primary);background:var(--color-primary-highlight)}
-.q.add{border-style:dashed;color:var(--color-primary-hover)}
-.sheetbg{position:absolute;inset:0;background:#0009;z-index:10;display:flex;align-items:flex-end}
-.sheet{background:var(--color-bg);border-top-left-radius:20px;border-top-right-radius:20px;border:1px solid var(--color-border);width:100%;max-height:92%;overflow-y:auto;padding:14px}
-.sheet h4{margin:0 0 4px;font-size:1.05rem;display:flex;justify-content:space-between;align-items:center}
-.x{background:none;border:0;color:var(--color-muted);font-size:1.2rem;cursor:pointer}
-.tpl{display:flex;flex-direction:column;gap:8px;margin:8px 0}
-.t{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 12px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:.88rem;cursor:pointer;text-align:left;color:inherit;font-family:inherit;width:100%}
-.t:hover{border-color:var(--color-primary)}
-.badge{font-size:.7rem;white-space:nowrap;padding:1px 8px;border-radius:var(--radius-full);border:1px solid var(--color-border);color:var(--color-muted)}
-.badge.ok{color:var(--color-success);border-color:var(--color-success)}
-.badge.lack{color:var(--color-warning);border-color:var(--color-warning)}
-.builder{line-height:2.5;font-size:.95rem}
-select,input[type=text]{font:inherit;background:var(--color-surface-2);color:var(--color-fg);border:1px solid var(--color-primary);border-radius:var(--radius-md);padding:3px 8px;max-width:100%}
-input[type=text]{width:100%;border-color:var(--color-border);padding:8px}
-.preview{margin:10px 0;padding:10px;border-radius:var(--radius-md);font-size:.85rem;border:1px solid var(--color-border)}
-.preview.ok{border-color:var(--color-success);background:var(--color-success-highlight)}
-.preview.lack{border-color:var(--color-warning);background:var(--color-warning-highlight)}
-.preview.no{border-style:dashed}
-.preview.dup{border-color:var(--color-info);background:var(--color-info-highlight)}
-.sec-h{font-size:.75rem;color:var(--color-muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 4px}
-.toast{position:absolute;left:14px;right:14px;bottom:14px;background:var(--color-fg);color:var(--color-bg);padding:10px 12px;border-radius:var(--radius-md);font-size:.85rem;z-index:30;display:flex;justify-content:space-between;gap:8px;align-items:center}
-.toast button{background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit}
-.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.mini{font-size:.8rem;border:1px solid var(--color-border);background:none;color:var(--color-fg);border-radius:var(--radius-md);padding:3px 8px;cursor:pointer}
-label.inl{display:flex;gap:8px;align-items:flex-start;font-size:.85rem;margin:10px 0}
-/* rechte Spalte */
-.doc h2{font-size:1.25rem;margin:28px 0 6px}.doc h2:first-child{margin-top:0}
-.doc p,.doc li{max-width:68ch}
-.doc .muted{color:var(--color-muted)}
-.doc table{border-collapse:collapse;font-size:.85rem;width:100%;margin:8px 0}
-.doc td,.doc th{border:1px solid var(--color-border);padding:6px 8px;text-align:left;vertical-align:top}
-.doc th{background:var(--color-surface)}
-.flow{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:12px;font-size:.85rem;font-family:ui-monospace,Consolas,monospace;white-space:pre;overflow-x:auto;line-height:1.35}
-.try{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-.try button{border:1px solid var(--color-primary);background:var(--color-primary-highlight);color:var(--color-fg);border-radius:var(--radius-full);padding:6px 12px;font:inherit;font-size:.82rem;cursor:pointer}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Insight Value – Signaltypen Runde 3</title>
+    <style>
+      :root {
+        --color-bg: #171614;
+        --color-fg: #f5f3ef;
+        --color-surface: #221f1c;
+        --color-surface-2: #2c2925;
+        --color-muted: #a8a39c;
+        --color-border: #3a352f;
+        --color-primary: #7c6af5;
+        --color-primary-hover: #9587ff;
+        --color-primary-highlight: #2b2742;
+        --color-success: #4ade80;
+        --color-success-highlight: #1f3327;
+        --color-warning: #fbbf24;
+        --color-warning-highlight: #2b2414;
+        --color-info: #60a5fa;
+        --color-info-highlight: #1c2a3f;
+        --color-mood: #7c6af5;
+        --radius-md: 0.5rem;
+        --radius-lg: 0.75rem;
+        --radius-xl: 1rem;
+        --radius-full: 9999px;
+      }
+      :root[data-theme='light'] {
+        --color-bg: #fafaf7;
+        --color-fg: #1c1a17;
+        --color-surface: #fff;
+        --color-surface-2: #f1efe9;
+        --color-muted: #6b6660;
+        --color-border: #d8d3cb;
+        --color-primary: #5b49d6;
+        --color-primary-hover: #4a3ab8;
+        --color-primary-highlight: #ece9fc;
+        --color-success: #15803d;
+        --color-success-highlight: #e3f5e9;
+        --color-warning: #a16207;
+        --color-warning-highlight: #fdf3d7;
+        --color-info: #1d4ed8;
+        --color-info-highlight: #e4ecfd;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--color-bg);
+        color: var(--color-fg);
+        font:
+          16px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+      }
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: var(--color-bg);
+        border-bottom: 1px solid var(--color-border);
+        padding: 10px 16px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      header.top h1 {
+        font-size: 1rem;
+        margin: 0;
+        flex: 1 1 240px;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+      }
+      .seg button {
+        background: none;
+        border: 0;
+        color: var(--color-muted);
+        padding: 6px 12px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.85rem;
+      }
+      .seg button[aria-pressed='true'] {
+        background: var(--color-primary-highlight);
+        color: var(--color-fg);
+      }
+      .layout {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+        gap: 32px;
+        align-items: start;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+      .phone {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+        border: 1px solid var(--color-border);
+        border-radius: 28px;
+        background: var(--color-bg);
+        overflow: hidden;
+        position: sticky;
+        top: 70px;
+        box-shadow: 0 8px 30px #0006;
+      }
+      @media (max-width: 900px) {
+        .phone {
+          position: static;
+        }
+      }
+      .screen {
+        height: 760px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        position: relative;
+        padding: 14px 14px 70px;
+      }
+      .nav {
+        display: flex;
+        border-top: 1px solid var(--color-border);
+        background: var(--color-surface);
+        font-size: 0.7rem;
+        color: var(--color-muted);
+      }
+      .nav span {
+        flex: 1;
+        text-align: center;
+        padding: 8px 0;
+      }
+      .nav .on {
+        color: var(--color-fg);
+        font-weight: 600;
+      }
+      h3.pg {
+        font-size: 1.15rem;
+        margin: 0 0 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 14px;
+        overflow-wrap: anywhere;
+        margin-bottom: 12px;
+      }
+      .card.small {
+        padding: 10px 12px;
+      }
+      .eyebrow {
+        font-size: 0.75rem;
+        color: var(--color-muted);
+        margin: 0 0 6px;
+      }
+      .headline {
+        font-size: 1.15rem;
+        line-height: 1.3;
+        font-weight: 650;
+        margin: 0 0 8px;
+      }
+      .meta {
+        font-size: 0.78rem;
+        color: var(--color-muted);
+        margin: 6px 0;
+      }
+      .evid {
+        font-size: 0.85rem;
+        margin: 6px 0;
+      }
+      .caveat {
+        font-size: 0.85rem;
+        margin: 8px 0;
+        padding: 8px 10px;
+        border-radius: var(--radius-md);
+        background: var(--color-surface-2);
+        border-left: 3px solid var(--color-muted);
+      }
+      .chip {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 0.75rem;
+        padding: 2px 10px;
+        border-radius: var(--radius-full);
+        border: 1px solid currentColor;
+        margin-bottom: 8px;
+      }
+      .chip.pattern {
+        color: var(--color-primary-hover);
+        background: var(--color-primary-highlight);
+      }
+      .chip.none {
+        color: var(--color-info);
+        background: var(--color-info-highlight);
+      }
+      .chip.lack {
+        color: var(--color-warning);
+        background: var(--color-warning-highlight);
+      }
+      .btn {
+        display: inline-block;
+        border: 1px solid var(--color-primary);
+        background: var(--color-primary);
+        color: #fff;
+        border-radius: var(--radius-md);
+        padding: 8px 14px;
+        font: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+      .btn.sec {
+        background: none;
+        color: var(--color-fg);
+        border-color: var(--color-border);
+      }
+      .btn.link {
+        background: none;
+        border: 0;
+        color: var(--color-primary-hover);
+        padding: 8px 4px;
+        text-decoration: underline;
+      }
+      .btn[disabled] {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .nextstep {
+        font-size: 0.85rem;
+        margin: 8px 0 0;
+      }
+      .bars {
+        margin: 8px 0;
+      }
+      .bars .b {
+        display: grid;
+        grid-template-columns: 96px 1fr 96px;
+        gap: 8px;
+        align-items: center;
+        font-size: 0.8rem;
+        margin: 5px 0;
+      }
+      .bars .trk {
+        height: 12px;
+        background: var(--color-surface-2);
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+      }
+      .bars .trk span {
+        display: block;
+        height: 100%;
+        background: var(--color-mood);
+      }
+      .bars .b > span:last-child {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .tabsrow {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+      }
+      .q {
+        flex: 0 0 auto;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        color: var(--color-fg);
+        border-radius: var(--radius-full);
+        padding: 6px 12px;
+        font: inherit;
+        font-size: 0.82rem;
+        cursor: pointer;
+        white-space: nowrap;
+        max-width: 230px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .q[aria-pressed='true'] {
+        border-color: var(--color-primary);
+        background: var(--color-primary-highlight);
+      }
+      .q.add {
+        border-style: dashed;
+        color: var(--color-primary-hover);
+      }
+      .sheetbg {
+        position: absolute;
+        inset: 0;
+        background: #0009;
+        z-index: 10;
+        display: flex;
+        align-items: flex-end;
+      }
+      .sheet {
+        background: var(--color-bg);
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        border: 1px solid var(--color-border);
+        width: 100%;
+        max-height: 92%;
+        overflow-y: auto;
+        padding: 14px;
+      }
+      .sheet h4 {
+        margin: 0 0 4px;
+        font-size: 1.05rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .x {
+        background: none;
+        border: 0;
+        color: var(--color-muted);
+        font-size: 1.2rem;
+        cursor: pointer;
+      }
+      .tpl {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 8px 0;
+      }
+      .t {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+        padding: 10px 12px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        font-size: 0.88rem;
+        cursor: pointer;
+        text-align: left;
+        color: inherit;
+        font-family: inherit;
+        width: 100%;
+      }
+      .t:hover {
+        border-color: var(--color-primary);
+      }
+      .badge {
+        font-size: 0.7rem;
+        white-space: nowrap;
+        padding: 1px 8px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--color-border);
+        color: var(--color-muted);
+      }
+      .badge.ok {
+        color: var(--color-success);
+        border-color: var(--color-success);
+      }
+      .badge.lack {
+        color: var(--color-warning);
+        border-color: var(--color-warning);
+      }
+      .builder {
+        line-height: 2.5;
+        font-size: 0.95rem;
+      }
+      select,
+      input[type='text'] {
+        font: inherit;
+        background: var(--color-surface-2);
+        color: var(--color-fg);
+        border: 1px solid var(--color-primary);
+        border-radius: var(--radius-md);
+        padding: 3px 8px;
+        max-width: 100%;
+      }
+      input[type='text'] {
+        width: 100%;
+        border-color: var(--color-border);
+        padding: 8px;
+      }
+      .preview {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: var(--radius-md);
+        font-size: 0.85rem;
+        border: 1px solid var(--color-border);
+      }
+      .preview.ok {
+        border-color: var(--color-success);
+        background: var(--color-success-highlight);
+      }
+      .preview.lack {
+        border-color: var(--color-warning);
+        background: var(--color-warning-highlight);
+      }
+      .preview.no {
+        border-style: dashed;
+      }
+      .preview.dup {
+        border-color: var(--color-info);
+        background: var(--color-info-highlight);
+      }
+      .sec-h {
+        font-size: 0.75rem;
+        color: var(--color-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin: 14px 0 4px;
+      }
+      .toast {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 14px;
+        background: var(--color-fg);
+        color: var(--color-bg);
+        padding: 10px 12px;
+        border-radius: var(--radius-md);
+        font-size: 0.85rem;
+        z-index: 30;
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+      }
+      .toast button {
+        background: none;
+        border: 0;
+        color: inherit;
+        text-decoration: underline;
+        cursor: pointer;
+        font: inherit;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .mini {
+        font-size: 0.8rem;
+        border: 1px solid var(--color-border);
+        background: none;
+        color: var(--color-fg);
+        border-radius: var(--radius-md);
+        padding: 3px 8px;
+        cursor: pointer;
+      }
+      label.inl {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: 0.85rem;
+        margin: 10px 0;
+      }
+      /* rechte Spalte */
+      .doc h2 {
+        font-size: 1.25rem;
+        margin: 28px 0 6px;
+      }
+      .doc h2:first-child {
+        margin-top: 0;
+      }
+      .doc p,
+      .doc li {
+        max-width: 68ch;
+      }
+      .doc .muted {
+        color: var(--color-muted);
+      }
+      .doc table {
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        width: 100%;
+        margin: 8px 0;
+      }
+      .doc td,
+      .doc th {
+        border: 1px solid var(--color-border);
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .doc th {
+        background: var(--color-surface);
+      }
+      .flow {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 12px;
+        font-size: 0.85rem;
+        font-family: ui-monospace, Consolas, monospace;
+        white-space: pre;
+        overflow-x: auto;
+        line-height: 1.35;
+      }
+      .try {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 8px 0;
+      }
+      .try button {
+        border: 1px solid var(--color-primary);
+        background: var(--color-primary-highlight);
+        color: var(--color-fg);
+        border-radius: var(--radius-full);
+        padding: 6px 12px;
+        font: inherit;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
 
-.doors{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
-.doors.compact{margin:4px 0 12px}
-.door{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:12px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);border-radius:var(--radius-lg);cursor:pointer;font:inherit;font-size:.9rem}
-.door:hover{border-color:var(--color-primary)}
-.door .ic{color:var(--color-primary-hover);font-size:1.1rem}
-.door .meta{margin:0;font-size:.72rem}
-.doors.compact .door{flex-direction:row;align-items:center;padding:8px 10px}
-.doors.compact .door .meta{display:none}
-.tabs2{display:flex;width:100%;margin:8px 0}.tabs2 button{flex:1}
-.chips2{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-.chips2 button{border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);border-radius:var(--radius-full);padding:4px 10px;font:inherit;font-size:.78rem;cursor:pointer}
-.chips2 button[aria-pressed=true]{border-color:var(--color-primary);background:var(--color-primary-highlight)}
-.kt{font-size:.68rem;border:1px solid var(--color-border);border-radius:9999px;padding:0 6px;color:var(--color-muted);margin-right:4px;white-space:nowrap}
-.typehint{font-size:.75rem;color:var(--color-muted);margin-top:2px}
-.chip.unclear{color:var(--color-muted);background:var(--color-surface-2)}
-.doc h3{margin-bottom:0}
-.doc code{background:var(--color-surface-2);padding:0 4px;border-radius:4px;font-size:.85em}
-</style>
-</head>
-<body>
-<header class="top">
-  <h1>Insight Value · Signaltypen Runde 3 <span style="color:var(--color-muted);font-weight:400">– synthetische Daten</span></h1>
-  <div class="seg" role="group" aria-label="Thema"><button data-th="dark" aria-pressed="true">Dunkel</button><button data-th="light" aria-pressed="false">Hell</button></div>
-</header>
+      .doors {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 0 0 12px;
+      }
+      .doors.compact {
+        margin: 4px 0 12px;
+      }
+      .door {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        text-align: left;
+        padding: 12px;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        color: var(--color-fg);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.9rem;
+      }
+      .door:hover {
+        border-color: var(--color-primary);
+      }
+      .door .ic {
+        color: var(--color-primary-hover);
+        font-size: 1.1rem;
+      }
+      .door .meta {
+        margin: 0;
+        font-size: 0.72rem;
+      }
+      .doors.compact .door {
+        flex-direction: row;
+        align-items: center;
+        padding: 8px 10px;
+      }
+      .doors.compact .door .meta {
+        display: none;
+      }
+      .tabs2 {
+        display: flex;
+        width: 100%;
+        margin: 8px 0;
+      }
+      .tabs2 button {
+        flex: 1;
+      }
+      .chips2 {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 6px 0;
+      }
+      .chips2 button {
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        color: var(--color-fg);
+        border-radius: var(--radius-full);
+        padding: 4px 10px;
+        font: inherit;
+        font-size: 0.78rem;
+        cursor: pointer;
+      }
+      .chips2 button[aria-pressed='true'] {
+        border-color: var(--color-primary);
+        background: var(--color-primary-highlight);
+      }
+      .kt {
+        font-size: 0.68rem;
+        border: 1px solid var(--color-border);
+        border-radius: 9999px;
+        padding: 0 6px;
+        color: var(--color-muted);
+        margin-right: 4px;
+        white-space: nowrap;
+      }
+      .typehint {
+        font-size: 0.75rem;
+        color: var(--color-muted);
+        margin-top: 2px;
+      }
+      .chip.unclear {
+        color: var(--color-muted);
+        background: var(--color-surface-2);
+      }
+      .doc h3 {
+        margin-bottom: 0;
+      }
+      .doc code {
+        background: var(--color-surface-2);
+        padding: 0 4px;
+        border-radius: 4px;
+        font-size: 0.85em;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <h1>
+        Insight Value · Signaltypen Runde 3
+        <span style="color: var(--color-muted); font-weight: 400">– synthetische Daten</span>
+      </h1>
+      <div class="seg" role="group" aria-label="Thema">
+        <button data-th="dark" aria-pressed="true">Dunkel</button
+        ><button data-th="light" aria-pressed="false">Hell</button>
+      </div>
+    </header>
 
-<div class="layout">
-<div>
-  <div class="phone"><div class="screen" id="screen"></div>
-  <div class="nav"><span>Heute</span><span>Trends</span><span class="on">Erkenntnisse</span><span>Bericht</span></div></div>
-</div>
+    <div class="layout">
+      <div>
+        <div class="phone">
+          <div class="screen" id="screen"></div>
+          <div class="nav">
+            <span>Heute</span><span>Trends</span><span class="on">Erkenntnisse</span
+            ><span>Bericht</span>
+          </div>
+        </div>
+      </div>
 
-<div class="doc">
-  <h2>Ausprobieren</h2>
-  <div class="try">
-    <button data-go="reset0">Neustart: noch keine Frage</button>
-    <button data-go="reset3">Neustart: 3 Fragen (Wert, Symptom, Tag×Tag)</button>
-    <button data-go="door1">Vorschlag wählen</button>
-    <button data-go="door2">Frage erstellen (Kaffee ↔ Kopfschmerz)</button>
-    <button data-go="door3">Aus Hinweis merken</button>
-  </div>
-  <p class="muted">Tipps: Im Baukasten „Kopfschmerz ↔ Alkohol“ (Symptom ↔ Tag), „Alkohol ↔ Spät gegessen“ (Tag ↔ Tag), „Stimmung ↔ Energie“ (nicht unterstützt) und „Montag“ + „am Folgetag“ ausprobieren. Im Vorschlags-Tab die Filter „Symptome“ und „Kombinationen“.</p>
+      <div class="doc">
+        <h2>Ausprobieren</h2>
+        <div class="try">
+          <button data-go="reset0">Neustart: noch keine Frage</button>
+          <button data-go="reset3">Neustart: 3 Fragen (Wert, Symptom, Tag×Tag)</button>
+          <button data-go="door1">Vorschlag wählen</button>
+          <button data-go="door2">Frage erstellen (Kaffee ↔ Kopfschmerz)</button>
+          <button data-go="door3">Aus Hinweis merken</button>
+        </div>
+        <p class="muted">
+          Tipps: Im Baukasten „Kopfschmerz ↔ Alkohol“ (Symptom ↔ Tag), „Alkohol ↔ Spät gegessen“
+          (Tag ↔ Tag), „Stimmung ↔ Energie“ (nicht unterstützt) und „Montag“ + „am Folgetag“
+          ausprobieren. Im Vorschlags-Tab die Filter „Symptome“ und „Kombinationen“.
+        </p>
 
-  <h2>1 · Zwei gleichrangige Wege statt „+ Frage“</h2>
-  <p>„Vorschlag wählen“ und „Frage erstellen“ stehen jetzt <b>nebeneinander auf derselben Ebene</b>: im Leerzustand als zwei gleich große Karten, sonst als zwei gleiche Schaltflächen direkt unter den Fragen und in „Meine Fragen“. Im Sheet sind es zwei gleichberechtigte Tabs. Der Baukasten ist nicht mehr eingeklappt. Der Tab-Wechsel behält den Stand, und „Passt nichts? Frage erstellen“ führt in einem Schritt hinüber.</p>
-  <div class="flow">Vorschlag wählen ─┐
-                    ├─►  Bestätigung  ─►  gemerkt (± Fokus)
-Frage erstellen  ─┤
-Hinweis „merken“ ─┘</div>
+        <h2>1 · Zwei gleichrangige Wege statt „+ Frage“</h2>
+        <p>
+          „Vorschlag wählen“ und „Frage erstellen“ stehen jetzt
+          <b>nebeneinander auf derselben Ebene</b>: im Leerzustand als zwei gleich große Karten,
+          sonst als zwei gleiche Schaltflächen direkt unter den Fragen und in „Meine Fragen“. Im
+          Sheet sind es zwei gleichberechtigte Tabs. Der Baukasten ist nicht mehr eingeklappt. Der
+          Tab-Wechsel behält den Stand, und „Passt nichts? Frage erstellen“ führt in einem Schritt
+          hinüber.
+        </p>
+        <div class="flow">
+          Vorschlag wählen ─┐ ├─► Bestätigung ─► gemerkt (± Fokus) Frage erstellen ─┤ Hinweis
+          „merken“ ─┘
+        </div>
 
-  <h2>2 · Wie Symptome und Tags erfragbar werden</h2>
-  <p><b>Grundgedanke:</b> Eine Frage verbindet <b>zwei Signale</b>. Jedes Signal ist ein <b>Tag</b> (inkl. eigener), ein <b>Symptom</b> oder ein <b>Wert</b> (Stimmung, Energie, Stress, Schlaf). Es gibt <b>eine einzige Auswahl</b> mit den vorhandenen Signalen, gruppiert nach Art. Die Art bestimmt <i>nicht</i> die Bedienung, sondern nur Satz, Methode und Datenhinweis. Damit ist „Auswirkungen auf Stress, Energie …“ nur ein Sonderfall.</p>
-  <table>
-    <tr><th>Paar</th><th>Fragesatz / Antwortform</th><th>Vorhandene Methode (laut Repo)</th><th>Besonderer Vorbehalt</th></tr>
-    <tr><td>Tag ↔ Wert</td><td>„An Tagen mit Sport war die Stimmung häufiger gut“<br><span class="muted">Anteil Tage mit gutem/niedrigem Wert, mit vs. ohne Tag</span></td><td>Punkt-biseriale Korrelation, Mann-Whitney (Insight-Engine)</td><td>Schwelle „gut“ / „niedrig“ muss sichtbar sein</td></tr>
-    <tr><td>Symptom ↔ Wert</td><td>„An Tagen mit Kopfschmerz war die Energie häufiger niedrig“</td><td><code>symptom_mood_association</code></td><td>Symptom zählt als vorhanden/nicht, Stärke ignoriert (ADR-0025)</td></tr>
-    <tr><td>Tag ↔ Symptom</td><td>„An Tagen mit Kaffee war Kopfschmerz häufiger vermerkt“<br><span class="muted">Anteil Tage mit Symptom, mit vs. ohne Tag</span></td><td><code>symptom_tag_cooccurrence</code> (Phi, Lift, Fisher Exact)</td><td>Reihenfolge innerhalb eines Tages unbekannt; Symptomtage sind oft selten</td></tr>
-    <tr><td>Tag ↔ Tag</td><td>„An Tagen mit Alkohol war auch ‚Spät gegessen‘ häufiger vermerkt“</td><td>Tag-Kookkurrenz (Tag-Heatmap)</td><td>Ähnliche Tags sind oft absichtlich gekoppelt; kein Zeitversatz</td></tr>
-    <tr><td>Symptom ↔ Symptom</td><td>wie Tag ↔ Tag</td><td>Symptom-Kookkurrenz (Heatmap)</td><td>wie oben</td></tr>
-    <tr><td>Wert ↔ Wert</td><td>nicht als Frage; Verweis auf Trends → Korrelations-Matrix</td><td>Korrelations-Matrix</td><td>Bewusst ausgeschlossen im ersten Ausbau</td></tr>
-  </table>
-  <p><b>Ein Antwortmuster für alle:</b> Die Karte C bleibt gleich. Es wird immer verglichen, <b>wie oft ein Ereignis auf Tagen mit und ohne das andere Signal vorkommt</b> („Tage mit Kopfschmerz: 5 von 9 mit Kaffee · 3 von 19 ohne“). Bei Werten wird das Ereignis über eine sichtbare Schwelle definiert („niedrige Energie“ = 1–2). Damit sind alle Fragearten ohne neue Visualisierung lesbar, und die Bedienung muss keine Statistik erklären.</p>
+        <h2>2 · Wie Symptome und Tags erfragbar werden</h2>
+        <p>
+          <b>Grundgedanke:</b> Eine Frage verbindet <b>zwei Signale</b>. Jedes Signal ist ein
+          <b>Tag</b> (inkl. eigener), ein <b>Symptom</b> oder ein <b>Wert</b> (Stimmung, Energie,
+          Stress, Schlaf). Es gibt <b>eine einzige Auswahl</b> mit den vorhandenen Signalen,
+          gruppiert nach Art. Die Art bestimmt <i>nicht</i> die Bedienung, sondern nur Satz, Methode
+          und Datenhinweis. Damit ist „Auswirkungen auf Stress, Energie …“ nur ein Sonderfall.
+        </p>
+        <table>
+          <tr>
+            <th>Paar</th>
+            <th>Fragesatz / Antwortform</th>
+            <th>Vorhandene Methode (laut Repo)</th>
+            <th>Besonderer Vorbehalt</th>
+          </tr>
+          <tr>
+            <td>Tag ↔ Wert</td>
+            <td>
+              „An Tagen mit Sport war die Stimmung häufiger gut“<br /><span class="muted"
+                >Anteil Tage mit gutem/niedrigem Wert, mit vs. ohne Tag</span
+              >
+            </td>
+            <td>Punkt-biseriale Korrelation, Mann-Whitney (Insight-Engine)</td>
+            <td>Schwelle „gut“ / „niedrig“ muss sichtbar sein</td>
+          </tr>
+          <tr>
+            <td>Symptom ↔ Wert</td>
+            <td>„An Tagen mit Kopfschmerz war die Energie häufiger niedrig“</td>
+            <td><code>symptom_mood_association</code></td>
+            <td>Symptom zählt als vorhanden/nicht, Stärke ignoriert (ADR-0025)</td>
+          </tr>
+          <tr>
+            <td>Tag ↔ Symptom</td>
+            <td>
+              „An Tagen mit Kaffee war Kopfschmerz häufiger vermerkt“<br /><span class="muted"
+                >Anteil Tage mit Symptom, mit vs. ohne Tag</span
+              >
+            </td>
+            <td><code>symptom_tag_cooccurrence</code> (Phi, Lift, Fisher Exact)</td>
+            <td>Reihenfolge innerhalb eines Tages unbekannt; Symptomtage sind oft selten</td>
+          </tr>
+          <tr>
+            <td>Tag ↔ Tag</td>
+            <td>„An Tagen mit Alkohol war auch ‚Spät gegessen‘ häufiger vermerkt“</td>
+            <td>Tag-Kookkurrenz (Tag-Heatmap)</td>
+            <td>Ähnliche Tags sind oft absichtlich gekoppelt; kein Zeitversatz</td>
+          </tr>
+          <tr>
+            <td>Symptom ↔ Symptom</td>
+            <td>wie Tag ↔ Tag</td>
+            <td>Symptom-Kookkurrenz (Heatmap)</td>
+            <td>wie oben</td>
+          </tr>
+          <tr>
+            <td>Wert ↔ Wert</td>
+            <td>nicht als Frage; Verweis auf Trends → Korrelations-Matrix</td>
+            <td>Korrelations-Matrix</td>
+            <td>Bewusst ausgeschlossen im ersten Ausbau</td>
+          </tr>
+        </table>
+        <p>
+          <b>Ein Antwortmuster für alle:</b> Die Karte C bleibt gleich. Es wird immer verglichen,
+          <b>wie oft ein Ereignis auf Tagen mit und ohne das andere Signal vorkommt</b> („Tage mit
+          Kopfschmerz: 5 von 9 mit Kaffee · 3 von 19 ohne“). Bei Werten wird das Ereignis über eine
+          sichtbare Schwelle definiert („niedrige Energie“ = 1–2). Damit sind alle Fragearten ohne
+          neue Visualisierung lesbar, und die Bedienung muss keine Statistik erklären.
+        </p>
 
-  <h3 style="font-size:1rem;margin:20px 0 4px">Wie sich das in der Bedienung zeigt</h3>
-  <ul>
-    <li><b>Gruppierte Auswahl</b> („Aktivitäten &amp; Tags · Symptome · Werte · Wochentag“) statt getrennter Feld-Typen. Der Hinweis unter dem Satz nennt die Art („Tag ↔ Symptom · Symptom-Frage“).</li>
-    <li><b>Vorschläge filterbar:</b> Alle · Stimmung &amp; Co. · Symptome · Kombinationen. Ein Nutzer ohne Symptome sieht den Filter „Symptome“ gar nicht (nicht gemockt).</li>
-    <li><b>Symptom-Vorbehalt in der Vorschau</b> vor dem Speichern, nicht erst in der Antwort.</li>
-    <li><b>Eigene Tags</b> stehen automatisch in der Auswahl („Meeting-Tag“).</li>
-    <li>Der <b>Zeitbezug „am Folgetag“</b> ist nur für Tag/Symptom → Wert freigegeben. Sonst bietet die Vorschau „am selben Tag“ an.</li>
-    <li>Die <b>Reihenfolge der Slots</b> ist egal: „Kopfschmerz ↔ Kaffee“ und „Kaffee ↔ Kopfschmerz“ sind dieselbe Frage. Der Duplikat-Check muss das erkennen (im Prototyp nur exakte Reihenfolge).</li>
-  </ul>
+        <h3 style="font-size: 1rem; margin: 20px 0 4px">Wie sich das in der Bedienung zeigt</h3>
+        <ul>
+          <li>
+            <b>Gruppierte Auswahl</b> („Aktivitäten &amp; Tags · Symptome · Werte · Wochentag“)
+            statt getrennter Feld-Typen. Der Hinweis unter dem Satz nennt die Art („Tag ↔ Symptom ·
+            Symptom-Frage“).
+          </li>
+          <li>
+            <b>Vorschläge filterbar:</b> Alle · Stimmung &amp; Co. · Symptome · Kombinationen. Ein
+            Nutzer ohne Symptome sieht den Filter „Symptome“ gar nicht (nicht gemockt).
+          </li>
+          <li>
+            <b>Symptom-Vorbehalt in der Vorschau</b> vor dem Speichern, nicht erst in der Antwort.
+          </li>
+          <li><b>Eigene Tags</b> stehen automatisch in der Auswahl („Meeting-Tag“).</li>
+          <li>
+            Der <b>Zeitbezug „am Folgetag“</b> ist nur für Tag/Symptom → Wert freigegeben. Sonst
+            bietet die Vorschau „am selben Tag“ an.
+          </li>
+          <li>
+            Die <b>Reihenfolge der Slots</b> ist egal: „Kopfschmerz ↔ Kaffee“ und „Kaffee ↔
+            Kopfschmerz“ sind dieselbe Frage. Der Duplikat-Check muss das erkennen (im Prototyp nur
+            exakte Reihenfolge).
+          </li>
+        </ul>
 
-  <h2>3 · Was das für den Plan bedeutet</h2>
-  <ul>
-    <li><b>Z1.1 (Fähigkeitsmatrix)</b> ist nicht mehr „Faktor × Ziel“, sondern <b>Signalart × Signalart × Zeitbezug × Methode</b>. Die Tabelle oben ist der Entwurf dafür.</li>
-    <li><b>Z1.3 (Katalog)</b> braucht Vorlagen je Familie (Wert / Symptom / Kombination), nicht nur für Ziele.</li>
-    <li><b>Datenschutz:</b> Namen von Custom-Symptomen sind verschlüsselt gespeichert (ADR-0005). Gemerkte Fragen mit Symptomnamen müssen Referenzen (IDs) speichern, keine Klartexte.</li>
-    <li><b>Kein Medizinbezug:</b> Symptom-Fragen brauchen dieselbe Grenze wie im Plan („keine diagnostische Schlussfolgerung“). Die Karten formulieren nur „häufiger vermerkt“.</li>
-    <li><b>Risiko Rechenbudget:</b> Symptom × Tag hat viele Kombinationen. Gemerkte Fragen dürfen nicht je eine Vollanalyse auslösen (Z3.2).</li>
-  </ul>
+        <h2>3 · Was das für den Plan bedeutet</h2>
+        <ul>
+          <li>
+            <b>Z1.1 (Fähigkeitsmatrix)</b> ist nicht mehr „Faktor × Ziel“, sondern
+            <b>Signalart × Signalart × Zeitbezug × Methode</b>. Die Tabelle oben ist der Entwurf
+            dafür.
+          </li>
+          <li>
+            <b>Z1.3 (Katalog)</b> braucht Vorlagen je Familie (Wert / Symptom / Kombination), nicht
+            nur für Ziele.
+          </li>
+          <li>
+            <b>Datenschutz:</b> Namen von Custom-Symptomen sind verschlüsselt gespeichert
+            (ADR-0005). Gemerkte Fragen mit Symptomnamen müssen Referenzen (IDs) speichern, keine
+            Klartexte.
+          </li>
+          <li>
+            <b>Kein Medizinbezug:</b> Symptom-Fragen brauchen dieselbe Grenze wie im Plan („keine
+            diagnostische Schlussfolgerung“). Die Karten formulieren nur „häufiger vermerkt“.
+          </li>
+          <li>
+            <b>Risiko Rechenbudget:</b> Symptom × Tag hat viele Kombinationen. Gemerkte Fragen
+            dürfen nicht je eine Vollanalyse auslösen (Z3.2).
+          </li>
+        </ul>
 
-  <h2>Offene Entscheidungen für dich</h2>
-  <ol>
-    <li><b>Werte ↔ Werte</b> bewusst ausgeschlossen lassen? (Empfehlung: ja, Verweis auf Matrix.)</li>
-    <li><b>Symptom als Ziel im ersten Ausbau?</b> „Was löst meinen Kopfschmerz aus?“ ist wohl die stärkste Nutzerfrage, aber medizinisch am nächsten dran. Bedarf einer ausdrücklichen Formulierungsregel.</li>
-    <li><b>Zwei gleiche Eingänge</b> auch dauerhaft neben den Chips, oder nur bis zur ersten Frage? (Hier: dauerhaft.)</li>
-    <li><b>Symmetrie:</b> Wortlaut „Wie hängt A mit B zusammen?“ für alle Arten, oder je Art ein natürlicher Satz („Tritt Kopfschmerz häufiger auf, wenn …?“)? Der erste ist einheitlicher, der zweite verständlicher.</li>
-  </ol>
-  <p class="muted">Alle Regeln und Auswertungen sind erfunden. Belastbar wird erst die Fähigkeitsmatrix aus Z1.1.</p>
-</div>
-</div>
+        <h2>Offene Entscheidungen für dich</h2>
+        <ol>
+          <li>
+            <b>Werte ↔ Werte</b> bewusst ausgeschlossen lassen? (Empfehlung: ja, Verweis auf
+            Matrix.)
+          </li>
+          <li>
+            <b>Symptom als Ziel im ersten Ausbau?</b> „Was löst meinen Kopfschmerz aus?“ ist wohl
+            die stärkste Nutzerfrage, aber medizinisch am nächsten dran. Bedarf einer ausdrücklichen
+            Formulierungsregel.
+          </li>
+          <li>
+            <b>Zwei gleiche Eingänge</b> auch dauerhaft neben den Chips, oder nur bis zur ersten
+            Frage? (Hier: dauerhaft.)
+          </li>
+          <li>
+            <b>Symmetrie:</b> Wortlaut „Wie hängt A mit B zusammen?“ für alle Arten, oder je Art ein
+            natürlicher Satz („Tritt Kopfschmerz häufiger auf, wenn …?“)? Der erste ist
+            einheitlicher, der zweite verständlicher.
+          </li>
+        </ol>
+        <p class="muted">
+          Alle Regeln und Auswertungen sind erfunden. Belastbar wird erst die Fähigkeitsmatrix aus
+          Z1.1.
+        </p>
+      </div>
+    </div>
 
-<script>
-const $=(s,r=document)=>r.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    <script>
+      const $ = (s, r = document) => r.querySelector(s);
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"]/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]
+        );
 
-/* ---------- Signale: drei Arten, ein Auswahlmodell (erfunden) ---------- */
-const SIG={
-  'Sport':'tag','Spaziergang':'tag','Kaffee':'tag','Alkohol':'tag','Spät gegessen':'tag','Meeting-Tag':'tag',
-  'Kopfschmerz':'sym','Rückenschmerz':'sym','Verdauung':'sym','Erkältung':'sym',
-  'Stimmung':'val','Energie':'val','Stress':'val','Schlaf':'val',
-  'Montag':'wd'
-};
-const GROUPS=[['Aktivitäten & Tags',['Sport','Spaziergang','Kaffee','Alkohol','Spät gegessen','Meeting-Tag']],['Symptome',['Kopfschmerz','Rückenschmerz','Verdauung','Erkältung']],['Werte',['Stimmung','Energie','Stress','Schlaf']],['Wochentag',['Montag']]];
-const KIND={tag:'Tag',sym:'Symptom',val:'Wert',wd:'Wochentag'};
-const TIME=['am selben Tag','am Folgetag'];
-const FAMILY=(a,b)=>{const k=[SIG[a],SIG[b]].sort().join('+');return {'tag+val':'val','sym+val':'sym','sym+tag':'symtag','tag+tag':'tagtag','sym+sym':'symsym','val+wd':'val','tag+wd':'no','sym+wd':'no','val+val':'no','wd+wd':'no'}[k]||'no'};
-const FAM_LABEL={val:'Wert-Frage',sym:'Symptom-Frage',symtag:'Symptom-Frage',tagtag:'Kombination',symsym:'Symptom-Frage'};
+      /* ---------- Signale: drei Arten, ein Auswahlmodell (erfunden) ---------- */
+      const SIG = {
+        Sport: 'tag',
+        Spaziergang: 'tag',
+        Kaffee: 'tag',
+        Alkohol: 'tag',
+        'Spät gegessen': 'tag',
+        'Meeting-Tag': 'tag',
+        Kopfschmerz: 'sym',
+        Rückenschmerz: 'sym',
+        Verdauung: 'sym',
+        Erkältung: 'sym',
+        Stimmung: 'val',
+        Energie: 'val',
+        Stress: 'val',
+        Schlaf: 'val',
+        Montag: 'wd',
+      };
+      const GROUPS = [
+        [
+          'Aktivitäten & Tags',
+          ['Sport', 'Spaziergang', 'Kaffee', 'Alkohol', 'Spät gegessen', 'Meeting-Tag'],
+        ],
+        ['Symptome', ['Kopfschmerz', 'Rückenschmerz', 'Verdauung', 'Erkältung']],
+        ['Werte', ['Stimmung', 'Energie', 'Stress', 'Schlaf']],
+        ['Wochentag', ['Montag']],
+      ];
+      const KIND = { tag: 'Tag', sym: 'Symptom', val: 'Wert', wd: 'Wochentag' };
+      const TIME = ['am selben Tag', 'am Folgetag'];
+      const FAMILY = (a, b) => {
+        const k = [SIG[a], SIG[b]].sort().join('+');
+        return (
+          {
+            'tag+val': 'val',
+            'sym+val': 'sym',
+            'sym+tag': 'symtag',
+            'tag+tag': 'tagtag',
+            'sym+sym': 'symsym',
+            'val+wd': 'val',
+            'tag+wd': 'no',
+            'sym+wd': 'no',
+            'val+val': 'no',
+            'wd+wd': 'no',
+          }[k] || 'no'
+        );
+      };
+      const FAM_LABEL = {
+        val: 'Wert-Frage',
+        sym: 'Symptom-Frage',
+        symtag: 'Symptom-Frage',
+        tagtag: 'Kombination',
+        symsym: 'Symptom-Frage',
+      };
 
-/* Sätze pro Frage */
-function text(a,b,z){
-  if(SIG[a]==='wd')return `Ist deine ${b} montags anders als an anderen Tagen?`;
-  if(SIG[b]==='wd')return text(b,a,z);
-  return `Wie hängt ${a} mit ${b} ${z} zusammen?`;
-}
-/* Unterstützung: Fantasieregelwerk bis Z1.1 */
-function support(a,b,z){
-  if(a===b)return {k:'no',m:'Bitte zwei verschiedene Dinge wählen.'};
-  const f=FAMILY(a,b);
-  if(f==='no'){
-    if(SIG[a]==='val'&&SIG[b]==='val')return {k:'no',m:'Zwei Werte untereinander vergleichst du in Trends → Korrelations-Matrix. Als gemerkte Frage wird das noch nicht unterstützt.'};
-    return {k:'no',m:'Für diese Kombination gibt es keine geprüfte Methode.'};
-  }
-  if(SIG[a]==='wd'||SIG[b]==='wd'){ if(z==='am Folgetag')return {k:'no',m:'Für „Montag“ wird nur der Vergleich am selben Tag unterstützt.',alt:[a,b,'am selben Tag']}; return {k:'ok',m:'Unterstützt und auswertbar: 4 Montage und 24 andere Tage in den letzten 28 Tagen.'}}
-  if(z==='am Folgetag'&&(f==='symtag'||f==='tagtag'||f==='symsym'))return {k:'no',m:'Zeitversatz wird nur für „Tag/Symptom → Wert“ unterstützt. Gleichzeitig (am selben Tag) ist möglich.',alt:[a,b,'am selben Tag']};
-  const few=[a,b].find(x=>x==='Kopfschmerz'||x==='Erkältung');
-  if(few)return {k:'lack',m:`Unterstützt, aber es gibt bisher nur ${few==='Kopfschmerz'?3:2} Tage mit „${few}“. Speichern ist möglich; der Datenstatus bleibt sichtbar.`};
-  const note={val:'',sym:' Ein Symptom zählt als „vorhanden“, unabhängig von der Stärke.',symtag:' Ein Symptom zählt als „vorhanden“, unabhängig von der Stärke.',tagtag:' Verglichen wird, wie oft beides am selben Tag vermerkt ist.',symsym:' Verglichen wird, wie oft beides am selben Tag vermerkt ist.'}[f];
-  return {k:'ok',m:'Unterstützt und auswertbar: 28 vergleichbare Tage in den letzten 28 Tagen.'+note};
-}
-const BADGE={ok:['ok','auswertbar'],lack:['lack','wenig Daten'],no:['','nicht unterstützt']};
+      /* Sätze pro Frage */
+      function text(a, b, z) {
+        if (SIG[a] === 'wd') return `Ist deine ${b} montags anders als an anderen Tagen?`;
+        if (SIG[b] === 'wd') return text(b, a, z);
+        return `Wie hängt ${a} mit ${b} ${z} zusammen?`;
+      }
+      /* Unterstützung: Fantasieregelwerk bis Z1.1 */
+      function support(a, b, z) {
+        if (a === b) return { k: 'no', m: 'Bitte zwei verschiedene Dinge wählen.' };
+        const f = FAMILY(a, b);
+        if (f === 'no') {
+          if (SIG[a] === 'val' && SIG[b] === 'val')
+            return {
+              k: 'no',
+              m: 'Zwei Werte untereinander vergleichst du in Trends → Korrelations-Matrix. Als gemerkte Frage wird das noch nicht unterstützt.',
+            };
+          return { k: 'no', m: 'Für diese Kombination gibt es keine geprüfte Methode.' };
+        }
+        if (SIG[a] === 'wd' || SIG[b] === 'wd') {
+          if (z === 'am Folgetag')
+            return {
+              k: 'no',
+              m: 'Für „Montag“ wird nur der Vergleich am selben Tag unterstützt.',
+              alt: [a, b, 'am selben Tag'],
+            };
+          return {
+            k: 'ok',
+            m: 'Unterstützt und auswertbar: 4 Montage und 24 andere Tage in den letzten 28 Tagen.',
+          };
+        }
+        if (z === 'am Folgetag' && (f === 'symtag' || f === 'tagtag' || f === 'symsym'))
+          return {
+            k: 'no',
+            m: 'Zeitversatz wird nur für „Tag/Symptom → Wert“ unterstützt. Gleichzeitig (am selben Tag) ist möglich.',
+            alt: [a, b, 'am selben Tag'],
+          };
+        const few = [a, b].find((x) => x === 'Kopfschmerz' || x === 'Erkältung');
+        if (few)
+          return {
+            k: 'lack',
+            m: `Unterstützt, aber es gibt bisher nur ${few === 'Kopfschmerz' ? 3 : 2} Tage mit „${few}“. Speichern ist möglich; der Datenstatus bleibt sichtbar.`,
+          };
+        const note = {
+          val: '',
+          sym: ' Ein Symptom zählt als „vorhanden“, unabhängig von der Stärke.',
+          symtag: ' Ein Symptom zählt als „vorhanden“, unabhängig von der Stärke.',
+          tagtag: ' Verglichen wird, wie oft beides am selben Tag vermerkt ist.',
+          symsym: ' Verglichen wird, wie oft beides am selben Tag vermerkt ist.',
+        }[f];
+        return {
+          k: 'ok',
+          m: 'Unterstützt und auswertbar: 28 vergleichbare Tage in den letzten 28 Tagen.' + note,
+        };
+      }
+      const BADGE = {
+        ok: ['ok', 'auswertbar'],
+        lack: ['lack', 'wenig Daten'],
+        no: ['', 'nicht unterstützt'],
+      };
 
-/* Katalog nach Familie */
-const CAT=[
- ['Sport','Stimmung','am selben Tag'],['Schlaf','Energie','am Folgetag'],['Spaziergang','Stress','am selben Tag'],['Montag','Energie','am selben Tag'],
- ['Kaffee','Kopfschmerz','am selben Tag'],['Kopfschmerz','Energie','am selben Tag'],['Schlaf','Rückenschmerz','am selben Tag'],
- ['Alkohol','Spät gegessen','am selben Tag'],['Kopfschmerz','Stress','am selben Tag']
-];
-const FILTERS=[['all','Alle'],['val','Stimmung & Co.'],['sym','Symptome'],['tagtag','Kombinationen']];
-const famOf=t=>{const f=FAMILY(t[0],t[1]);return f==='symtag'||f==='symsym'?'sym':f};
-const withSym=t=>[t[0],t[1]].some(x=>SIG[x]==='sym');
+      /* Katalog nach Familie */
+      const CAT = [
+        ['Sport', 'Stimmung', 'am selben Tag'],
+        ['Schlaf', 'Energie', 'am Folgetag'],
+        ['Spaziergang', 'Stress', 'am selben Tag'],
+        ['Montag', 'Energie', 'am selben Tag'],
+        ['Kaffee', 'Kopfschmerz', 'am selben Tag'],
+        ['Kopfschmerz', 'Energie', 'am selben Tag'],
+        ['Schlaf', 'Rückenschmerz', 'am selben Tag'],
+        ['Alkohol', 'Spät gegessen', 'am selben Tag'],
+        ['Kopfschmerz', 'Stress', 'am selben Tag'],
+      ];
+      const FILTERS = [
+        ['all', 'Alle'],
+        ['val', 'Stimmung & Co.'],
+        ['sym', 'Symptome'],
+        ['tagtag', 'Kombinationen'],
+      ];
+      const famOf = (t) => {
+        const f = FAMILY(t[0], t[1]);
+        return f === 'symtag' || f === 'symsym' ? 'sym' : f;
+      };
+      const withSym = (t) => [t[0], t[1]].some((x) => SIG[x] === 'sym');
 
-/* ---------- Auswertungen (synthetisch) je Fragetyp ---------- */
-const RES={
- 'Sport|Stimmung|am selben Tag':{st:'pattern',cap:'Tage mit guter Stimmung',head:'An Tagen mit Sport war deine Stimmung häufiger gut.',a:['Mit Sport',7,10],b:['Ohne Sport',7,18],meta:'1.–28. September · 28 vergleichbare Tage · „gut“ = Stimmung 4 oder 5',cav:'Deine Einträge zeigen einen Unterschied, aber noch keine Ursache.',next:'Prüfe, ob die Arbeitssituation den Unterschied miterklärt.',cta:'Antwort prüfen'},
- 'Spaziergang|Stress|am selben Tag':{st:'none',cap:'Tage mit hohem Stress',head:'In diesem Zeitraum zeigt sich kein klarer Zusammenhang zwischen Spaziergang und Stress.',a:['Mit Spaziergang',5,12],b:['Ohne Spaziergang',6,16],meta:'1.–28. September · 28 vergleichbare Tage · „hoher Stress“ = Stress 4 oder 5',cav:'Das heißt nicht, dass es keinen Einfluss gibt, nur dass er in diesen Einträgen nicht erkennbar ist.',next:null,cta:'Vergleich ansehen'},
- 'Kaffee|Kopfschmerz|am selben Tag':{st:'pattern',cap:'Tage mit Kopfschmerz',head:'An Tagen mit Kaffee war Kopfschmerz häufiger vermerkt.',a:['Mit Kaffee',5,9],b:['Ohne Kaffee',3,19],meta:'1.–28. September · 28 vergleichbare Tage · Kopfschmerz zählt als vorhanden, unabhängig von der Stärke',cav:'Ob der Kaffee vor oder nach dem Kopfschmerz kam, ist in den Einträgen nicht erfasst. Das zeigt einen Zusammenhang, keine Ursache.',next:'Prüfe, ob der Wochentag oder deine Arbeitssituation eine Rolle spielt.',cta:'Antwort prüfen'},
- 'Kopfschmerz|Energie|am selben Tag':{st:'unclear',cap:'Tage mit niedriger Energie',head:'Die bisherigen Daten lassen mehrere Deutungen zu.',a:['Mit Kopfschmerz',2,3],b:['Ohne Kopfschmerz',8,25],meta:'1.–28. September · 28 erfasste Tage · „niedrig“ = Energie 1 oder 2',cav:'Mit nur 3 Kopfschmerz-Tagen streuen die Werte stark; ein Unterschied ist möglich, aber nicht belastbar.',next:'Behalte die Frage im Blick; sie wird bei neuen Einträgen neu ausgewertet.',cta:'Streuung ansehen'},
- 'Alkohol|Spät gegessen|am selben Tag':{st:'pattern',cap:'Tage mit „Spät gegessen“',head:'An Tagen mit Alkohol war auch „Spät gegessen“ häufiger vermerkt.',a:['Mit Alkohol',6,8],b:['Ohne Alkohol',4,20],meta:'1.–28. September · 28 vergleichbare Tage · verglichen wird das gemeinsame Vorkommen am selben Tag',cav:'Beides tritt häufig zusammen auf. Was zuerst kam oder ob eins das andere beeinflusst, ist nicht erkennbar.',next:'Beide Tags auch als gemeinsame Gruppe in Trends ansehen.',cta:'Antwort prüfen'},
- 'Kopfschmerz|Stress|am selben Tag':{st:'lack',head:'Für deine Frage gibt es bisher zu wenige Tage mit Kopfschmerz.',days:[['Mit Kopfschmerz',3],['Ohne Kopfschmerz',25]],meta:'1.–28. September · 28 erfasste Tage',cav:'Das ist kein Fehler und kein Ergebnis, nur eine Datenlücke. Wie viele Tage genügen, hängt von den Werten ab.',next:'Trage weiter ein wie bisher; die Frage bleibt gespeichert und wird bei neuen Daten wieder ausgewertet.',cta:'Datenabdeckung ansehen'}
-};
-const DEFAULT_RES=()=>({st:'lack',head:'Für diese Frage liegt noch keine Auswertung vor.',days:[['Tage mit Faktor',0],['Tage ohne Faktor',0]],meta:'Noch keine Auswertung berechnet',cav:'Die Frage ist gespeichert. Die Auswertung erscheint, sobald genug Einträge vorliegen.',next:null,cta:'Datenabdeckung ansehen'});
-const CHIP={pattern:['◆','Muster beobachtet'],none:['○','Kein klares Muster'],unclear:['◐','Noch unklar'],lack:['◔','Zu wenig Daten']};
+      /* ---------- Auswertungen (synthetisch) je Fragetyp ---------- */
+      const RES = {
+        'Sport|Stimmung|am selben Tag': {
+          st: 'pattern',
+          cap: 'Tage mit guter Stimmung',
+          head: 'An Tagen mit Sport war deine Stimmung häufiger gut.',
+          a: ['Mit Sport', 7, 10],
+          b: ['Ohne Sport', 7, 18],
+          meta: '1.–28. September · 28 vergleichbare Tage · „gut“ = Stimmung 4 oder 5',
+          cav: 'Deine Einträge zeigen einen Unterschied, aber noch keine Ursache.',
+          next: 'Prüfe, ob die Arbeitssituation den Unterschied miterklärt.',
+          cta: 'Antwort prüfen',
+        },
+        'Spaziergang|Stress|am selben Tag': {
+          st: 'none',
+          cap: 'Tage mit hohem Stress',
+          head: 'In diesem Zeitraum zeigt sich kein klarer Zusammenhang zwischen Spaziergang und Stress.',
+          a: ['Mit Spaziergang', 5, 12],
+          b: ['Ohne Spaziergang', 6, 16],
+          meta: '1.–28. September · 28 vergleichbare Tage · „hoher Stress“ = Stress 4 oder 5',
+          cav: 'Das heißt nicht, dass es keinen Einfluss gibt, nur dass er in diesen Einträgen nicht erkennbar ist.',
+          next: null,
+          cta: 'Vergleich ansehen',
+        },
+        'Kaffee|Kopfschmerz|am selben Tag': {
+          st: 'pattern',
+          cap: 'Tage mit Kopfschmerz',
+          head: 'An Tagen mit Kaffee war Kopfschmerz häufiger vermerkt.',
+          a: ['Mit Kaffee', 5, 9],
+          b: ['Ohne Kaffee', 3, 19],
+          meta: '1.–28. September · 28 vergleichbare Tage · Kopfschmerz zählt als vorhanden, unabhängig von der Stärke',
+          cav: 'Ob der Kaffee vor oder nach dem Kopfschmerz kam, ist in den Einträgen nicht erfasst. Das zeigt einen Zusammenhang, keine Ursache.',
+          next: 'Prüfe, ob der Wochentag oder deine Arbeitssituation eine Rolle spielt.',
+          cta: 'Antwort prüfen',
+        },
+        'Kopfschmerz|Energie|am selben Tag': {
+          st: 'unclear',
+          cap: 'Tage mit niedriger Energie',
+          head: 'Die bisherigen Daten lassen mehrere Deutungen zu.',
+          a: ['Mit Kopfschmerz', 2, 3],
+          b: ['Ohne Kopfschmerz', 8, 25],
+          meta: '1.–28. September · 28 erfasste Tage · „niedrig“ = Energie 1 oder 2',
+          cav: 'Mit nur 3 Kopfschmerz-Tagen streuen die Werte stark; ein Unterschied ist möglich, aber nicht belastbar.',
+          next: 'Behalte die Frage im Blick; sie wird bei neuen Einträgen neu ausgewertet.',
+          cta: 'Streuung ansehen',
+        },
+        'Alkohol|Spät gegessen|am selben Tag': {
+          st: 'pattern',
+          cap: 'Tage mit „Spät gegessen“',
+          head: 'An Tagen mit Alkohol war auch „Spät gegessen“ häufiger vermerkt.',
+          a: ['Mit Alkohol', 6, 8],
+          b: ['Ohne Alkohol', 4, 20],
+          meta: '1.–28. September · 28 vergleichbare Tage · verglichen wird das gemeinsame Vorkommen am selben Tag',
+          cav: 'Beides tritt häufig zusammen auf. Was zuerst kam oder ob eins das andere beeinflusst, ist nicht erkennbar.',
+          next: 'Beide Tags auch als gemeinsame Gruppe in Trends ansehen.',
+          cta: 'Antwort prüfen',
+        },
+        'Kopfschmerz|Stress|am selben Tag': {
+          st: 'lack',
+          head: 'Für deine Frage gibt es bisher zu wenige Tage mit Kopfschmerz.',
+          days: [
+            ['Mit Kopfschmerz', 3],
+            ['Ohne Kopfschmerz', 25],
+          ],
+          meta: '1.–28. September · 28 erfasste Tage',
+          cav: 'Das ist kein Fehler und kein Ergebnis, nur eine Datenlücke. Wie viele Tage genügen, hängt von den Werten ab.',
+          next: 'Trage weiter ein wie bisher; die Frage bleibt gespeichert und wird bei neuen Daten wieder ausgewertet.',
+          cta: 'Datenabdeckung ansehen',
+        },
+      };
+      const DEFAULT_RES = () => ({
+        st: 'lack',
+        head: 'Für diese Frage liegt noch keine Auswertung vor.',
+        days: [
+          ['Tage mit Faktor', 0],
+          ['Tage ohne Faktor', 0],
+        ],
+        meta: 'Noch keine Auswertung berechnet',
+        cav: 'Die Frage ist gespeichert. Die Auswertung erscheint, sobald genug Einträge vorliegen.',
+        next: null,
+        cta: 'Datenabdeckung ansehen',
+      });
+      const CHIP = {
+        pattern: ['◆', 'Muster beobachtet'],
+        none: ['○', 'Kein klares Muster'],
+        unclear: ['◐', 'Noch unklar'],
+        lack: ['◔', 'Zu wenig Daten'],
+      };
 
-/* ---------- Zustand ---------- */
-let S,nid=1;
-function fresh(n){
-  S={qs:[],focus:null,view:'main',sheet:null,toast:null};
-  if(n===3){[['Sport','Stimmung','am selben Tag'],['Kaffee','Kopfschmerz','am selben Tag'],['Alkohol','Spät gegessen','am selben Tag']].forEach(t=>addQ(t,'',false));S.focus=S.qs[0].id}
-}
-function addQ(t,title,focus){const q={id:nid++,t,title,archived:false};S.qs.push(q);if(focus)S.focus=q.id;return q}
-const byId=id=>S.qs.find(q=>q.id===id);
-const has=t=>S.qs.find(q=>!q.archived&&q.t.join('|')===t.join('|'));
-const label=q=>q.title||text(...q.t);
+      /* ---------- Zustand ---------- */
+      let S,
+        nid = 1;
+      function fresh(n) {
+        S = { qs: [], focus: null, view: 'main', sheet: null, toast: null };
+        if (n === 3) {
+          [
+            ['Sport', 'Stimmung', 'am selben Tag'],
+            ['Kaffee', 'Kopfschmerz', 'am selben Tag'],
+            ['Alkohol', 'Spät gegessen', 'am selben Tag'],
+          ].forEach((t) => addQ(t, '', false));
+          S.focus = S.qs[0].id;
+        }
+      }
+      function addQ(t, title, focus) {
+        const q = { id: nid++, t, title, archived: false };
+        S.qs.push(q);
+        if (focus) S.focus = q.id;
+        return q;
+      }
+      const byId = (id) => S.qs.find((q) => q.id === id);
+      const has = (t) => S.qs.find((q) => !q.archived && q.t.join('|') === t.join('|'));
+      const label = (q) => q.title || text(...q.t);
 
-/* ---------- Antwortkarte C (ein Muster für alle Fragearten) ---------- */
-function bars(r){
-  if(r.days){const m=Math.max(...r.days.map(d=>d[1]),1);return `<div class="bars" role="img" aria-label="Tage in der Auswertung">${r.days.map(d=>`<div class="b"><span>${d[0]}</span><div class="trk"><span style="width:${d[1]/m*100}%"></span></div><span>${d[1]} Tage</span></div>`).join('')}</div>`}
-  return `<p class="meta" style="margin-bottom:0">${r.cap}:</p><div class="bars">${[r.a,r.b].map(g=>`<div class="b"><span>${g[0]}</span><div class="trk"><span style="width:${Math.round(g[1]/g[2]*100)}%"></span></div><span>${g[1]} von ${g[2]} · ${Math.round(g[1]/g[2]*100)} %</span></div>`).join('')}</div>`;
-}
-function kindTag(q){const f=famOf(q.t);return `<span class="kt">${{val:'Wert-Frage',sym:'Symptom-Frage',tagtag:'Kombination'}[f]||''}</span>`}
-function answerCard(q){
-  const r=RES[q.t.join('|')]||DEFAULT_RES();const c=CHIP[r.st];
-  const acts=r.st==='none'
-   ?`<p class="nextstep"><b>Du entscheidest:</b></p><div class="actions"><button class="btn sec">Weiter beobachten</button><button class="btn sec">Andere Frage</button><button class="btn sec">In Bericht aufnehmen</button></div>`
-   :`${r.next?`<p class="nextstep"><b>Als Nächstes:</b> ${r.next}</p>`:''}<div class="actions"><button class="btn${r.st==='pattern'?'':' sec'}">${r.cta}</button></div>`;
-  return `<div class="card"><p class="eyebrow">Deine Frage · ${kindTag(q)} ${esc(label(q))}</p>
+      /* ---------- Antwortkarte C (ein Muster für alle Fragearten) ---------- */
+      function bars(r) {
+        if (r.days) {
+          const m = Math.max(...r.days.map((d) => d[1]), 1);
+          return `<div class="bars" role="img" aria-label="Tage in der Auswertung">${r.days.map((d) => `<div class="b"><span>${d[0]}</span><div class="trk"><span style="width:${(d[1] / m) * 100}%"></span></div><span>${d[1]} Tage</span></div>`).join('')}</div>`;
+        }
+        return `<p class="meta" style="margin-bottom:0">${r.cap}:</p><div class="bars">${[r.a, r.b].map((g) => `<div class="b"><span>${g[0]}</span><div class="trk"><span style="width:${Math.round((g[1] / g[2]) * 100)}%"></span></div><span>${g[1]} von ${g[2]} · ${Math.round((g[1] / g[2]) * 100)} %</span></div>`).join('')}</div>`;
+      }
+      function kindTag(q) {
+        const f = famOf(q.t);
+        return `<span class="kt">${{ val: 'Wert-Frage', sym: 'Symptom-Frage', tagtag: 'Kombination' }[f] || ''}</span>`;
+      }
+      function answerCard(q) {
+        const r = RES[q.t.join('|')] || DEFAULT_RES();
+        const c = CHIP[r.st];
+        const acts =
+          r.st === 'none'
+            ? `<p class="nextstep"><b>Du entscheidest:</b></p><div class="actions"><button class="btn sec">Weiter beobachten</button><button class="btn sec">Andere Frage</button><button class="btn sec">In Bericht aufnehmen</button></div>`
+            : `${r.next ? `<p class="nextstep"><b>Als Nächstes:</b> ${r.next}</p>` : ''}<div class="actions"><button class="btn${r.st === 'pattern' ? '' : ' sec'}">${r.cta}</button></div>`;
+        return `<div class="card"><p class="eyebrow">Deine Frage · ${kindTag(q)} ${esc(label(q))}</p>
   <span class="chip ${r.st}"><span aria-hidden="true">${c[0]}</span>${c[1]}</span>
   <p class="headline">${r.head}</p>${bars(r)}<p class="meta">${r.meta}</p><p class="caveat">${r.cav}</p>${acts}
   <p class="meta" style="margin-top:10px"><a href="#" style="color:inherit" data-act="why">Warum sehe ich das?</a></p></div>`;
-}
+      }
 
-/* ---------- Screens ---------- */
-const tplBtn=(t,i)=>{const s=support(...t);return `<button class="t" data-act="pick" data-i="${i}"><span>${text(...t)}</span><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span></button>`};
-const twoDoors=()=>`<div class="doors"><button class="door" data-act="open" data-door="1"><span class="ic" aria-hidden="true">✦</span><b>Vorschlag wählen</b><span class="meta">Geprüfte Fragen, passend zu deinen Tags, Symptomen und Werten</span></button><button class="door" data-act="open" data-door="2"><span class="ic" aria-hidden="true">✎</span><b>Frage erstellen</b><span class="meta">Zwei Dinge selbst verbinden: Tag, Symptom oder Wert</span></button></div>`;
-function main(){
-  const act=S.qs.filter(q=>!q.archived),foc=byId(S.focus);
-  let h=`<h3 class="pg">Erkenntnisse<button class="mini" data-act="mine">Meine Fragen (${act.length})</button></h3>`;
-  if(act.length){
-    h+=`<div class="tabsrow" role="group" aria-label="Meine Fragen">${act.map(q=>`<button class="q" data-act="focus" data-id="${q.id}" aria-pressed="${q.id===S.focus}" title="${esc(label(q))}">${q.id===S.focus?'● ':''}${esc(label(q))}</button>`).join('')}</div>`;
-    h+=twoDoors().replace('class="doors"','class="doors compact"');
-  }
-  if(!foc||foc.archived){
-    h+=`<div class="card"><p class="headline">Was möchtest du über deinen Alltag wissen?</p><p class="evid">Optional. Du kannst Zusammenhänge zwischen Tags, Symptomen und Werten wie Stimmung, Energie, Stress und Schlaf erfragen.</p></div>${twoDoors()}<p class="meta">Ohne Frage entdeckt CorrelCore weiter Auffälligkeiten für dich.</p>`;
-  } else h+=answerCard(foc);
-  h+=`<div class="sec-h">Weitere Hinweise aus deinen Einträgen</div>`;
-  [['Schlaf','Energie','am Folgetag','Nach kurzen Nächten war deine Energie am Folgetag häufiger niedrig.'],['Verdauung','Stress','am selben Tag','An Tagen mit Verdauungsbeschwerden war dein Stress häufiger hoch.']].forEach((x,i)=>{
-    h+=`<div class="card small"><p class="evid" style="margin:0 0 4px"><b>${x[3]}</b></p><div class="row"><button class="btn link" style="padding-left:0">Ansehen</button><button class="btn link" data-act="open" data-door="3" data-i="${i}">Frage merken</button></div></div>`;
-  });
-  return h;
-}
-function mine(){
-  let h=`<h3 class="pg"><span><button class="mini" data-act="back">←</button> Meine Fragen</span></h3>`;
-  const act=S.qs.filter(q=>!q.archived),arc=S.qs.filter(q=>q.archived);
-  h+=act.map(q=>`<div class="card small"><div><b>${esc(label(q))}</b> ${kindTag(q)}${q.title?`<div class="meta">${text(...q.t)}</div>`:''}<div class="meta">${q.id===S.focus?'● Aktueller Fokus':''}</div></div>
-   <div class="actions"><button class="mini" data-act="rename" data-id="${q.id}">Umbenennen</button>${q.id!==S.focus?`<button class="mini" data-act="focus2" data-id="${q.id}">Als Fokus</button>`:''}<button class="mini" data-act="archive" data-id="${q.id}">Archivieren</button><button class="mini" data-act="del" data-id="${q.id}">Löschen</button></div></div>`).join('')||'<p class="meta">Noch keine Fragen.</p>';
-  if(arc.length)h+=`<div class="sec-h">Archiviert</div>`+arc.map(q=>`<div class="card small"><div class="row"><span>${esc(label(q))}</span><button class="mini" data-act="restore" data-id="${q.id}">Wiederherstellen</button></div></div>`).join('');
-  h+=twoDoors().replace('class="doors"','class="doors compact"')+`<p class="meta">Gemerkte Fragen lösen keine zusätzlichen Vollanalysen aus. Ein neuer Fokus ändert nur die Startdarstellung.</p>`;
-  return h;
-}
-/* ---------- Sheet: zwei gleichrangige Tabs ---------- */
-function slot(id,val,label){
-  return `<select id="${id}" aria-label="${label}">${GROUPS.map(g=>`<optgroup label="${g[0]}">${g[1].map(x=>`<option ${x===val?'selected':''}>${x}</option>`).join('')}</optgroup>`).join('')}</select>`;
-}
-function builder(b){
-  const s=support(...b);
-  return `<div class="builder" id="bld">Wie hängt ${slot('f',b[0],'Erstes')} mit ${slot('t',b[1],'Zweites')} <select id="z" aria-label="Zeitbezug">${TIME.map(x=>`<option ${x===b[2]?'selected':''}>${x}</option>`).join('')}</select> zusammen?</div>
-  <div class="typehint" id="th">${SIG[b[0]]?`${KIND[SIG[b[0]]]} ↔ ${KIND[SIG[b[1]]]}`:''}${FAM_LABEL[FAMILY(b[0],b[1])]?` · ${FAM_LABEL[FAMILY(b[0],b[1])]}`:''}</div>
-  <div class="preview ${s.k}" id="bpv"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}${s.alt?`<div class="actions"><button class="btn sec" data-act="alt2">Stattdessen: ${text(...s.alt)}</button></div>`:''}</div>
-  <div class="actions"><button class="btn" data-act="build" id="bnext" ${s.k==='no'?'disabled':''}>Weiter</button></div>`;
-}
-function sheet(){
-  const sh=S.sheet;let b='';
-  const tabs=(cur)=>`<div class="seg tabs2" role="tablist"><button role="tab" data-act="tab" data-tab="pick" aria-pressed="${cur==='pick'}">✦ Vorschläge</button><button role="tab" data-act="tab" data-tab="build" aria-pressed="${cur==='build'}">✎ Frage erstellen</button></div>`;
-  if(sh.step==='pick'){
-    const flt=sh.filter||'all';
-    const items=CAT.map((t,i)=>[t,i]).filter(([t])=>flt==='all'||(flt==='sym'?withSym(t):famOf(t)===flt&&!withSym(t)));
-    b=`<h4>Neue Frage <button class="x" data-act="close" aria-label="Schließen">✕</button></h4>${tabs('pick')}
-    <div class="chips2">${FILTERS.map(f=>`<button data-act="flt" data-f="${f[0]}" aria-pressed="${flt===f[0]}">${f[1]}</button>`).join('')}</div>
-    <div class="tpl">${items.map(([t,i])=>tplBtn(t,i)).join('')||'<p class="meta">Keine Vorschläge.</p>'}</div>
+      /* ---------- Screens ---------- */
+      const tplBtn = (t, i) => {
+        const s = support(...t);
+        return `<button class="t" data-act="pick" data-i="${i}"><span>${text(...t)}</span><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span></button>`;
+      };
+      const twoDoors = () =>
+        `<div class="doors"><button class="door" data-act="open" data-door="1"><span class="ic" aria-hidden="true">✦</span><b>Vorschlag wählen</b><span class="meta">Geprüfte Fragen, passend zu deinen Tags, Symptomen und Werten</span></button><button class="door" data-act="open" data-door="2"><span class="ic" aria-hidden="true">✎</span><b>Frage erstellen</b><span class="meta">Zwei Dinge selbst verbinden: Tag, Symptom oder Wert</span></button></div>`;
+      function main() {
+        const act = S.qs.filter((q) => !q.archived),
+          foc = byId(S.focus);
+        let h = `<h3 class="pg">Erkenntnisse<button class="mini" data-act="mine">Meine Fragen (${act.length})</button></h3>`;
+        if (act.length) {
+          h += `<div class="tabsrow" role="group" aria-label="Meine Fragen">${act.map((q) => `<button class="q" data-act="focus" data-id="${q.id}" aria-pressed="${q.id === S.focus}" title="${esc(label(q))}">${q.id === S.focus ? '● ' : ''}${esc(label(q))}</button>`).join('')}</div>`;
+          h += twoDoors().replace('class="doors"', 'class="doors compact"');
+        }
+        if (!foc || foc.archived) {
+          h += `<div class="card"><p class="headline">Was möchtest du über deinen Alltag wissen?</p><p class="evid">Optional. Du kannst Zusammenhänge zwischen Tags, Symptomen und Werten wie Stimmung, Energie, Stress und Schlaf erfragen.</p></div>${twoDoors()}<p class="meta">Ohne Frage entdeckt CorrelCore weiter Auffälligkeiten für dich.</p>`;
+        } else h += answerCard(foc);
+        h += `<div class="sec-h">Weitere Hinweise aus deinen Einträgen</div>`;
+        [
+          [
+            'Schlaf',
+            'Energie',
+            'am Folgetag',
+            'Nach kurzen Nächten war deine Energie am Folgetag häufiger niedrig.',
+          ],
+          [
+            'Verdauung',
+            'Stress',
+            'am selben Tag',
+            'An Tagen mit Verdauungsbeschwerden war dein Stress häufiger hoch.',
+          ],
+        ].forEach((x, i) => {
+          h += `<div class="card small"><p class="evid" style="margin:0 0 4px"><b>${x[3]}</b></p><div class="row"><button class="btn link" style="padding-left:0">Ansehen</button><button class="btn link" data-act="open" data-door="3" data-i="${i}">Frage merken</button></div></div>`;
+        });
+        return h;
+      }
+      function mine() {
+        let h = `<h3 class="pg"><span><button class="mini" data-act="back">←</button> Meine Fragen</span></h3>`;
+        const act = S.qs.filter((q) => !q.archived),
+          arc = S.qs.filter((q) => q.archived);
+        h +=
+          act
+            .map(
+              (
+                q
+              ) => `<div class="card small"><div><b>${esc(label(q))}</b> ${kindTag(q)}${q.title ? `<div class="meta">${text(...q.t)}</div>` : ''}<div class="meta">${q.id === S.focus ? '● Aktueller Fokus' : ''}</div></div>
+   <div class="actions"><button class="mini" data-act="rename" data-id="${q.id}">Umbenennen</button>${q.id !== S.focus ? `<button class="mini" data-act="focus2" data-id="${q.id}">Als Fokus</button>` : ''}<button class="mini" data-act="archive" data-id="${q.id}">Archivieren</button><button class="mini" data-act="del" data-id="${q.id}">Löschen</button></div></div>`
+            )
+            .join('') || '<p class="meta">Noch keine Fragen.</p>';
+        if (arc.length)
+          h +=
+            `<div class="sec-h">Archiviert</div>` +
+            arc
+              .map(
+                (q) =>
+                  `<div class="card small"><div class="row"><span>${esc(label(q))}</span><button class="mini" data-act="restore" data-id="${q.id}">Wiederherstellen</button></div></div>`
+              )
+              .join('');
+        h +=
+          twoDoors().replace('class="doors"', 'class="doors compact"') +
+          `<p class="meta">Gemerkte Fragen lösen keine zusätzlichen Vollanalysen aus. Ein neuer Fokus ändert nur die Startdarstellung.</p>`;
+        return h;
+      }
+      /* ---------- Sheet: zwei gleichrangige Tabs ---------- */
+      function slot(id, val, label) {
+        return `<select id="${id}" aria-label="${label}">${GROUPS.map((g) => `<optgroup label="${g[0]}">${g[1].map((x) => `<option ${x === val ? 'selected' : ''}>${x}</option>`).join('')}</optgroup>`).join('')}</select>`;
+      }
+      function builder(b) {
+        const s = support(...b);
+        return `<div class="builder" id="bld">Wie hängt ${slot('f', b[0], 'Erstes')} mit ${slot('t', b[1], 'Zweites')} <select id="z" aria-label="Zeitbezug">${TIME.map((x) => `<option ${x === b[2] ? 'selected' : ''}>${x}</option>`).join('')}</select> zusammen?</div>
+  <div class="typehint" id="th">${SIG[b[0]] ? `${KIND[SIG[b[0]]]} ↔ ${KIND[SIG[b[1]]]}` : ''}${FAM_LABEL[FAMILY(b[0], b[1])] ? ` · ${FAM_LABEL[FAMILY(b[0], b[1])]}` : ''}</div>
+  <div class="preview ${s.k}" id="bpv"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}${s.alt ? `<div class="actions"><button class="btn sec" data-act="alt2">Stattdessen: ${text(...s.alt)}</button></div>` : ''}</div>
+  <div class="actions"><button class="btn" data-act="build" id="bnext" ${s.k === 'no' ? 'disabled' : ''}>Weiter</button></div>`;
+      }
+      function sheet() {
+        const sh = S.sheet;
+        let b = '';
+        const tabs = (cur) =>
+          `<div class="seg tabs2" role="tablist"><button role="tab" data-act="tab" data-tab="pick" aria-pressed="${cur === 'pick'}">✦ Vorschläge</button><button role="tab" data-act="tab" data-tab="build" aria-pressed="${cur === 'build'}">✎ Frage erstellen</button></div>`;
+        if (sh.step === 'pick') {
+          const flt = sh.filter || 'all';
+          const items = CAT.map((t, i) => [t, i]).filter(
+            ([t]) => flt === 'all' || (flt === 'sym' ? withSym(t) : famOf(t) === flt && !withSym(t))
+          );
+          b = `<h4>Neue Frage <button class="x" data-act="close" aria-label="Schließen">✕</button></h4>${tabs('pick')}
+    <div class="chips2">${FILTERS.map((f) => `<button data-act="flt" data-f="${f[0]}" aria-pressed="${flt === f[0]}">${f[1]}</button>`).join('')}</div>
+    <div class="tpl">${items.map(([t, i]) => tplBtn(t, i)).join('') || '<p class="meta">Keine Vorschläge.</p>'}</div>
     <p class="meta">Vorschläge nutzen deine vorhandenen Tags und Symptome. Nichts hier ist etwas, das die App schon „gefunden“ hat.</p>
     <div class="actions"><button class="btn link" data-act="tab" data-tab="build">Passt nichts? Frage erstellen →</button></div>`;
-  } else if(sh.step==='build'){
-    b=`<h4>Neue Frage <button class="x" data-act="close" aria-label="Schließen">✕</button></h4>${tabs('build')}
-    <p class="meta">Verbinde zwei Dinge aus deinen Einträgen: Tags, Symptome und Werte.</p>${builder(sh.build||CAT[0])}
+        } else if (sh.step === 'build') {
+          b = `<h4>Neue Frage <button class="x" data-act="close" aria-label="Schließen">✕</button></h4>${tabs('build')}
+    <p class="meta">Verbinde zwei Dinge aus deinen Einträgen: Tags, Symptome und Werte.</p>${builder(sh.build || CAT[0])}
     <div class="actions"><button class="btn link" data-act="tab" data-tab="pick">← Zu den Vorschlägen</button></div>`;
-  } else {
-    const t=sh.t,s=support(...t),dup=has(t);
-    b=`<h4>Frage bestätigen <button class="x" data-act="close" aria-label="Schließen">✕</button></h4>
-    ${sh.src?`<p class="meta" style="margin-top:0">${sh.src}</p>`:''}
+        } else {
+          const t = sh.t,
+            s = support(...t),
+            dup = has(t);
+          b = `<h4>Frage bestätigen <button class="x" data-act="close" aria-label="Schließen">✕</button></h4>
+    ${sh.src ? `<p class="meta" style="margin-top:0">${sh.src}</p>` : ''}
     <p class="headline" style="font-size:1.05rem;margin-top:8px">${text(...t)}</p>
-    ${dup?`<div class="preview dup"><b>Diese Frage hast du schon.</b> <button class="btn link" data-act="focus2" data-id="${dup.id}">Zur vorhandenen Frage</button></div>`
-     :`<div class="preview ${s.k}"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}${s.alt?`<div class="actions"><button class="btn sec" data-act="alt">Stattdessen: ${text(...s.alt)}</button></div>`:''}</div>`}
-    ${!dup&&s.k!=='no'?`<label class="eyebrow" for="ttl">Eigener Titel (optional, ändert die Analyse nicht)</label><input type="text" id="ttl" placeholder="${esc(text(...t))}">
-    ${S.focus&&!byId(S.focus).archived?`<label class="inl"><input type="checkbox" id="foc"> <span>Als Fokus setzen <span class="meta">(Aktuell im Fokus: ${esc(label(byId(S.focus)))})</span></span></label>`:`<label class="inl"><input type="checkbox" id="foc" checked> <span>Als Fokus setzen <span class="meta">(deine erste Frage)</span></span></label>`}
-    <div class="actions"><button class="btn" data-act="save">Frage merken</button><button class="btn link" data-act="back2">Zurück</button></div>`:`<div class="actions"><button class="btn link" data-act="back2">Zurück</button></div>`}`;
-  }
-  return `<div class="sheetbg"><div class="sheet">${b}</div></div>`;
-}
+    ${
+      dup
+        ? `<div class="preview dup"><b>Diese Frage hast du schon.</b> <button class="btn link" data-act="focus2" data-id="${dup.id}">Zur vorhandenen Frage</button></div>`
+        : `<div class="preview ${s.k}"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}${s.alt ? `<div class="actions"><button class="btn sec" data-act="alt">Stattdessen: ${text(...s.alt)}</button></div>` : ''}</div>`
+    }
+    ${
+      !dup && s.k !== 'no'
+        ? `<label class="eyebrow" for="ttl">Eigener Titel (optional, ändert die Analyse nicht)</label><input type="text" id="ttl" placeholder="${esc(text(...t))}">
+    ${S.focus && !byId(S.focus).archived ? `<label class="inl"><input type="checkbox" id="foc"> <span>Als Fokus setzen <span class="meta">(Aktuell im Fokus: ${esc(label(byId(S.focus)))})</span></span></label>` : `<label class="inl"><input type="checkbox" id="foc" checked> <span>Als Fokus setzen <span class="meta">(deine erste Frage)</span></span></label>`}
+    <div class="actions"><button class="btn" data-act="save">Frage merken</button><button class="btn link" data-act="back2">Zurück</button></div>`
+        : `<div class="actions"><button class="btn link" data-act="back2">Zurück</button></div>`
+    }`;
+        }
+        return `<div class="sheetbg"><div class="sheet">${b}</div></div>`;
+      }
 
-/* ---------- Render + Events ---------- */
-function render(){
-  const sc=$('#screen'),top=sc.scrollTop;
-  sc.innerHTML=(S.view==='main'?main():mine())+(S.sheet?sheet():'')+(S.toast?`<div class="toast"><span>${S.toast.m}</span>${S.toast.undo?`<button data-act="undo">Rückgängig</button>`:''}</div>`:'');
-  sc.scrollTop=top;
-}
-function toast(m,undo){S.toast={m,undo};render();clearTimeout(toast.t);toast.t=setTimeout(()=>{S.toast=null;render()},6000)}
-const okSig=v=>Object.prototype.hasOwnProperty.call(SIG,v)?v:'Sport';
-const readBuild=()=>[okSig($('#f').value),okSig($('#t').value),TIME.includes($('#z').value)?$('#z').value:TIME[0]];
-$('#screen').addEventListener('change',e=>{
-  if(e.target.closest('#bld')){S.sheet.build=readBuild();const scr=$('#screen').scrollTop;render();$('#screen').scrollTop=scr}
-});
-let undoState=null;
-document.addEventListener('click',e=>{
-  const b=e.target.closest('[data-act]');if(!b)return;
-  const a=b.dataset.act,id=+b.dataset.id;
-  if(a==='why'){e.preventDefault();toast('Du verfolgst diese Frage.');return}
-  if(a==='mine')S.view='mine';
-  else if(a==='back')S.view='main';
-  else if(a==='focus'){if(S.focus!==id){undoState=S.focus;S.focus=id;render();toast('Fokus gewechselt zu: '+label(byId(id)),true);return}}
-  else if(a==='focus2'){undoState=S.focus;S.focus=id;S.sheet=null;S.view='main';render();toast('Fokus gewechselt zu: '+label(byId(id)),true);return}
-  else if(a==='undo'){S.focus=undoState;S.toast=null}
-  else if(a==='open'){const d=b.dataset.door;
-    if(d==='3'){const src=[['Schlaf','Energie','am Folgetag'],['Verdauung','Stress','am selben Tag']][+b.dataset.i];S.sheet={step:'confirm',t:src,from:'hint',src:'Aus einem Hinweis in deinen Einträgen; beide Seiten und der Zeitbezug sind übernommen.'}}
-    else S.sheet={step:d==='2'?'build':'pick',build:CAT[0]}}
-  else if(a==='tab'){const cur=S.sheet;S.sheet={step:b.dataset.tab,build:cur.build||CAT[0],filter:cur.filter}}
-  else if(a==='flt'){S.sheet.filter=b.dataset.f}
-  else if(a==='close')S.sheet=null;
-  else if(a==='pick'){S.sheet={step:'confirm',t:CAT[+b.dataset.i],from:'pick',src:'Aus den Vorschlägen.',build:CAT[+b.dataset.i]}}
-  else if(a==='build'){S.sheet={step:'confirm',t:readBuild(),from:'build',src:'Selbst erstellt.',build:readBuild()}}
-  else if(a==='back2'){S.sheet={step:S.sheet.from==='build'?'build':'pick',build:S.sheet.build||CAT[0]}}
-  else if(a==='alt'){S.sheet.t=support(...S.sheet.t).alt;S.sheet.src='Angepasst: unterstützte Alternative.'}
-  else if(a==='alt2'){S.sheet.build=support(...readBuild()).alt}
-  else if(a==='save'){const t=S.sheet.t,title=$('#ttl').value.trim(),wantFocus=$('#foc').checked,prev=S.focus;addQ(t,title,wantFocus);S.sheet=null;render();
-    toast(wantFocus&&prev?'Gemerkt. Fokus wechselt zu dieser Frage.':wantFocus?'Gemerkt und fokussiert.':'Gemerkt. Dein Fokus bleibt unverändert.',wantFocus&&!!prev);undoState=prev;return}
-  else if(a==='rename'){const q=byId(id),n=prompt('Titel (leer = Standardtext)',q.title||'');if(n!==null)q.title=n.trim()}
-  else if(a==='archive'){byId(id).archived=true;if(S.focus===id)S.focus=(S.qs.find(x=>!x.archived)||{}).id||null}
-  else if(a==='restore'){byId(id).archived=false;if(!S.focus)S.focus=id}
-  else if(a==='del'){if(confirm('Frage löschen? Gespeicherte Auswertungen dieser Frage gehen verloren.')){S.qs=S.qs.filter(q=>q.id!==id);if(S.focus===id)S.focus=(S.qs.find(x=>!x.archived)||{}).id||null}}
-  render();
-});
-document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const g=b.dataset.go;
-  if(g==='reset0')fresh(0);else if(g==='reset3')fresh(3);
-  else if(g==='door1'){S.sheet={step:'pick',build:CAT[0]}}
-  else if(g==='door2'){S.sheet={step:'build',build:['Kaffee','Kopfschmerz','am selben Tag']}}
-  else if(g==='door3'){S.view='main';S.sheet={step:'confirm',t:['Verdauung','Stress','am selben Tag'],from:'hint',src:'Aus einem Hinweis in deinen Einträgen; beide Seiten und der Zeitbezug sind übernommen.'}}
-  render()});
-document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{document.documentElement.dataset.theme=b.dataset.th;document.querySelectorAll('[data-th]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
-fresh(3);render();
-</script>
-</body>
+      /* ---------- Render + Events ---------- */
+      function render() {
+        const sc = $('#screen'),
+          top = sc.scrollTop;
+        sc.innerHTML =
+          (S.view === 'main' ? main() : mine()) +
+          (S.sheet ? sheet() : '') +
+          (S.toast
+            ? `<div class="toast"><span>${S.toast.m}</span>${S.toast.undo ? `<button data-act="undo">Rückgängig</button>` : ''}</div>`
+            : '');
+        sc.scrollTop = top;
+      }
+      function toast(m, undo) {
+        S.toast = { m, undo };
+        render();
+        clearTimeout(toast.t);
+        toast.t = setTimeout(() => {
+          S.toast = null;
+          render();
+        }, 6000);
+      }
+      const okSig = (v) => (Object.prototype.hasOwnProperty.call(SIG, v) ? v : 'Sport');
+      const readBuild = () => [
+        okSig($('#f').value),
+        okSig($('#t').value),
+        TIME.includes($('#z').value) ? $('#z').value : TIME[0],
+      ];
+      $('#screen').addEventListener('change', (e) => {
+        if (e.target.closest('#bld')) {
+          S.sheet.build = readBuild();
+          const scr = $('#screen').scrollTop;
+          render();
+          $('#screen').scrollTop = scr;
+        }
+      });
+      let undoState = null;
+      document.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-act]');
+        if (!b) return;
+        const a = b.dataset.act,
+          id = +b.dataset.id;
+        if (a === 'why') {
+          e.preventDefault();
+          toast('Du verfolgst diese Frage.');
+          return;
+        }
+        if (a === 'mine') S.view = 'mine';
+        else if (a === 'back') S.view = 'main';
+        else if (a === 'focus') {
+          if (S.focus !== id) {
+            undoState = S.focus;
+            S.focus = id;
+            render();
+            toast('Fokus gewechselt zu: ' + label(byId(id)), true);
+            return;
+          }
+        } else if (a === 'focus2') {
+          undoState = S.focus;
+          S.focus = id;
+          S.sheet = null;
+          S.view = 'main';
+          render();
+          toast('Fokus gewechselt zu: ' + label(byId(id)), true);
+          return;
+        } else if (a === 'undo') {
+          S.focus = undoState;
+          S.toast = null;
+        } else if (a === 'open') {
+          const d = b.dataset.door;
+          if (d === '3') {
+            const src = [
+              ['Schlaf', 'Energie', 'am Folgetag'],
+              ['Verdauung', 'Stress', 'am selben Tag'],
+            ][+b.dataset.i];
+            S.sheet = {
+              step: 'confirm',
+              t: src,
+              from: 'hint',
+              src: 'Aus einem Hinweis in deinen Einträgen; beide Seiten und der Zeitbezug sind übernommen.',
+            };
+          } else S.sheet = { step: d === '2' ? 'build' : 'pick', build: CAT[0] };
+        } else if (a === 'tab') {
+          const cur = S.sheet;
+          S.sheet = { step: b.dataset.tab, build: cur.build || CAT[0], filter: cur.filter };
+        } else if (a === 'flt') {
+          S.sheet.filter = b.dataset.f;
+        } else if (a === 'close') S.sheet = null;
+        else if (a === 'pick') {
+          S.sheet = {
+            step: 'confirm',
+            t: CAT[+b.dataset.i],
+            from: 'pick',
+            src: 'Aus den Vorschlägen.',
+            build: CAT[+b.dataset.i],
+          };
+        } else if (a === 'build') {
+          S.sheet = {
+            step: 'confirm',
+            t: readBuild(),
+            from: 'build',
+            src: 'Selbst erstellt.',
+            build: readBuild(),
+          };
+        } else if (a === 'back2') {
+          S.sheet = {
+            step: S.sheet.from === 'build' ? 'build' : 'pick',
+            build: S.sheet.build || CAT[0],
+          };
+        } else if (a === 'alt') {
+          S.sheet.t = support(...S.sheet.t).alt;
+          S.sheet.src = 'Angepasst: unterstützte Alternative.';
+        } else if (a === 'alt2') {
+          S.sheet.build = support(...readBuild()).alt;
+        } else if (a === 'save') {
+          const t = S.sheet.t,
+            title = $('#ttl').value.trim(),
+            wantFocus = $('#foc').checked,
+            prev = S.focus;
+          addQ(t, title, wantFocus);
+          S.sheet = null;
+          render();
+          toast(
+            wantFocus && prev
+              ? 'Gemerkt. Fokus wechselt zu dieser Frage.'
+              : wantFocus
+                ? 'Gemerkt und fokussiert.'
+                : 'Gemerkt. Dein Fokus bleibt unverändert.',
+            wantFocus && !!prev
+          );
+          undoState = prev;
+          return;
+        } else if (a === 'rename') {
+          const q = byId(id),
+            n = prompt('Titel (leer = Standardtext)', q.title || '');
+          if (n !== null) q.title = n.trim();
+        } else if (a === 'archive') {
+          byId(id).archived = true;
+          if (S.focus === id) S.focus = (S.qs.find((x) => !x.archived) || {}).id || null;
+        } else if (a === 'restore') {
+          byId(id).archived = false;
+          if (!S.focus) S.focus = id;
+        } else if (a === 'del') {
+          if (confirm('Frage löschen? Gespeicherte Auswertungen dieser Frage gehen verloren.')) {
+            S.qs = S.qs.filter((q) => q.id !== id);
+            if (S.focus === id) S.focus = (S.qs.find((x) => !x.archived) || {}).id || null;
+          }
+        }
+        render();
+      });
+      document.querySelectorAll('[data-go]').forEach(
+        (b) =>
+          (b.onclick = () => {
+            const g = b.dataset.go;
+            if (g === 'reset0') fresh(0);
+            else if (g === 'reset3') fresh(3);
+            else if (g === 'door1') {
+              S.sheet = { step: 'pick', build: CAT[0] };
+            } else if (g === 'door2') {
+              S.sheet = { step: 'build', build: ['Kaffee', 'Kopfschmerz', 'am selben Tag'] };
+            } else if (g === 'door3') {
+              S.view = 'main';
+              S.sheet = {
+                step: 'confirm',
+                t: ['Verdauung', 'Stress', 'am selben Tag'],
+                from: 'hint',
+                src: 'Aus einem Hinweis in deinen Einträgen; beide Seiten und der Zeitbezug sind übernommen.',
+              };
+            }
+            render();
+          })
+      );
+      document.querySelectorAll('[data-th]').forEach(
+        (b) =>
+          (b.onclick = () => {
+            document.documentElement.dataset.theme = b.dataset.th;
+            document
+              .querySelectorAll('[data-th]')
+              .forEach((x) => x.setAttribute('aria-pressed', x === b));
+          })
+      );
+      fresh(3);
+      render();
+    </script>
+  </body>
 </html>

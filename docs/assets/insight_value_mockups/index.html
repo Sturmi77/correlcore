@@ -1,333 +1,976 @@
 <!doctype html>
 <html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Insight Value – Mockups Runde 1</title>
-<style>
-/* Tokens aus apps/web/src/app.css (Dark = Default, Light unter [data-theme=light]) */
-:root{
-  --color-bg:#171614;--color-fg:#f5f3ef;--color-surface:#221f1c;--color-surface-2:#2c2925;
-  --color-muted:#a8a39c;--color-border:#3a352f;--color-primary:#7c6af5;--color-primary-hover:#9587ff;
-  --color-primary-highlight:#2b2742;--color-success:#4ade80;--color-success-highlight:#1f3327;
-  --color-warning:#fbbf24;--color-warning-highlight:#2b2414;--color-error:#f87171;
-  --color-info:#60a5fa;--color-info-highlight:#1c2a3f;
-  --color-mood:#7c6af5;--color-stress:#f87171;
-  --radius-md:.5rem;--radius-lg:.75rem;--radius-xl:1rem;--radius-full:9999px;
-}
-:root[data-theme=light]{
-  --color-bg:#fafaf7;--color-fg:#1c1a17;--color-surface:#fff;--color-surface-2:#f1efe9;
-  --color-muted:#6b6660;--color-border:#d8d3cb;--color-primary:#5b49d6;--color-primary-hover:#4a3ab8;
-  --color-primary-highlight:#ece9fc;--color-success:#15803d;--color-success-highlight:#e3f5e9;
-  --color-warning:#a16207;--color-warning-highlight:#fdf3d7;--color-error:#b91c1c;
-  --color-info:#1d4ed8;--color-info-highlight:#e4ecfd;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--color-bg);color:var(--color-fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-a{color:var(--color-primary-hover)}
-.wrap{max-width:1180px;margin:0 auto;padding:16px}
-header.top{position:sticky;top:0;z-index:5;background:var(--color-bg);border-bottom:1px solid var(--color-border);padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-header.top h1{font-size:1rem;margin:0;flex:1 1 220px}
-.seg{display:inline-flex;border:1px solid var(--color-border);border-radius:var(--radius-full);overflow:hidden}
-.seg button{background:none;border:0;color:var(--color-muted);padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem}
-.seg button[aria-pressed=true]{background:var(--color-primary-highlight);color:var(--color-fg)}
-h2{font-size:1.3rem;margin:40px 0 4px}
-.lead{color:var(--color-muted);margin:0 0 12px;max-width:70ch}
-.crit{font-size:.85rem;color:var(--color-muted);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px 12px;margin:8px 0 16px}
-.crit b{color:var(--color-fg)}
-.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:start}
-body.phone .grid{grid-template-columns:repeat(auto-fit,minmax(0,375px))}
-.opt{border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:12px;background:var(--color-surface-2)}
-.opt>header{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:8px}
-.opt>header strong{font-size:.95rem}
-.opt label.pick{font-size:.8rem;color:var(--color-muted);display:flex;gap:4px;align-items:center;cursor:pointer}
-.frame{max-width:100%}
-body.phone .frame{max-width:375px}
-.note{font-size:.8rem;color:var(--color-muted);margin-top:10px}
-.note b{color:var(--color-fg)}
-.note ul{margin:4px 0 0;padding-left:18px}
-/* Karten */
-.card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:14px;overflow-wrap:anywhere}
-.eyebrow{font-size:.75rem;color:var(--color-muted);margin:0 0 6px}
-.headline{font-size:1.2rem;line-height:1.3;font-weight:650;margin:0 0 8px}
-.evid{font-size:.85rem;margin:0 0 4px}
-.meta{font-size:.78rem;color:var(--color-muted);margin:0 0 8px}
-.caveat{font-size:.85rem;margin:8px 0;padding:8px 10px;border-radius:var(--radius-md);background:var(--color-surface-2);border-left:3px solid var(--color-muted)}
-.chip{display:inline-flex;gap:6px;align-items:center;font-size:.75rem;padding:2px 10px;border-radius:var(--radius-full);border:1px solid currentColor;margin-bottom:8px}
-.chip.pattern{color:var(--color-primary-hover);background:var(--color-primary-highlight)}
-.chip.none{color:var(--color-info);background:var(--color-info-highlight)}
-.chip.lack{color:var(--color-warning);background:var(--color-warning-highlight)}
-.chip.unclear{color:var(--color-muted);background:var(--color-surface-2)}
-.chip.unsup{color:var(--color-muted);background:transparent;border-style:dashed}
-.btn{display:inline-block;border:1px solid var(--color-primary);background:var(--color-primary);color:#fff;border-radius:var(--radius-md);padding:8px 14px;font:inherit;font-size:.9rem;cursor:pointer}
-.btn.sec{background:none;color:var(--color-fg);border-color:var(--color-border)}
-.btn.link{background:none;border:0;color:var(--color-primary-hover);padding:8px 0;text-decoration:underline}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
-.nextstep{font-size:.85rem;margin:8px 0 0}
-/* Punktraster */
-.dots{display:flex;flex-direction:column;gap:6px;margin:8px 0}
-.dots .row{display:flex;gap:8px;align-items:center;font-size:.8rem}
-.dots .lab{flex:0 0 96px;color:var(--color-muted)}
-.dots .d{display:flex;flex-wrap:wrap;gap:3px;flex:1}
-.dots i{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--color-mood);display:block}
-.dots i.on{background:var(--color-mood)}
-.dots .n{flex:0 0 auto;font-variant-numeric:tabular-nums;white-space:nowrap}
-/* Balken */
-.bars{margin:8px 0}
-.bars .b{display:grid;grid-template-columns:96px 1fr 44px;gap:8px;align-items:center;font-size:.8rem;margin:4px 0}
-.bars .t{height:12px;background:var(--color-surface-2);border-radius:6px;overflow:hidden;border:1px solid var(--color-border)}
-.bars .t span{display:block;height:100%;background:var(--color-mood)}
-.bars .b span.pc{text-align:right;font-variant-numeric:tabular-nums}
-/* Formulare */
-.builder{font-size:1rem;line-height:2.4}
-select{font:inherit;background:var(--color-surface-2);color:var(--color-fg);border:1px solid var(--color-primary);border-radius:var(--radius-md);padding:3px 8px;max-width:100%}
-.preview{margin-top:10px;padding:10px;border-radius:var(--radius-md);font-size:.85rem;border:1px solid var(--color-border)}
-.preview.ok{border-color:var(--color-success);background:var(--color-success-highlight)}
-.preview.lack{border-color:var(--color-warning);background:var(--color-warning-highlight)}
-.preview.no{border-color:var(--color-border);border-style:dashed}
-.tpl{display:flex;flex-direction:column;gap:8px}
-.tpl .t{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 12px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:.9rem;cursor:pointer;text-align:left;color:inherit;font-family:inherit}
-.tpl .t[aria-pressed=true]{border-color:var(--color-primary);background:var(--color-primary-highlight)}
-.badge{font-size:.7rem;white-space:nowrap;padding:1px 8px;border-radius:var(--radius-full);border:1px solid var(--color-border);color:var(--color-muted)}
-.badge.ok{color:var(--color-success);border-color:var(--color-success)}
-.badge.lack{color:var(--color-warning);border-color:var(--color-warning)}
-.sheet{margin-top:8px;background:var(--color-surface);border:1px solid var(--color-primary);border-radius:var(--radius-lg);padding:12px;font-size:.9rem}
-.steps{display:flex;gap:6px;margin-bottom:10px}
-.steps span{flex:1;height:4px;border-radius:2px;background:var(--color-border)}
-.steps span.on{background:var(--color-primary)}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-.chips button{border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);border-radius:var(--radius-full);padding:6px 12px;font:inherit;font-size:.85rem;cursor:pointer}
-.chips button[aria-pressed=true]{border-color:var(--color-primary);background:var(--color-primary-highlight)}
-details{margin-top:8px;font-size:.85rem}
-summary{cursor:pointer;color:var(--color-muted)}
-.summary{margin-top:40px;padding:12px;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface)}
-</style>
-</head>
-<body>
-<header class="top">
-  <h1>Insight Value · Mockups Runde 1 <span style="color:var(--color-muted);font-weight:400">– synthetische Daten, keine App-Screenshots</span></h1>
-  <div class="seg" role="group" aria-label="Breite"><button data-vp="desk" aria-pressed="true">Desktop</button><button data-vp="phone" aria-pressed="false">Handy 375</button></div>
-  <div class="seg" role="group" aria-label="Thema"><button data-th="dark" aria-pressed="true">Dunkel</button><button data-th="light" aria-pressed="false">Hell</button></div>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Insight Value – Mockups Runde 1</title>
+    <style>
+      /* Tokens aus apps/web/src/app.css (Dark = Default, Light unter [data-theme=light]) */
+      :root {
+        --color-bg: #171614;
+        --color-fg: #f5f3ef;
+        --color-surface: #221f1c;
+        --color-surface-2: #2c2925;
+        --color-muted: #a8a39c;
+        --color-border: #3a352f;
+        --color-primary: #7c6af5;
+        --color-primary-hover: #9587ff;
+        --color-primary-highlight: #2b2742;
+        --color-success: #4ade80;
+        --color-success-highlight: #1f3327;
+        --color-warning: #fbbf24;
+        --color-warning-highlight: #2b2414;
+        --color-error: #f87171;
+        --color-info: #60a5fa;
+        --color-info-highlight: #1c2a3f;
+        --color-mood: #7c6af5;
+        --color-stress: #f87171;
+        --radius-md: 0.5rem;
+        --radius-lg: 0.75rem;
+        --radius-xl: 1rem;
+        --radius-full: 9999px;
+      }
+      :root[data-theme='light'] {
+        --color-bg: #fafaf7;
+        --color-fg: #1c1a17;
+        --color-surface: #fff;
+        --color-surface-2: #f1efe9;
+        --color-muted: #6b6660;
+        --color-border: #d8d3cb;
+        --color-primary: #5b49d6;
+        --color-primary-hover: #4a3ab8;
+        --color-primary-highlight: #ece9fc;
+        --color-success: #15803d;
+        --color-success-highlight: #e3f5e9;
+        --color-warning: #a16207;
+        --color-warning-highlight: #fdf3d7;
+        --color-error: #b91c1c;
+        --color-info: #1d4ed8;
+        --color-info-highlight: #e4ecfd;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--color-bg);
+        color: var(--color-fg);
+        font:
+          16px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+      }
+      a {
+        color: var(--color-primary-hover);
+      }
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: var(--color-bg);
+        border-bottom: 1px solid var(--color-border);
+        padding: 10px 16px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      header.top h1 {
+        font-size: 1rem;
+        margin: 0;
+        flex: 1 1 220px;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+      }
+      .seg button {
+        background: none;
+        border: 0;
+        color: var(--color-muted);
+        padding: 6px 12px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.85rem;
+      }
+      .seg button[aria-pressed='true'] {
+        background: var(--color-primary-highlight);
+        color: var(--color-fg);
+      }
+      h2 {
+        font-size: 1.3rem;
+        margin: 40px 0 4px;
+      }
+      .lead {
+        color: var(--color-muted);
+        margin: 0 0 12px;
+        max-width: 70ch;
+      }
+      .crit {
+        font-size: 0.85rem;
+        color: var(--color-muted);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: 8px 12px;
+        margin: 8px 0 16px;
+      }
+      .crit b {
+        color: var(--color-fg);
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        align-items: start;
+      }
+      body.phone .grid {
+        grid-template-columns: repeat(auto-fit, minmax(0, 375px));
+      }
+      .opt {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-xl);
+        padding: 12px;
+        background: var(--color-surface-2);
+      }
+      .opt > header {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: baseline;
+        margin-bottom: 8px;
+      }
+      .opt > header strong {
+        font-size: 0.95rem;
+      }
+      .opt label.pick {
+        font-size: 0.8rem;
+        color: var(--color-muted);
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        cursor: pointer;
+      }
+      .frame {
+        max-width: 100%;
+      }
+      body.phone .frame {
+        max-width: 375px;
+      }
+      .note {
+        font-size: 0.8rem;
+        color: var(--color-muted);
+        margin-top: 10px;
+      }
+      .note b {
+        color: var(--color-fg);
+      }
+      .note ul {
+        margin: 4px 0 0;
+        padding-left: 18px;
+      }
+      /* Karten */
+      .card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 14px;
+        overflow-wrap: anywhere;
+      }
+      .eyebrow {
+        font-size: 0.75rem;
+        color: var(--color-muted);
+        margin: 0 0 6px;
+      }
+      .headline {
+        font-size: 1.2rem;
+        line-height: 1.3;
+        font-weight: 650;
+        margin: 0 0 8px;
+      }
+      .evid {
+        font-size: 0.85rem;
+        margin: 0 0 4px;
+      }
+      .meta {
+        font-size: 0.78rem;
+        color: var(--color-muted);
+        margin: 0 0 8px;
+      }
+      .caveat {
+        font-size: 0.85rem;
+        margin: 8px 0;
+        padding: 8px 10px;
+        border-radius: var(--radius-md);
+        background: var(--color-surface-2);
+        border-left: 3px solid var(--color-muted);
+      }
+      .chip {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 0.75rem;
+        padding: 2px 10px;
+        border-radius: var(--radius-full);
+        border: 1px solid currentColor;
+        margin-bottom: 8px;
+      }
+      .chip.pattern {
+        color: var(--color-primary-hover);
+        background: var(--color-primary-highlight);
+      }
+      .chip.none {
+        color: var(--color-info);
+        background: var(--color-info-highlight);
+      }
+      .chip.lack {
+        color: var(--color-warning);
+        background: var(--color-warning-highlight);
+      }
+      .chip.unclear {
+        color: var(--color-muted);
+        background: var(--color-surface-2);
+      }
+      .chip.unsup {
+        color: var(--color-muted);
+        background: transparent;
+        border-style: dashed;
+      }
+      .btn {
+        display: inline-block;
+        border: 1px solid var(--color-primary);
+        background: var(--color-primary);
+        color: #fff;
+        border-radius: var(--radius-md);
+        padding: 8px 14px;
+        font: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+      .btn.sec {
+        background: none;
+        color: var(--color-fg);
+        border-color: var(--color-border);
+      }
+      .btn.link {
+        background: none;
+        border: 0;
+        color: var(--color-primary-hover);
+        padding: 8px 0;
+        text-decoration: underline;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .nextstep {
+        font-size: 0.85rem;
+        margin: 8px 0 0;
+      }
+      /* Punktraster */
+      .dots {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 8px 0;
+      }
+      .dots .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 0.8rem;
+      }
+      .dots .lab {
+        flex: 0 0 96px;
+        color: var(--color-muted);
+      }
+      .dots .d {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+        flex: 1;
+      }
+      .dots i {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        border: 1.5px solid var(--color-mood);
+        display: block;
+      }
+      .dots i.on {
+        background: var(--color-mood);
+      }
+      .dots .n {
+        flex: 0 0 auto;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      /* Balken */
+      .bars {
+        margin: 8px 0;
+      }
+      .bars .b {
+        display: grid;
+        grid-template-columns: 96px 1fr 44px;
+        gap: 8px;
+        align-items: center;
+        font-size: 0.8rem;
+        margin: 4px 0;
+      }
+      .bars .t {
+        height: 12px;
+        background: var(--color-surface-2);
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+      }
+      .bars .t span {
+        display: block;
+        height: 100%;
+        background: var(--color-mood);
+      }
+      .bars .b span.pc {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      /* Formulare */
+      .builder {
+        font-size: 1rem;
+        line-height: 2.4;
+      }
+      select {
+        font: inherit;
+        background: var(--color-surface-2);
+        color: var(--color-fg);
+        border: 1px solid var(--color-primary);
+        border-radius: var(--radius-md);
+        padding: 3px 8px;
+        max-width: 100%;
+      }
+      .preview {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: var(--radius-md);
+        font-size: 0.85rem;
+        border: 1px solid var(--color-border);
+      }
+      .preview.ok {
+        border-color: var(--color-success);
+        background: var(--color-success-highlight);
+      }
+      .preview.lack {
+        border-color: var(--color-warning);
+        background: var(--color-warning-highlight);
+      }
+      .preview.no {
+        border-color: var(--color-border);
+        border-style: dashed;
+      }
+      .tpl {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .tpl .t {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+        padding: 10px 12px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        font-size: 0.9rem;
+        cursor: pointer;
+        text-align: left;
+        color: inherit;
+        font-family: inherit;
+      }
+      .tpl .t[aria-pressed='true'] {
+        border-color: var(--color-primary);
+        background: var(--color-primary-highlight);
+      }
+      .badge {
+        font-size: 0.7rem;
+        white-space: nowrap;
+        padding: 1px 8px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--color-border);
+        color: var(--color-muted);
+      }
+      .badge.ok {
+        color: var(--color-success);
+        border-color: var(--color-success);
+      }
+      .badge.lack {
+        color: var(--color-warning);
+        border-color: var(--color-warning);
+      }
+      .sheet {
+        margin-top: 8px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-primary);
+        border-radius: var(--radius-lg);
+        padding: 12px;
+        font-size: 0.9rem;
+      }
+      .steps {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .steps span {
+        flex: 1;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--color-border);
+      }
+      .steps span.on {
+        background: var(--color-primary);
+      }
+      .chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 6px 0;
+      }
+      .chips button {
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        color: var(--color-fg);
+        border-radius: var(--radius-full);
+        padding: 6px 12px;
+        font: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+      .chips button[aria-pressed='true'] {
+        border-color: var(--color-primary);
+        background: var(--color-primary-highlight);
+      }
+      details {
+        margin-top: 8px;
+        font-size: 0.85rem;
+      }
+      summary {
+        cursor: pointer;
+        color: var(--color-muted);
+      }
+      .summary {
+        margin-top: 40px;
+        padding: 12px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        background: var(--color-surface);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <h1>
+        Insight Value · Mockups Runde 1
+        <span style="color: var(--color-muted); font-weight: 400"
+          >– synthetische Daten, keine App-Screenshots</span
+        >
+      </h1>
+      <div class="seg" role="group" aria-label="Breite">
+        <button data-vp="desk" aria-pressed="true">Desktop</button
+        ><button data-vp="phone" aria-pressed="false">Handy 375</button>
+      </div>
+      <div class="seg" role="group" aria-label="Thema">
+        <button data-th="dark" aria-pressed="true">Dunkel</button
+        ><button data-th="light" aria-pressed="false">Hell</button>
+      </div>
+    </header>
 
-<div class="wrap">
-<p class="lead">Ziel: drei Grundsatzentscheidungen aus <code>INSIGHT_USER_VALUE_TARGET</code> (§2 Einstieg, §2 Heute, §3 Zustände) mit je 3 bewusst unterschiedlichen Optionen vergleichen. Alle Beispiele sind erfunden. Kein Mockup ersetzt die Fähigkeitsmatrix (Z1.1): Welche Zustände und Kombinationen die Engine tatsächlich liefert, steht noch nicht fest. Schaltet oben auf Handy-Breite und Hell/Dunkel, wählt rechts oben in jeder Option „Favorit“ und tragt Begründungen unten zusammen.</p>
+    <div class="wrap">
+      <p class="lead">
+        Ziel: drei Grundsatzentscheidungen aus <code>INSIGHT_USER_VALUE_TARGET</code> (§2 Einstieg,
+        §2 Heute, §3 Zustände) mit je 3 bewusst unterschiedlichen Optionen vergleichen. Alle
+        Beispiele sind erfunden. Kein Mockup ersetzt die Fähigkeitsmatrix (Z1.1): Welche Zustände
+        und Kombinationen die Engine tatsächlich liefert, steht noch nicht fest. Schaltet oben auf
+        Handy-Breite und Hell/Dunkel, wählt rechts oben in jeder Option „Favorit“ und tragt
+        Begründungen unten zusammen.
+      </p>
 
-<!-- ============ ENTSCHEIDUNG 1 ============ -->
-<h2>1 · Die Antwortkarte (Heute / Erkenntnisse)</h2>
-<p class="lead">Frage: Wie muss die eine führende Antwort aufgebaut sein, damit Nutzer:innen in ≤ 15 s Aussage, Zeitraum und Vorbehalt erfassen (§7)?</p>
-<div class="crit"><b>Prüfkriterien:</b> Antwort in 15 s gefunden · Zeitraum + Vergleich + Vorbehalt genannt · nächster Schritt erklärbar · nichts abgeschnitten (320 px, langer DE-Text) · Stress ausdrücklich „mehr/weniger Stress“ · nicht farbabhängig</div>
-<div class="seg" id="sc1" role="group" aria-label="Szenario" style="margin-bottom:12px"></div>
-<div class="grid" id="d1"></div>
+      <!-- ============ ENTSCHEIDUNG 1 ============ -->
+      <h2>1 · Die Antwortkarte (Heute / Erkenntnisse)</h2>
+      <p class="lead">
+        Frage: Wie muss die eine führende Antwort aufgebaut sein, damit Nutzer:innen in ≤ 15 s
+        Aussage, Zeitraum und Vorbehalt erfassen (§7)?
+      </p>
+      <div class="crit">
+        <b>Prüfkriterien:</b> Antwort in 15 s gefunden · Zeitraum + Vergleich + Vorbehalt genannt ·
+        nächster Schritt erklärbar · nichts abgeschnitten (320 px, langer DE-Text) · Stress
+        ausdrücklich „mehr/weniger Stress“ · nicht farbabhängig
+      </div>
+      <div
+        class="seg"
+        id="sc1"
+        role="group"
+        aria-label="Szenario"
+        style="margin-bottom: 12px"
+      ></div>
+      <div class="grid" id="d1"></div>
 
-<!-- ============ ENTSCHEIDUNG 2 ============ -->
-<h2>2 · Wie stelle ich meine Frage?</h2>
-<p class="lead">Frage: Wie kommt jemand zu einer unterstützten Frage, ohne dass ein Freitext eine beliebige Analyse verspricht? Alle Optionen sind interaktiv, das Kombinations-Regelwerk ist Fantasie.</p>
-<div class="crit"><b>Prüfkriterien:</b> erste Frage in &lt; 30 s gespeichert · Grenze („nicht unterstützt“) wird vor dem Speichern verstanden · Frage ohne Treffer möglich · kein Pflichtschritt · mehrere Fragen merkbar</div>
-<div class="grid" id="d2"></div>
+      <!-- ============ ENTSCHEIDUNG 2 ============ -->
+      <h2>2 · Wie stelle ich meine Frage?</h2>
+      <p class="lead">
+        Frage: Wie kommt jemand zu einer unterstützten Frage, ohne dass ein Freitext eine beliebige
+        Analyse verspricht? Alle Optionen sind interaktiv, das Kombinations-Regelwerk ist Fantasie.
+      </p>
+      <div class="crit">
+        <b>Prüfkriterien:</b> erste Frage in &lt; 30 s gespeichert · Grenze („nicht unterstützt“)
+        wird vor dem Speichern verstanden · Frage ohne Treffer möglich · kein Pflichtschritt ·
+        mehrere Fragen merkbar
+      </div>
+      <div class="grid" id="d2"></div>
 
-<!-- ============ ENTSCHEIDUNG 3 ============ -->
-<h2>3 · „Kein Muster“ und „Daten reichen nicht“</h2>
-<p class="lead">Frage: Wie sehen die beiden unbequemsten Zustände aus, damit sie weder wie Fehler noch wie Beweise wirken (§3: kein Beweis fehlender Wirkung; keine Zusage „nach N Tagen sicher“)?</p>
-<div class="crit"><b>Prüfkriterien:</b> 0 Fälle von „bewiesen kein Einfluss“ · Datenbedarf konkret ohne Versprechen · Frage bleibt sichtbar · nicht mit Fehler/Timeout verwechselbar · neutral im Ton, keine Aufforderung „bis zum Treffer zu suchen“</div>
-<div class="seg" id="sc3" role="group" aria-label="Szenario" style="margin-bottom:12px"></div>
-<div class="grid" id="d3"></div>
+      <!-- ============ ENTSCHEIDUNG 3 ============ -->
+      <h2>3 · „Kein Muster“ und „Daten reichen nicht“</h2>
+      <p class="lead">
+        Frage: Wie sehen die beiden unbequemsten Zustände aus, damit sie weder wie Fehler noch wie
+        Beweise wirken (§3: kein Beweis fehlender Wirkung; keine Zusage „nach N Tagen sicher“)?
+      </p>
+      <div class="crit">
+        <b>Prüfkriterien:</b> 0 Fälle von „bewiesen kein Einfluss“ · Datenbedarf konkret ohne
+        Versprechen · Frage bleibt sichtbar · nicht mit Fehler/Timeout verwechselbar · neutral im
+        Ton, keine Aufforderung „bis zum Treffer zu suchen“
+      </div>
+      <div
+        class="seg"
+        id="sc3"
+        role="group"
+        aria-label="Szenario"
+        style="margin-bottom: 12px"
+      ></div>
+      <div class="grid" id="d3"></div>
 
-<div class="summary">
-  <strong>Meine Präferenzen (lokal gespeichert)</strong>
-  <div id="prefs" class="note"></div>
-  <p class="note">Nächster Schritt: Präferenzen und Beobachtungen sammeln, dann Runde 2 nur für die Sieger (Detailansicht, Fragenwechsel, Berichtseinleitung) und anschließend 2 Personen im Test (#1023).</p>
-</div>
-</div>
+      <div class="summary">
+        <strong>Meine Präferenzen (lokal gespeichert)</strong>
+        <div id="prefs" class="note"></div>
+        <p class="note">
+          Nächster Schritt: Präferenzen und Beobachtungen sammeln, dann Runde 2 nur für die Sieger
+          (Detailansicht, Fragenwechsel, Berichtseinleitung) und anschließend 2 Personen im Test
+          (#1023).
+        </p>
+      </div>
+    </div>
 
-<script>
-const $=(s,r=document)=>r.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const store={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+    <script>
+      const $ = (s, r = document) => r.querySelector(s);
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"']/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+        );
+      const store = {
+        get(k) {
+          try {
+            return localStorage.getItem(k);
+          } catch {
+            return null;
+          }
+        },
+        set(k, v) {
+          try {
+            localStorage.setItem(k, v);
+          } catch {}
+        },
+      };
 
-/* ---------- Szenarien (synthetisch) ---------- */
-const SC={
- muster:{label:'Muster beobachtet',chip:['pattern','◆','Muster beobachtet'],
-  q:'Hängt Sport mit deiner Stimmung zusammen?',
-  head:'An Tagen mit Sport war deine Stimmung häufiger gut.',
-  a:{lab:'Mit Sport',on:7,n:10},b:{lab:'Ohne Sport',on:7,n:18},
-  evid:'7 von 10 Tagen mit Sport · 7 von 18 Tagen ohne Sport',
-  meta:'1.–28. September · 28 vergleichbare Tage · „gut“ = Stimmung 4 oder 5',
-  cav:'Deine Einträge zeigen einen Unterschied, aber noch keine Ursache.',
-  next:'Prüfe, ob die Arbeitssituation den Unterschied miterklärt.',cta:'Antwort prüfen'},
- stress:{label:'Stress + Zeitversatz (langer Text)',chip:['pattern','◆','Muster beobachtet'],
-  q:'Wie hängt Schlaf mit meiner Energie am Folgetag zusammen?',
-  head:'Nach Nächten mit weniger als 6 Stunden Schlaf war deine Energie am folgenden Tag häufiger niedrig, und du hattest häufiger mehr Stress.',
-  a:{lab:'Nach < 6 h Schlaf',on:9,n:11},b:{lab:'Nach ≥ 6 h Schlaf',on:8,n:24},
-  evid:'9 von 11 Tagen nach kurzer Nacht mit niedriger Energie · 8 von 24 nach längerer Nacht',
-  meta:'2.–29. September · 35 gepaarte Nächte/Tage · Schlaf der Nacht vor dem Eintrag, Energie am folgenden Tag · „niedrig“ = Energie 1 oder 2',
-  cav:'Ein Zusammenhang in deinen Einträgen, keine Ursache. Wochenenden sind in den kurzen Nächten überrepräsentiert.',
-  next:'Vergleiche nur Werktage, um den Wochentag auszuschließen.',cta:'Antwort prüfen'},
- unklar:{label:'Noch unklar',chip:['unclear','◐','Noch unklar'],
-  q:'Hängt ein Spaziergang mit meinem Stress zusammen?',
-  head:'Die bisherigen Daten lassen mehrere Deutungen zu.',
-  a:{lab:'Mit Spaziergang',on:4,n:9},b:{lab:'Ohne Spaziergang',on:9,n:15},
-  evid:'4 von 9 Tagen mit Spaziergang mit hohem Stress · 9 von 15 ohne',
-  meta:'1.–28. September · 24 vergleichbare Tage · „hoher Stress“ = Stress 4 oder 5',
-  cav:'Die Werte streuen stark; ein Unterschied ist möglich, aber nicht belastbar.',
-  next:'Behalte die Frage im Blick.',cta:'Streuung ansehen'},
- keins:{label:'Kein klares Muster',chip:['none','○','Kein klares Muster'],
-  q:'Hängt ein Spaziergang mit meinem Stress zusammen?',
-  head:'In diesem Zeitraum zeigt sich kein klarer Zusammenhang zwischen Spaziergang und Stress.',
-  a:{lab:'Mit Spaziergang',on:5,n:12},b:{lab:'Ohne Spaziergang',on:6,n:16},
-  evid:'5 von 12 Tagen mit Spaziergang mit hohem Stress · 6 von 16 ohne',
-  meta:'1.–28. September · 28 vergleichbare Tage · „hoher Stress“ = Stress 4 oder 5',
-  cav:'Das heißt nicht, dass es keinen Einfluss gibt, nur dass er in diesen Einträgen nicht erkennbar ist.',
-  next:'Du kannst diese Frage weiterverfolgen oder eine andere wählen.',cta:'Vergleich ansehen'},
- mangel:{label:'Datenbasis reicht nicht',chip:['lack','◔','Zu wenig Vergleichstage'],
-  q:'Hängt Sport mit deiner Stimmung zusammen?',
-  head:'Für deine Frage fehlen bisher Vergleichstage ohne Sport.',
-  a:{lab:'Mit Sport',on:0,n:12,plain:true},b:{lab:'Ohne Sport',on:0,n:2,plain:true},
-  evid:'12 Tage mit Sport · 2 Tage ohne Sport',
-  meta:'1.–28. September · 14 erfasste Tage',
-  cav:'Mit nur 2 Vergleichstagen ist keine Aussage möglich.',
-  next:'Trage auch an Tagen ohne Sport deine Stimmung ein, dann entsteht ein Vergleich.',cta:'Datenabdeckung ansehen'},
- unsup:{label:'Nicht unterstützt',chip:['unsup','⊘','Noch nicht auswertbar'],
-  q:'Warum bin ich montags erschöpft?',
-  head:'Diese Frage kann CorrelCore so noch nicht beantworten.',
-  a:null,b:null,evid:'',meta:'',
-  cav:'„Warum“-Fragen brauchen mehr als Einträge. Möglich ist der Vergleich Montag ↔ andere Wochentage bei Energie.',
-  next:'Stattdessen fragen: „Ist meine Energie montags niedriger als an anderen Tagen?“',cta:'Alternative übernehmen'}
-};
+      /* ---------- Szenarien (synthetisch) ---------- */
+      const SC = {
+        muster: {
+          label: 'Muster beobachtet',
+          chip: ['pattern', '◆', 'Muster beobachtet'],
+          q: 'Hängt Sport mit deiner Stimmung zusammen?',
+          head: 'An Tagen mit Sport war deine Stimmung häufiger gut.',
+          a: { lab: 'Mit Sport', on: 7, n: 10 },
+          b: { lab: 'Ohne Sport', on: 7, n: 18 },
+          evid: '7 von 10 Tagen mit Sport · 7 von 18 Tagen ohne Sport',
+          meta: '1.–28. September · 28 vergleichbare Tage · „gut“ = Stimmung 4 oder 5',
+          cav: 'Deine Einträge zeigen einen Unterschied, aber noch keine Ursache.',
+          next: 'Prüfe, ob die Arbeitssituation den Unterschied miterklärt.',
+          cta: 'Antwort prüfen',
+        },
+        stress: {
+          label: 'Stress + Zeitversatz (langer Text)',
+          chip: ['pattern', '◆', 'Muster beobachtet'],
+          q: 'Wie hängt Schlaf mit meiner Energie am Folgetag zusammen?',
+          head: 'Nach Nächten mit weniger als 6 Stunden Schlaf war deine Energie am folgenden Tag häufiger niedrig, und du hattest häufiger mehr Stress.',
+          a: { lab: 'Nach < 6 h Schlaf', on: 9, n: 11 },
+          b: { lab: 'Nach ≥ 6 h Schlaf', on: 8, n: 24 },
+          evid: '9 von 11 Tagen nach kurzer Nacht mit niedriger Energie · 8 von 24 nach längerer Nacht',
+          meta: '2.–29. September · 35 gepaarte Nächte/Tage · Schlaf der Nacht vor dem Eintrag, Energie am folgenden Tag · „niedrig“ = Energie 1 oder 2',
+          cav: 'Ein Zusammenhang in deinen Einträgen, keine Ursache. Wochenenden sind in den kurzen Nächten überrepräsentiert.',
+          next: 'Vergleiche nur Werktage, um den Wochentag auszuschließen.',
+          cta: 'Antwort prüfen',
+        },
+        unklar: {
+          label: 'Noch unklar',
+          chip: ['unclear', '◐', 'Noch unklar'],
+          q: 'Hängt ein Spaziergang mit meinem Stress zusammen?',
+          head: 'Die bisherigen Daten lassen mehrere Deutungen zu.',
+          a: { lab: 'Mit Spaziergang', on: 4, n: 9 },
+          b: { lab: 'Ohne Spaziergang', on: 9, n: 15 },
+          evid: '4 von 9 Tagen mit Spaziergang mit hohem Stress · 9 von 15 ohne',
+          meta: '1.–28. September · 24 vergleichbare Tage · „hoher Stress“ = Stress 4 oder 5',
+          cav: 'Die Werte streuen stark; ein Unterschied ist möglich, aber nicht belastbar.',
+          next: 'Behalte die Frage im Blick.',
+          cta: 'Streuung ansehen',
+        },
+        keins: {
+          label: 'Kein klares Muster',
+          chip: ['none', '○', 'Kein klares Muster'],
+          q: 'Hängt ein Spaziergang mit meinem Stress zusammen?',
+          head: 'In diesem Zeitraum zeigt sich kein klarer Zusammenhang zwischen Spaziergang und Stress.',
+          a: { lab: 'Mit Spaziergang', on: 5, n: 12 },
+          b: { lab: 'Ohne Spaziergang', on: 6, n: 16 },
+          evid: '5 von 12 Tagen mit Spaziergang mit hohem Stress · 6 von 16 ohne',
+          meta: '1.–28. September · 28 vergleichbare Tage · „hoher Stress“ = Stress 4 oder 5',
+          cav: 'Das heißt nicht, dass es keinen Einfluss gibt, nur dass er in diesen Einträgen nicht erkennbar ist.',
+          next: 'Du kannst diese Frage weiterverfolgen oder eine andere wählen.',
+          cta: 'Vergleich ansehen',
+        },
+        mangel: {
+          label: 'Datenbasis reicht nicht',
+          chip: ['lack', '◔', 'Zu wenig Vergleichstage'],
+          q: 'Hängt Sport mit deiner Stimmung zusammen?',
+          head: 'Für deine Frage fehlen bisher Vergleichstage ohne Sport.',
+          a: { lab: 'Mit Sport', on: 0, n: 12, plain: true },
+          b: { lab: 'Ohne Sport', on: 0, n: 2, plain: true },
+          evid: '12 Tage mit Sport · 2 Tage ohne Sport',
+          meta: '1.–28. September · 14 erfasste Tage',
+          cav: 'Mit nur 2 Vergleichstagen ist keine Aussage möglich.',
+          next: 'Trage auch an Tagen ohne Sport deine Stimmung ein, dann entsteht ein Vergleich.',
+          cta: 'Datenabdeckung ansehen',
+        },
+        unsup: {
+          label: 'Nicht unterstützt',
+          chip: ['unsup', '⊘', 'Noch nicht auswertbar'],
+          q: 'Warum bin ich montags erschöpft?',
+          head: 'Diese Frage kann CorrelCore so noch nicht beantworten.',
+          a: null,
+          b: null,
+          evid: '',
+          meta: '',
+          cav: '„Warum“-Fragen brauchen mehr als Einträge. Möglich ist der Vergleich Montag ↔ andere Wochentage bei Energie.',
+          next: 'Stattdessen fragen: „Ist meine Energie montags niedriger als an anderen Tagen?“',
+          cta: 'Alternative übernehmen',
+        },
+      };
 
-function dotsRow(g){
-  if(g.plain) return `<div class="row"><span class="lab">${g.lab}</span><span class="d">${'<i style="opacity:.6"></i>'.repeat(g.n)}</span><span class="n">${g.n} Tage</span></div>`;
-  const dots=Array.from({length:g.n},(_,i)=>`<i class="${i<g.on?'on':''}"></i>`).join('');
-  return `<div class="row"><span class="lab">${g.lab}</span><span class="d">${dots}</span><span class="n">${g.on} von ${g.n}</span></div>`;
-}
-function barRow(g){
-  const p=Math.round(g.on/g.n*100);
-  return `<div class="b"><span>${g.lab}</span><div class="t"><span style="width:${p}%"></span></div><span class="pc">${p} %</span></div>`;
-}
-const chip=s=>`<span class="chip ${s.chip[0]}"><span aria-hidden="true">${s.chip[1]}</span>${s.chip[2]}</span>`;
+      function dotsRow(g) {
+        if (g.plain)
+          return `<div class="row"><span class="lab">${g.lab}</span><span class="d">${'<i style="opacity:.6"></i>'.repeat(g.n)}</span><span class="n">${g.n} Tage</span></div>`;
+        const dots = Array.from(
+          { length: g.n },
+          (_, i) => `<i class="${i < g.on ? 'on' : ''}"></i>`
+        ).join('');
+        return `<div class="row"><span class="lab">${g.lab}</span><span class="d">${dots}</span><span class="n">${g.on} von ${g.n}</span></div>`;
+      }
+      function barRow(g) {
+        const p = Math.round((g.on / g.n) * 100);
+        return `<div class="b"><span>${g.lab}</span><div class="t"><span style="width:${p}%"></span></div><span class="pc">${p} %</span></div>`;
+      }
+      const chip = (s) =>
+        `<span class="chip ${s.chip[0]}"><span aria-hidden="true">${s.chip[1]}</span>${s.chip[2]}</span>`;
 
-/* ---------- Entscheidung 1: Optionen ---------- */
-const cardA=s=>`<div class="card">${chip(s)}
+      /* ---------- Entscheidung 1: Optionen ---------- */
+      const cardA = (s) => `<div class="card">${chip(s)}
   <p class="headline">${s.head}</p>
-  ${s.evid?`<p class="evid">${s.evid}</p><p class="meta">${s.meta}</p>`:''}
+  ${s.evid ? `<p class="evid">${s.evid}</p><p class="meta">${s.meta}</p>` : ''}
   <p class="caveat">${s.cav}</p>
   <div class="actions"><button class="btn">${s.cta}</button><button class="btn link">Ausblenden</button></div></div>`;
-const cardB=s=>`<div class="card">${chip(s)}
+      const cardB = (s) => `<div class="card">${chip(s)}
   <p class="headline">${s.head}</p>
-  ${s.a?`<div class="dots" role="img" aria-label="${s.evid}">${dotsRow(s.a)}${dotsRow(s.b)}</div><p class="meta">${s.meta}</p>`:''}
+  ${s.a ? `<div class="dots" role="img" aria-label="${s.evid}">${dotsRow(s.a)}${dotsRow(s.b)}</div><p class="meta">${s.meta}</p>` : ''}
   <p class="caveat">${s.cav}</p>
   <div class="actions"><button class="btn">${s.cta}</button></div></div>`;
-const cardC=s=>`<div class="card"><p class="eyebrow">Deine Frage · ${s.q}</p>
+      const cardC = (s) => `<div class="card"><p class="eyebrow">Deine Frage · ${s.q}</p>
   ${chip(s)}
   <p class="headline">${s.head}</p>
-  ${s.a?`<div class="bars">${s.a.plain?'':barRow(s.a)+barRow(s.b)}</div><p class="meta">${s.a.plain?s.evid+' · ':''}${s.meta}</p>`:''}
+  ${s.a ? `<div class="bars">${s.a.plain ? '' : barRow(s.a) + barRow(s.b)}</div><p class="meta">${s.a.plain ? s.evid + ' · ' : ''}${s.meta}</p>` : ''}
   <p class="caveat">${s.cav}</p>
   <p class="nextstep"><b>Als Nächstes:</b> ${s.next}</p>
   <div class="actions"><button class="btn sec">${s.cta}</button></div></div>`;
-const D1=[
- {t:'A · Satz zuerst (Vorschlag im Plan)',f:cardA,
-  n:'<b>Idee:</b> Der Satz ist die Botschaft; Evidenz klein darunter.<ul><li>+ am ruhigsten, schnell implementierbar</li><li>− Zahlen wirken abstrakt; 7/10 vs 7/18 muss gelesen werden</li><li>− Frage taucht nicht auf: Wovon ist das die Antwort?</li></ul>'},
- {t:'B · Satz + sichtbare Häufigkeiten',f:cardB,
-  n:'<b>Idee:</b> Punktraster macht natürliche Häufigkeiten sichtbar, ohne Achsen.<ul><li>+ Unterschied und Gruppengröße auf einen Blick; Datenmangel ist sofort sichtbar</li><li>− bei 90 Tagen zu viele Punkte (Aggregation nötig)</li><li>− Farb-/Füllkodierung: braucht Textalternative</li></ul>'},
- {t:'C · Frage → Zustand → Antwort → Schritt',f:cardC,
-  n:'<b>Idee:</b> Karte wiederholt die persönliche Frage; Balken statt Punkte; nächster Schritt als Satz statt nur Button.<ul><li>+ trägt „meine Frage“; Zustand explizit; Schritt begründet</li><li>− höchste Dichte, mehr Text auf der Startseite</li><li>− Prozentbalken suggerieren Präzision bei kleinen n</li></ul>'}
-];
+      const D1 = [
+        {
+          t: 'A · Satz zuerst (Vorschlag im Plan)',
+          f: cardA,
+          n: '<b>Idee:</b> Der Satz ist die Botschaft; Evidenz klein darunter.<ul><li>+ am ruhigsten, schnell implementierbar</li><li>− Zahlen wirken abstrakt; 7/10 vs 7/18 muss gelesen werden</li><li>− Frage taucht nicht auf: Wovon ist das die Antwort?</li></ul>',
+        },
+        {
+          t: 'B · Satz + sichtbare Häufigkeiten',
+          f: cardB,
+          n: '<b>Idee:</b> Punktraster macht natürliche Häufigkeiten sichtbar, ohne Achsen.<ul><li>+ Unterschied und Gruppengröße auf einen Blick; Datenmangel ist sofort sichtbar</li><li>− bei 90 Tagen zu viele Punkte (Aggregation nötig)</li><li>− Farb-/Füllkodierung: braucht Textalternative</li></ul>',
+        },
+        {
+          t: 'C · Frage → Zustand → Antwort → Schritt',
+          f: cardC,
+          n: '<b>Idee:</b> Karte wiederholt die persönliche Frage; Balken statt Punkte; nächster Schritt als Satz statt nur Button.<ul><li>+ trägt „meine Frage“; Zustand explizit; Schritt begründet</li><li>− höchste Dichte, mehr Text auf der Startseite</li><li>− Prozentbalken suggerieren Präzision bei kleinen n</li></ul>',
+        },
+      ];
 
-/* ---------- Entscheidung 2 ---------- */
-const FACT=['Sport','Spaziergang','Schlaf','Kopfschmerz','Montag'];
-const TARG=['Stimmung','Energie','Stress'];
-const TIME=['am selben Tag','am Folgetag'];
-function support(f,t,z){
-  if(f==='Kopfschmerz'&&t==='Energie'&&z==='am Folgetag') return {k:'lack',m:'Unterstützt, aber es gibt erst 3 Tage mit Kopfschmerz. Du kannst die Frage speichern; die Vorschau zeigt den Datenstatus.'};
-  if(f==='Montag'&&z==='am Folgetag') return {k:'no',m:'Für „Montag“ wird nur der Vergleich am selben Tag unterstützt. Alternative: „Ist meine '+t+' montags anders?“'};
-  if(f==='Schlaf'&&z==='am selben Tag') return {k:'ok',m:'Unterstützt: Schlaf der Nacht vor dem Eintrag ↔ '+t+' an diesem Tag. Genug Daten (28 Tage).'};
-  return {k:'ok',m:'Unterstützt und auswertbar: 28 vergleichbare Tage in den letzten 28 Tagen.'};
-}
-const badge={ok:['ok','auswertbar'],lack:['lack','wenig Daten'],no:['','nicht unterstützt']};
-const TPL=[['Hängt Sport mit deiner Stimmung zusammen?','ok'],['Wie passt dein Schlaf zur Energie am Folgetag?','ok'],['Hängt Kopfschmerz mit deinem Stress zusammen?','lack'],['Ist deine Energie montags niedriger als an anderen Tagen?','ok']];
+      /* ---------- Entscheidung 2 ---------- */
+      const FACT = ['Sport', 'Spaziergang', 'Schlaf', 'Kopfschmerz', 'Montag'];
+      const TARG = ['Stimmung', 'Energie', 'Stress'];
+      const TIME = ['am selben Tag', 'am Folgetag'];
+      function support(f, t, z) {
+        if (f === 'Kopfschmerz' && t === 'Energie' && z === 'am Folgetag')
+          return {
+            k: 'lack',
+            m: 'Unterstützt, aber es gibt erst 3 Tage mit Kopfschmerz. Du kannst die Frage speichern; die Vorschau zeigt den Datenstatus.',
+          };
+        if (f === 'Montag' && z === 'am Folgetag')
+          return {
+            k: 'no',
+            m:
+              'Für „Montag“ wird nur der Vergleich am selben Tag unterstützt. Alternative: „Ist meine ' +
+              t +
+              ' montags anders?“',
+          };
+        if (f === 'Schlaf' && z === 'am selben Tag')
+          return {
+            k: 'ok',
+            m:
+              'Unterstützt: Schlaf der Nacht vor dem Eintrag ↔ ' +
+              t +
+              ' an diesem Tag. Genug Daten (28 Tage).',
+          };
+        return {
+          k: 'ok',
+          m: 'Unterstützt und auswertbar: 28 vergleichbare Tage in den letzten 28 Tagen.',
+        };
+      }
+      const badge = {
+        ok: ['ok', 'auswertbar'],
+        lack: ['lack', 'wenig Daten'],
+        no: ['', 'nicht unterstützt'],
+      };
+      const TPL = [
+        ['Hängt Sport mit deiner Stimmung zusammen?', 'ok'],
+        ['Wie passt dein Schlaf zur Energie am Folgetag?', 'ok'],
+        ['Hängt Kopfschmerz mit deinem Stress zusammen?', 'lack'],
+        ['Ist deine Energie montags niedriger als an anderen Tagen?', 'ok'],
+      ];
 
-function d2A(root){
-  const sel=(id,arr)=>`<select id="${id}" aria-label="${id}">${arr.map(x=>`<option>${x}</option>`).join('')}</select>`;
-  root.innerHTML=`<div class="card"><p class="builder">Wie hängt ${sel('f',FACT)} mit ${sel('t',TARG)} ${sel('z',TIME)} zusammen?</p>
+      function d2A(root) {
+        const sel = (id, arr) =>
+          `<select id="${id}" aria-label="${id}">${arr.map((x) => `<option>${x}</option>`).join('')}</select>`;
+        root.innerHTML = `<div class="card"><p class="builder">Wie hängt ${sel('f', FACT)} mit ${sel('t', TARG)} ${sel('z', TIME)} zusammen?</p>
   <div class="preview" id="pv"></div><div class="actions"><button class="btn" id="save">Als Frage merken</button></div><p class="note" id="saved"></p></div>`;
-  const upd=()=>{const s=support($('#f',root).value,$('#t',root).value,$('#z',root).value);const pv=$('#pv',root);pv.className='preview '+s.k;pv.innerHTML=`<span class="badge ${badge[s.k][0]}">${badge[s.k][1]}</span> ${esc(s.m)}`;$('#save',root).disabled=s.k==='no';$('#save',root).style.opacity=s.k==='no'?.4:1};
-  root.addEventListener('change',upd);upd();
-  $('#save',root).onclick=()=>{$('#saved',root).textContent='Gemerkt: '+`Wie hängt ${$('#f',root).value} mit ${$('#t',root).value} ${$('#z',root).value} zusammen? (Fokus: ja, 2 weitere Fragen gemerkt)`};
-}
-function d2B(root){
-  root.innerHTML=`<div class="card"><p class="eyebrow">Vorschläge für dich</p><div class="tpl">${TPL.map((t,i)=>`<button class="t" data-i="${i}" aria-pressed="false"><span>${t[0]}</span><span class="badge ${badge[t[1]][0]}">${badge[t[1]][1]}</span></button>`).join('')}
+        const upd = () => {
+          const s = support($('#f', root).value, $('#t', root).value, $('#z', root).value);
+          const pv = $('#pv', root);
+          pv.className = 'preview ' + s.k;
+          pv.innerHTML = `<span class="badge ${badge[s.k][0]}">${badge[s.k][1]}</span> ${esc(s.m)}`;
+          $('#save', root).disabled = s.k === 'no';
+          $('#save', root).style.opacity = s.k === 'no' ? 0.4 : 1;
+        };
+        root.addEventListener('change', upd);
+        upd();
+        $('#save', root).onclick = () => {
+          $('#saved', root).textContent =
+            'Gemerkt: ' +
+            `Wie hängt ${$('#f', root).value} mit ${$('#t', root).value} ${$('#z', root).value} zusammen? (Fokus: ja, 2 weitere Fragen gemerkt)`;
+        };
+      }
+      function d2B(root) {
+        root.innerHTML = `<div class="card"><p class="eyebrow">Vorschläge für dich</p><div class="tpl">${TPL.map((t, i) => `<button class="t" data-i="${i}" aria-pressed="false"><span>${t[0]}</span><span class="badge ${badge[t[1]][0]}">${badge[t[1]][1]}</span></button>`).join('')}
   <button class="t" style="border-style:dashed" data-own><span>+ Eigene Frage zusammenstellen …</span></button></div><p class="note" id="msg">Nichts gewählt. Vorschläge kommen aus einem geprüften Katalog, nicht aus Trefferhäufigkeit.</p></div>`;
-  root.querySelectorAll('.t[data-i]').forEach(b=>b.onclick=()=>{root.querySelectorAll('.t[data-i]').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');const t=TPL[b.dataset.i];$('#msg',root).innerHTML=`<b>${t[1]==='lack'?'Gemerkt mit Datenstatus:':'Gemerkt und fokussiert:'}</b> ${t[0]}${t[1]==='lack'?' Bisher nur 3 Tage mit Kopfschmerz.':''}`});
-  $('[data-own]',root).onclick=()=>{$('#msg',root).innerHTML='→ öffnet den Baukasten aus Option A (nur bei Bedarf).'};
-}
-function d2C(root){
-  const s=SC.muster;
-  root.innerHTML=`<div class="card"><p class="eyebrow">Aus einer Beobachtung</p><p class="headline" style="font-size:1rem">${s.head}</p><p class="meta">${s.evid}</p>
+        root.querySelectorAll('.t[data-i]').forEach(
+          (b) =>
+            (b.onclick = () => {
+              root
+                .querySelectorAll('.t[data-i]')
+                .forEach((x) => x.setAttribute('aria-pressed', 'false'));
+              b.setAttribute('aria-pressed', 'true');
+              const t = TPL[b.dataset.i];
+              $('#msg', root).innerHTML =
+                `<b>${t[1] === 'lack' ? 'Gemerkt mit Datenstatus:' : 'Gemerkt und fokussiert:'}</b> ${t[0]}${t[1] === 'lack' ? ' Bisher nur 3 Tage mit Kopfschmerz.' : ''}`;
+            })
+        );
+        $('[data-own]', root).onclick = () => {
+          $('#msg', root).innerHTML = '→ öffnet den Baukasten aus Option A (nur bei Bedarf).';
+        };
+      }
+      function d2C(root) {
+        const s = SC.muster;
+        root.innerHTML = `<div class="card"><p class="eyebrow">Aus einer Beobachtung</p><p class="headline" style="font-size:1rem">${s.head}</p><p class="meta">${s.evid}</p>
   <div class="actions"><button class="btn sec" id="rem">Diese Frage merken</button><button class="btn link">Antwort prüfen</button></div>
   <div class="sheet" id="sh" hidden><div class="steps"><span class="on"></span><span></span></div>
   <b>Deine Frage</b><div class="chips" id="ch"><button aria-pressed="true">Sport ↔ Stimmung, am selben Tag</button></div>
   <p class="note">Faktor, Ziel und Zeitbezug werden aus dem Insight übernommen. Optional: privater Titel.</p>
   <div class="actions"><button class="btn" id="ok">Merken &amp; fokussieren</button><button class="btn link" id="no">Nur merken</button></div><p class="note" id="done"></p></div></div>`;
-  $('#rem',root).onclick=()=>{$('#sh',root).hidden=false};
-  $('#ok',root).onclick=()=>{$('#done',root).textContent='Gemerkt. Diese Frage ist jetzt dein Fokus; 2 weitere gemerkte Fragen bleiben erreichbar.'};
-  $('#no',root).onclick=()=>{$('#done',root).textContent='Gemerkt. Dein Fokus bleibt unverändert.'};
-}
-const D2=[
- {t:'A · Satz-Baukasten',fn:d2A,n:'<b>Idee:</b> Satz mit Auswahlfeldern; Live-Vorschau zeigt Status <i>bevor</i> gespeichert wird. Probiere Kopfschmerz/Energie/Folgetag und Montag/Folgetag.<ul><li>+ maximal frei, eigene Tags, Grenze sofort sichtbar</li><li>− Nutzer:in muss wissen, was sie will; Sprachlogik bei Grammatik</li><li>− lädt zum Ausprobieren unsinniger Kombinationen ein</li></ul>'},
- {t:'B · Vorschlagsliste',fn:d2B,n:'<b>Idee:</b> Kuratierte Vorlagen mit Datenstatus-Badges; Baukasten nur als Ausweg.<ul><li>+ am schnellsten, kein Wissen nötig, trägt Fragen ohne Treffer</li><li>− begrenzt Interessen; Katalogpflege; Sprache für „ihre“ Tags?</li><li>− Badge „wenig Daten“ kann demotivieren</li></ul>'},
- {t:'C · Aus einer Beobachtung ableiten',fn:d2C,n:'<b>Idee:</b> Frage entsteht aus einem Insight oder Trend („Diese Frage merken“), keine eigene Fragewahl-Seite.<ul><li>+ null Zusatzkonzept, Kontext sofort da, passt zu „Beobachtung weiterverfolgen“</li><li>− ohne vorhandenen Insight gibt es keinen Einstieg (widerspricht „auch ohne Treffer“)</li><li>− Auffindbarkeit der Aktion</li></ul>'}
-];
+        $('#rem', root).onclick = () => {
+          $('#sh', root).hidden = false;
+        };
+        $('#ok', root).onclick = () => {
+          $('#done', root).textContent =
+            'Gemerkt. Diese Frage ist jetzt dein Fokus; 2 weitere gemerkte Fragen bleiben erreichbar.';
+        };
+        $('#no', root).onclick = () => {
+          $('#done', root).textContent = 'Gemerkt. Dein Fokus bleibt unverändert.';
+        };
+      }
+      const D2 = [
+        {
+          t: 'A · Satz-Baukasten',
+          fn: d2A,
+          n: '<b>Idee:</b> Satz mit Auswahlfeldern; Live-Vorschau zeigt Status <i>bevor</i> gespeichert wird. Probiere Kopfschmerz/Energie/Folgetag und Montag/Folgetag.<ul><li>+ maximal frei, eigene Tags, Grenze sofort sichtbar</li><li>− Nutzer:in muss wissen, was sie will; Sprachlogik bei Grammatik</li><li>− lädt zum Ausprobieren unsinniger Kombinationen ein</li></ul>',
+        },
+        {
+          t: 'B · Vorschlagsliste',
+          fn: d2B,
+          n: '<b>Idee:</b> Kuratierte Vorlagen mit Datenstatus-Badges; Baukasten nur als Ausweg.<ul><li>+ am schnellsten, kein Wissen nötig, trägt Fragen ohne Treffer</li><li>− begrenzt Interessen; Katalogpflege; Sprache für „ihre“ Tags?</li><li>− Badge „wenig Daten“ kann demotivieren</li></ul>',
+        },
+        {
+          t: 'C · Aus einer Beobachtung ableiten',
+          fn: d2C,
+          n: '<b>Idee:</b> Frage entsteht aus einem Insight oder Trend („Diese Frage merken“), keine eigene Fragewahl-Seite.<ul><li>+ null Zusatzkonzept, Kontext sofort da, passt zu „Beobachtung weiterverfolgen“</li><li>− ohne vorhandenen Insight gibt es keinen Einstieg (widerspricht „auch ohne Treffer“)</li><li>− Auffindbarkeit der Aktion</li></ul>',
+        },
+      ];
 
-/* ---------- Entscheidung 3 ---------- */
-const st3={
- keins:{
-  A:s=>`<div class="card">${chip(s)}<p class="headline">${s.head}</p><p class="evid">${s.evid}</p><p class="caveat">${s.cav}</p><div class="actions"><button class="btn sec">Frage behalten</button><button class="btn link">Andere Frage wählen</button></div></div>`,
-  B:s=>`<div class="card">${chip(s)}<p class="headline">${s.head}</p><div class="dots">${dotsRow(s.a)}${dotsRow(s.b)}</div><p class="meta">Beide Gruppen liegen nahe beieinander (42 % und 38 %). ${s.meta}</p><p class="caveat">${s.cav}</p><details><summary>Was wurde geprüft?</summary><p>Vergleich der Tage mit und ohne Spaziergang, Stress 4–5. Kontext (Wochentag, Arbeitssituation) wurde nicht berücksichtigt.</p></details><div class="actions"><button class="btn sec">Frage behalten</button></div></div>`,
-  C:s=>`<div class="card"><p class="eyebrow">Deine Frage · ${s.q}</p>${chip(s)}<p class="headline">Bisher zeigt sich kein klarer Zusammenhang.</p><p class="caveat">${s.cav}</p><p class="nextstep"><b>Du entscheidest:</b></p><div class="chips"><button>Weiter beobachten</button><button>Andere Frage</button><button>In Bericht aufnehmen</button></div><details><summary>Zahlen</summary><p>${s.evid}. ${s.meta}</p></details></div>`,
-  na:['Nüchtern: Satz, Zahlen, Vorbehalt, zwei Aktionen','Mit Häufigkeiten: Nähe der Gruppen sichtbar, Methodik einklappbar','Entscheidungsleiste: drei gleichwertige Wege, Zahlen einklappbar'],
-  nb:['+ knapp, klar<br>− „Frage behalten“ wirkt wie Aufgabe','+ Beweislage wird selbst sichtbar<br>− Punktraster wirkt bei Nicht-Ergebnis „leer“ und rechnerisch','+ Nutzer:in behält Kontrolle; Bericht möglich (§2)<br>− mehr Entscheidungen bei ohnehin schwacher Nachricht']},
- mangel:{
-  A:s=>`<div class="card">${chip(s)}<p class="headline">${s.head}</p><p class="evid">${s.evid}</p><p class="meta">${s.meta}</p><p class="nextstep">${s.next}</p><div class="actions"><button class="btn sec">${s.cta}</button></div></div>`,
-  B:s=>`<div class="card">${chip(s)}<p class="headline">${s.head}</p><div class="dots">${dotsRow(s.a)}${dotsRow(s.b)}</div><p class="caveat">${s.cav}</p><p class="nextstep">${s.next}</p><div class="actions"><button class="btn sec">Heute eintragen</button></div></div>`,
-  C:s=>`<div class="card"><p class="eyebrow">Deine Frage · ${s.q}</p>${chip(s)}<p class="headline">Noch keine Antwort möglich.</p><p class="evid"><b>Was da ist:</b> 12 Tage mit Sport</p><p class="evid"><b>Was fehlt:</b> Tage ohne Sport (bisher 2)</p><p class="caveat">Das ist kein Fehler und kein Ergebnis, nur eine Datenlücke. Wie viele Tage genügen, hängt von den Werten ab.</p><p class="nextstep">${s.next}</p></div>`,
-  na:['Nüchtern: Status, Zahl, Schritt, Link zur Abdeckung','Punktraster zeigt die Lücke sofort, Aktion „Heute eintragen“','Was da ist / Was fehlt; ausdrückliches „kein Fehler“'],
-  nb:['+ ruhig<br>− Datenlücke bleibt abstrakt','+ Lücke sofort verständlich; Handlungsaufforderung nah<br>− Risiko: Nudging zu mehr Tracking (Grenze zu Gamification prüfen)','+ trennt Lücke von Fehler/Ergebnis; kein N-Tage-Versprechen<br>− Schritt hier bewusst ohne Button; führt er ins Leere?']}
-};
+      /* ---------- Entscheidung 3 ---------- */
+      const st3 = {
+        keins: {
+          A: (s) =>
+            `<div class="card">${chip(s)}<p class="headline">${s.head}</p><p class="evid">${s.evid}</p><p class="caveat">${s.cav}</p><div class="actions"><button class="btn sec">Frage behalten</button><button class="btn link">Andere Frage wählen</button></div></div>`,
+          B: (s) =>
+            `<div class="card">${chip(s)}<p class="headline">${s.head}</p><div class="dots">${dotsRow(s.a)}${dotsRow(s.b)}</div><p class="meta">Beide Gruppen liegen nahe beieinander (42 % und 38 %). ${s.meta}</p><p class="caveat">${s.cav}</p><details><summary>Was wurde geprüft?</summary><p>Vergleich der Tage mit und ohne Spaziergang, Stress 4–5. Kontext (Wochentag, Arbeitssituation) wurde nicht berücksichtigt.</p></details><div class="actions"><button class="btn sec">Frage behalten</button></div></div>`,
+          C: (s) =>
+            `<div class="card"><p class="eyebrow">Deine Frage · ${s.q}</p>${chip(s)}<p class="headline">Bisher zeigt sich kein klarer Zusammenhang.</p><p class="caveat">${s.cav}</p><p class="nextstep"><b>Du entscheidest:</b></p><div class="chips"><button>Weiter beobachten</button><button>Andere Frage</button><button>In Bericht aufnehmen</button></div><details><summary>Zahlen</summary><p>${s.evid}. ${s.meta}</p></details></div>`,
+          na: [
+            'Nüchtern: Satz, Zahlen, Vorbehalt, zwei Aktionen',
+            'Mit Häufigkeiten: Nähe der Gruppen sichtbar, Methodik einklappbar',
+            'Entscheidungsleiste: drei gleichwertige Wege, Zahlen einklappbar',
+          ],
+          nb: [
+            '+ knapp, klar<br>− „Frage behalten“ wirkt wie Aufgabe',
+            '+ Beweislage wird selbst sichtbar<br>− Punktraster wirkt bei Nicht-Ergebnis „leer“ und rechnerisch',
+            '+ Nutzer:in behält Kontrolle; Bericht möglich (§2)<br>− mehr Entscheidungen bei ohnehin schwacher Nachricht',
+          ],
+        },
+        mangel: {
+          A: (s) =>
+            `<div class="card">${chip(s)}<p class="headline">${s.head}</p><p class="evid">${s.evid}</p><p class="meta">${s.meta}</p><p class="nextstep">${s.next}</p><div class="actions"><button class="btn sec">${s.cta}</button></div></div>`,
+          B: (s) =>
+            `<div class="card">${chip(s)}<p class="headline">${s.head}</p><div class="dots">${dotsRow(s.a)}${dotsRow(s.b)}</div><p class="caveat">${s.cav}</p><p class="nextstep">${s.next}</p><div class="actions"><button class="btn sec">Heute eintragen</button></div></div>`,
+          C: (s) =>
+            `<div class="card"><p class="eyebrow">Deine Frage · ${s.q}</p>${chip(s)}<p class="headline">Noch keine Antwort möglich.</p><p class="evid"><b>Was da ist:</b> 12 Tage mit Sport</p><p class="evid"><b>Was fehlt:</b> Tage ohne Sport (bisher 2)</p><p class="caveat">Das ist kein Fehler und kein Ergebnis, nur eine Datenlücke. Wie viele Tage genügen, hängt von den Werten ab.</p><p class="nextstep">${s.next}</p></div>`,
+          na: [
+            'Nüchtern: Status, Zahl, Schritt, Link zur Abdeckung',
+            'Punktraster zeigt die Lücke sofort, Aktion „Heute eintragen“',
+            'Was da ist / Was fehlt; ausdrückliches „kein Fehler“',
+          ],
+          nb: [
+            '+ ruhig<br>− Datenlücke bleibt abstrakt',
+            '+ Lücke sofort verständlich; Handlungsaufforderung nah<br>− Risiko: Nudging zu mehr Tracking (Grenze zu Gamification prüfen)',
+            '+ trennt Lücke von Fehler/Ergebnis; kein N-Tage-Versprechen<br>− Schritt hier bewusst ohne Button; führt er ins Leere?',
+          ],
+        },
+      };
 
-/* ---------- Rendering ---------- */
-let sc1='muster',sc3='keins';
-function opt(o,group,i,inner){
-  const key=`ivm.${group}`;const on=store.get(key)===String(i);
-  return `<div class="opt"><header><strong>${o.t}</strong><label class="pick"><input type="radio" name="${group}" ${on?'checked':''} data-g="${group}" data-i="${i}"> Favorit</label></header><div class="frame">${inner}</div><div class="note">${o.n||''}</div></div>`;
-}
-function renderD1(){
-  $('#d1').innerHTML=D1.map((o,i)=>opt(o,'d1',i,o.f(SC[sc1]))).join('');
-}
-function renderD2(){
-  $('#d2').innerHTML=D2.map((o,i)=>opt(o,'d2',i,`<div id="d2o${i}"></div>`)).join('');
-  D2.forEach((o,i)=>o.fn($('#d2o'+i)));
-}
-function renderD3(){
-  const s=SC[sc3],d=st3[sc3];
-  $('#d3').innerHTML=['A','B','C'].map((k,i)=>opt({t:`${k} · ${d.na[i]}`,n:'<b>Bewertung:</b> '+d.nb[i]},'d3',i,d[k](s))).join('');
-}
-function seg(el,keys,cur,cb){
-  el.innerHTML=keys.map(k=>`<button data-k="${k}" aria-pressed="${k===cur}">${SC[k].label}</button>`).join('');
-  el.onclick=e=>{const b=e.target.closest('button');if(!b)return;cb(b.dataset.k);seg(el,keys,b.dataset.k,cb)};
-}
-seg($('#sc1'),['muster','stress','unklar','keins','mangel','unsup'],sc1,k=>{sc1=k;renderD1()});
-seg($('#sc3'),['keins','mangel'],sc3,k=>{sc3=k;renderD3()});
-renderD1();renderD2();renderD3();
+      /* ---------- Rendering ---------- */
+      let sc1 = 'muster',
+        sc3 = 'keins';
+      function opt(o, group, i, inner) {
+        const key = `ivm.${group}`;
+        const on = store.get(key) === String(i);
+        return `<div class="opt"><header><strong>${o.t}</strong><label class="pick"><input type="radio" name="${group}" ${on ? 'checked' : ''} data-g="${group}" data-i="${i}"> Favorit</label></header><div class="frame">${inner}</div><div class="note">${o.n || ''}</div></div>`;
+      }
+      function renderD1() {
+        $('#d1').innerHTML = D1.map((o, i) => opt(o, 'd1', i, o.f(SC[sc1]))).join('');
+      }
+      function renderD2() {
+        $('#d2').innerHTML = D2.map((o, i) => opt(o, 'd2', i, `<div id="d2o${i}"></div>`)).join('');
+        D2.forEach((o, i) => o.fn($('#d2o' + i)));
+      }
+      function renderD3() {
+        const s = SC[sc3],
+          d = st3[sc3];
+        $('#d3').innerHTML = ['A', 'B', 'C']
+          .map((k, i) =>
+            opt({ t: `${k} · ${d.na[i]}`, n: '<b>Bewertung:</b> ' + d.nb[i] }, 'd3', i, d[k](s))
+          )
+          .join('');
+      }
+      function seg(el, keys, cur, cb) {
+        el.innerHTML = keys
+          .map((k) => `<button data-k="${k}" aria-pressed="${k === cur}">${SC[k].label}</button>`)
+          .join('');
+        el.onclick = (e) => {
+          const b = e.target.closest('button');
+          if (!b) return;
+          cb(b.dataset.k);
+          seg(el, keys, b.dataset.k, cb);
+        };
+      }
+      seg($('#sc1'), ['muster', 'stress', 'unklar', 'keins', 'mangel', 'unsup'], sc1, (k) => {
+        sc1 = k;
+        renderD1();
+      });
+      seg($('#sc3'), ['keins', 'mangel'], sc3, (k) => {
+        sc3 = k;
+        renderD3();
+      });
+      renderD1();
+      renderD2();
+      renderD3();
 
-function prefs(){
-  const names={d1:'Antwortkarte',d2:'Fragen-Einstieg',d3:'Kein Muster / Datenmangel'};
-  $('#prefs').innerHTML=Object.entries(names).map(([g,n])=>{const v=store.get('ivm.'+g);return `${n}: <b>${v===null?'noch offen':'Option '+'ABC'[v]}</b>`}).join(' &nbsp;·&nbsp; ');
-}
-document.addEventListener('change',e=>{const r=e.target.closest('input[type=radio][data-g]');if(r){store.set('ivm.'+r.dataset.g,r.dataset.i);prefs()}});
-prefs();
+      function prefs() {
+        const names = {
+          d1: 'Antwortkarte',
+          d2: 'Fragen-Einstieg',
+          d3: 'Kein Muster / Datenmangel',
+        };
+        $('#prefs').innerHTML = Object.entries(names)
+          .map(([g, n]) => {
+            const v = store.get('ivm.' + g);
+            return `${n}: <b>${v === null ? 'noch offen' : 'Option ' + 'ABC'[v]}</b>`;
+          })
+          .join(' &nbsp;·&nbsp; ');
+      }
+      document.addEventListener('change', (e) => {
+        const r = e.target.closest('input[type=radio][data-g]');
+        if (r) {
+          store.set('ivm.' + r.dataset.g, r.dataset.i);
+          prefs();
+        }
+      });
+      prefs();
 
-document.querySelectorAll('[data-vp]').forEach(b=>b.onclick=()=>{document.body.classList.toggle('phone',b.dataset.vp==='phone');document.querySelectorAll('[data-vp]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
-document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{document.documentElement.dataset.theme=b.dataset.th;document.querySelectorAll('[data-th]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
-</script>
-</body>
+      document.querySelectorAll('[data-vp]').forEach(
+        (b) =>
+          (b.onclick = () => {
+            document.body.classList.toggle('phone', b.dataset.vp === 'phone');
+            document
+              .querySelectorAll('[data-vp]')
+              .forEach((x) => x.setAttribute('aria-pressed', x === b));
+          })
+      );
+      document.querySelectorAll('[data-th]').forEach(
+        (b) =>
+          (b.onclick = () => {
+            document.documentElement.dataset.theme = b.dataset.th;
+            document
+              .querySelectorAll('[data-th]')
+              .forEach((x) => x.setAttribute('aria-pressed', x === b));
+          })
+      );
+    </script>
+  </body>
 </html>
