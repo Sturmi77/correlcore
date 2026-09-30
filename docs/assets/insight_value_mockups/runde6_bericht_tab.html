@@ -163,7 +163,7 @@ table.mt th{background:var(--color-surface-2);font-weight:600}
     <button data-go="door2">Erstellen: Schlaf + Energie</button>
     <button data-go="door3">Aus Hinweis merken</button>
   </div>
-  <p class="muted">Neu in Runde 6: <b>Bericht als eigener Tab</b> (untere Leiste, mit Zähler) und die <b>Schlafschwelle</b> im Text („wenig Schlaf“ = kürzer als dein Median von 7 Std 10 Min). Probier im Baukasten <b>Schlaf + Energie am selben Tag</b>: nicht unterstützt, mit Vorschlag „am nächsten Tag“.</p>
+  <p class="muted">Neu in Runde 6: <b>Bericht als eigener Tab</b> (untere Leiste, mit Zähler) und die <b>Schlafschwelle</b> im Text („wenig Schlaf“ = kürzer als der Median deiner Schlafwerte an den verglichenen Tagen). Probier im Baukasten <b>Schlaf + Energie am selben Tag</b>: nicht unterstützt, mit Vorschlag „am nächsten Tag“.</p>
 
   <h2>Entscheidungen dieser Runde</h2>
   <ul>
@@ -179,7 +179,7 @@ table.mt th{background:var(--color-surface-2);font-weight:600}
     <tr><td>Schlaf ↔ Energie / Stress / Symptom, am selben Tag</td><td>Nicht implementiert (Same-Day-Schlaf betrachtet nur Stimmung; Sleep×Symptom laut Feature-Spec noch offen)</td><td><b>Nicht unterstützt</b>, Vorschlag „am nächsten Tag“</td></tr>
     <tr><td>Schlaf → Wert / Symptom, zeitversetzt</td><td>Lag-Pipeline, Schlaf nur als Ausgangssignal; Median-Split am Abstand des Gewinners</td><td>Unterstützt ab 90 Einträgen. Die Schwelle ist der <b>Median deiner Schlafwerte</b>, nicht ein Richtwert</td></tr>
   </table>
-  <p><b>Zur Schwelle:</b> Was die Engine heute aufteilt, ist der Median der eigenen Schlafwerte, nicht „weniger als 6 Stunden“. Das ist gut lesbar („kürzer als deine typische Nacht“), aber die Zahl ändert sich, wenn sich der Median verschiebt. Deshalb steht sie samt Wert und Einheit im Vertrag (<code>event.split</code>) und der Bericht nennt den Stand. Ob Dauer oder Qualität gemeint ist, muss der Vertrag ebenfalls tragen (<code>sleep_minutes</code> / <code>sleep_quality</code>).</p>
+  <p><b>Zur Schwelle:</b> Was die Engine heute aufteilt, ist der Median der Schlafwerte an den <b>gepaarten Tagen des verglichenen Abstands</b>, nicht der Median des ganzen Kontos und nicht „weniger als 6 Stunden“. Die Zahl kann sich mit Abstand und Zeitraum ändern. Deshalb steht sie samt Wert, Einheit und Population im Vertrag (<code>event.split</code>) und der Bericht nennt sie. Ob Dauer oder Qualität gemeint ist, steht schon in <code>feature_key</code>.</p>
 
   <h2>Zusammenfassungen für ADR und Z1.1</h2>
   <p>Die Ergebnisse aller Runden sind für die Issues aufbereitet:</p>
@@ -191,10 +191,10 @@ table.mt th{background:var(--color-surface-2);font-weight:600}
 
   <h2>Noch offen</h2>
   <ol>
-    <li><b>„Was kam zuerst?“</b> nur bei Symptom ↔ Symptom (Empfehlung, keine Rückmeldung).</li>
+    <li><b>„Was kam zuerst?“</b> nur bei Symptom → Symptom mit Zeitversatz. Symptom ↔ Symptom am selben Tag ist nicht unterstützt (kein Backend dafür).</li>
     <li><b>Median-Schwelle sichtbar machen oder festen Richtwert wählen?</b> Der Vertrag trägt beides; im Prototyp gilt der Median.</li>
     <li><b>Schlafdauer oder Schlafqualität</b> als „wenig Schlaf“? Im Prototyp ist Dauer gemeint. Die Fragebildung müsste das auswählbar machen oder festlegen.</li>
-    <li><b>Wochentag ↔ Werte:</b> welche Werte <code>weekday_pattern</code> tatsächlich abdeckt, ist noch nicht geprüft (Matrix, Zeile W1).</li>
+    <li><b>Wochentag ↔ Werte:</b> <code>weekday_pattern</code> deckt heute nur die Stimmung ab; der Prototyp erlaubt nur Wochentag + Stimmung. Sollen Energie und Stress dazukommen?</li>
   </ol>
   <p class="muted">Regeln, Zahlen und Auswertungen im Prototyp sind erfunden; die Grenzen (≥ 90 Einträge, Abstand 1–7, Same-Day-Schlaf nur Stimmung) stammen aus dem Repo-Code.</p>
 </div>
@@ -215,7 +215,7 @@ const MAXLAG=7; // Engine: MAX_LAG_DAYS = 7
 const LAGMIN=90; // Engine: MIN_ML_ENTRIES = 90
 let DAYS=120;    // erfasste Tage im Beispielkonto (umschaltbar)
 const FEW={Erkältung:2}; // Tage mit Symptom, erfunden
-const SLEEP_THR='kürzer als dein Median von 7 Std 10 Min'; // Herkunft: Schlafdatenvertrag (Vertragsfeld event.split)
+const SLEEP_THR='kürzer als der Median deiner Schlafwerte an den verglichenen Tagen (7 Std 10 Min)'; // Herkunft: Schlafdatenvertrag (Vertragsfeld event.split)
 
 /* ---------- Zeit: same | lag n | open ---------- */
 const zkey=z=>z.k==='lag'?'lag'+z.n:z.k;
@@ -231,7 +231,7 @@ function orient(x,y,z,sw){
   if(kinds==='slp+slp')return {err:'Bitte zwei verschiedene Dinge wählen.'};
   if(kx==='wd'||ky==='wd'){
     const other=kx==='wd'?y:x;
-    if(SIG[other]!=='val')return {err:'Der Wochentag lässt sich nur mit Stimmung, Energie oder Stress vergleichen.'};
+    if(other!=='Stimmung')return {err:'Der Wochentag lässt sich derzeit nur mit der Stimmung vergleichen.'};
     if(z.k!=='same')return {err:'Für „Montag“ wird nur der Vergleich am selben Tag unterstützt.',altSame:true};
     return {c:kx==='wd'?x:y,o:other};
   }
@@ -242,7 +242,8 @@ function orient(x,y,z,sw){
       return {c,o}}
     if(kx==='val')return {c:y,o:x}; if(ky==='val')return {c:x,o:y};
     if(kx!==ky)return kx==='sym'?{c:y,o:x}:{c:x,o:y}; // Symptom ist Ziel, Tag ist Bezug
-    return sw?{c:y,o:x,symmetric:true}:{c:x,o:y,symmetric:true}; // Tag↔Tag, Symptom↔Symptom
+    if(kx==='sym')return {err:'Zwei Symptome untereinander sind am selben Tag noch nicht als Frage möglich. Mit Zeitversatz (was kam zuerst?) geht es.',altLag:true};
+    return sw?{c:y,o:x,symmetric:true}:{c:x,o:y,symmetric:true}; // nur Tag↔Tag gleichzeitig
   }
   /* Zeitversatz: früher = Bezug, später = Ziel. Ziel muss Wert (außer Schlaf) oder Symptom sein. */
   const canEarly=k=>k==='tag'||k==='sym'||k==='slp';           // Werte (Stimmung…) als Ausgangspunkt: noch nicht
@@ -288,7 +289,7 @@ function support(q){
   else if(q.z.k==='lag')m+=`${pairs} gepaarte Tage (Ausgangstag und Zieltag ${q.z.n===1?'einen Tag':q.z.n+' Tage'} später). Je größer der Abstand, desto weniger Paare.`;
   else m+=`Es werden ${MAXLAG} Abstände verglichen (ab ${W-MAXLAG} Paaren). Genannt wird der deutlichste. Ein einzelner Abstand kann zufällig auffallen.`;
   if(SIG[q.o]==='sym'||SIG[q.c]==='sym')m+=' Ein Symptom zählt als „vorhanden“, unabhängig von der Stärke.';
-  if(SIG[q.c]==='slp')m+=` „Wenig Schlaf“ heißt: ${SLEEP_THR} (aus deinen Schlafdaten). Schlaf bezieht sich auf die Nacht vor dem Eintrag.`;
+  if(SIG[q.c]==='slp')m+=` „Wenig Schlaf“ heißt: ${SLEEP_THR}. Schlaf bezieht sich auf die Nacht vor dem Eintrag.`;
   if(isSym(q)&&q.z.k==='same')m+=' Verglichen wird das gemeinsame Vorkommen am selben Tag.';
   return {k:'ok',m};
 }
@@ -296,7 +297,7 @@ const BADGE={ok:['ok','auswertbar'],lack:['lack','wenig Daten'],no:['','nicht un
 
 /* ---------- Katalog ---------- */
 const Q=(c,o,z)=>({c,o,z:z||{k:'same'}});
-const CAT=[Q('Sport','Stimmung'),Q('Schlaf','Energie',{k:'lag',n:1}),Q('Sport','Energie',{k:'lag',n:2}),Q('Spaziergang','Stress'),Q('Montag','Energie'),
+const CAT=[Q('Sport','Stimmung'),Q('Schlaf','Energie',{k:'lag',n:1}),Q('Sport','Energie',{k:'lag',n:2}),Q('Spaziergang','Stress'),Q('Montag','Stimmung'),
   Q('Kaffee','Kopfschmerz'),Q('Alkohol','Kopfschmerz',{k:'open'}),Q('Kopfschmerz','Energie'),Q('Schlaf','Stimmung'),Q('Schlaf','Rückenschmerz',{k:'lag',n:1}),Q('Alkohol','Spät gegessen'),Q('Erkältung','Stress')];
 const FILTERS=[['all','Alle'],['val','Stimmung & Co.'],['sym','Symptome'],['tagtag','Kombinationen'],['lag','Zeitversatz']];
 const inFilter=(q,f)=>f==='all'||(f==='lag'?q.z.k!=='same':f==='sym'?fam(q)==='sym':fam(q)===f);
@@ -306,7 +307,7 @@ const RES={};
 const R=(q,r)=>RES[key(q)]=r;
 R(Q('Sport','Stimmung'),{st:'pattern',cap:'Tage mit guter Stimmung',head:'An Tagen mit Sport war deine Stimmung häufiger gut.',a:['Mit Sport',7,10],b:['Ohne Sport',7,18],meta:'1.–28. September · 28 vergleichbare Tage · „gut“ = Stimmung 4 oder 5',cav:'Deine Einträge zeigen einen Unterschied, aber noch keine Ursache.',next:'Prüfe, ob die Arbeitssituation den Unterschied miterklärt.',cta:'Antwort prüfen'});
 R(Q('Sport','Energie',{k:'lag',n:2}),{st:'pattern',cap:'Tage mit guter Energie',head:'Zwei Tage nach Sport war deine Energie häufiger gut.',a:['2 Tage nach Sport',18,26],b:['2 Tage nach Tagen ohne Sport',24,62],meta:'3. Juli–28. September · 88 gepaarte Tage · Ausgangstag mit/ohne Sport, Zieltag 2 Tage später · „gut“ = Energie 4 oder 5',cav:'Ein Zusammenhang in deinen Einträgen, keine Ursache. Was an den Tagen dazwischen war, ist nicht berücksichtigt.',next:'Sieh dir auch den Abstand von 1 und 3 Tagen an.',cta:'Antwort prüfen'});
-R(Q('Schlaf','Energie',{k:'lag',n:1}),{st:'pattern',cap:'Tage mit guter Energie',head:'Nach kurzen Nächten war deine Energie am Folgetag seltener gut.',a:['Nach kürzeren Nächten',19,44],b:['Nach längeren Nächten',34,45],meta:'2. Juli–28. September · 89 gepaarte Tage · „wenig Schlaf“ = '+SLEEP_THR+' · „gut“ = Energie 4 oder 5',cav:'Ein Zusammenhang in deinen Einträgen, keine Ursache. Die Grenze „wenig Schlaf“ ist dein eigener Median, nicht ein Richtwert.',next:'Prüfe, ob der Wochentag den Unterschied miterklärt.',cta:'Antwort prüfen'});
+R(Q('Schlaf','Energie',{k:'lag',n:1}),{st:'pattern',cap:'Tage mit guter Energie',head:'Nach kurzen Nächten war deine Energie am Folgetag seltener gut.',a:['Nach kürzeren Nächten',19,44],b:['Nach längeren Nächten',34,45],meta:'2. Juli–28. September · 89 gepaarte Tage · „wenig Schlaf“ = '+SLEEP_THR+' · „gut“ = Energie 4 oder 5',cav:'Ein Zusammenhang in deinen Einträgen, keine Ursache. Die Grenze „wenig Schlaf“ ist der Median deiner Schlafwerte an den verglichenen Tagen, kein Richtwert und nicht dein Kontomedian.',next:'Prüfe, ob der Wochentag den Unterschied miterklärt.',cta:'Antwort prüfen'});
 R(Q('Schlaf','Stimmung'),{st:'pattern',cap:'Tage mit guter Stimmung',head:'Nach kürzeren Nächten war deine Stimmung seltener gut.',a:['Nach kürzeren Nächten',14,40],b:['Nach längeren Nächten',30,48],meta:'2. Juli–28. September · 88 Tage mit Schlafwert · „wenig Schlaf“ = '+SLEEP_THR+' · „gut“ = Stimmung 4 oder 5',cav:'Ein Zusammenhang, keine Ursache. Wochenenden mit mehr Schlaf und besserer Stimmung können beides erklären.',next:'Prüfe, ob der Wochentag den Unterschied miterklärt.',cta:'Antwort prüfen'});
 R(Q('Spaziergang','Stress'),{st:'none',cap:'Tage mit wenig Stress',head:'In diesem Zeitraum zeigt sich kein klarer Zusammenhang zwischen Spaziergang und Stress.',a:['Mit Spaziergang',7,12],b:['Ohne Spaziergang',10,16],meta:'1.–28. September · 28 vergleichbare Tage · „wenig Stress“ = Stress 1 oder 2',cav:'Das heißt nicht, dass es keinen Einfluss gibt, nur dass er in diesen Einträgen nicht erkennbar ist.',cta:'Vergleich ansehen'});
 R(Q('Kaffee','Kopfschmerz'),{st:'pattern',cap:'Tage mit Kopfschmerz',head:'An Tagen mit Kaffee war Kopfschmerz häufiger vermerkt.',a:['Mit Kaffee',5,9],b:['Ohne Kaffee',3,19],meta:'1.–28. September · 28 vergleichbare Tage · Kopfschmerz zählt als vorhanden, unabhängig von der Stärke',cav:'Ob der Kaffee vor oder nach dem Kopfschmerz kam, ist in den Einträgen nicht erfasst. Das zeigt einen Zusammenhang, keine Ursache.',next:'Prüfe, ob der Wochentag oder deine Arbeitssituation eine Rolle spielt.',cta:'Antwort prüfen'});
@@ -428,7 +429,7 @@ function grpTable(r){
 }
 const CTX={'Sport|Stimmung|same':'Wenn wir ähnliche Arbeitstage vergleichen, fällt der Unterschied kleiner aus (7 von 10 gegen 7 von 14 statt 7 von 18).'};
 const METHOD=q=>q.z.k==='same'
-  ?(fam(q)==='val'?'Vergleich des Anteils guter Tage mit und ohne '+q.c+' (punkt-biseriale Korrelation, Mann-Whitney-U).':fam(q)==='sym'?'Gemeinsames Vorkommen am selben Tag (Phi, Lift, Fisher Exact).':'Gemeinsames Vorkommen am selben Tag (Kookkurrenz).')
+  ?(SIG[q.c]==='slp'?'Rangkorrelation nach Spearman zwischen Schlaf und Stimmung; Wochentag und Arbeitssituation werden als Kontext geprüft.':SIG[q.c]==='wd'?'Vergleich deines Stimmungsmittels an diesem Wochentag mit deinem Gesamtmittel (Differenz ab 0,5).':fam(q)==='val'?'Punkt-biseriale Korrelation zwischen '+q.c+' (ja/nein) und '+q.o+'; die Häufigkeiten zeigen guten Tage mit und ohne '+q.c+'.':fam(q)==='sym'?'Gemeinsames Vorkommen am selben Tag (Phi, Lift, Fisher Exact).':'Gemeinsames Vorkommen am selben Tag (Kookkurrenz).')
   :'Korrelation zwischen Ausgangstag und Zieltag je Abstand von 1 bis '+MAXLAG+' Tagen (Pearson). p-Werte über alle geprüften Paare und Abstände korrigiert (FDR 0,10).';
 function detail(){
   const q=byId(S.did),r=lagLack(q.t)||RES[key(q.t)]||DEFAULT_RES(),c=CHIP[r.st],diff=r.a?Math.round(r.a[1]/r.a[2]*100)-Math.round(r.b[1]/r.b[2]*100):null;
@@ -459,7 +460,7 @@ function report(){
 
 /* ---------- Render + Events ---------- */
 function stub(){return `<h3 class="pg">${S.stub==='today'?'Heute':'Trends'}</h3><div class="card"><p class="evid">Dieser Tab ist nicht Teil des Mockups. Die persönliche Frage erscheint hier später als eine führende Antwort (Heute) bzw. als Vergleich (Trends).</p></div>`}
-function navSync(){document.querySelectorAll('.nav [data-act=nav]').forEach(n=>{const t=n.dataset.t,cur=S.view==='report'?'report':S.view==='stub'?S.stub:'main';n.classList.toggle('on',t===cur);if(t==='report'){const k=S.rep.size;n.querySelector('.bd').textContent=k?k:''}})}
+function navSync(){document.querySelectorAll('.nav [data-act=nav]').forEach(n=>{const t=n.dataset.t,cur=S.view==='report'?'report':S.view==='stub'?S.stub:'main';n.classList.toggle('on',t===cur);if(t==='report'){const k=S.qs.filter(q=>!q.archived&&S.rep.has(q.id)).length;n.querySelector('.bd').textContent=k?k:''}})}
 function render(){navSync();const sc=$('#screen'),top=sc.scrollTop;
   sc.innerHTML=(S.view==='main'?main():S.view==='mine'?mine():S.view==='detail'?detail():S.view==='stub'?stub():report())+(S.sheet?sheet():'')+(S.toast?`<div class="toast"><span>${S.toast.m}</span>${S.toast.undo?`<button data-act="undo">Rückgängig</button>`:''}${S.toast.go?`<button data-act="repview">Bericht öffnen</button>`:''}</div>`:'');sc.scrollTop=top}
 function toast(m,undo,go){S.toast={m,undo,go};render();clearTimeout(toast.t);toast.t=setTimeout(()=>{S.toast=null;render()},6000)}
@@ -483,7 +484,7 @@ document.addEventListener('click',e=>{
   else if(a==='reptoggle'){S.rep.has(id)?S.rep.delete(id):S.rep.add(id)}
   else if(a==='focus'){if(S.focus!==id){undoState=S.focus;S.focus=id;render();toast('Fokus gewechselt zu: '+label(byId(id)),true);return}}
   else if(a==='focus2'){undoState=S.focus;S.focus=id;S.sheet=null;S.view='main';render();toast('Fokus gewechselt zu: '+label(byId(id)),true);return}
-  else if(a==='undo'){S.focus=undoState;S.toast=null}
+  else if(a==='undo'){const u=byId(undoState);S.focus=u&&!u.archived?undoState:((S.qs.find(x=>!x.archived)||{}).id||null);S.toast=null}
   else if(a==='open'){const d=b.dataset.door;
     if(d==='3'){const src=[Q('Schlaf','Energie',{k:'lag',n:1}),Q('Verdauung','Stress')][+b.dataset.i];S.sheet={step:'confirm',t:src,from:'hint',src:'Aus einem Hinweis in deinen Einträgen; beide Seiten und der Zeitbezug sind übernommen.',build:toBuild(src)}}
     else S.sheet={step:d==='2'?'build':'pick',build:{...DEF_BUILD}}}
@@ -502,7 +503,7 @@ document.addEventListener('click',e=>{
   else if(a==='rename'){const q=byId(id),n=prompt('Titel (leer = Standardtext)',q.title||'');if(n!==null)q.title=n.trim()}
   else if(a==='archive'){byId(id).archived=true;if(S.focus===id)S.focus=(S.qs.find(x=>!x.archived)||{}).id||null}
   else if(a==='restore'){byId(id).archived=false;if(!S.focus)S.focus=id}
-  else if(a==='del'){if(confirm('Frage löschen? Gespeicherte Auswertungen dieser Frage gehen verloren.')){S.qs=S.qs.filter(q=>q.id!==id);if(S.focus===id)S.focus=(S.qs.find(x=>!x.archived)||{}).id||null}}
+  else if(a==='del'){if(confirm('Frage löschen? Gespeicherte Auswertungen dieser Frage gehen verloren.')){S.qs=S.qs.filter(q=>q.id!==id);S.rep.delete(id);if(S.focus===id)S.focus=(S.qs.find(x=>!x.archived)||{}).id||null}}
   render();
 });
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const g=b.dataset.go;

@@ -19,7 +19,7 @@ A question connects two of: **tag** (incl. custom), **symptom**, **value** (mood
 
 ### 2. Roles are derived, order is irrelevant
 
-Users pick two things in any order; the app assigns reference and target. Values are targets; sleep and weekday are references; a symptom is the target when paired with a tag and the reference when paired with a value. Only tag↔tag and symptom↔symptom are symmetric (a duplicate in reverse order is the same question).
+Users pick two things in any order; the app assigns reference and target. Values are targets; sleep and weekday are references; a symptom is the target when paired with a tag and the reference when paired with a value. Same day, only tag↔tag is symmetric (a duplicate in reverse order is the same question). Symptom↔symptom exists only with a time offset, where direction ("what came first") decides; the engine has no same-day symptom↔symptom association.
 
 ### 3. Time is a second, equal choice
 
@@ -55,7 +55,7 @@ Selection is explicit; "add to report" does not navigate. Non-results and data s
 
 ### 11. Continuous signals: the threshold is part of the contract
 
-For sleep the engine splits at the **median of the user's own values**. The UI says "shorter than your median of 7 h 10 min"; value, unit, feature (duration or quality) and as-of date are contract fields (`event.split`), not UI constants.
+For sleep the engine splits at the **median of the sleep values on the paired days at the compared offset** (not the whole account). The UI says "shorter than the median of your sleep values on the compared days (7 h 10 min)"; value, unit and population are contract fields (`event.split`), not UI constants. The sleep measure (duration or quality) is already identified by `feature_key`.
 
 ## Consequences
 
@@ -76,9 +76,9 @@ For sleep the engine splits at the **median of the user's own values**. The UI s
 
 ## Open questions
 
-1. "What came first?" prompt only for symptom↔symptom, or always visible.
+1. "What came first?" prompt only for symptom→symptom with lag, or always visible.
 2. Sleep duration vs. quality as the meaning of "little sleep".
-3. Which values the weekday pattern actually covers.
+3. Weekday patterns cover mood only today; whether energy and stress are added.
 4. Whether the sleep median or a fixed guideline reads better in the early user tests.
 5. Family of multiple tests for a personal question (matrix-wide today).
 
