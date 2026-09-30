@@ -1,0 +1,80 @@
+# Z1.1 Fähigkeitsmatrix (Entwurf): Signalart × Signalart × Zeitbezug × Methode
+
+Stand: 30.09.2026. Status: **Entwurf zur Übernahme in #1020, aus Code-Lektüre; nichts davon wurde ausgeführt, und die Zeilen sind noch nicht durch Analytics-Verantwortliche bestätigt.** Repo-Stand `6d8ac3ad`.
+
+Bezug: [Zielbild](INSIGHT_USER_VALUE_TARGET_2026-09-29.md) §2 („Frei wählbarer Teil“) und §3, Issue #1020 (Z1.1), [Lücken im Lag-Vertrag](INSIGHT_LAG_EVIDENCE_GAP_993.md), Mockups `docs/assets/insight_value_mockups/runde6_bericht_tab.html`.
+
+Zweck: Jede im Fragebaukasten wählbare Kombination erhält eine Klasse und einen Verweis auf eine reale Engine-Fähigkeit. Keine Methode wird aus UI-Wünschen abgeleitet.
+
+## 1. Begriffe
+
+| Signalart     | Beispiele                    | Voraussetzung, damit es als Signal wählbar ist                                                                   |
+| ------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Tag**       | Sport, Kaffee, eigener Tag   | Für Kookkurrenz und Lag ≥ 5 Nutzungen und ≥ 2 Tage ohne (`MIN_BINARY_FEATURE_USAGES = 5`, `build_design_matrix`) |
+| **Symptom**   | Kopfschmerz, eigenes Symptom | dieselbe Schwelle; Stärke (0–3) wird als vorhanden/nicht behandelt (ADR-0025)                                    |
+| **Wert**      | Stimmung, Energie, Stress    | immer vorhanden (`METRIC_TARGETS`)                                                                               |
+| **Schlaf**    | Dauer, Qualität              | optional, nur Tage mit Schlafwert (Pairwise-Deletion)                                                            |
+| **Wochentag** | Montag                       | Wochentagsmuster (`weekday_pattern`)                                                                             |
+
+Zeitbezug: **gleichzeitig** (am selben Tag, Lag 0), **fest** (Lag 1–7), **offen** (deutlichster Abstand aus 1–7).
+Klassen: **U** unterstützt · **UV** unterstützt, aber Vertrag/Häufigkeiten fehlen (siehe Lücken) · **D** datenarm, abhängig von Schwellen · **N** nicht unterstützt · **P** technisch vorhanden, als Frage per Produktentscheidung ausgeschlossen.
+
+## 2. Matrix
+
+| ID     | Bezug ↔ Ziel                         | Zeit         | Engine-Fähigkeit (Fundstelle)                                                                              | Mindestdaten und Gates                                                                              | Typisierter Vertrag heute                                                                        | Klasse                                    |
+| ------ | ------------------------------------ | ------------ | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| **C1** | Tag → Wert                           | gleichzeitig | `pointbiserial`, `null_association` (`insights/correlation.py`)                                            | ≥ 15 Einträge (`MIN_BIVARIATE_ENTRIES`), Gruppen ≥ 2 (`MIN_TAG_GROUP_SIZE`), \|Effekt\| ≥ 0,25, FDR | `AssociationEvidence` (Gruppen-n, gute Tage, Verteilung, Wochentag-/Kontextkoeffizient)          | **U** (welche Werte genau: zu bestätigen) |
+| **C2** | Symptom → Wert                       | gleichzeitig | `symptom_mood_association` (`insights/symptoms.py`, `symptom_analytics.py`, Ziele Stimmung/Energie/Stress) | ≥ 15 Einträge, ≥ 5 Symptomnutzungen, \|Effekt\| ≥ 0,25                                              | `AssociationEvidence` (Typ ist in `project_evidence` aufgeführt)                                 | **U**                                     |
+| **C3** | Tag → Symptom                        | gleichzeitig | `symptom_tag_cooccurrence` (Lift, Fisher, BH-FDR; Endpunkt `/symptom-tag-cooccurrence`, Fenster 14/28/90)  | ≥ 15 Tage, Tag ≥ 5 Nutzungen, `min_count = 3`, Lift-Delta ≥ 0,67 (Karte)                            | **kein** typisierter Vertrag (G11)                                                               | **UV**                                    |
+| **C4** | Tag ↔ Tag                            | gleichzeitig | Tag-Kookkurrenz (`get_tag_cooccurrence`, Lift/Fisher/BH α = 0,10, Fenster 14/28/90)                        | ≥ 15 Tage, beide Tags ≥ 5 Nutzungen, `min_count = 2`                                                | **kein** typisierter Vertrag (G11); kein `InsightType`                                           | **UV**                                    |
+| **C5** | Symptom ↔ Symptom                    | gleichzeitig | Symptom-Kookkurrenz-Heatmap (Frontend vorhanden)                                                           | Backend-Quelle noch nicht geprüft                                                                   | offen                                                                                            | **offen, zu prüfen**                      |
+| **C6** | Schlaf → Stimmung                    | gleichzeitig | Spearman Schlafdauer/-qualität, Kalender-Kontextprüfung (`_sleep_spearman_candidates`)                     | ≥ 15 Tage mit Schlafwert, \|ρ\| ≥ 0,25                                                              | **kein** typisierter Vertrag (G11); keine Gruppen, keine Schwelle (G10)                          | **UV**                                    |
+| **C7** | Schlaf → Energie / Stress / Symptom  | gleichzeitig | nicht implementiert (Feature-Spec nennt Sleep×Symptom als offen)                                           | –                                                                                                   | –                                                                                                | **N** (Alternative: Lag 1)                |
+| **C8** | Wochentag → Wert                     | gleichzeitig | `weekday_pattern` (`insights/weekday.py`)                                                                  | ≥ 7 Einträge, Delta ≥ 0,5                                                                           | **kein** typisierter Vertrag (G11); Metriken zu bestätigen                                       | **UV, zu prüfen**                         |
+| **L1** | Tag → Wert                           | fest / offen | Lag-Pipeline (`multivariate_analytics.run_lag_analysis`)                                                   | ≥ 90 Einträge, ≥ 10 Paare je Abstand, \|r\| ≥ 0,25, FDR über gesamte Matrix, Top 10 je Lauf         | `LagEvidence` ohne Häufigkeiten, Paarzahl, Profil (G1); Median-Split leer bei seltenen Tags (G2) | **UV**                                    |
+| **L2** | Symptom → Wert                       | fest / offen | wie L1                                                                                                     | wie L1                                                                                              | wie L1                                                                                           | **UV**                                    |
+| **L3** | Tag / Symptom → Symptom              | fest / offen | wie L1, Ziel Symptom (Metrik `symptom_presence`)                                                           | wie L1                                                                                              | wie L1; keine Häufigkeiten für Symptom-Ziele (G3)                                                | **UV**                                    |
+| **L4** | Schlaf → Wert / Symptom              | fest / offen | wie L1, Schlaf nur als Ausgangssignal, eigene Frames (Pairwise-Deletion)                                   | wie L1, Schlafwerte ausreichend                                                                     | Schwelle = Median der Schlafwerte, nicht im Vertrag (G10)                                        | **UV**                                    |
+| **L5** | Tag ↔ Tag                            | fest / offen | Tags sind nie Ziel der Lag-Pipeline                                                                        | –                                                                                                   | –                                                                                                | **N**                                     |
+| **L6** | Wert → Symptom / Wert                | fest / offen | Wert als Ausgangssignal technisch vorhanden                                                                | wie L1                                                                                              | Richtung hoch/niedrig müsste gewählt werden (G9)                                                 | **P**                                     |
+| **X1** | Wert ↔ Wert                          | gleichzeitig | Spearman Metrik ↔ Metrik, Korrelations-Matrix                                                              | –                                                                                                   | –                                                                                                | **P** (Verweis auf Trends → Matrix)       |
+| **X2** | Tag ↔ Wochentag, Symptom ↔ Wochentag | –            | nicht implementiert                                                                                        | –                                                                                                   | –                                                                                                | **N**                                     |
+| **X3** | Beliebiger Freitext                  | –            | keine                                                                                                      | –                                                                                                   | –                                                                                                | **N** (nur private Notiz)                 |
+
+Nicht als persönliche Frage vorgesehen: Changepoint (`changepoint`), Belastung/Erholung (`belastung_pattern`), Symptom-Cluster ohne Lag.
+
+## 3. Regeln aus der Matrix (Grundlage für Fragebaukasten und Zustände)
+
+1. **Rollen:** Werte sind Ziel; Schlaf und Wochentag sind Bezug; ein Symptom ist Ziel, wenn es mit einem Tag verbunden wird, und Bezug, wenn es mit einem Wert verbunden wird. Nur Tag ↔ Tag und Symptom ↔ Symptom sind symmetrisch (Reihenfolge frei, Duplikate erkennen).
+2. **Zeit:** „Später“ muss Wert (außer Schlaf) oder Symptom sein; Bezug früher darf Tag, Symptom oder Schlaf sein (L1–L4).
+3. **Same-Day-Schlaf nur mit Stimmung** (C6). Für Energie, Stress und Symptome wird „am nächsten Tag“ angeboten (C7 → L4).
+4. **Zeitversatz braucht ≥ 90 Einträge** (Zustand „zu wenig Daten“ mit eigenem Grund, G7).
+5. **Ereignis** ist die Engine-Definition „guter Tag“ (Stimmung/Energie ≥ 4, Stress ≤ 2, `metric_semantics`) oder „Symptom vorhanden“; Gegenrichtungen sind nur mit Vertragsergänzung möglich (G9).
+6. **Schwelle bei stetigen Signalen** (Schlaf) ist der **Median der eigenen Werte**, mit Wert, Einheit und Stand im Vertrag (G10).
+7. **Nicht unterstützte Kombinationen** speichern nichts, nennen den Grund und bieten die nächste unterstützte Variante an (siehe Mockup „Schlaf + Energie am selben Tag“).
+
+## 4. Zustandsgründe (Zulieferung an Z1.2, #1021)
+
+| Code (Vorschlag)               | Auslöser                                         | Quelle                                                    |
+| ------------------------------ | ------------------------------------------------ | --------------------------------------------------------- |
+| `insufficient_entries`         | < 15 erfasste Tage                               | `DEVELOPING_ENTRY_COUNT`, `MIN_SYMPTOM_ANALYTICS_ENTRIES` |
+| `insufficient_entries_for_lag` | < 90 Einträge bei Zeitversatz                    | `MIN_ML_ENTRIES` (G7)                                     |
+| `feature_ineligible`           | Tag/Symptom < 5 Nutzungen oder < 2 Tage ohne     | `MIN_BINARY_FEATURE_USAGES`                               |
+| `insufficient_group`           | Gruppe < 2 Tage / < 3 gemeinsame Tage            | `MIN_TAG_GROUP_SIZE`, `min_count`                         |
+| `insufficient_pairs`           | < 10 gepaarte Tage am Abstand                    | `MIN_LAG_OBSERVATIONS`                                    |
+| `unsupported_pair`             | Kombination nicht in der Matrix (C7, L5, X2, X3) | dieses Dokument                                           |
+| `unsupported_time`             | Zeitbezug für dieses Paar nicht unterstützt      | dieses Dokument                                           |
+| `excluded_by_product`          | P-Klassen (L6, X1)                               | Produktentscheidung                                       |
+| `analysis_unavailable`         | Timeout, Budget, Analyse aus                     | unabhängig von „kein Muster“ (Zielbild §3)                |
+
+## 5. Abnahmekriterien für #1020 (aus dem Issue, konkretisiert)
+
+- [ ] Jede Zeile hat einen Testverweis oder ausdrücklich „ohne Test“ (Lücke).
+- [ ] Zeilen mit „zu bestätigen/zu prüfen“ (C1-Werte, C5, C8) sind vor Abschluss aufgelöst.
+- [ ] Analytics-Verantwortliche bestätigen die Klassen U/UV/N/P.
+- [ ] Jeder Baukasten-Zustand im Prototyp lässt sich auf eine Zeile und einen Grund-Code abbilden.
+
+## 6. Grenzen
+
+- Aus Code-Lektüre; keine Läufe, keine Daten. Die Gates sind Konstanten im Repo-Stand, keine geprüften Nutzerwege.
+- Nicht enthalten: Fensterlogik der Karten (14/28/90) für Lag, Paaridentität (#996) und Stress-/Belastungssemantik im Detail (#979), die separat abzugleichen sind.
