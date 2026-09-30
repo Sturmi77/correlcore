@@ -142,6 +142,7 @@ summary{cursor:pointer;color:var(--color-muted)}
 
 <script>
 const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
 
 /* ---------- Szenarien (synthetisch) ---------- */
@@ -249,7 +250,7 @@ function d2A(root){
   const sel=(id,arr)=>`<select id="${id}" aria-label="${id}">${arr.map(x=>`<option>${x}</option>`).join('')}</select>`;
   root.innerHTML=`<div class="card"><p class="builder">Wie hängt ${sel('f',FACT)} mit ${sel('t',TARG)} ${sel('z',TIME)} zusammen?</p>
   <div class="preview" id="pv"></div><div class="actions"><button class="btn" id="save">Als Frage merken</button></div><p class="note" id="saved"></p></div>`;
-  const upd=()=>{const s=support($('#f',root).value,$('#t',root).value,$('#z',root).value);const pv=$('#pv',root);pv.className='preview '+s.k;pv.innerHTML=`<span class="badge ${badge[s.k][0]}">${badge[s.k][1]}</span> ${s.m}`;$('#save',root).disabled=s.k==='no';$('#save',root).style.opacity=s.k==='no'?.4:1};
+  const upd=()=>{const s=support($('#f',root).value,$('#t',root).value,$('#z',root).value);const pv=$('#pv',root);pv.className='preview '+s.k;pv.innerHTML=`<span class="badge ${badge[s.k][0]}">${badge[s.k][1]}</span> ${esc(s.m)}`;$('#save',root).disabled=s.k==='no';$('#save',root).style.opacity=s.k==='no'?.4:1};
   root.addEventListener('change',upd);upd();
   $('#save',root).onclick=()=>{$('#saved',root).textContent='Gemerkt: '+`Wie hängt ${$('#f',root).value} mit ${$('#t',root).value} ${$('#z',root).value} zusammen? (Fokus: ja, 2 weitere Fragen gemerkt)`};
 }

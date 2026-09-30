@@ -283,7 +283,7 @@ function render(){
 function toast(m,undo){S.toast={m,undo};render();clearTimeout(toast.t);toast.t=setTimeout(()=>{S.toast=null;render()},6000)}
 function readBuild(){return [$('#f').value,$('#t').value,$('#z').value]}
 $('#screen').addEventListener('change',e=>{
-  if(e.target.closest('#bld')){const t=readBuild(),s=support(...t);S.sheet.build=t;const p=$('#bpv');p.className='preview '+s.k;p.innerHTML=`<span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${s.m}`}
+  if(e.target.closest('#bld')){const t=readBuild(),s=support(...t);S.sheet.build=t;const p=$('#bpv');p.className='preview '+s.k;p.innerHTML=`<span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}`}
 });
 let undoState=null;
 document.addEventListener('click',e=>{

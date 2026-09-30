@@ -380,7 +380,7 @@ function builder(b){
   <div class="zeit"><span class="meta" style="margin:0">Zeitlich:</span><div class="seg tabs2" role="group"><button data-act="mode" data-m="same" aria-pressed="${b.mode==='same'}">am selben Tag</button><button data-act="mode" data-m="lag" aria-pressed="${b.mode==='lag'}">zeitversetzt</button></div>
   ${b.mode==='lag'?`<div>${nsel}</div>${r.ambiguous?`<div class="swap"><span class="meta" style="margin:0">Was kam zuerst? <b>${r.q.c}</b> → danach <b>${r.q.o}</b></span> <button class="mini" data-act="swap">⇄ umdrehen</button></div>`:''}`:''}</div>
   <div class="yq"><span class="eyebrow">Deine Frage</span><br>${r.q?`<b>${text(r.q)}</b> <span class="kt">${famLabel(r.q)}</span>`:'<span class="meta">Noch nicht möglich.</span>'}</div>
-  <div class="preview ${sup.k}" id="bpv"><span class="badge ${BADGE[sup.k][0]}">${BADGE[sup.k][1]}</span> ${sup.m}${r.alt?`<div class="actions"><button class="btn sec" data-act="alt2">Stattdessen: ${text(r.alt)}</button></div>`:''}</div>
+  <div class="preview ${sup.k}" id="bpv"><span class="badge ${BADGE[sup.k][0]}">${BADGE[sup.k][1]}</span> ${esc(sup.m)}${r.alt?`<div class="actions"><button class="btn sec" data-act="alt2">Stattdessen: ${text(r.alt)}</button></div>`:''}</div>
   <div class="actions"><button class="btn" data-act="build" ${r.q?'':'disabled'}>Weiter</button></div>`;
 }
 const toBuild=q=>({x:q.c,y:q.o,mode:q.z.k==='same'?'same':'lag',n:q.z.k==='open'?'open':q.z.k==='lag'?q.z.n:1,sw:false});
@@ -405,7 +405,7 @@ function sheet(){
     <p class="headline" style="font-size:1.05rem;margin-top:8px">${text(t)}</p>
     <div class="chips2" style="margin:0 0 6px"><span class="kt">Bezug: ${t.c}</span><span class="kt">Ziel: ${t.o}</span><span class="kt">Zeit: ${t.z.k==='same'?'am selben Tag':t.z.k==='open'?'1–'+MAXLAG+' Tage später':ZLAB(t.z.n)}</span></div>
     ${dup?`<div class="preview dup"><b>Diese Frage hast du schon</b> (auch in umgekehrter Reihenfolge). <button class="btn link" data-act="focus2" data-id="${dup.id}">Zur vorhandenen Frage</button></div>`
-     :`<div class="preview ${s.k}"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${s.m}</div>`}
+     :`<div class="preview ${s.k}"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}</div>`}
     ${!dup?`<label class="eyebrow" for="ttl">Eigener Titel (optional, ändert die Analyse nicht)</label><input type="text" id="ttl" placeholder="${esc(text(t))}">
     ${S.focus&&!byId(S.focus).archived?`<label class="inl"><input type="checkbox" id="foc"> <span>Als Fokus setzen <span class="meta">(Aktuell im Fokus: ${esc(label(byId(S.focus)))})</span></span></label>`:`<label class="inl"><input type="checkbox" id="foc" checked> <span>Als Fokus setzen <span class="meta">(deine erste Frage)</span></span></label>`}
     <div class="actions"><button class="btn" data-act="save">Frage merken</button><button class="btn sec" data-act="adjust">Anpassen</button><button class="btn link" data-act="back2">Zurück</button></div>`:`<div class="actions"><button class="btn link" data-act="back2">Zurück</button></div>`}`;
@@ -419,8 +419,8 @@ function render(){const sc=$('#screen'),top=sc.scrollTop;
 function toast(m,undo){S.toast={m,undo};render();clearTimeout(toast.t);toast.t=setTimeout(()=>{S.toast=null;render()},6000)}
 $('#screen').addEventListener('change',e=>{
   const b=S.sheet&&S.sheet.build;if(!b)return;
-  if(e.target.id==='x'||e.target.id==='y'){b[e.target.id]=e.target.value;b.sw=false}
-  else if(e.target.id==='n')b.n=e.target.value;
+  if(e.target.id==='x'||e.target.id==='y'){if(!Object.prototype.hasOwnProperty.call(SIG,e.target.value))return;b[e.target.id]=e.target.value;b.sw=false}
+  else if(e.target.id==='n'){const v=e.target.value;if(v!=='open'&&!/^[1-7]$/.test(v))return;b.n=v}
   else return;
   render()});
 let undoState=null;

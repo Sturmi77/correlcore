@@ -311,7 +311,7 @@ function builder(b){
   const s=support(...b);
   return `<div class="builder" id="bld">Wie hängt ${slot('f',b[0],'Erstes')} mit ${slot('t',b[1],'Zweites')} <select id="z" aria-label="Zeitbezug">${TIME.map(x=>`<option ${x===b[2]?'selected':''}>${x}</option>`).join('')}</select> zusammen?</div>
   <div class="typehint" id="th">${SIG[b[0]]?`${KIND[SIG[b[0]]]} ↔ ${KIND[SIG[b[1]]]}`:''}${FAM_LABEL[FAMILY(b[0],b[1])]?` · ${FAM_LABEL[FAMILY(b[0],b[1])]}`:''}</div>
-  <div class="preview ${s.k}" id="bpv"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${s.m}${s.alt?`<div class="actions"><button class="btn sec" data-act="alt2">Stattdessen: ${text(...s.alt)}</button></div>`:''}</div>
+  <div class="preview ${s.k}" id="bpv"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}${s.alt?`<div class="actions"><button class="btn sec" data-act="alt2">Stattdessen: ${text(...s.alt)}</button></div>`:''}</div>
   <div class="actions"><button class="btn" data-act="build" id="bnext" ${s.k==='no'?'disabled':''}>Weiter</button></div>`;
 }
 function sheet(){
@@ -335,7 +335,7 @@ function sheet(){
     ${sh.src?`<p class="meta" style="margin-top:0">${sh.src}</p>`:''}
     <p class="headline" style="font-size:1.05rem;margin-top:8px">${text(...t)}</p>
     ${dup?`<div class="preview dup"><b>Diese Frage hast du schon.</b> <button class="btn link" data-act="focus2" data-id="${dup.id}">Zur vorhandenen Frage</button></div>`
-     :`<div class="preview ${s.k}"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${s.m}${s.alt?`<div class="actions"><button class="btn sec" data-act="alt">Stattdessen: ${text(...s.alt)}</button></div>`:''}</div>`}
+     :`<div class="preview ${s.k}"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}${s.alt?`<div class="actions"><button class="btn sec" data-act="alt">Stattdessen: ${text(...s.alt)}</button></div>`:''}</div>`}
     ${!dup&&s.k!=='no'?`<label class="eyebrow" for="ttl">Eigener Titel (optional, ändert die Analyse nicht)</label><input type="text" id="ttl" placeholder="${esc(text(...t))}">
     ${S.focus&&!byId(S.focus).archived?`<label class="inl"><input type="checkbox" id="foc"> <span>Als Fokus setzen <span class="meta">(Aktuell im Fokus: ${esc(label(byId(S.focus)))})</span></span></label>`:`<label class="inl"><input type="checkbox" id="foc" checked> <span>Als Fokus setzen <span class="meta">(deine erste Frage)</span></span></label>`}
     <div class="actions"><button class="btn" data-act="save">Frage merken</button><button class="btn link" data-act="back2">Zurück</button></div>`:`<div class="actions"><button class="btn link" data-act="back2">Zurück</button></div>`}`;
@@ -350,7 +350,8 @@ function render(){
   sc.scrollTop=top;
 }
 function toast(m,undo){S.toast={m,undo};render();clearTimeout(toast.t);toast.t=setTimeout(()=>{S.toast=null;render()},6000)}
-const readBuild=()=>[$('#f').value,$('#t').value,$('#z').value];
+const okSig=v=>Object.prototype.hasOwnProperty.call(SIG,v)?v:'Sport';
+const readBuild=()=>[okSig($('#f').value),okSig($('#t').value),TIME.includes($('#z').value)?$('#z').value:TIME[0]];
 $('#screen').addEventListener('change',e=>{
   if(e.target.closest('#bld')){S.sheet.build=readBuild();const scr=$('#screen').scrollTop;render();$('#screen').scrollTop=scr}
 });
