@@ -22,7 +22,7 @@ Alle Arbeitspakete besitzen konkrete Maßnahmen, Regressionstests und Abschlussk
 
 ## A00-Nachweise
 
-[Ausgangsstand und Status](A00_STATUS.md) · [Befundregister](A00_BEFUNDREGISTER.csv) · [Reviewregister](A00_REVIEWREGISTER.csv) · [lokale Fix-Kandidaten](A00_LOKALE_FIXES.csv)
+[Ausgangsstand und Status](A00_STATUS.md) · [Desktop-Retest 30.09.2026](QA_RETEST_2026-09-30.md) · [Befundregister](A00_BEFUNDREGISTER.csv) · [Reviewregister](A00_REVIEWREGISTER.csv) · [lokale Fix-Kandidaten](A00_LOKALE_FIXES.csv)
 
 ## A12-Nachweise
 
