@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insight Value – Vorschlag Runde 2</title>
+<style>
+:root{
+  --color-bg:#171614;--color-fg:#f5f3ef;--color-surface:#221f1c;--color-surface-2:#2c2925;
+  --color-muted:#a8a39c;--color-border:#3a352f;--color-primary:#7c6af5;--color-primary-hover:#9587ff;
+  --color-primary-highlight:#2b2742;--color-success:#4ade80;--color-success-highlight:#1f3327;
+  --color-warning:#fbbf24;--color-warning-highlight:#2b2414;--color-info:#60a5fa;--color-info-highlight:#1c2a3f;
+  --color-mood:#7c6af5;--radius-md:.5rem;--radius-lg:.75rem;--radius-xl:1rem;--radius-full:9999px;
+}
+:root[data-theme=light]{
+  --color-bg:#fafaf7;--color-fg:#1c1a17;--color-surface:#fff;--color-surface-2:#f1efe9;--color-muted:#6b6660;--color-border:#d8d3cb;
+  --color-primary:#5b49d6;--color-primary-hover:#4a3ab8;--color-primary-highlight:#ece9fc;--color-success:#15803d;
+  --color-success-highlight:#e3f5e9;--color-warning:#a16207;--color-warning-highlight:#fdf3d7;--color-info:#1d4ed8;--color-info-highlight:#e4ecfd;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header.top{position:sticky;top:0;z-index:20;background:var(--color-bg);border-bottom:1px solid var(--color-border);padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+header.top h1{font-size:1rem;margin:0;flex:1 1 240px}
+.seg{display:inline-flex;border:1px solid var(--color-border);border-radius:var(--radius-full);overflow:hidden}
+.seg button{background:none;border:0;color:var(--color-muted);padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem}
+.seg button[aria-pressed=true]{background:var(--color-primary-highlight);color:var(--color-fg)}
+.layout{max-width:1180px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:32px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.phone{width:100%;max-width:400px;margin:0 auto;border:1px solid var(--color-border);border-radius:28px;background:var(--color-bg);overflow:hidden;position:sticky;top:70px;box-shadow:0 8px 30px #0006}
+@media(max-width:900px){.phone{position:static}}
+.screen{height:760px;max-height:calc(100vh - 100px);overflow-y:auto;position:relative;padding:14px 14px 70px}
+.nav{display:flex;border-top:1px solid var(--color-border);background:var(--color-surface);font-size:.7rem;color:var(--color-muted)}
+.nav span{flex:1;text-align:center;padding:8px 0}.nav .on{color:var(--color-fg);font-weight:600}
+h3.pg{font-size:1.15rem;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:14px;overflow-wrap:anywhere;margin-bottom:12px}
+.card.small{padding:10px 12px}
+.eyebrow{font-size:.75rem;color:var(--color-muted);margin:0 0 6px}
+.headline{font-size:1.15rem;line-height:1.3;font-weight:650;margin:0 0 8px}
+.meta{font-size:.78rem;color:var(--color-muted);margin:6px 0}
+.evid{font-size:.85rem;margin:6px 0}
+.caveat{font-size:.85rem;margin:8px 0;padding:8px 10px;border-radius:var(--radius-md);background:var(--color-surface-2);border-left:3px solid var(--color-muted)}
+.chip{display:inline-flex;gap:6px;align-items:center;font-size:.75rem;padding:2px 10px;border-radius:var(--radius-full);border:1px solid currentColor;margin-bottom:8px}
+.chip.pattern{color:var(--color-primary-hover);background:var(--color-primary-highlight)}
+.chip.none{color:var(--color-info);background:var(--color-info-highlight)}
+.chip.lack{color:var(--color-warning);background:var(--color-warning-highlight)}
+.btn{display:inline-block;border:1px solid var(--color-primary);background:var(--color-primary);color:#fff;border-radius:var(--radius-md);padding:8px 14px;font:inherit;font-size:.9rem;cursor:pointer}
+.btn.sec{background:none;color:var(--color-fg);border-color:var(--color-border)}
+.btn.link{background:none;border:0;color:var(--color-primary-hover);padding:8px 4px;text-decoration:underline}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.nextstep{font-size:.85rem;margin:8px 0 0}
+.bars{margin:8px 0}
+.bars .b{display:grid;grid-template-columns:96px 1fr 96px;gap:8px;align-items:center;font-size:.8rem;margin:5px 0}
+.bars .trk{height:12px;background:var(--color-surface-2);border-radius:6px;overflow:hidden;border:1px solid var(--color-border)}
+.bars .trk span{display:block;height:100%;background:var(--color-mood)}
+.bars .b>span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.tabsrow{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}
+.q{flex:0 0 auto;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);border-radius:var(--radius-full);padding:6px 12px;font:inherit;font-size:.82rem;cursor:pointer;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.q[aria-pressed=true]{border-color:var(--color-primary);background:var(--color-primary-highlight)}
+.q.add{border-style:dashed;color:var(--color-primary-hover)}
+.sheetbg{position:absolute;inset:0;background:#0009;z-index:10;display:flex;align-items:flex-end}
+.sheet{background:var(--color-bg);border-top-left-radius:20px;border-top-right-radius:20px;border:1px solid var(--color-border);width:100%;max-height:92%;overflow-y:auto;padding:14px}
+.sheet h4{margin:0 0 4px;font-size:1.05rem;display:flex;justify-content:space-between;align-items:center}
+.x{background:none;border:0;color:var(--color-muted);font-size:1.2rem;cursor:pointer}
+.tpl{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.t{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 12px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:.88rem;cursor:pointer;text-align:left;color:inherit;font-family:inherit;width:100%}
+.t:hover{border-color:var(--color-primary)}
+.badge{font-size:.7rem;white-space:nowrap;padding:1px 8px;border-radius:var(--radius-full);border:1px solid var(--color-border);color:var(--color-muted)}
+.badge.ok{color:var(--color-success);border-color:var(--color-success)}
+.badge.lack{color:var(--color-warning);border-color:var(--color-warning)}
+.builder{line-height:2.5;font-size:.95rem}
+select,input[type=text]{font:inherit;background:var(--color-surface-2);color:var(--color-fg);border:1px solid var(--color-primary);border-radius:var(--radius-md);padding:3px 8px;max-width:100%}
+input[type=text]{width:100%;border-color:var(--color-border);padding:8px}
+.preview{margin:10px 0;padding:10px;border-radius:var(--radius-md);font-size:.85rem;border:1px solid var(--color-border)}
+.preview.ok{border-color:var(--color-success);background:var(--color-success-highlight)}
+.preview.lack{border-color:var(--color-warning);background:var(--color-warning-highlight)}
+.preview.no{border-style:dashed}
+.preview.dup{border-color:var(--color-info);background:var(--color-info-highlight)}
+.sec-h{font-size:.75rem;color:var(--color-muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 4px}
+.toast{position:absolute;left:14px;right:14px;bottom:14px;background:var(--color-fg);color:var(--color-bg);padding:10px 12px;border-radius:var(--radius-md);font-size:.85rem;z-index:30;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.toast button{background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mini{font-size:.8rem;border:1px solid var(--color-border);background:none;color:var(--color-fg);border-radius:var(--radius-md);padding:3px 8px;cursor:pointer}
+label.inl{display:flex;gap:8px;align-items:flex-start;font-size:.85rem;margin:10px 0}
+/* rechte Spalte */
+.doc h2{font-size:1.25rem;margin:28px 0 6px}.doc h2:first-child{margin-top:0}
+.doc p,.doc li{max-width:68ch}
+.doc .muted{color:var(--color-muted)}
+.doc table{border-collapse:collapse;font-size:.85rem;width:100%;margin:8px 0}
+.doc td,.doc th{border:1px solid var(--color-border);padding:6px 8px;text-align:left;vertical-align:top}
+.doc th{background:var(--color-surface)}
+.flow{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:12px;font-size:.85rem;font-family:ui-monospace,Consolas,monospace;white-space:pre;overflow-x:auto;line-height:1.35}
+.try{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.try button{border:1px solid var(--color-primary);background:var(--color-primary-highlight);color:var(--color-fg);border-radius:var(--radius-full);padding:6px 12px;font:inherit;font-size:.82rem;cursor:pointer}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Insight Value · Vorschlag Runde 2 <span style="color:var(--color-muted);font-weight:400">– synthetische Daten</span></h1>
+  <div class="seg" role="group" aria-label="Thema"><button data-th="dark" aria-pressed="true">Dunkel</button><button data-th="light" aria-pressed="false">Hell</button></div>
+</header>
+
+<div class="layout">
+<div>
+  <div class="phone"><div class="screen" id="screen"></div>
+  <div class="nav"><span>Heute</span><span>Trends</span><span class="on">Erkenntnisse</span><span>Bericht</span></div></div>
+</div>
+
+<div class="doc">
+  <h2>Ausprobieren</h2>
+  <p class="muted">Der Prototyp läuft links. Startet mit diesen Wegen:</p>
+  <div class="try">
+    <button data-go="reset0">Neustart: noch keine Frage</button>
+    <button data-go="reset3">Neustart: 3 Fragen gemerkt</button>
+    <button data-go="door1">Tür 1: „+ Frage“</button>
+    <button data-go="door3">Tür 3: aus Hinweis merken</button>
+  </div>
+
+  <h2>Kernidee: drei Türen, ein Raum</h2>
+  <p>Alle drei Wege zur Frage enden in <b>derselben Bestätigung</b> (Vorschau, optionaler Titel, Fokus-Entscheidung). Das ist ein Konzept statt drei, weil die Regeln nur einmal gelten: Unterstützt-Status vor dem Speichern, keine stillen Fokuswechsel, keine Freitext-Analyse.</p>
+  <div class="flow">Tür 1  Vorschläge (Katalog)     ─┐
+Tür 2  Selbst zusammenstellen    ─┼─►  Bestätigung  ─►  gemerkt (± Fokus)
+Tür 3  „Frage merken“ am Hinweis ─┘   (Status-Vorschau)
+
+Verbindungen zwischen den Türen:
+  Vorschlag ──[Anpassen]──► Baukasten (vorbefüllt)
+  Baukasten „nicht unterstützt“ ──► ähnlicher Vorschlag
+  Hinweis-Karte ──[Frage merken]──► Bestätigung (vorbefüllt, Baukasten nicht nötig)</div>
+
+  <table>
+    <tr><th>Tür</th><th>Wann sichtbar</th><th>Rolle</th></tr>
+    <tr><td><b>1 · Vorschläge</b></td><td>„+ Frage“ in der Chip-Leiste; im Leerzustand als Hauptinhalt</td><td><b>Standardweg</b>, kein Vorwissen nötig, auch ohne Treffer und ohne Daten</td></tr>
+    <tr><td><b>2 · Selbst zusammenstellen</b></td><td>Ausklappbar unter den Vorschlägen; über „Anpassen“ vorbefüllt</td><td><b>Freiheit</b> für Power-User und eigene Tags; Grenze der Unterstützung sofort sichtbar</td></tr>
+    <tr><td><b>3 · Aus Beobachtung</b></td><td>Zweit-Hinweise, Insight-Detail, Trends-Vergleich</td><td><b>Beiläufiger Weg</b>: Interesse entsteht beim Lesen; kein eigener Einstieg, ergänzt nur</td></tr>
+  </table>
+
+  <h2>Antwortkarte (Entscheidung 1: C)</h2>
+  <p>Frage → Zustand → Satz → Balken mit Zahlen → Vorbehalt → begründeter nächster Schritt. Aus der Runde-1-Kritik übernommen:</p>
+  <ul>
+    <li>Prozentbalken immer <b>mit</b> „7 von 10“ daneben, damit kleine Gruppen nicht wie Präzision wirken.</li>
+    <li>Bei Datenmangel zeigen die Balken <b>Tage</b> statt Prozent; sie machen die Lücke sichtbar.</li>
+    <li>Nicht-Ergebnis (Entscheidung 3, C): ausgeklappte Zahlen und Balken, dazu drei gleichwertige Wege statt einer Aufforderung.</li>
+  </ul>
+
+  <h2>Regeln, die der Prototyp zeigt</h2>
+  <ul>
+    <li><b>Fokus wechselt nie unbemerkt.</b> Beim Speichern ist „Als Fokus setzen“ nur dann vorausgewählt, wenn noch keine Frage fokussiert ist. Wechsel zeigt eine Meldung mit „Rückgängig“ (Release-Blocker im Plan).</li>
+    <li><b>Duplikate</b> werden erkannt („Diese Frage hast du schon“) und führen zur bestehenden Frage.</li>
+    <li><b>Nicht unterstützt</b> speichert nichts; bietet die nächste unterstützte Alternative an.</li>
+    <li><b>Wenig Daten</b> ist speicherbar, der Datenstatus steht in der Vorschau und später auf der Karte.</li>
+    <li><b>Titel</b> ist optional und ändert keine Analyse. „Meine Fragen“ erlaubt Umbenennen, Fokus, Archivieren, Löschen.</li>
+  </ul>
+
+  <h2>Offene Entscheidungen für dich</h2>
+  <ol>
+    <li><b>Reihenfolge im Sheet:</b> Vorschläge zuerst (Standard) oder gleichrangige Tabs „Vorschläge / Selbst“? Empfehlung: Vorschläge zuerst, Baukasten eingeklappt.</li>
+    <li><b>Fokus-Vorauswahl:</b> bei bereits gesetztem Fokus standardmäßig <i>nicht</i> wechseln (hier so gebaut). Alternative: immer fragen.</li>
+    <li><b>Tür 3 an mehr Stellen?</b> Aktuell Hinweis-Karten; Trends-Vergleich und Insight-Detail wären dieselbe Aktion.</li>
+    <li><b>Wo lebt „Meine Fragen“?</b> Hier als Link unter der Chip-Leiste; Alternative wäre ein Bereich in Einstellungen.</li>
+  </ol>
+  <p class="muted">Nicht gemockt: Detailansicht, Bericht, Änderungshinweise (R2), Offline-/Kontowechsel, Höchstzahl der Fragen. Kombinations-Regelwerk und Katalog sind erfunden; verbindlich wird erst die Fähigkeitsmatrix (Z1.1).</p>
+</div>
+</div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- synthetische Auswertungen je Frage-Schlüssel ---------- */
+const RES={
+ 'Sport|Stimmung|am selben Tag':{st:'pattern',head:'An Tagen mit Sport war deine Stimmung häufiger gut.',a:['Mit Sport',7,10],b:['Ohne Sport',7,18],meta:'1.–28. September · 28 vergleichbare Tage · „gut“ = Stimmung 4 oder 5',cav:'Deine Einträge zeigen einen Unterschied, aber noch keine Ursache.',next:'Prüfe, ob die Arbeitssituation den Unterschied miterklärt.',cta:'Antwort prüfen'},
+ 'Spaziergang|Stress|am selben Tag':{st:'none',head:'In diesem Zeitraum zeigt sich kein klarer Zusammenhang zwischen Spaziergang und Stress.',a:['Mit Spaziergang',5,12],b:['Ohne Spaziergang',6,16],meta:'1.–28. September · 28 vergleichbare Tage · „hoher Stress“ = Stress 4 oder 5',cav:'Das heißt nicht, dass es keinen Einfluss gibt, nur dass er in diesen Einträgen nicht erkennbar ist.',next:null,cta:'Vergleich ansehen'},
+ 'Kopfschmerz|Stress|am selben Tag':{st:'lack',head:'Für deine Frage gibt es bisher zu wenige Tage mit Kopfschmerz.',days:[['Mit Kopfschmerz',3],['Ohne Kopfschmerz',25]],meta:'1.–28. September · 28 erfasste Tage',cav:'Das ist kein Fehler und kein Ergebnis, nur eine Datenlücke. Wie viele Tage genügen, hängt von den Werten ab.',next:'Trage weiter ein wie bisher; die Frage bleibt gespeichert und wird bei neuen Daten wieder ausgewertet.',cta:'Datenabdeckung ansehen'}
+};
+const DEFAULT_RES=k=>({st:'lack',head:'Für diese Frage liegt noch keine Auswertung vor.',days:[['Tage mit Faktor',0],['Tage ohne Faktor',0]],meta:'Noch keine Auswertung berechnet',cav:'Die Frage ist gespeichert. Die Auswertung erscheint, sobald genug Einträge vorliegen.',next:null,cta:'Datenabdeckung ansehen'});
+const CHIP={pattern:['◆','Muster beobachtet'],none:['○','Kein klares Muster'],lack:['◔','Zu wenig Daten']};
+
+/* ---------- Katalog + Regelwerk (erfunden) ---------- */
+const FACT=['Sport','Spaziergang','Schlaf','Kopfschmerz','Montag'],TARG=['Stimmung','Energie','Stress'],TIME=['am selben Tag','am Folgetag'];
+const key=(f,t,z)=>`${f}|${t}|${z}`;
+const text=(f,t,z)=>f==='Montag'?`Ist deine ${t} montags anders als an anderen Tagen?`:`Wie hängt ${f} mit ${t} ${z} zusammen?`;
+function support(f,t,z){
+  if(f==='Montag'&&z==='am Folgetag')return {k:'no',m:`Für „Montag“ wird nur der Vergleich am selben Tag unterstützt.`,alt:['Montag',t,'am selben Tag']};
+  if(f==='Kopfschmerz')return {k:'lack',m:'Unterstützt, aber es gibt bisher nur 3 Tage mit Kopfschmerz. Speichern ist möglich; der Datenstatus bleibt sichtbar.'};
+  if(f==='Schlaf'&&z==='am selben Tag')return {k:'ok',m:'Unterstützt: Schlaf der Nacht vor dem Eintrag ↔ '+t+' an diesem Tag. Genug Daten (28 Tage).'};
+  return {k:'ok',m:'Unterstützt und auswertbar: 28 vergleichbare Tage in den letzten 28 Tagen.'};
+}
+const CAT=[['Sport','Stimmung','am selben Tag'],['Schlaf','Energie','am Folgetag'],['Spaziergang','Stress','am selben Tag'],['Kopfschmerz','Stress','am selben Tag'],['Montag','Energie','am selben Tag']];
+const BADGE={ok:['ok','auswertbar'],lack:['lack','wenig Daten'],no:['','nicht unterstützt']};
+
+/* ---------- Zustand ---------- */
+let S,nid=1;
+function fresh(n){
+  S={qs:[],focus:null,view:'main',sheet:null,toast:null,showMenu:null};
+  if(n===3){
+    [['Sport','Stimmung','am selben Tag'],['Spaziergang','Stress','am selben Tag'],['Kopfschmerz','Stress','am selben Tag']].forEach(t=>addQ(t,'',false));
+    S.focus=S.qs[0].id;
+  }
+}
+function addQ(t,title,focus){const q={id:nid++,t,title,archived:false};S.qs.push(q);if(focus)S.focus=q.id;return q}
+const byId=id=>S.qs.find(q=>q.id===id);
+const has=t=>S.qs.find(q=>!q.archived&&q.t.join('|')===t.join('|'));
+const label=q=>q.title||text(...q.t);
+
+/* ---------- Antwortkarte C ---------- */
+function bars(r){
+  if(r.days){const m=Math.max(...r.days.map(d=>d[1]),1);return `<div class="bars" role="img" aria-label="Tage in der Auswertung">${r.days.map(d=>`<div class="b"><span>${d[0]}</span><div class="trk"><span style="width:${d[1]/m*100}%"></span></div><span>${d[1]} Tage</span></div>`).join('')}</div>`}
+  return `<div class="bars">${[r.a,r.b].map(g=>`<div class="b"><span>${g[0]}</span><div class="trk"><span style="width:${Math.round(g[1]/g[2]*100)}%"></span></div><span>${g[1]} von ${g[2]} · ${Math.round(g[1]/g[2]*100)} %</span></div>`).join('')}</div>`;
+}
+function answerCard(q){
+  const r=RES[q.t.join('|')]||DEFAULT_RES();const c=CHIP[r.st];
+  const acts=r.st==='none'
+   ?`<p class="nextstep"><b>Du entscheidest:</b></p><div class="actions"><button class="btn sec">Weiter beobachten</button><button class="btn sec">Andere Frage</button><button class="btn sec">In Bericht aufnehmen</button></div>`
+   :`${r.next?`<p class="nextstep"><b>Als Nächstes:</b> ${r.next}</p>`:''}<div class="actions"><button class="btn${r.st==='pattern'?'':' sec'}">${r.cta}</button></div>`;
+  return `<div class="card"><p class="eyebrow">Deine Frage · ${esc(label(q))}</p>
+  <span class="chip ${r.st}"><span aria-hidden="true">${c[0]}</span>${c[1]}</span>
+  <p class="headline">${r.head}</p>${bars(r)}<p class="meta">${r.meta}</p><p class="caveat">${r.cav}</p>${acts}
+  <p class="meta" style="margin-top:10px"><a href="#" style="color:inherit" data-act="why">Warum sehe ich das?</a></p></div>`;
+}
+
+/* ---------- Screens ---------- */
+function main(){
+  const act=S.qs.filter(q=>!q.archived);
+  const foc=byId(S.focus);
+  let h=`<h3 class="pg">Erkenntnisse<button class="mini" data-act="mine">Meine Fragen (${act.length})</button></h3>`;
+  h+=`<div class="tabsrow" role="group" aria-label="Meine Fragen">${act.map(q=>`<button class="q" data-act="focus" data-id="${q.id}" aria-pressed="${q.id===S.focus}" title="${esc(label(q))}">${q.id===S.focus?'● ':''}${esc(label(q))}</button>`).join('')}<button class="q add" data-act="open" data-door="1">+ Frage</button></div>`;
+  if(!foc||foc.archived){
+    h+=`<div class="card"><p class="headline">Was möchtest du über deinen Alltag wissen?</p><p class="evid">Wähle eine Frage. Das ist optional; ohne Frage entdeckt CorrelCore weiter Auffälligkeiten für dich.</p>
+    <div class="tpl">${CAT.slice(0,3).map((t,i)=>tplBtn(t,i)).join('')}</div>
+    <div class="actions"><button class="btn sec" data-act="open" data-door="1">Weitere Vorschläge</button><button class="btn link" data-act="open" data-door="2">Selbst zusammenstellen</button></div></div>`;
+  } else h+=answerCard(foc);
+  h+=`<div class="sec-h">Weitere Hinweise aus deinen Einträgen</div>`;
+  [['Schlaf','Energie','am Folgetag','Nach kurzen Nächten war deine Energie am Folgetag häufiger niedrig.'],['Montag','Energie','am selben Tag','Montags war deine Energie häufiger niedrig als an anderen Tagen.']].forEach((x,i)=>{
+    h+=`<div class="card small"><p class="evid" style="margin:0 0 4px"><b>${x[3]}</b></p><div class="row"><button class="btn link" style="padding-left:0">Ansehen</button><button class="btn link" data-act="open" data-door="3" data-i="${i}">Frage merken</button></div></div>`;
+  });
+  return h;
+}
+const tplBtn=(t,i)=>{const s=support(...t);return `<button class="t" data-act="pick" data-i="${i}"><span>${text(...t)}</span><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span></button>`};
+function mine(){
+  let h=`<h3 class="pg"><span><button class="mini" data-act="back">←</button> Meine Fragen</span></h3>`;
+  const act=S.qs.filter(q=>!q.archived),arc=S.qs.filter(q=>q.archived);
+  h+=act.map(q=>`<div class="card small"><div class="row"><div><b>${esc(label(q))}</b>${q.title?`<div class="meta">${text(...q.t)}</div>`:''}<div class="meta">${q.id===S.focus?'● Aktueller Fokus':''}</div></div></div>
+   <div class="actions"><button class="mini" data-act="rename" data-id="${q.id}">Umbenennen</button>${q.id!==S.focus?`<button class="mini" data-act="focus2" data-id="${q.id}">Als Fokus</button>`:''}<button class="mini" data-act="archive" data-id="${q.id}">Archivieren</button><button class="mini" data-act="del" data-id="${q.id}">Löschen</button></div></div>`).join('')||'<p class="meta">Noch keine Fragen.</p>';
+  if(arc.length)h+=`<div class="sec-h">Archiviert</div>`+arc.map(q=>`<div class="card small"><div class="row"><span>${esc(label(q))}</span><button class="mini" data-act="restore" data-id="${q.id}">Wiederherstellen</button></div></div>`).join('');
+  h+=`<div class="actions"><button class="btn" data-act="open" data-door="1">+ Frage hinzufügen</button></div><p class="meta">Gemerkte Fragen lösen keine zusätzlichen Vollanalysen aus. Ein neuer Fokus ändert nur die Startdarstellung.</p>`;
+  return h;
+}
+/* ---------- Sheet ---------- */
+function sheet(){
+  const sh=S.sheet;let b='';
+  if(sh.step==='pick'){
+    b=`<h4>Neue Frage <button class="x" data-act="close" aria-label="Schließen">✕</button></h4>
+    <p class="meta" style="margin-top:0">Wähle einen Vorschlag oder stelle selbst eine zusammen.</p>
+    <div class="sec-h" style="margin-top:6px">Vorschläge für dich</div><div class="tpl">${CAT.map((t,i)=>tplBtn(t,i)).join('')}</div>
+    <details ${sh.build?'open':''} id="bd"><summary style="cursor:pointer;color:var(--color-primary-hover);font-size:.9rem;padding:6px 0">Eigene Frage zusammenstellen</summary>${builder(sh.build||CAT[0])}</details>`;
+  } else {
+    const t=sh.t,s=support(...t),dup=has(t);
+    b=`<h4>Frage bestätigen <button class="x" data-act="close" aria-label="Schließen">✕</button></h4>
+    ${sh.src?`<p class="meta" style="margin-top:0">${sh.src}</p>`:''}
+    <p class="headline" style="font-size:1.05rem;margin-top:8px">${text(...t)}</p>
+    ${dup?`<div class="preview dup"><b>Diese Frage hast du schon.</b> <button class="btn link" data-act="focus2" data-id="${dup.id}" data-close="1">Zur vorhandenen Frage</button></div>`
+     :`<div class="preview ${s.k}"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${s.m}${s.alt?`<div class="actions"><button class="btn sec" data-act="alt">Stattdessen: ${text(...s.alt)}</button></div>`:''}</div>`}
+    ${!dup&&s.k!=='no'?`<label class="eyebrow" for="ttl">Eigener Titel (optional, ändert die Analyse nicht)</label><input type="text" id="ttl" placeholder="${esc(text(...t))}">
+    ${S.focus&&!byId(S.focus).archived?`<label class="inl"><input type="checkbox" id="foc"> <span>Als Fokus setzen <span class="meta">(Aktuell im Fokus: ${esc(label(byId(S.focus)))})</span></span></label>`:`<label class="inl"><input type="checkbox" id="foc" checked> <span>Als Fokus setzen <span class="meta">(deine erste Frage)</span></span></label>`}
+    <div class="actions"><button class="btn" data-act="save">Frage merken</button><button class="btn link" data-act="${sh.from==='build'?'tobuild':'topick'}">Zurück</button></div>`:''}`;
+  }
+  return `<div class="sheetbg"><div class="sheet">${b}</div></div>`;
+}
+function builder(b){
+  const sel=(id,arr,v)=>`<select id="${id}">${arr.map(x=>`<option ${x===v?'selected':''}>${x}</option>`).join('')}</select>`;
+  const s=support(...b);
+  return `<div class="builder" id="bld">Wie hängt ${sel('f',FACT,b[0])} mit ${sel('t',TARG,b[1])} ${sel('z',TIME,b[2])} zusammen?</div>
+  <div class="preview ${s.k}" id="bpv"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${s.m}</div>
+  <div class="actions"><button class="btn" data-act="build">Weiter</button></div>`;
+}
+
+/* ---------- Render + Events ---------- */
+function render(){
+  const sc=$('#screen'),top=sc.scrollTop;
+  sc.innerHTML=(S.view==='main'?main():mine())+(S.sheet?sheet():'')+(S.toast?`<div class="toast"><span>${S.toast.m}</span>${S.toast.undo?`<button data-act="undo">Rückgängig</button>`:''}</div>`:'');
+  sc.scrollTop=top;
+}
+function toast(m,undo){S.toast={m,undo};render();clearTimeout(toast.t);toast.t=setTimeout(()=>{S.toast=null;render()},6000)}
+function readBuild(){return [$('#f').value,$('#t').value,$('#z').value]}
+$('#screen').addEventListener('change',e=>{
+  if(e.target.closest('#bld')){const t=readBuild(),s=support(...t);S.sheet.build=t;const p=$('#bpv');p.className='preview '+s.k;p.innerHTML=`<span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}`}
+});
+let undoState=null;
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,id=+b.dataset.id;
+  if(a==='why'){e.preventDefault();toast('Du verfolgst diese Frage.');return}
+  if(a==='mine'){S.view='mine'}
+  else if(a==='back'){S.view='main'}
+  else if(a==='focus'){if(S.focus!==id){undoState=S.focus;S.focus=id;render();toast('Fokus gewechselt zu: '+label(byId(id)),true);return}}
+  else if(a==='focus2'){undoState=S.focus;S.focus=id;S.sheet=null;S.view='main';render();toast('Fokus gewechselt zu: '+label(byId(id)),true);return}
+  else if(a==='undo'){S.focus=undoState;S.toast=null}
+  else if(a==='open'){const d=b.dataset.door;S.sheet={step:'pick',build:d==='2'?CAT[0]:null};
+    if(d==='3'){const src=[['Schlaf','Energie','am Folgetag'],['Montag','Energie','am selben Tag']][+b.dataset.i];S.sheet={step:'confirm',t:src,from:'hint',src:'Aus einem Hinweis in deinen Einträgen; Faktor, Ziel und Zeitbezug sind übernommen.'}}}
+  else if(a==='close'){S.sheet=null}
+  else if(a==='pick'){const t=CAT[+b.dataset.i];if(!S.sheet){S.sheet={}};S.sheet={step:'confirm',t,from:'pick',src:'Aus den Vorschlägen.'}}
+  else if(a==='build'){S.sheet={step:'confirm',t:readBuild(),from:'build',src:'Selbst zusammengestellt.'}}
+  else if(a==='tobuild'){S.sheet={step:'pick',build:S.sheet.t}}
+  else if(a==='topick'||a==='tobuild'){S.sheet={step:'pick'}}
+  else if(a==='alt'){S.sheet.t=support(...S.sheet.t).alt;S.sheet.src='Angepasst: unterstützte Alternative.'}
+  else if(a==='save'){const t=S.sheet.t,title=$('#ttl').value.trim(),wantFocus=$('#foc').checked;const prev=S.focus;const q=addQ(t,title,wantFocus);S.sheet=null;render();
+    toast(wantFocus&&prev?'Gemerkt. Fokus wechselt zu dieser Frage.':wantFocus?'Gemerkt und fokussiert.':'Gemerkt. Dein Fokus bleibt unverändert.',wantFocus&&!!prev);undoState=prev;return}
+  else if(a==='rename'){const q=byId(id),n=prompt('Titel (leer = Standardtext)',q.title||'');if(n!==null)q.title=n.trim()}
+  else if(a==='archive'){const q=byId(id);q.archived=true;if(S.focus===id)S.focus=(S.qs.find(x=>!x.archived)||{}).id||null}
+  else if(a==='restore'){byId(id).archived=false;if(!S.focus)S.focus=id}
+  else if(a==='del'){if(confirm('Frage löschen? Gespeicherte Auswertungen dieser Frage gehen verloren.')){S.qs=S.qs.filter(q=>q.id!==id);if(S.focus===id)S.focus=(S.qs.find(x=>!x.archived)||{}).id||null}}
+  render();
+});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const g=b.dataset.go;
+  if(g==='reset0')fresh(0);else if(g==='reset3')fresh(3);
+  else if(g==='door1'){S.sheet={step:'pick'}}
+  else if(g==='door3'){S.view='main';S.sheet={step:'confirm',t:['Schlaf','Energie','am Folgetag'],from:'hint',src:'Aus einem Hinweis in deinen Einträgen; Faktor, Ziel und Zeitbezug sind übernommen.'}}
+  render()});
+document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{document.documentElement.dataset.theme=b.dataset.th;document.querySelectorAll('[data-th]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+fresh(3);render();
+</script>
+</body>
+</html>

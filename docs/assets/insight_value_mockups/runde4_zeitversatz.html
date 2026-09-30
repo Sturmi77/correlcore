@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insight Value – Zeitversatz Runde 4</title>
+<style>
+:root{
+  --color-bg:#171614;--color-fg:#f5f3ef;--color-surface:#221f1c;--color-surface-2:#2c2925;
+  --color-muted:#a8a39c;--color-border:#3a352f;--color-primary:#7c6af5;--color-primary-hover:#9587ff;
+  --color-primary-highlight:#2b2742;--color-success:#4ade80;--color-success-highlight:#1f3327;
+  --color-warning:#fbbf24;--color-warning-highlight:#2b2414;--color-info:#60a5fa;--color-info-highlight:#1c2a3f;
+  --color-mood:#7c6af5;--radius-md:.5rem;--radius-lg:.75rem;--radius-xl:1rem;--radius-full:9999px;
+}
+:root[data-theme=light]{
+  --color-bg:#fafaf7;--color-fg:#1c1a17;--color-surface:#fff;--color-surface-2:#f1efe9;--color-muted:#6b6660;--color-border:#d8d3cb;
+  --color-primary:#5b49d6;--color-primary-hover:#4a3ab8;--color-primary-highlight:#ece9fc;--color-success:#15803d;
+  --color-success-highlight:#e3f5e9;--color-warning:#a16207;--color-warning-highlight:#fdf3d7;--color-info:#1d4ed8;--color-info-highlight:#e4ecfd;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header.top{position:sticky;top:0;z-index:20;background:var(--color-bg);border-bottom:1px solid var(--color-border);padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+header.top h1{font-size:1rem;margin:0;flex:1 1 240px}
+.seg{display:inline-flex;border:1px solid var(--color-border);border-radius:var(--radius-full);overflow:hidden}
+.seg button{background:none;border:0;color:var(--color-muted);padding:6px 12px;cursor:pointer;font:inherit;font-size:.85rem}
+.seg button[aria-pressed=true]{background:var(--color-primary-highlight);color:var(--color-fg)}
+.layout{max-width:1180px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:32px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.phone{width:100%;max-width:400px;margin:0 auto;border:1px solid var(--color-border);border-radius:28px;background:var(--color-bg);overflow:hidden;position:sticky;top:70px;box-shadow:0 8px 30px #0006}
+@media(max-width:900px){.phone{position:static}}
+.screen{height:760px;max-height:calc(100vh - 100px);overflow-y:auto;position:relative;padding:14px 14px 70px}
+.nav{display:flex;border-top:1px solid var(--color-border);background:var(--color-surface);font-size:.7rem;color:var(--color-muted)}
+.nav span{flex:1;text-align:center;padding:8px 0}.nav .on{color:var(--color-fg);font-weight:600}
+h3.pg{font-size:1.15rem;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:14px;overflow-wrap:anywhere;margin-bottom:12px}
+.card.small{padding:10px 12px}
+.eyebrow{font-size:.75rem;color:var(--color-muted);margin:0 0 6px}
+.headline{font-size:1.15rem;line-height:1.3;font-weight:650;margin:0 0 8px}
+.meta{font-size:.78rem;color:var(--color-muted);margin:6px 0}
+.evid{font-size:.85rem;margin:6px 0}
+.caveat{font-size:.85rem;margin:8px 0;padding:8px 10px;border-radius:var(--radius-md);background:var(--color-surface-2);border-left:3px solid var(--color-muted)}
+.chip{display:inline-flex;gap:6px;align-items:center;font-size:.75rem;padding:2px 10px;border-radius:var(--radius-full);border:1px solid currentColor;margin-bottom:8px}
+.chip.pattern{color:var(--color-primary-hover);background:var(--color-primary-highlight)}
+.chip.none{color:var(--color-info);background:var(--color-info-highlight)}
+.chip.lack{color:var(--color-warning);background:var(--color-warning-highlight)}
+.btn{display:inline-block;border:1px solid var(--color-primary);background:var(--color-primary);color:#fff;border-radius:var(--radius-md);padding:8px 14px;font:inherit;font-size:.9rem;cursor:pointer}
+.btn.sec{background:none;color:var(--color-fg);border-color:var(--color-border)}
+.btn.link{background:none;border:0;color:var(--color-primary-hover);padding:8px 4px;text-decoration:underline}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.nextstep{font-size:.85rem;margin:8px 0 0}
+.bars{margin:8px 0}
+.bars .b{display:grid;grid-template-columns:118px 1fr 92px;gap:8px;align-items:center;font-size:.8rem;margin:5px 0}
+.bars .trk{height:12px;background:var(--color-surface-2);border-radius:6px;overflow:hidden;border:1px solid var(--color-border)}
+.bars .trk span{display:block;height:100%;background:var(--color-mood)}
+.bars .b>span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.tabsrow{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}
+.q{flex:0 0 auto;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);border-radius:var(--radius-full);padding:6px 12px;font:inherit;font-size:.82rem;cursor:pointer;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.q[aria-pressed=true]{border-color:var(--color-primary);background:var(--color-primary-highlight)}
+.q.add{border-style:dashed;color:var(--color-primary-hover)}
+.sheetbg{position:absolute;inset:0;background:#0009;z-index:10;display:flex;align-items:flex-end}
+.sheet{background:var(--color-bg);border-top-left-radius:20px;border-top-right-radius:20px;border:1px solid var(--color-border);width:100%;max-height:92%;overflow-y:auto;padding:14px}
+.sheet h4{margin:0 0 4px;font-size:1.05rem;display:flex;justify-content:space-between;align-items:center}
+.x{background:none;border:0;color:var(--color-muted);font-size:1.2rem;cursor:pointer}
+.tpl{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.t{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 12px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:.88rem;cursor:pointer;text-align:left;color:inherit;font-family:inherit;width:100%}
+.t:hover{border-color:var(--color-primary)}
+.badge{font-size:.7rem;white-space:nowrap;padding:1px 8px;border-radius:var(--radius-full);border:1px solid var(--color-border);color:var(--color-muted)}
+.badge.ok{color:var(--color-success);border-color:var(--color-success)}
+.badge.lack{color:var(--color-warning);border-color:var(--color-warning)}
+.builder{line-height:2.5;font-size:.95rem}
+select,input[type=text]{font:inherit;background:var(--color-surface-2);color:var(--color-fg);border:1px solid var(--color-primary);border-radius:var(--radius-md);padding:3px 8px;max-width:100%}
+input[type=text]{width:100%;border-color:var(--color-border);padding:8px}
+.preview{margin:10px 0;padding:10px;border-radius:var(--radius-md);font-size:.85rem;border:1px solid var(--color-border)}
+.preview.ok{border-color:var(--color-success);background:var(--color-success-highlight)}
+.preview.lack{border-color:var(--color-warning);background:var(--color-warning-highlight)}
+.preview.no{border-style:dashed}
+.preview.dup{border-color:var(--color-info);background:var(--color-info-highlight)}
+.sec-h{font-size:.75rem;color:var(--color-muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 4px}
+.toast{position:absolute;left:14px;right:14px;bottom:14px;background:var(--color-fg);color:var(--color-bg);padding:10px 12px;border-radius:var(--radius-md);font-size:.85rem;z-index:30;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.toast button{background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mini{font-size:.8rem;border:1px solid var(--color-border);background:none;color:var(--color-fg);border-radius:var(--radius-md);padding:3px 8px;cursor:pointer}
+label.inl{display:flex;gap:8px;align-items:flex-start;font-size:.85rem;margin:10px 0}
+/* rechte Spalte */
+.doc h2{font-size:1.25rem;margin:28px 0 6px}.doc h2:first-child{margin-top:0}
+.doc p,.doc li{max-width:68ch}
+.doc .muted{color:var(--color-muted)}
+.doc table{border-collapse:collapse;font-size:.85rem;width:100%;margin:8px 0}
+.doc td,.doc th{border:1px solid var(--color-border);padding:6px 8px;text-align:left;vertical-align:top}
+.doc th{background:var(--color-surface)}
+.flow{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:12px;font-size:.85rem;font-family:ui-monospace,Consolas,monospace;white-space:pre;overflow-x:auto;line-height:1.35}
+.try{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.try button{border:1px solid var(--color-primary);background:var(--color-primary-highlight);color:var(--color-fg);border-radius:var(--radius-full);padding:6px 12px;font:inherit;font-size:.82rem;cursor:pointer}
+
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
+.doors.compact{margin:4px 0 12px}
+.door{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:12px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);border-radius:var(--radius-lg);cursor:pointer;font:inherit;font-size:.9rem}
+.door:hover{border-color:var(--color-primary)}
+.door .ic{color:var(--color-primary-hover);font-size:1.1rem}
+.door .meta{margin:0;font-size:.72rem}
+.doors.compact .door{flex-direction:row;align-items:center;padding:8px 10px}
+.doors.compact .door .meta{display:none}
+.tabs2{display:flex;width:100%;margin:8px 0}.tabs2 button{flex:1}
+.chips2{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.chips2 button{border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-fg);border-radius:var(--radius-full);padding:4px 10px;font:inherit;font-size:.78rem;cursor:pointer}
+.chips2 button[aria-pressed=true]{border-color:var(--color-primary);background:var(--color-primary-highlight)}
+.kt{font-size:.68rem;border:1px solid var(--color-border);border-radius:9999px;padding:0 6px;color:var(--color-muted);margin-right:4px;white-space:nowrap}
+.typehint{font-size:.75rem;color:var(--color-muted);margin-top:2px}
+.chip.unclear{color:var(--color-muted);background:var(--color-surface-2)}
+.doc h3{margin-bottom:0}
+.doc code{background:var(--color-surface-2);padding:0 4px;border-radius:4px;font-size:.85em}
+
+.qtext{font-size:.95rem;font-weight:600;margin:0 0 8px;line-height:1.3}
+.zeit{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.zeit select{width:100%}
+.swap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.82rem}
+.yq{margin:10px 0;padding:8px 10px;border-radius:var(--radius-md);background:var(--color-surface);border:1px solid var(--color-border);font-size:.9rem}
+.prof .cols{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:end;margin:4px 0 2px}
+.prof .col{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.68rem;color:var(--color-muted)}
+.prof .bar{height:44px;width:100%;display:flex;align-items:flex-end;background:var(--color-surface-2);border-radius:4px;border:1px solid var(--color-border);overflow:hidden}
+.prof .bar span{display:block;width:100%;background:var(--color-muted);opacity:.7}
+.prof .col.win .bar span{background:var(--color-mood);opacity:1}
+.prof .col.win{color:var(--color-fg);font-weight:600}
+.prof .w{font-size:.62rem;color:var(--color-primary-hover);white-space:nowrap}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Insight Value · Zeitversatz Runde 4 <span style="color:var(--color-muted);font-weight:400">– synthetische Daten</span></h1>
+  <div class="seg" role="group" aria-label="Thema"><button data-th="dark" aria-pressed="true">Dunkel</button><button data-th="light" aria-pressed="false">Hell</button></div>
+</header>
+
+<div class="layout">
+<div>
+  <div class="phone"><div class="screen" id="screen"></div>
+  <div class="nav"><span>Heute</span><span>Trends</span><span class="on">Erkenntnisse</span><span>Bericht</span></div></div>
+</div>
+
+<div class="doc">
+  <h2>Ausprobieren</h2>
+  <div class="try">
+    <button data-go="reset0">Neustart: keine Frage</button>
+    <button data-go="reset3">Neustart: 3 Fragen (inkl. Zeitversatz)</button>
+    <button data-go="door1">Vorschlag wählen</button>
+    <button data-go="door2">Erstellen: Kopfschmerz + Alkohol, zeitversetzt</button>
+    <button data-go="door3">Aus Hinweis merken</button>
+  </div>
+  <p class="muted">Im Baukasten testen: Alkohol + Kopfschmerz vs. Kopfschmerz + Alkohol (gleiche Frage) · Stimmung + Energie (ausgeschlossen) · Kopfschmerz + Rückenschmerz zeitversetzt (mit „⇄ umdrehen“) · Alkohol + Spät gegessen zeitversetzt (nicht unterstützt, Alternative) · Stimmung + Kopfschmerz zeitversetzt.</p>
+
+  <h2>Deine drei Entscheidungen, umgesetzt</h2>
+  <ul>
+    <li><b>Wert ↔ Wert ist ausgeschlossen.</b> Der Baukasten sagt es vor dem Speichern und verweist auf die Korrelations-Matrix.</li>
+    <li><b>Natürliche Sätze</b> pro Fragetyp, aus einer Vorlage erzeugt: <i>„Wie ist meine Energie 2 Tage nach Sport?“ · „Tritt Kopfschmerz an Tagen mit Kaffee häufiger auf?“ · „Kommt ‚Spät gegessen‘ an Tagen mit Alkohol häufiger vor?“</i></li>
+    <li><b>Reihenfolge unabhängig.</b> Nutzer:innen wählen zwei Dinge in beliebiger Reihenfolge; die App bestimmt Bezug und Ziel. Duplikate werden auch umgekehrt erkannt.</li>
+  </ul>
+  <p><b>Ehrliche Folge der Reihenfolge-Freiheit:</b> Die App entscheidet, welche Seite „Bezug“ und welche „Ziel“ ist. Regeln im Prototyp: Werte (Stimmung, Energie, Stress) sind immer Ziel, Schlaf und Wochentag immer Bezug, ein Symptom ist Ziel, wenn es mit einem Tag verbunden wird, und Bezug, wenn es mit einem Wert verbunden wird. Nur bei Tag ↔ Tag und Symptom ↔ Symptom ist die Richtung tatsächlich Geschmackssache; dort bleibt es bei der Eingabe-Reihenfolge, und die Bestätigung erlaubt „umdrehen“.</p>
+
+  <h2>Lag-Analyse: was das Repo tatsächlich kann</h2>
+  <p>Ja, mehr als der Folgetag. Aus <code>multivariate_analytics.py</code>:</p>
+  <table>
+    <tr><th>Eigenschaft</th><th>Stand im Code</th><th>Folge für die Frage</th></tr>
+    <tr><td>Abstände</td><td><code>MAX_LAG_DAYS = 7</code>; Korrelation für <b>jeden</b> Abstand 1–7 wird berechnet, das Lag-Profil liegt im Payload</td><td>Feste Wahl „genau N Tage“ <i>und</i> „Abstand offen“ (Profil) sind beide möglich</td></tr>
+    <tr><td>Ausgangssignal (früher)</td><td>Tags, Symptome, Werte und Schlaf</td><td>Im Prototyp: Tag, Symptom, Schlaf. Werte (z. B. „hoher Stress“) noch nicht, weil hoch/niedrig gewählt werden müsste</td></tr>
+    <tr><td>Zielsignal (später)</td><td><b>nur</b> Werte (Stimmung, Energie, Stress) und Symptome. Schlaf nie, Tags nie</td><td>Tag ↔ Tag mit Zeitversatz ist <b>nicht</b> möglich; der Baukasten nennt den Grund und bietet „am selben Tag“ an</td></tr>
+    <tr><td>Mindestdaten</td><td>≥ 10 Beobachtungspaare je Abstand; |r| ≥ 0,25; FDR 0,10 über die gesamte Lag-Matrix</td><td>Je größer der Abstand, desto weniger Paare (28 Tage − Abstand). Die Vorschau nennt die Zahl</td></tr>
+    <tr><td>Maß</td><td>Korrelation; Häufigkeiten nur im Payload (Median-Split), nicht im Vertrag. <b>Korrigiert in Runde 5</b>, siehe INSIGHT_LAG_EVIDENCE_GAP_993.md</td><td><b>Lücke:</b> Die Antwortkarte zeigt „8 von 11 gegen 6 von 15“. Für den Zeitversatz müsste das Backend diese Gruppen am gewählten Abstand liefern (Z1.1 / #993)</td></tr>
+  </table>
+
+  <h3 style="font-size:1rem;margin:18px 0 4px">Bedienung: Zeit als zweite, gleichrangige Wahl</h3>
+  <ul>
+    <li><b>am selben Tag</b> (Standard) · <b>zeitversetzt</b> mit Auswahl „am nächsten Tag · 2 … 7 Tage später · Abstand offen lassen“.</li>
+    <li>Beim Zeitversatz zählt die Richtung: Früher = Bezug, später = Ziel. Ist sie eindeutig, setzt die App sie selbst; nur bei Symptom ↔ Symptom fragt sie „Was kam zuerst?“ mit „⇄ umdrehen“.</li>
+    <li>Der <b>Fragesatz zeigt den Abstand ausgeschrieben</b>: „…am Tag nach…“, „…2 Tage nach…“, „…in den 7 Tagen nach…“.</li>
+  </ul>
+
+  <h3 style="font-size:1rem;margin:18px 0 4px">Der heikle Punkt: „Abstand offen lassen“</h3>
+  <p>Diese Variante vergleicht 7 Abstände und nennt den deutlichsten. Sie ist die stärkste Nutzerfrage („Wann zeigt sich das?“), aber statistisch die riskanteste: Bei 7 Vergleichen fällt einer leicht zufällig auf. Die Engine korrigiert dafür (FDR), aber die Karte muss es sagen. Im Prototyp:</p>
+  <ul>
+    <li>Das Profil zeigt <b>alle 7 Abstände</b> als Säulen, der deutlichste ist mit ◆ markiert und beschriftet. Damit sieht man auch, wenn nur einer heraussticht.</li>
+    <li>Der Vorbehalt steht auf der Karte: „7 Abstände verglichen; der deutlichste ist nicht automatisch der aussagekräftigste“.</li>
+    <li>Der nächste Schritt lautet: „Prüfe, ob der Abstand über mehrere Wochen ähnlich bleibt.“ Keine Aufforderung, weitere Abstände auszuprobieren.</li>
+    <li><b>Spannung zum Plan:</b> §4 schließt „automatisches Durchprobieren von Fenstern bis zu einem Treffer“ aus. Das gilt hier nur, wenn die Nutzerin es ausdrücklich wählt und die Korrektur sichtbar ist. Das braucht eine ausdrückliche Entscheidung (siehe unten).</li>
+  </ul>
+
+  <h2>Was sich im Plan ändert</h2>
+  <ul>
+    <li><b>Z1.1</b> (Fähigkeitsmatrix) bekommt die Achse <b>Zeitbezug 0 / 1–7 / offen</b> und die Regel „Ziel nur Wert oder Symptom“.</li>
+    <li><b>Z1.2</b>: Zustand „Zu wenig Daten“ muss Abstands-Paare zählen, nicht nur Tage.</li>
+    <li><b>Backend-Aufgabe:</b> Gruppenhäufigkeiten am gewählten oder deutlichsten Abstand (heute nur Korrelation und Profil).</li>
+    <li><b>Daten:</b> Die Eingabe „hoher/niedriger Wert als Ausgangspunkt“ bleibt offen (siehe unten).</li>
+  </ul>
+
+  <h2>Offene Entscheidungen für dich</h2>
+  <ol>
+    <li><b>„Abstand offen lassen“ im ersten Ausbau?</b> Meine Empfehlung: ja, aber nur mit Profil und Vorbehalt wie gezeigt, und nie automatisch für gemerkte Fragen ohne Nutzerwahl. Alternative: nur feste Abstände 0–7.</li>
+    <li><b>Werte als Ausgangspunkt</b> („nach Tagen mit hohem Stress … Kopfschmerz“): braucht eine Wahl hoch/niedrig. Im Prototyp ausgeschlossen. Sonst 3. Auswahlfeld im Baukasten.</li>
+    <li><b>Beschriftung „Was kam zuerst?“</b> nur bei Symptom ↔ Symptom, oder immer als sichtbare Zeile?</li>
+    <li><b>Schlaf-Definition:</b> „wenig Schlaf“ ist im Prototyp fest. Die Schwelle müsste sichtbar und aus dem Schlafdatenvertrag kommen.</li>
+  </ol>
+  <p class="muted">Regeln und Auswertungen sind erfunden; die Lag-Grenzen (Abstand 1–7, Ziel nur Wert/Symptom, ≥ 10 Paare) stammen aus dem Repo.</p>
+</div>
+</div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- Signale (erfunden, Art bestimmt Rolle und Satz) ---------- */
+const SIG={'Sport':'tag','Spaziergang':'tag','Kaffee':'tag','Alkohol':'tag','Spät gegessen':'tag','Meeting-Tag':'tag',
+  'Kopfschmerz':'sym','Rückenschmerz':'sym','Verdauung':'sym','Erkältung':'sym',
+  'Stimmung':'val','Energie':'val','Stress':'val','Schlaf':'slp','Montag':'wd'};
+const GROUPS=[['Aktivitäten & Tags',['Sport','Spaziergang','Kaffee','Alkohol','Spät gegessen','Meeting-Tag']],['Symptome',['Kopfschmerz','Rückenschmerz','Verdauung','Erkältung']],['Werte',['Stimmung','Energie','Stress','Schlaf']],['Wochentag',['Montag']]];
+const KIND={tag:'Tag',sym:'Symptom',val:'Wert',slp:'Wert',wd:'Wochentag'};
+const POSS={Stimmung:'meine Stimmung',Energie:'meine Energie',Stress:'mein Stress'};
+const MAXLAG=7; // Engine: MAX_LAG_DAYS = 7
+const FEW={Erkältung:2}; // Tage mit Symptom, erfunden
+
+/* ---------- Zeit: same | lag n | open ---------- */
+const zkey=z=>z.k==='lag'?'lag'+z.n:z.k;
+const ZLAB=n=>n===1?'am nächsten Tag':n+' Tage später';
+
+/* ---------- Ausrichtung: aus zwei ungeordneten Signalen → Bezug (c) und Ziel (o) ---------- */
+function orient(x,y,z,sw){
+  const kx=SIG[x],ky=SIG[y];
+  if(x===y)return {err:'Bitte zwei verschiedene Dinge wählen.'};
+  const kinds=[kx,ky].sort().join('+');
+  if(kx==='val'&&ky==='val'||kinds==='slp+val'&&false)return {err:'Zwei Werte untereinander vergleichst du in Trends → Korrelations-Matrix. Als Frage wird das zunächst nicht unterstützt.'};
+  if(kinds==='slp+tag')return {err:'Schlaf lässt sich nur mit Stimmung, Energie, Stress oder Symptomen verbinden, nicht mit Tags.'};
+  if(kinds==='slp+slp')return {err:'Bitte zwei verschiedene Dinge wählen.'};
+  if(kx==='wd'||ky==='wd'){
+    const other=kx==='wd'?y:x;
+    if(SIG[other]!=='val')return {err:'Der Wochentag lässt sich nur mit Stimmung, Energie oder Stress vergleichen.'};
+    if(z.k!=='same')return {err:'Für „Montag“ wird nur der Vergleich am selben Tag unterstützt.',altSame:true};
+    return {c:kx==='wd'?x:y,o:other};
+  }
+  if(z.k==='same'){
+    const rank={val:3,sym:2,tag:1,slp:0}; // höherer Rang = eher Ziel; Schlaf immer Bezug
+    if(kx==='slp')return {c:x,o:y}; if(ky==='slp')return {c:y,o:x};
+    if(kx==='val')return {c:y,o:x}; if(ky==='val')return {c:x,o:y};
+    if(kx!==ky)return kx==='sym'?{c:y,o:x}:{c:x,o:y}; // Symptom ist Ziel, Tag ist Bezug
+    return sw?{c:y,o:x,symmetric:true}:{c:x,o:y,symmetric:true}; // Tag↔Tag, Symptom↔Symptom
+  }
+  /* Zeitversatz: früher = Bezug, später = Ziel. Ziel muss Wert (außer Schlaf) oder Symptom sein. */
+  const canEarly=k=>k==='tag'||k==='sym'||k==='slp';           // Werte (Stimmung…) als Ausgangspunkt: noch nicht
+  const canLate=k=>k==='val'||k==='sym';
+  const xy=canEarly(kx)&&canLate(ky), yx=canEarly(ky)&&canLate(kx);
+  if(!xy&&!yx){
+    if(kx==='tag'&&ky==='tag')return {err:'Zeitversatz wird für Tag ↔ Tag nicht unterstützt. Tags sind Ausgangspunkte, sie können nicht das später Gemessene sein.',altSame:true};
+    if(kx==='val'||ky==='val')return {err:'Zeitversatz von einem Wert (z. B. „hoher Stress“) aus ist noch nicht als Frage möglich, weil die Richtung hoch/niedrig gewählt werden müsste.',altSame:true};
+    return {err:'Für diese Kombination gibt es keinen unterstützten Zeitversatz.',altSame:true};
+  }
+  if(xy&&yx)return sw?{c:y,o:x,ambiguous:true}:{c:x,o:y,ambiguous:true};
+  return xy?{c:x,o:y}:{c:y,o:x};
+}
+
+/* ---------- natürliche Sätze ---------- */
+function condPhrase(c,z){
+  if(SIG[c]==='wd')return 'montags';
+  if(SIG[c]==='slp'){const n=z.n;return z.k==='same'?'nach Nächten mit wenig Schlaf':z.k==='open'?`in den ${MAXLAG} Tagen nach einer Nacht mit wenig Schlaf`:n===1?'am Tag nach einer Nacht mit wenig Schlaf':`${n} Tage nach einer Nacht mit wenig Schlaf`}
+  return z.k==='same'?`an Tagen mit ${c}`:z.k==='open'?`in den ${MAXLAG} Tagen nach ${c}`:z.n===1?`am Tag nach ${c}`:`${z.n} Tage nach ${c}`;
+}
+function text(q){
+  const {c,o,z}=q,k=SIG[o];
+  if(SIG[c]==='wd')return `Ist ${POSS[o]} montags anders als an anderen Tagen?`;
+  if(k==='val')return `Wie ist ${POSS[o]} ${condPhrase(c,z)}?`;
+  if(k==='sym')return `Tritt ${o} ${condPhrase(c,z)} häufiger auf?`;
+  return `Kommt „${o}“ ${condPhrase(c,z)} häufiger vor?`;
+}
+const isSym=q=>SIG[q.c]==='tag'&&SIG[q.o]==='tag'||SIG[q.c]==='sym'&&SIG[q.o]==='sym';
+const key=q=>(isSym(q)?[q.c,q.o].sort().join('|'):q.c+'|'+q.o)+'|'+zkey(q.z);
+const fam=q=>SIG[q.o]==='val'||SIG[q.c]==='wd'?'val':(SIG[q.o]==='sym'||SIG[q.c]==='sym')?'sym':'tagtag';
+const famLabel=q=>({val:'Wert-Frage',sym:'Symptom-Frage',tagtag:'Kombination'})[fam(q)];
+
+/* ---------- Unterstützung (Fantasieregelwerk bis Z1.1) ---------- */
+function support(q){
+  const days=[q.c,q.o].find(x=>FEW[x]);
+  const pairs=28-(q.z.k==='lag'?q.z.n:q.z.k==='open'?MAXLAG:0);
+  let m='';
+  if(days)return {k:'lack',m:`Unterstützt, aber es gibt bisher nur ${FEW[days]} Tage mit „${days}“. Speichern ist möglich; der Datenstatus bleibt sichtbar.`};
+  m='Unterstützt und auswertbar: ';
+  if(q.z.k==='same')m+='28 vergleichbare Tage in den letzten 28 Tagen.';
+  else if(q.z.k==='lag')m+=`${pairs} gepaarte Tage (Ausgangstag und Zieltag ${q.z.n===1?'einen Tag':q.z.n+' Tage'} später). Je größer der Abstand, desto weniger Paare.`;
+  else m+=`Es werden ${MAXLAG} Abstände verglichen (ab ${28-MAXLAG} Paaren). Genannt wird der deutlichste. Ein einzelner Abstand kann zufällig auffallen.`;
+  if(SIG[q.o]==='sym'||SIG[q.c]==='sym')m+=' Ein Symptom zählt als „vorhanden“, unabhängig von der Stärke.';
+  if(SIG[q.c]==='slp')m+=' Schlaf bezieht sich auf die Nacht vor dem Eintrag.';
+  if(isSym(q)&&q.z.k==='same')m+=' Verglichen wird das gemeinsame Vorkommen am selben Tag.';
+  return {k:'ok',m};
+}
+const BADGE={ok:['ok','auswertbar'],lack:['lack','wenig Daten'],no:['','nicht unterstützt']};
+
+/* ---------- Katalog ---------- */
+const Q=(c,o,z)=>({c,o,z:z||{k:'same'}});
+const CAT=[Q('Sport','Stimmung'),Q('Schlaf','Energie',{k:'lag',n:1}),Q('Sport','Energie',{k:'lag',n:2}),Q('Spaziergang','Stress'),Q('Montag','Energie'),
+  Q('Kaffee','Kopfschmerz'),Q('Alkohol','Kopfschmerz',{k:'open'}),Q('Kopfschmerz','Energie'),Q('Schlaf','Rückenschmerz'),Q('Alkohol','Spät gegessen'),Q('Erkältung','Stress')];
+const FILTERS=[['all','Alle'],['val','Stimmung & Co.'],['sym','Symptome'],['tagtag','Kombinationen'],['lag','Zeitversatz']];
+const inFilter=(q,f)=>f==='all'||(f==='lag'?q.z.k!=='same':f==='sym'?fam(q)==='sym':fam(q)===f);
+
+/* ---------- Auswertungen (synthetisch) ---------- */
+const RES={};
+const R=(q,r)=>RES[key(q)]=r;
+R(Q('Sport','Stimmung'),{st:'pattern',cap:'Tage mit guter Stimmung',head:'An Tagen mit Sport war deine Stimmung häufiger gut.',a:['Mit Sport',7,10],b:['Ohne Sport',7,18],meta:'1.–28. September · 28 vergleichbare Tage · „gut“ = Stimmung 4 oder 5',cav:'Deine Einträge zeigen einen Unterschied, aber noch keine Ursache.',next:'Prüfe, ob die Arbeitssituation den Unterschied miterklärt.',cta:'Antwort prüfen'});
+R(Q('Sport','Energie',{k:'lag',n:2}),{st:'pattern',cap:'Tage mit hoher Energie',head:'Zwei Tage nach Sport war deine Energie häufiger hoch.',a:['2 Tage nach Sport',8,11],b:['2 Tage nach Tagen ohne Sport',6,15],meta:'3.–28. September · 26 gepaarte Tage · Ausgangstag mit/ohne Sport, Zieltag 2 Tage später · „hoch“ = Energie 4 oder 5',cav:'Ein Zusammenhang in deinen Einträgen, keine Ursache. Was an den Tagen dazwischen war, ist nicht berücksichtigt.',next:'Sieh dir auch den Abstand von 1 und 3 Tagen an.',cta:'Antwort prüfen'});
+R(Q('Spaziergang','Stress'),{st:'none',cap:'Tage mit hohem Stress',head:'In diesem Zeitraum zeigt sich kein klarer Zusammenhang zwischen Spaziergang und Stress.',a:['Mit Spaziergang',5,12],b:['Ohne Spaziergang',6,16],meta:'1.–28. September · 28 vergleichbare Tage · „hoher Stress“ = Stress 4 oder 5',cav:'Das heißt nicht, dass es keinen Einfluss gibt, nur dass er in diesen Einträgen nicht erkennbar ist.',cta:'Vergleich ansehen'});
+R(Q('Kaffee','Kopfschmerz'),{st:'pattern',cap:'Tage mit Kopfschmerz',head:'An Tagen mit Kaffee war Kopfschmerz häufiger vermerkt.',a:['Mit Kaffee',5,9],b:['Ohne Kaffee',3,19],meta:'1.–28. September · 28 vergleichbare Tage · Kopfschmerz zählt als vorhanden, unabhängig von der Stärke',cav:'Ob der Kaffee vor oder nach dem Kopfschmerz kam, ist in den Einträgen nicht erfasst. Das zeigt einen Zusammenhang, keine Ursache.',next:'Prüfe, ob der Wochentag oder deine Arbeitssituation eine Rolle spielt.',cta:'Antwort prüfen'});
+R(Q('Alkohol','Kopfschmerz',{k:'open'}),{st:'pattern',cap:'Tage mit Kopfschmerz',head:'Am deutlichsten zeigte sich ein Unterschied am Tag nach Alkohol: Kopfschmerz war häufiger vermerkt.',a:['Am Tag nach Alkohol',4,8],b:['Am Tag nach Tagen ohne Alkohol',3,19],profile:[.42,.18,.05,-.03,.10,.02,0],win:1,meta:'2.–28. September · 27 gepaarte Tage beim deutlichsten Abstand · 7 Abstände verglichen · Kopfschmerz zählt als vorhanden',cav:'Es wurden 7 Abstände verglichen; der deutlichste ist nicht automatisch der aussagekräftigste. Ein Zusammenhang, keine Ursache.',next:'Prüfe, ob der Abstand von 1 Tag über mehrere Wochen ähnlich bleibt.',cta:'Abstände ansehen'});
+R(Q('Kopfschmerz','Energie'),{st:'unclear',cap:'Tage mit niedriger Energie',head:'Die bisherigen Daten lassen mehrere Deutungen zu.',a:['Mit Kopfschmerz',3,8],b:['Ohne Kopfschmerz',9,20],meta:'1.–28. September · 28 erfasste Tage · „niedrig“ = Energie 1 oder 2',cav:'Die Werte streuen stark; ein Unterschied ist möglich, aber nicht belastbar.',next:'Behalte die Frage im Blick; sie wird bei neuen Einträgen neu ausgewertet.',cta:'Streuung ansehen'});
+R(Q('Alkohol','Spät gegessen'),{st:'pattern',cap:'Tage mit „Spät gegessen“',head:'An Tagen mit Alkohol war auch „Spät gegessen“ häufiger vermerkt.',a:['Mit Alkohol',6,8],b:['Ohne Alkohol',4,20],meta:'1.–28. September · 28 vergleichbare Tage · gemeinsames Vorkommen am selben Tag',cav:'Beides tritt häufig zusammen auf. Was zuerst kam oder ob eins das andere beeinflusst, ist nicht erkennbar.',next:'Beide Tags auch als gemeinsame Gruppe in Trends ansehen.',cta:'Antwort prüfen'});
+R(Q('Erkältung','Stress'),{st:'lack',head:'Für deine Frage gibt es bisher zu wenige Tage mit Erkältung.',days:[['Mit Erkältung',2],['Ohne Erkältung',26]],meta:'1.–28. September · 28 erfasste Tage',cav:'Das ist kein Fehler und kein Ergebnis, nur eine Datenlücke. Wie viele Tage genügen, hängt von den Werten ab.',next:'Trage weiter ein wie bisher; die Frage bleibt gespeichert und wird bei neuen Daten wieder ausgewertet.',cta:'Datenabdeckung ansehen'});
+const DEFAULT_RES=()=>({st:'lack',head:'Für diese Frage liegt noch keine Auswertung vor.',days:[['Tage mit Faktor',0],['Tage ohne Faktor',0]],meta:'Noch keine Auswertung berechnet',cav:'Die Frage ist gespeichert. Die Auswertung erscheint, sobald genug Einträge vorliegen.',cta:'Datenabdeckung ansehen'});
+const CHIP={pattern:['◆','Muster beobachtet'],none:['○','Kein klares Muster'],unclear:['◐','Noch unklar'],lack:['◔','Zu wenig Daten']};
+
+/* ---------- Zustand ---------- */
+let S,nid=1;
+function fresh(n){S={qs:[],focus:null,view:'main',sheet:null,toast:null};
+  if(n===3){[Q('Sport','Stimmung'),Q('Kaffee','Kopfschmerz'),Q('Alkohol','Kopfschmerz',{k:'open'})].forEach(t=>addQ(t,'',false));S.focus=S.qs[0].id}}
+function addQ(t,title,focus){const q={id:nid++,t,title,archived:false};S.qs.push(q);if(focus)S.focus=q.id;return q}
+const byId=id=>S.qs.find(q=>q.id===id);
+const has=t=>S.qs.find(q=>!q.archived&&key(q.t)===key(t));
+const label=q=>q.title||text(q.t);
+
+/* ---------- Antwortkarte C ---------- */
+function bars(r){
+  if(r.days){const m=Math.max(...r.days.map(d=>d[1]),1);return `<div class="bars" role="img" aria-label="Tage in der Auswertung">${r.days.map(d=>`<div class="b"><span>${d[0]}</span><div class="trk"><span style="width:${d[1]/m*100}%"></span></div><span>${d[1]} Tage</span></div>`).join('')}</div>`}
+  return `<p class="meta" style="margin-bottom:0">${r.cap}:</p><div class="bars">${[r.a,r.b].map(g=>`<div class="b"><span>${g[0]}</span><div class="trk"><span style="width:${Math.round(g[1]/g[2]*100)}%"></span></div><span>${g[1]} von ${g[2]} · ${Math.round(g[1]/g[2]*100)} %</span></div>`).join('')}</div>`;
+}
+function profile(r){
+  if(!r.profile)return '';
+  const m=Math.max(...r.profile.map(Math.abs));
+  return `<div class="prof" role="img" aria-label="Stärke des Zusammenhangs je Abstand von 1 bis 7 Tagen. Am deutlichsten nach ${r.win} Tag(en).">
+  <p class="meta" style="margin:8px 0 2px">Abstand zwischen Ausgangstag und Zieltag (Stärke des Zusammenhangs):</p>
+  <div class="cols">${r.profile.map((v,i)=>`<div class="col${i+1===r.win?' win':''}"><div class="bar"><span style="height:${Math.max(4,Math.abs(v)/m*100)}%"></span></div><span class="d">${i+1} T</span>${i+1===r.win?'<span class="w">◆ deutlichster</span>':''}</div>`).join('')}</div></div>`;
+}
+function answerCard(q){
+  const r=RES[key(q.t)]||DEFAULT_RES(),c=CHIP[r.st];
+  const acts=r.st==='none'
+   ?`<p class="nextstep"><b>Du entscheidest:</b></p><div class="actions"><button class="btn sec">Weiter beobachten</button><button class="btn sec">Andere Frage</button><button class="btn sec">In Bericht aufnehmen</button></div>`
+   :`${r.next?`<p class="nextstep"><b>Als Nächstes:</b> ${r.next}</p>`:''}<div class="actions"><button class="btn${r.st==='pattern'?'':' sec'}">${r.cta}</button></div>`;
+  return `<div class="card"><p class="eyebrow">Deine Frage · <span class="kt">${famLabel(q.t)}</span></p><p class="qtext">${esc(label(q))}</p>
+  <span class="chip ${r.st}"><span aria-hidden="true">${c[0]}</span>${c[1]}</span>
+  <p class="headline">${r.head}</p>${bars(r)}${profile(r)}<p class="meta">${r.meta}</p><p class="caveat">${r.cav}</p>${acts}
+  <p class="meta" style="margin-top:10px"><a href="#" style="color:inherit" data-act="why">Warum sehe ich das?</a></p></div>`;
+}
+
+/* ---------- Screens ---------- */
+const tplBtn=(q,i)=>{const s=support(q);return `<button class="t" data-act="pick" data-i="${i}"><span>${text(q)}${q.z.k!=='same'?' <span class="kt">Zeitversatz</span>':''}</span><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span></button>`};
+const twoDoors=(cls)=>`<div class="doors ${cls||''}"><button class="door" data-act="open" data-door="1"><span class="ic" aria-hidden="true">✦</span><b>Vorschlag wählen</b><span class="meta">Geprüfte Fragen, passend zu deinen Tags, Symptomen und Werten</span></button><button class="door" data-act="open" data-door="2"><span class="ic" aria-hidden="true">✎</span><b>Frage erstellen</b><span class="meta">Zwei Dinge selbst verbinden, auch zeitversetzt</span></button></div>`;
+function main(){
+  const act=S.qs.filter(q=>!q.archived),foc=byId(S.focus);
+  let h=`<h3 class="pg">Erkenntnisse<button class="mini" data-act="mine">Meine Fragen (${act.length})</button></h3>`;
+  if(act.length)h+=`<div class="tabsrow" role="group" aria-label="Meine Fragen">${act.map(q=>`<button class="q" data-act="focus" data-id="${q.id}" aria-pressed="${q.id===S.focus}" title="${esc(label(q))}">${q.id===S.focus?'● ':''}${esc(label(q))}</button>`).join('')}</div>`+twoDoors('compact');
+  if(!foc||foc.archived)h+=`<div class="card"><p class="headline">Was möchtest du über deinen Alltag wissen?</p><p class="evid">Optional. Du kannst Zusammenhänge zwischen Tags, Symptomen und Werten wie Stimmung, Energie und Stress erfragen, am selben Tag oder zeitversetzt.</p></div>${twoDoors()}<p class="meta">Ohne Frage entdeckt CorrelCore weiter Auffälligkeiten für dich.</p>`;
+  else h+=answerCard(foc);
+  h+=`<div class="sec-h">Weitere Hinweise aus deinen Einträgen</div>`;
+  [[Q('Schlaf','Energie',{k:'lag',n:1}),'Nach kurzen Nächten war deine Energie am Folgetag häufiger niedrig.'],[Q('Verdauung','Stress'),'An Tagen mit Verdauungsbeschwerden war dein Stress häufiger hoch.']].forEach((x,i)=>{
+    h+=`<div class="card small"><p class="evid" style="margin:0 0 4px"><b>${x[1]}</b></p><div class="row"><button class="btn link" style="padding-left:0">Ansehen</button><button class="btn link" data-act="open" data-door="3" data-i="${i}">Frage merken</button></div></div>`});
+  return h;
+}
+function mine(){
+  let h=`<h3 class="pg"><span><button class="mini" data-act="back">←</button> Meine Fragen</span></h3>`;
+  const act=S.qs.filter(q=>!q.archived),arc=S.qs.filter(q=>q.archived);
+  h+=act.map(q=>`<div class="card small"><div><b>${esc(label(q))}</b> <span class="kt">${famLabel(q.t)}</span>${q.title?`<div class="meta">${text(q.t)}</div>`:''}<div class="meta">${q.id===S.focus?'● Aktueller Fokus':''}</div></div>
+   <div class="actions"><button class="mini" data-act="rename" data-id="${q.id}">Umbenennen</button>${q.id!==S.focus?`<button class="mini" data-act="focus2" data-id="${q.id}">Als Fokus</button>`:''}<button class="mini" data-act="archive" data-id="${q.id}">Archivieren</button><button class="mini" data-act="del" data-id="${q.id}">Löschen</button></div></div>`).join('')||'<p class="meta">Noch keine Fragen.</p>';
+  if(arc.length)h+=`<div class="sec-h">Archiviert</div>`+arc.map(q=>`<div class="card small"><div class="row"><span>${esc(label(q))}</span><button class="mini" data-act="restore" data-id="${q.id}">Wiederherstellen</button></div></div>`).join('');
+  return h+twoDoors('compact')+`<p class="meta">Gemerkte Fragen lösen keine zusätzlichen Vollanalysen aus. Ein neuer Fokus ändert nur die Startdarstellung.</p>`;
+}
+
+/* ---------- Baukasten (ungeordnet + Zeit) ---------- */
+const opts=(val,id,lab)=>`<select id="${id}" aria-label="${lab}">${GROUPS.map(g=>`<optgroup label="${g[0]}">${g[1].map(x=>`<option ${x===val?'selected':''}>${x}</option>`).join('')}</optgroup>`).join('')}</select>`;
+function resolve(b){ // Baukasten-Zustand → Frage oder Fehler
+  const z=b.mode==='same'?{k:'same'}:b.n==='open'?{k:'open'}:{k:'lag',n:+b.n};
+  const o=orient(b.x,b.y,z,b.sw);
+  if(o.err){const alt=o.altSame?orient(b.x,b.y,{k:'same'},b.sw):null;return {err:o.err,alt:alt&&!alt.err?{c:alt.c,o:alt.o,z:{k:'same'}}:null}}
+  return {q:{c:o.c,o:o.o,z},ambiguous:o.ambiguous,symmetric:o.symmetric};
+}
+function builder(b){
+  const r=resolve(b);let sup=r.q?support(r.q):{k:'no',m:r.err};
+  const nsel=`<select id="n" aria-label="Abstand">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${+b.n===n?'selected':''}>${ZLAB(n)}</option>`).join('')}<option value="open" ${b.n==='open'?'selected':''}>Abstand offen lassen (1–${MAXLAG} Tage vergleichen)</option></select>`;
+  return `<div class="builder" id="bld">Wie hängen ${opts(b.x,'x','Erstes')} und ${opts(b.y,'y','Zweites')} zusammen?</div>
+  <div class="zeit"><span class="meta" style="margin:0">Zeitlich:</span><div class="seg tabs2" role="group"><button data-act="mode" data-m="same" aria-pressed="${b.mode==='same'}">am selben Tag</button><button data-act="mode" data-m="lag" aria-pressed="${b.mode==='lag'}">zeitversetzt</button></div>
+  ${b.mode==='lag'?`<div>${nsel}</div>${r.ambiguous?`<div class="swap"><span class="meta" style="margin:0">Was kam zuerst? <b>${r.q.c}</b> → danach <b>${r.q.o}</b></span> <button class="mini" data-act="swap">⇄ umdrehen</button></div>`:''}`:''}</div>
+  <div class="yq"><span class="eyebrow">Deine Frage</span><br>${r.q?`<b>${text(r.q)}</b> <span class="kt">${famLabel(r.q)}</span>`:'<span class="meta">Noch nicht möglich.</span>'}</div>
+  <div class="preview ${sup.k}" id="bpv"><span class="badge ${BADGE[sup.k][0]}">${BADGE[sup.k][1]}</span> ${esc(sup.m)}${r.alt?`<div class="actions"><button class="btn sec" data-act="alt2">Stattdessen: ${text(r.alt)}</button></div>`:''}</div>
+  <div class="actions"><button class="btn" data-act="build" ${r.q?'':'disabled'}>Weiter</button></div>`;
+}
+const toBuild=q=>({x:q.c,y:q.o,mode:q.z.k==='same'?'same':'lag',n:q.z.k==='open'?'open':q.z.k==='lag'?q.z.n:1,sw:false});
+const DEF_BUILD={x:'Kaffee',y:'Kopfschmerz',mode:'same',n:1,sw:false};
+
+function sheet(){
+  const sh=S.sheet;let b='';
+  const tabs=cur=>`<div class="seg tabs2" role="tablist"><button role="tab" data-act="tab" data-tab="pick" aria-pressed="${cur==='pick'}">✦ Vorschläge</button><button role="tab" data-act="tab" data-tab="build" aria-pressed="${cur==='build'}">✎ Frage erstellen</button></div>`;
+  const hd=t=>`<h4>${t} <button class="x" data-act="close" aria-label="Schließen">✕</button></h4>`;
+  if(sh.step==='pick'){
+    const flt=sh.filter||'all',items=CAT.map((q,i)=>[q,i]).filter(([q])=>inFilter(q,flt));
+    b=`${hd('Neue Frage')}${tabs('pick')}<div class="chips2">${FILTERS.map(f=>`<button data-act="flt" data-f="${f[0]}" aria-pressed="${flt===f[0]}">${f[1]}</button>`).join('')}</div>
+    <div class="tpl">${items.map(([q,i])=>tplBtn(q,i)).join('')||'<p class="meta">Keine Vorschläge.</p>'}</div>
+    <p class="meta">Vorschläge nutzen deine vorhandenen Tags und Symptome. Sie sind nicht das, was die App schon „gefunden“ hat.</p>
+    <div class="actions"><button class="btn link" data-act="tab" data-tab="build">Passt nichts? Frage erstellen →</button></div>`;
+  } else if(sh.step==='build'){
+    b=`${hd('Neue Frage')}${tabs('build')}<p class="meta">Wähle zwei Dinge aus deinen Einträgen. Die Reihenfolge spielt keine Rolle.</p>${builder(sh.build)}
+    <div class="actions"><button class="btn link" data-act="tab" data-tab="pick">← Zu den Vorschlägen</button></div>`;
+  } else {
+    const t=sh.t,s=support(t),dup=has(t);
+    b=`${hd('Frage bestätigen')}${sh.src?`<p class="meta" style="margin-top:0">${sh.src}</p>`:''}
+    <p class="headline" style="font-size:1.05rem;margin-top:8px">${text(t)}</p>
+    <div class="chips2" style="margin:0 0 6px"><span class="kt">Bezug: ${t.c}</span><span class="kt">Ziel: ${t.o}</span><span class="kt">Zeit: ${t.z.k==='same'?'am selben Tag':t.z.k==='open'?'1–'+MAXLAG+' Tage später':ZLAB(t.z.n)}</span></div>
+    ${dup?`<div class="preview dup"><b>Diese Frage hast du schon</b> (auch in umgekehrter Reihenfolge). <button class="btn link" data-act="focus2" data-id="${dup.id}">Zur vorhandenen Frage</button></div>`
+     :`<div class="preview ${s.k}"><span class="badge ${BADGE[s.k][0]}">${BADGE[s.k][1]}</span> ${esc(s.m)}</div>`}
+    ${!dup?`<label class="eyebrow" for="ttl">Eigener Titel (optional, ändert die Analyse nicht)</label><input type="text" id="ttl" placeholder="${esc(text(t))}">
+    ${S.focus&&!byId(S.focus).archived?`<label class="inl"><input type="checkbox" id="foc"> <span>Als Fokus setzen <span class="meta">(Aktuell im Fokus: ${esc(label(byId(S.focus)))})</span></span></label>`:`<label class="inl"><input type="checkbox" id="foc" checked> <span>Als Fokus setzen <span class="meta">(deine erste Frage)</span></span></label>`}
+    <div class="actions"><button class="btn" data-act="save">Frage merken</button><button class="btn sec" data-act="adjust">Anpassen</button><button class="btn link" data-act="back2">Zurück</button></div>`:`<div class="actions"><button class="btn link" data-act="back2">Zurück</button></div>`}`;
+  }
+  return `<div class="sheetbg"><div class="sheet">${b}</div></div>`;
+}
+
+/* ---------- Render + Events ---------- */
+function render(){const sc=$('#screen'),top=sc.scrollTop;
+  sc.innerHTML=(S.view==='main'?main():mine())+(S.sheet?sheet():'')+(S.toast?`<div class="toast"><span>${S.toast.m}</span>${S.toast.undo?`<button data-act="undo">Rückgängig</button>`:''}</div>`:'');sc.scrollTop=top}
+function toast(m,undo){S.toast={m,undo};render();clearTimeout(toast.t);toast.t=setTimeout(()=>{S.toast=null;render()},6000)}
+$('#screen').addEventListener('change',e=>{
+  const b=S.sheet&&S.sheet.build;if(!b)return;
+  if(e.target.id==='x'||e.target.id==='y'){if(!Object.prototype.hasOwnProperty.call(SIG,e.target.value))return;b[e.target.id]=e.target.value;b.sw=false}
+  else if(e.target.id==='n'){const v=e.target.value;if(v!=='open'&&!/^[1-7]$/.test(v))return;b.n=v}
+  else return;
+  render()});
+let undoState=null;
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,id=+b.dataset.id;
+  if(a==='why'){e.preventDefault();toast('Du verfolgst diese Frage.');return}
+  if(a==='mine')S.view='mine';else if(a==='back')S.view='main';
+  else if(a==='focus'){if(S.focus!==id){undoState=S.focus;S.focus=id;render();toast('Fokus gewechselt zu: '+label(byId(id)),true);return}}
+  else if(a==='focus2'){undoState=S.focus;S.focus=id;S.sheet=null;S.view='main';render();toast('Fokus gewechselt zu: '+label(byId(id)),true);return}
+  else if(a==='undo'){S.focus=undoState;S.toast=null}
+  else if(a==='open'){const d=b.dataset.door;
+    if(d==='3'){const src=[Q('Schlaf','Energie',{k:'lag',n:1}),Q('Verdauung','Stress')][+b.dataset.i];S.sheet={step:'confirm',t:src,from:'hint',src:'Aus einem Hinweis in deinen Einträgen; beide Seiten und der Zeitbezug sind übernommen.',build:toBuild(src)}}
+    else S.sheet={step:d==='2'?'build':'pick',build:{...DEF_BUILD}}}
+  else if(a==='tab'){const cur=S.sheet;S.sheet={step:b.dataset.tab,build:cur.build||{...DEF_BUILD},filter:cur.filter}}
+  else if(a==='flt')S.sheet.filter=b.dataset.f;
+  else if(a==='close')S.sheet=null;
+  else if(a==='pick'){const q=CAT[+b.dataset.i];S.sheet={step:'confirm',t:q,from:'pick',src:'Aus den Vorschlägen.',build:toBuild(q)}}
+  else if(a==='build'){const r=resolve(S.sheet.build);S.sheet={step:'confirm',t:r.q,from:'build',src:'Selbst erstellt.',build:S.sheet.build}}
+  else if(a==='adjust'){S.sheet={step:'build',build:S.sheet.build}}
+  else if(a==='back2'){S.sheet={step:S.sheet.from==='pick'?'pick':'build',build:S.sheet.build||{...DEF_BUILD}}}
+  else if(a==='mode'){S.sheet.build.mode=b.dataset.m;S.sheet.build.sw=false}
+  else if(a==='swap')S.sheet.build.sw=!S.sheet.build.sw;
+  else if(a==='alt2')S.sheet.build.mode='same';
+  else if(a==='save'){const t=S.sheet.t,title=$('#ttl').value.trim(),wantFocus=$('#foc').checked,prev=S.focus;addQ(t,title,wantFocus);S.sheet=null;render();
+    toast(wantFocus&&prev?'Gemerkt. Fokus wechselt zu dieser Frage.':wantFocus?'Gemerkt und fokussiert.':'Gemerkt. Dein Fokus bleibt unverändert.',wantFocus&&!!prev);undoState=prev;return}
+  else if(a==='rename'){const q=byId(id),n=prompt('Titel (leer = Standardtext)',q.title||'');if(n!==null)q.title=n.trim()}
+  else if(a==='archive'){byId(id).archived=true;if(S.focus===id)S.focus=(S.qs.find(x=>!x.archived)||{}).id||null}
+  else if(a==='restore'){byId(id).archived=false;if(!S.focus)S.focus=id}
+  else if(a==='del'){if(confirm('Frage löschen? Gespeicherte Auswertungen dieser Frage gehen verloren.')){S.qs=S.qs.filter(q=>q.id!==id);if(S.focus===id)S.focus=(S.qs.find(x=>!x.archived)||{}).id||null}}
+  render();
+});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const g=b.dataset.go;
+  if(g==='reset0')fresh(0);else if(g==='reset3')fresh(3);
+  else if(g==='door1')S.sheet={step:'pick',build:{...DEF_BUILD}};
+  else if(g==='door2')S.sheet={step:'build',build:{x:'Kopfschmerz',y:'Alkohol',mode:'lag',n:'open',sw:false}};
+  else if(g==='door3'){S.view='main';const q=Q('Schlaf','Energie',{k:'lag',n:1});S.sheet={step:'confirm',t:q,from:'hint',src:'Aus einem Hinweis in deinen Einträgen; beide Seiten und der Zeitbezug sind übernommen.',build:toBuild(q)}}
+  render()});
+document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{document.documentElement.dataset.theme=b.dataset.th;document.querySelectorAll('[data-th]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+fresh(3);render();
+</script>
+</body>
+</html>
