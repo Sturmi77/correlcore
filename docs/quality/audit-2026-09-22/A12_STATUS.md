@@ -1,10 +1,34 @@
 # A12 – Geräte-, Betriebs- und Nutzerabnahmen
 
-Stand: 23.09.2026. Audit-Basis: `71d1089ff77388cadf2253ac67d1471dfa99fa40`.
+Stand: 01.10.2026 (Umfang ergänzt; Tabelle unten stammt vom 23.09.2026). Audit-Basis: `71d1089ff77388cadf2253ac67d1471dfa99fa40`.
+
+## Umfang von v1.9.2 (Stand 01.10.2026)
+
+Der Owner hat den angebotenen Umfang von `v1.9.2` so festgelegt: **Self-Hosting durch einen einzelnen Betreiber im
+Tailnet**, ausgeliefert als GHCR-Images und Sideload-APK. Daraus folgt für die Gates:
+
+| Gate                 | Entscheidung    | Begründung                                                                                      |
+| -------------------- | --------------- | ----------------------------------------------------------------------------------------------- |
+| `research_h4`        | nicht anwendbar | Gespräche folgen nach der Umsetzung von Insight Value (#1017).                                  |
+| `hosted_beta`        | nicht anwendbar | Keine Hosted Beta in diesem Release; #621 bleibt offen.                                         |
+| `firebase_play`      | nicht anwendbar | Keine Auslieferung über Google Play; Sideload-Builds enthalten kein FCM; #717, #722–#724 offen. |
+| `deployment_restore` | offen           | Restore-Probe erledigt, Abweichung dokumentiert; Staging- und Produktions-Smoke fehlen.         |
+| `runtime_security`   | offen           | Ist-Abgleich der tatsächlichen Konfiguration; TLS und Cookies nur, soweit im Tailnet vorhanden. |
+| `health_connect_m8`  | offen           | Ein reales Gerät mit einer Matrixzeile.                                                         |
+| `compare_device`     | offen           | Dasselbe Gerät, Release-Build.                                                                  |
+
+Die drei „nicht anwendbar“-Einträge stehen mit Rolle, Datum und Ergebnis im [Register](A12_ACCEPTANCE_REGISTER.json); der
+Validator läuft durch (`7 gates, 0 passed, 3 not applicable`). Das Sign-off entspricht der Owner-Entscheidung im Verlauf
+dieser Arbeit; mit dem Merge bestätigt der Owner es. Wer das Release später doch als Hosted Beta oder über Play
+anbietet, muss diese Gates wieder öffnen.
+
+Der A10-Weg ist für diesen Umfang ebenfalls leichter: Die Skripte `a10-staging-smoke.mjs` und `a10-runtime-images.py`
+laufen von Hand gegen ein Staging im Tailnet, Trivy und ZAP lokal. Das versiegelte A10-Manifest entsteht dabei nicht;
+das ist eine vom Owner akzeptierte Abweichung (siehe [Kandidatendokument](A10_CANDIDATE_v1.9.2-rc.1.md)).
 
 ## Status
 
-**Alle A12-Gates sind offen.** Es liegen im Repository keine aktuellen Nachweise für
+**Vier A12-Gates sind offen, drei sind für `v1.9.2` nicht anwendbar (siehe Umfang oben).** Für die offenen Gates gilt: Es liegen im Repository keine aktuellen Nachweise für
 Interviews, reale Health-Connect-/Play-Geräte, die Hosted-Produktionskonfiguration,
 eine Staging-Migration des finalen Kandidaten oder dessen Backup-Restore vor. Frühere
 Labor- und Sideload-Nachweise werden als Vorarbeiten wiederverwendet, gelten aber nicht

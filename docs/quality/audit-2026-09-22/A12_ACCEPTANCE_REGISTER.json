@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "audit_basis": "71d1089ff77388cadf2253ac67d1471dfa99fa40",
-  "updated_at": "2026-09-23",
+  "updated_at": "2026-10-01",
   "release_candidate": {
     "git_sha": null,
     "api_image_digest": null,
@@ -15,10 +15,9 @@
     {
       "id": "research_h4",
       "title": "Nutzerverständnis #930 H.4",
-      "status": "blocked_external",
+      "status": "not_applicable",
       "owner_role": "Product / Research",
       "tracking_issues": [930, 986],
-      "blocking_reason": "4–6 Interviewpartner und dokumentierte Nachtests fehlen.",
       "required_evidence": [
         "anonymisierte Durchführung der sechs Leitfragen",
         "Befunde mit Schweregrad und Entscheidung",
@@ -26,7 +25,12 @@
       ],
       "candidate": null,
       "evidence": [],
-      "signoff": null
+      "signoff": {
+        "role": "Owner / Release",
+        "date": "2026-10-01",
+        "result": "not_applicable"
+      },
+      "not_applicable_reason": "Die Nutzergespräche (#930 H.4) sind nicht Teil von 1.9.2. Sie folgen nach der Umsetzung von Insight Value (#1017). Das Tracking bleibt in #930 und #986 offen."
     },
     {
       "id": "health_connect_m8",
@@ -47,10 +51,9 @@
     {
       "id": "hosted_beta",
       "title": "Hosted Beta / #621",
-      "status": "blocked_external",
+      "status": "not_applicable",
       "owner_role": "Operations / Release",
       "tracking_issues": [621, 986],
-      "blocking_reason": "Owner-Abgleich gegen die laufende Hosted-Konfiguration fehlt.",
       "required_evidence": [
         "SMTP- und Domain-Hygiene",
         "Login, Registrierung, Reset und Legal-Seiten",
@@ -58,15 +61,19 @@
       ],
       "candidate": null,
       "evidence": [],
-      "signoff": null
+      "signoff": {
+        "role": "Owner / Release",
+        "date": "2026-10-01",
+        "result": "not_applicable"
+      },
+      "not_applicable_reason": "1.9.2 wird nicht als Hosted Beta angeboten. Veröffentlicht werden Images und eine Sideload-APK für Self-Hosting durch einen einzelnen Betreiber im Tailnet. Die Hosted-Themen bleiben in #621 offen."
     },
     {
       "id": "firebase_play",
       "title": "Firebase / Play",
-      "status": "blocked_external",
+      "status": "not_applicable",
       "owner_role": "Mobile / Operations",
       "tracking_issues": [717, 722, 723, 724, 986],
-      "blocking_reason": "Firebase-/Play-Zugang, Realgerät und Pre-Launch-/Closed-Testing-Nachweise fehlen.",
       "required_evidence": [
         "FCM-Zustellung, Abmeldung und Fehlerfälle",
         "Pre-Launch-Report ohne kritische Crashes",
@@ -74,7 +81,12 @@
       ],
       "candidate": null,
       "evidence": [],
-      "signoff": null
+      "signoff": {
+        "role": "Owner / Release",
+        "date": "2026-10-01",
+        "result": "not_applicable"
+      },
+      "not_applicable_reason": "1.9.2 wird nicht über Google Play ausgeliefert. Android erscheint als Sideload-APK; Sideload-Builds enthalten kein FCM (ohne google-services.json). Die Play- und FCM-Arbeit bleibt in #717 und #722 bis #724 offen."
     },
     {
       "id": "compare_device",
