@@ -17,11 +17,14 @@ COPY pyproject.toml uv.lock README.md ./
 # scheitert dann mit ModuleNotFoundError: No module named 'app').
 COPY app/ app/
 
-# Install deps + Package into /app/.venv
-# --no-dev: Production-Image enthält nur Runtime-Deps (ruff, mypy, pytest etc.
-# bleiben draußen → kleineres Image, kleinere Angriffsfläche).
-RUN uv venv .venv && \
-    uv pip install --python .venv/bin/python -e ".[analytics]"
+# Install deps + Package into /app/.venv - exactly the versions in uv.lock.
+# `uv pip install -e .` ignored the lockfile and resolved fresh, so the image
+# shipped dependency versions CI never tested (SQLAlchemy 2.1 without the implicit
+# greenlet dependency made `import app.main` fail). --frozen installs the locked
+# set without re-resolving; ruff, mypy, pytest etc. live in the `dev` extra and
+# stay out (smaller image, smaller attack surface).
+ENV UV_PYTHON_DOWNLOADS=never UV_PROJECT_ENVIRONMENT=/app/.venv
+RUN uv sync --frozen --no-dev --extra analytics --python /usr/local/bin/python
 
 # ---- Supercronic stage (#757) ----
 # Fetches the static supercronic binary once, pinned + checksum-verified, so
