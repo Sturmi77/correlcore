@@ -12,10 +12,11 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from typing import Any
 
 import bcrypt
-from jose import jwt
+import jwt
+from jwt.types import Options
 
 from app.core.config import settings
 
@@ -40,6 +41,12 @@ def hash_password(password: str) -> str:
     return digest.decode("utf-8")
 
 
+# python-jose never checked `iat`; PyJWT rejects a future `iat`, which would turn
+# small clock drift between API instances into spurious 401s. Tokens are only
+# accepted if we signed them, so `iat` carries no security meaning here.
+JWT_DECODE_OPTIONS: Options = {"verify_iat": False}
+
+
 def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> str:
     """Create a short-lived access token (15 min by default)."""
     expire = datetime.now(UTC) + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -52,7 +59,7 @@ def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> st
     }
     if extra:
         payload.update(extra)
-    return cast(str, jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM))
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def create_refresh_token(subject: str, jti: str) -> str:
@@ -70,12 +77,14 @@ def create_refresh_token(subject: str, jti: str) -> str:
         "type": "refresh",
         "jti": jti,
     }
-    return cast(str, jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM))
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def decode_token(token: str) -> dict[str, Any]:
-    """Decode and verify a JWT. Raises JWTError on invalid/expired tokens."""
-    return cast(
-        dict[str, Any],
-        jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]),
+    """Decode and verify a JWT. Raises jwt.PyJWTError on invalid/expired tokens."""
+    return jwt.decode(
+        token,
+        settings.SECRET_KEY,
+        algorithms=[settings.JWT_ALGORITHM],
+        options=JWT_DECODE_OPTIONS,
     )

@@ -3,8 +3,8 @@
 Covers:
 - bcrypt roundtrip via hash_password / verify_password
 - JWT roundtrip for access and refresh tokens (incl. extra payload)
-- Expired access token raises JWTError
-- Wrong/altered signature raises JWTError
+- Expired access token raises PyJWTError
+- Wrong/altered signature raises PyJWTError
 - Refresh token preserves caller-supplied JTI
 - Token type is set correctly ("access" vs "refresh")
 """
@@ -15,8 +15,9 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import jwt
 import pytest
-from jose import JWTError, jwt
+from jwt import PyJWTError
 
 from app.core.config import settings
 from app.core.security import (
@@ -125,7 +126,7 @@ def test_decode_token_rejects_expired_token() -> None:
         "exp": datetime.now(UTC) - timedelta(hours=1),
     }
     expired = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-    with pytest.raises(JWTError):
+    with pytest.raises(PyJWTError):
         decode_token(expired)
 
 
@@ -134,7 +135,7 @@ def test_decode_token_rejects_wrong_signature() -> None:
     # Replace the entire signature segment with a different-but-valid-base64 string.
     header_payload, _sig = token.rsplit(".", 1)
     tampered = header_payload + "." + "A" * len(_sig)
-    with pytest.raises(JWTError):
+    with pytest.raises(PyJWTError):
         decode_token(tampered)
 
 
@@ -149,10 +150,39 @@ def test_decode_token_rejects_token_signed_with_other_secret() -> None:
     foreign = jwt.encode(
         payload, "totally-different-secret-key-32-bytes!!", algorithm=settings.JWT_ALGORITHM
     )
-    with pytest.raises(JWTError):
+    with pytest.raises(PyJWTError):
         decode_token(foreign)
 
 
 def test_decode_token_rejects_garbage() -> None:
-    with pytest.raises(JWTError):
+    with pytest.raises(PyJWTError):
         decode_token("not-a-jwt-at-all")
+
+
+def test_decode_token_tolerates_small_clock_drift_in_iat() -> None:
+    """A token minted a few seconds "in the future" by another instance still works."""
+    payload: dict[str, Any] = {
+        "sub": "user-x",
+        "type": "access",
+        "jti": str(uuid.uuid4()),
+        "iat": datetime.now(UTC) + timedelta(seconds=30),
+        "exp": datetime.now(UTC) + timedelta(minutes=5),
+    }
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    assert decode_token(token)["sub"] == "user-x"
+
+
+@pytest.mark.filterwarnings("ignore::jwt.warnings.InsecureKeyLengthWarning")
+@pytest.mark.parametrize("algorithm", ["HS512", "none"])
+def test_decode_token_rejects_other_algorithms(algorithm: str) -> None:
+    """Only the configured algorithm is accepted (no algorithm confusion, no alg=none)."""
+    payload: dict[str, Any] = {
+        "sub": "user-x",
+        "type": "access",
+        "jti": str(uuid.uuid4()),
+        "exp": datetime.now(UTC) + timedelta(minutes=5),
+    }
+    key = None if algorithm == "none" else settings.SECRET_KEY
+    token = jwt.encode(payload, key, algorithm=algorithm)
+    with pytest.raises(PyJWTError):
+        decode_token(token)

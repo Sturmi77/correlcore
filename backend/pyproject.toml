@@ -24,7 +24,8 @@ dependencies = [
   "pydantic-settings>=2.14.2",
   "email-validator>=2.2.0",
   # Auth (Phase 1: native JWT — ADR-0004)
-  "python-jose[cryptography]>=3.3.0",
+  # PyJWT replaces python-jose (which dragged in the unfixable ecdsa, CVE-2024-23342).
+  "pyjwt>=2.15.1",
   # Hash/verify via bcrypt directly (passlib's wrap self-test breaks on bcrypt≥4.1).
   "bcrypt>=4.0.1,<6.0.0",
   # Encryption at-rest (ADR-0005). Floor raised to 50.0.0 for PYSEC-2026-3552 (#655).

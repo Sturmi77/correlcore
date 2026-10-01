@@ -16,10 +16,10 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import jwt
 import pytest
 from fastapi import HTTPException
 from httpx import AsyncClient
-from jose import jwt
 
 from app.api.v1.deps.auth import (
     _load_and_bind_dek,
