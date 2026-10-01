@@ -88,3 +88,26 @@ Vier Specs aus `test:e2e:mobile` schlagen fehl (je mit Retry):
 Das ist kein Fehler des Kandidaten: Das Nightly-Workflow `ci-e2e-nightly.yml` ist seit mindestens 26.09. täglich rot.
 Die Specs müssen an die aktuelle UI angepasst werden, bevor dieser Job grün werden kann. Bis dahin kann A10 kein
 Manifest erzeugen, auch wenn Staging vorhanden ist.
+
+### Nachtrag: Behebung und Folgebefund (01.10.2026)
+
+Die vier Specs sind mit [#1058](https://github.com/Sturmi77/correlcore/pull/1058) an die aktuelle UI angepasst
+(lokal: Smoke 9, Mobile 21, GDPR 4 bestanden). Ursachen: schlankes Standard-Layout seit Phase 6 (optionale Sektionen
+müssen im Test aktiviert werden), geänderte Texte und ein zusätzliches „Mood“-Checkbox-Label.
+
+**Folgebefund: feste Kalenderdaten in e2e-Specs.** Die Trends-Specs verfielen, weil ihre Mock-Daten auf Juni 2026
+datiert waren, die Seite aber ein exaktes Fenster bis heute lädt (#867): Der Eintrag „Office“ fiel aus dem Fenster.
+In #1058 sind nur die Trends-Specs und der Insights-Mock auf relative Daten umgestellt. Weitere Specs enthalten
+weiterhin feste Daten und laufen derzeit durch; sie können mit der Zeit nach demselben Muster brechen:
+
+| Spec                                                                                           | Feste Daten                                                                    | Risiko  |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------- |
+| `smoke.spec.ts`                                                                                | `now`, `entry_date` und Zeitreihe um 2026-05-20/22, Fenster 05-16..05-22       | mittel  |
+| `user-journeys.spec.ts`                                                                        | `now` 2026-06-30, Fenster 06-01..06-30, Einträge um 06-03                      | mittel  |
+| `mobile-entry-foundation.spec.ts`                                                              | `entry_date` 2026-01-01, Route `/entries/day/2026-01-01`, Fenster 06-01..06-23 | mittel  |
+| `a11y-smoke.spec.ts`                                                                           | `now` 2026-09-05                                                               | niedrig |
+| `mobile-supporting-flows`, `mobile-theme-parity`, `gdpr-self-service`, `stress-display-verify` | nur `created_at`/`updated_at`/Dateiname                                        | niedrig |
+
+Das Risiko ist eine Einschätzung aus dem Quelltext, nicht geprüft. Empfehlung: einen gemeinsamen Helfer für relative
+Daten (`tests/e2e/helpers/dates.ts`) einführen und die mittleren Fälle darauf umstellen, bevor das Nightly als
+Release-Gate dient. Solange das fehlt, ist ein grünes Nightly nur eine Momentaufnahme.
