@@ -66,8 +66,26 @@ Prozedur (ohne Daten und Geheimnisse):
 
 ## Findings and follow-up
 
-- Produktion folgt vermutlich einem beweglichen Tag (`:latest`/`:main`); noch zu bestätigen. Das hat die Migration
-  vor der Probe ausgelöst und ist der Anlass der Abweichung. Siehe Z0.2 ([#1019](https://github.com/Sturmi77/correlcore/issues/1019)).
+- **Produktion läuft gepinnt auf `v1.9.2`**, nicht auf einem beweglichen Tag (Stack in Dockhand, Updates erfolgen dort).
+  Beim Prüfen am 01.10.2026 waren die Container `correlcore-api`, `-web` und `-worker` etwa 22–23 Minuten alt, Postgres
+  und Redis rund 33 Stunden. Die Migration auf 055 ist daher sehr wahrscheinlich beim Wechsel auf `v1.9.2`
+  gelaufen, ohne vorheriges Backup. Der Owner bestätigt das noch.
+- Folge für künftige Updates: **vor jedem Image-Wechsel sichern** (Runbook §8, Schritt 1), nicht danach.
+- Die Annahme „bewegliches Tag“ aus der ersten Fassung dieses Dokuments war falsch und ist entfernt.
+
+## Produktion: laufende Version (Beobachtung vom 01.10.2026)
+
+| Wert                            | Ergebnis                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| `settings.APP_VERSION`          | `1.9.2`                                                                   |
+| `settings.GIT_COMMIT`           | `a48b84cae4bd7ba39c174f098fabee577cd9a934` (entspricht dem Kandidaten)    |
+| Image-Tag API / Worker / Web    | `:v1.9.2`                                                                 |
+| Lokale Image-ID API (Container) | `sha256:4ef2467c3adec7386f9a23dccb3415d042c59075c0a237f00d3d764ab35b54ed` |
+| Lokale Image-ID Web (Container) | `sha256:cc9f4dc6ebd6b0d11ea6bf386e8a3bc1093d3ca52bffbe23b0360f59f01337a8` |
+
+Das sind lokale Image-IDs, nicht die Registry-Digests. Dass sie zu den Kandidaten-Digests
+(`sha256:f0ccdd29…` API, `sha256:ca1bd66d…` Web) gehören, ist noch **nicht belegt**; dafür müssen die `RepoDigests` der
+lokalen Images ausgelesen werden (`docker image inspect … --format '{{.RepoDigests}}'`).
 
 ## Sign-off
 
