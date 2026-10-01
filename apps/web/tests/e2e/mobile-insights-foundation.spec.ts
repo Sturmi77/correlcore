@@ -39,15 +39,16 @@ test('390px prioritizes the strongest signal, confidence, and maturity', async (
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewport);
 });
 
-test('430px shows the correlation matrix inline alongside findings and analytics', async ({
+test('430px shows the enabled correlation matrix inline alongside findings and analytics', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 430, height: 932 });
-  await installInsightsApiMock(page);
+  // The matrix and analytics blocks are optional sections; enable them explicitly.
+  await installInsightsApiMock(page, { allSections: true });
   await page.goto('/insights');
 
   await expect(page.getByTestId('insights-analysis-toolbar')).toBeVisible({ timeout: 30_000 });
-  // #571: the matrix is prominent inline above the top insight (mobile lead).
+  // #571: with the section enabled, the matrix sits inline above the top insight (mobile lead).
   await expect(page.getByTestId('insight-matrix')).toBeVisible();
   await expect(page.getByTestId('mobile-insight-lead')).toBeVisible();
   const matrixBox = await page.getByTestId('insight-matrix').boundingBox();
@@ -103,12 +104,26 @@ test('desktop preserves the existing analysis-first composition', async ({ page 
     mockInsights.length
   );
 
-  // #571: matrix shows inline on desktop too — no tab toggle.
-  await expect(page.getByTestId('insight-matrix')).toBeVisible();
+  // Phase 6 / D5: the slim default keeps the optional blocks out of the first viewport.
+  await expect(page.getByTestId('insight-matrix')).toHaveCount(0);
+  await expect(page.getByTestId('insight-section-symptom_analytics')).toHaveCount(0);
 
   const layout = await page.evaluate(() => ({
     viewport: window.innerWidth,
     scrollWidth: document.documentElement.scrollWidth,
   }));
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewport);
+});
+
+test('desktop shows the correlation matrix inline when the optional section is enabled', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installInsightsApiMock(page, { allSections: true });
+  await page.goto('/insights');
+
+  await expect(page.getByTestId('insights-analysis-toolbar')).toBeVisible({ timeout: 60_000 });
+  // #571: inline, no tab toggle.
+  await expect(page.getByTestId('insight-matrix')).toBeVisible();
+  await expect(page.getByTestId('insight-feed')).toBeVisible();
 });

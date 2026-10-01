@@ -8,7 +8,9 @@ test.use({
 
 test('M7 insights mobile mock flow supports touch interactions', async ({ page }) => {
   test.setTimeout(90_000);
-  await installInsightsApiMock(page);
+  // The symptom/co-occurrence blocks are optional sections (Phase 6 / D5 slim default);
+  // this flow exercises them, so the saved layout enables every section.
+  await installInsightsApiMock(page, { allSections: true });
 
   await page.goto('/insights');
   await expect(page.getByTestId('insights-analysis-toolbar')).toBeVisible({ timeout: 60_000 });
@@ -27,8 +29,8 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
       .first()
   ).toBeVisible();
 
-  // #571: correlation matrix is inline & always visible — no tab toggle.
-  await expect(page.getByText(/Correlation Matrix/i)).toBeVisible();
+  // #571: with the section enabled the correlation matrix is inline — no tab toggle.
+  await expect(page.getByTestId('insight-matrix')).toBeVisible();
 
   await page
     .getByRole('heading', { name: 'Symptoms in insights', exact: true })
@@ -50,7 +52,8 @@ test('M7 insights mobile mock flow supports touch interactions', async ({ page }
   await page.getByTestId('symptom-cooccurrence-detail-close').tap();
   const tagCooccurrenceCell = page
     .getByRole('gridcell', {
-      name: /Walk.*Caffeine together|Caffeine.*Walk together|Walk.*Meetings together|Meetings.*Walk together|Deep work.*Walk together|Walk.*Deep work together/i,
+      // Tag pairs read "A and B: both on N of M days ..." (symptom pairs say "together on").
+      name: /^(Caffeine and Walk|Walk and Caffeine|Meetings and Walk|Walk and Meetings|Deep work and Walk|Walk and Deep work): both on/i,
     })
     .first();
   await tagCooccurrenceCell.scrollIntoViewIfNeeded();
