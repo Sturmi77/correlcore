@@ -40,3 +40,9 @@ Befunde als behoben (Berichtsauswahl, natürliche Häufigkeiten, adjustierte Str
 Tagesfenster). Offen bleiben Sprachmischung, die Fensterbezeichnung „letzte 90 Tage“, gemischte
 Fenster auf der Detailseite. Die A10-/A12-Gates sind davon
 unberührt.
+
+Ergänzend zum Nachtrag vom 30.09.: `python-jose` wurde durch `PyJWT` ersetzt (#1044). Damit entfällt die
+dokumentierte Ausnahme PYSEC-2026-1325 in `A10_SECURITY_EXCEPTIONS.json`, in `ci-security.yml` und im
+A10-Workflow; `ecdsa` ist nicht mehr im Lockfile. Die transitiven Pakete `cookie` und `uuid` sind über
+`overrides` angehoben (#1045). Die geschützte Umgebung `audit-rc` (siehe oben) existiert im Repository noch
+nicht; ohne sie kann der manuelle A10-Workflow nicht laufen.
