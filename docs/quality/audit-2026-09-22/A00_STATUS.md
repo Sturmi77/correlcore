@@ -31,3 +31,5 @@ A10-Lauf auf dem finalen Kandidaten vorliegt). Den aktuellen Desktop-Nachweis li
 [Retest vom 30.09.2026](QA_RETEST_2026-09-30.md): AUD-07, -08, -12 und -24 sind im
 Desktop-Weg bestanden; AUD-16 und -28 nur teilweise. Sprachmischung (A09), Fensterbezeichnung (A07)
 und gemischte Fenster auf der Detailseite sind offen, mehrere Zeilen (u. a. AUD-14) sind nicht geprüft.
+
+Aktuelle Gesamtübersicht je Paket: [STATUS_2026-10-01.md](STATUS_2026-10-01.md).
