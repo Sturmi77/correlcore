@@ -1,4 +1,4 @@
-# Release-Kandidat v1.9.2-rc.1
+# Release-Kandidat v1.9.2-rc.1 (abgelöst durch rc.2)
 
 Stand: 01.10.2026. Dieses Dokument legt fest, **was** der Kandidat ist. Es erteilt keine Freigabe.
 
@@ -88,3 +88,75 @@ Vier Specs aus `test:e2e:mobile` schlagen fehl (je mit Retry):
 Das ist kein Fehler des Kandidaten: Das Nightly-Workflow `ci-e2e-nightly.yml` ist seit mindestens 26.09. täglich rot.
 Die Specs müssen an die aktuelle UI angepasst werden, bevor dieser Job grün werden kann. Bis dahin kann A10 kein
 Manifest erzeugen, auch wenn Staging vorhanden ist.
+
+### Nachtrag: Behebung und Folgebefund (01.10.2026)
+
+Die vier Specs sind mit [#1058](https://github.com/Sturmi77/correlcore/pull/1058) an die aktuelle UI angepasst
+(lokal: Smoke 9, Mobile 21, GDPR 4 bestanden). Ursachen: schlankes Standard-Layout seit Phase 6 (optionale Sektionen
+müssen im Test aktiviert werden), geänderte Texte und ein zusätzliches „Mood“-Checkbox-Label.
+
+**Folgebefund: feste Kalenderdaten in e2e-Specs.** Die Trends-Specs verfielen, weil ihre Mock-Daten auf Juni 2026
+datiert waren, die Seite aber ein exaktes Fenster bis heute lädt (#867): Der Eintrag „Office“ fiel aus dem Fenster.
+In #1058 sind nur die Trends-Specs und der Insights-Mock auf relative Daten umgestellt. Weitere Specs enthalten
+weiterhin feste Daten und laufen derzeit durch; sie können mit der Zeit nach demselben Muster brechen:
+
+| Spec                                                                                           | Feste Daten                                                                    | Risiko  |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------- |
+| `smoke.spec.ts`                                                                                | `now`, `entry_date` und Zeitreihe um 2026-05-20/22, Fenster 05-16..05-22       | mittel  |
+| `user-journeys.spec.ts`                                                                        | `now` 2026-06-30, Fenster 06-01..06-30, Einträge um 06-03                      | mittel  |
+| `mobile-entry-foundation.spec.ts`                                                              | `entry_date` 2026-01-01, Route `/entries/day/2026-01-01`, Fenster 06-01..06-23 | mittel  |
+| `a11y-smoke.spec.ts`                                                                           | `now` 2026-09-05                                                               | niedrig |
+| `mobile-supporting-flows`, `mobile-theme-parity`, `gdpr-self-service`, `stress-display-verify` | nur `created_at`/`updated_at`/Dateiname                                        | niedrig |
+
+Das Risiko ist eine Einschätzung aus dem Quelltext, nicht geprüft. Empfehlung: einen gemeinsamen Helfer für relative
+Daten (`tests/e2e/helpers/dates.ts`) einführen und die mittleren Fälle darauf umstellen, bevor das Nightly als
+Release-Gate dient. Solange das fehlt, ist ein grünes Nightly nur eine Momentaufnahme.
+
+## Release-Kandidat v1.9.2-rc.2 (ersetzt rc.1)
+
+`rc.2` enthält dieselben Produktänderungen wie `rc.1` und zusätzlich die angepassten e2e-Specs aus
+[#1058](https://github.com/Sturmi77/correlcore/pull/1058) sowie die Doku aus #1057. Grund: A10 prüft den
+Spec-Stand im Checkout des Kandidaten; auf dem `rc.1`-Commit konnte der Mobile-Job nicht bestehen.
+
+| Feld            | Wert                                                                                                                                     |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Git-Tag         | `v1.9.2-rc.2` (annotiert)                                                                                                                |
+| Commit          | `a48b84cae4bd7ba39c174f098fabee577cd9a934` (Merge von [#1058](https://github.com/Sturmi77/correlcore/pull/1058))                         |
+| API-Image       | `ghcr.io/sturmi77/correlcore-api@sha256:110ea4d5617aa2b6b4e7ffc7166bdd7309f51e94682fa45313b8966ea6a19a5a`                                |
+| Web-Image       | `ghcr.io/sturmi77/correlcore-web@sha256:220e6dfc96867cb4a958e81ba10f123bb2534775ee569fb690bf07cb37d60864`                                |
+| Android         | [Pre-Release](https://github.com/Sturmi77/correlcore/releases/tag/v1.9.2-rc.2) mit `correlcore-1.9.2-rc.2.aab`, `.apk`, `SHA256SUMS.txt` |
+| Android-Version | `versionName` 1.9.2-rc.2, `versionCode` 100900202                                                                                        |
+
+Wie bei `rc.1` gilt: maßgeblich sind die Digests. Der Tag-Lauf hat `:1.9.2-rc.2` und `:sha-a48b84c` auf dieselben
+Digests gesetzt; `:main` und `:latest` stammen aus dem Push-Lauf desselben Commits und können abweichen.
+
+Geprüft lokal an den Digests: Labels (`revision` = Commit oben, `version` = `1.9.2-rc.2`), `import app.main` mit
+SQLAlchemy 2.0.49 und `greenlet` 3.5.0, PyJWT 2.15.1, `APP_VERSION` 1.9.2, OpenSSL und PCRE2 auf `deb13u3`, kein
+System-`pip`, im Web-Image kein `npm`/`npx`, beide Prozesse als `correlcore`.
+
+### A10-Lauf auf rc.2
+
+[Run 36855944618](https://github.com/Sturmi77/correlcore/actions/runs/36855944618), wieder mit Platzhalter-Staging:
+
+| Job                                                         | rc.1           | rc.2                                       |
+| ----------------------------------------------------------- | -------------- | ------------------------------------------ |
+| Immutable candidate identity                                | bestanden      | bestanden                                  |
+| Linux lint, types, unit tests, production build             | bestanden      | bestanden                                  |
+| Windows and timezone regression                             | bestanden      | bestanden                                  |
+| Migrations, backfills, real PostgreSQL integration          | bestanden      | bestanden                                  |
+| Bounded compute and web asset budgets                       | bestanden      | bestanden                                  |
+| Production visual, accessibility, download and mobile smoke | fehlgeschlagen | **bestanden**                              |
+| Real API two-user release journey                           | fehlgeschlagen | fehlgeschlagen (`A10_SSH_*` nicht gesetzt) |
+| Dependency, image and authenticated DAST gates              | übersprungen   | übersprungen (hängt am Staging-Job)        |
+| Seal A10 evidence manifest                                  | übersprungen   | übersprungen                               |
+
+Sieben von neun Jobs bestehen. Es gibt weiter **kein Manifest**. Die zwei verbleibenden Lücken:
+
+1. **Staging-Job:** Er scheitert im ersten Schritt, weil die Umgebung `audit-rc` keine Secrets und Variablen hat
+   (`A10_SSH_HOST`, `A10_SSH_KEY`, `A10_SSH_KNOWN_HOSTS`, `A10_API_CONTAINER`, `A10_WEB_CONTAINER`,
+   `A10_USER_A_*`, `A10_USER_B_*`) und keine Staging-Instanz mit diesen Digests läuft.
+2. **Image-, Abhängigkeits- und DAST-Gates** (Trivy gegen genau diese Digests, authentifizierter ZAP-Scan) laufen
+   erst nach dem Staging-Job und sind damit noch nicht ausgeführt.
+
+Das Nightly-e2e (`ci-e2e-nightly.yml`) wurde für `rc.2` nicht manuell gestartet; ob es auf `main` wieder grün ist,
+zeigt der nächste planmäßige Lauf.
