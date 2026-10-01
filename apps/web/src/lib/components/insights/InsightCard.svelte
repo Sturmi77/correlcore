@@ -256,6 +256,10 @@
     if (typeof value === 'string' && value.length > 0) return value;
     if (value && typeof value === 'object') {
       const record = value as Record<string, unknown>;
+      if (record.kind === 'metric') {
+        const metricKey = record.key ?? record.name;
+        if (typeof metricKey === 'string' && metricKey.length > 0) return metricLabel(metricKey);
+      }
       if (typeof record.name === 'string' && record.name.length > 0) return record.name;
       if (typeof record.label === 'string' && record.label.length > 0) return record.label;
       if (typeof record.key === 'string' && record.key.length > 0) return record.key;
@@ -284,8 +288,10 @@
     }
     if (ins.insight_type === 'symptom_cluster') {
       const method = payloadString(ins, 'method') ?? (ins.flags?.method === 'lag' ? 'lag' : null);
+      const rawTarget = ins.payload?.target;
       const target =
-        payloadFeatureLabel(ins.payload?.target) ?? metricLabel(ins.metric) ?? ins.metric;
+        (typeof rawTarget === 'string' ? metricLabel(rawTarget) : payloadFeatureLabel(rawTarget)) ??
+        metricLabel(ins.metric);
       if (method === 'lasso') {
         const features = ins.payload?.features;
         const labels = Array.isArray(features)
@@ -320,6 +326,11 @@
       // Spearman, so it gets `↔`: nothing here establishes which side came
       // first, and the lag card next to it does (#928 D2).
       return `${metricLabel(sleepKey)} ${RELATION_SYMMETRIC} ${metricLabel('mood')} (${$_('insights.signal.same_day_badge')})`;
+    }
+    const leftMetric = ins.payload?.left_metric;
+    const rightMetric = ins.payload?.right_metric;
+    if (typeof leftMetric === 'string' && typeof rightMetric === 'string') {
+      return relationPairLabel(ins, metricLabel(leftMetric), metricLabel(rightMetric));
     }
     // metricLabel returns the key unchanged for anything it does not know, so
     // routing the fallback through it labels the core metrics and leaves the

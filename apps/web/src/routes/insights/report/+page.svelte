@@ -49,7 +49,7 @@
   $: insightsBackHref = carriedPairQuery ? `/insights?${carriedPairQuery}` : '/insights';
 
   $: matrixRows = buildMatrixDisplayRows(insights, { includeWeak: false }).strong;
-  $: reportRows = buildInsightReportRows(matrixRows);
+  $: reportRows = buildInsightReportRows(matrixRows, $_);
   $: selectedRows = reportRows.filter((row) => selectedIds.includes(row.id));
   $: coverage = reportCoverageStats(selectedRows);
 

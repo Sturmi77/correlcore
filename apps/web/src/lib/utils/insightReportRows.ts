@@ -1,6 +1,7 @@
 import { insightEndpoints, insightRelation, relationPairLabel } from './insightRelation';
 import { displayEffectForMetric } from './metrics';
 import type { InsightResponse, InsightTier } from '$lib/api/insights';
+import type { Translate } from './metricLabels';
 
 /** Canonical row consumed by the report table and every export renderer. */
 export interface InsightReportRow {
@@ -41,9 +42,9 @@ function nonEmptyString(payload: Record<string, unknown>, ...keys: string[]): st
   return null;
 }
 
-export function toInsightReportRow(insight: InsightResponse): InsightReportRow {
+export function toInsightReportRow(insight: InsightResponse, t?: Translate): InsightReportRow {
   const payload = insight.payload ?? {};
-  const endpoints = insightEndpoints(insight);
+  const endpoints = insightEndpoints(insight, t);
   return {
     id: insight.id,
     factor: endpoints.feature,
@@ -70,8 +71,11 @@ export function toInsightReportRow(insight: InsightResponse): InsightReportRow {
   };
 }
 
-export function buildInsightReportRows(insights: readonly InsightResponse[]): InsightReportRow[] {
-  return insights.map(toInsightReportRow);
+export function buildInsightReportRows(
+  insights: readonly InsightResponse[],
+  t?: Translate
+): InsightReportRow[] {
+  return insights.map((insight) => toInsightReportRow(insight, t));
 }
 
 export function reportCoverageStats(rows: readonly InsightReportRow[]): {

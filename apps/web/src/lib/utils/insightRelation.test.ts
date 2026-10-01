@@ -57,3 +57,52 @@ it('uses the lag payload and composite endpoints instead of duplicating the targ
     })
   ).toEqual({ feature: 'Fatigue', target: 'Work' });
 });
+
+describe('insightEndpoints localisation', () => {
+  const t = (key: string) =>
+    ({
+      'trends.metric.mood': 'Stimmung',
+      'trends.metric.stress': 'Stress',
+      'trends.metric.energy': 'Energie',
+    })[key] ?? key;
+
+  it('names both metrics of a same-day pair instead of exposing the pair key', () => {
+    const pair = {
+      ...base,
+      insight_type: 'spearman',
+      metric: 'stress_mood',
+      subject_label: 'mood_score',
+      payload: { left_metric: 'stress', right_metric: 'mood_score' },
+    } satisfies InsightResponse;
+    expect(insightEndpoints(pair, t)).toEqual({ feature: 'Stress', target: 'Stimmung' });
+    expect(insightEndpoints(pair)).toEqual({ feature: 'stress', target: 'mood_score' });
+  });
+
+  it('localises the metric target but keeps symptom names as entered', () => {
+    const symptom = {
+      ...base,
+      insight_type: 'symptom_mood_association',
+      metric: 'stress',
+      subject_type: 'symptom',
+      subject_label: 'Kopfschmerzen',
+    } satisfies InsightResponse;
+    expect(insightEndpoints(symptom, t)).toEqual({ feature: 'Kopfschmerzen', target: 'Stress' });
+  });
+
+  it('never rewrites a user tag that happens to be called like a metric', () => {
+    const tag = { ...base, metric: 'mood_score', subject_type: 'tag', subject_label: 'stress' };
+    expect(insightEndpoints(tag, t).feature).toBe('stress');
+  });
+
+  it('localises metric-kind lag endpoints only', () => {
+    const lag = {
+      ...base,
+      payload: {
+        method: 'lag',
+        feature: { kind: 'metric', key: 'energy' },
+        target: { kind: 'metric', key: 'stress' },
+      },
+    } satisfies InsightResponse;
+    expect(insightEndpoints(lag, t)).toEqual({ feature: 'Energie', target: 'Stress' });
+  });
+});
