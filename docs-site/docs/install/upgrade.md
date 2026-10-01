@@ -1,8 +1,45 @@
-# Upgrade guide — v1.9.1
+# Upgrade guide — v1.9.2
 
-Last updated: 2026-09-11
+Last updated: 2026-10-01
 
-## v1.9.1 (current)
+## v1.9.2 (current)
+
+From **v1.9.1** to **v1.9.2**. Contains the audit follow-up work and the insight foundation. **Back up the
+database first and test the restore**: this release applies **nine Alembic revisions (047–055)**, including a
+destructive one.
+
+| Who                  | Action                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Production / homelab | Back up PostgreSQL, restore it into a separate database once, pin `IMAGE_TAG=v1.9.2`, pull, `up -d --remove-orphans`   |
+| `.env`               | **No required new vars.** Optional `COOCCURRENCE_*` limits (defaults apply, see `.env.example`).                       |
+| Database             | `migrate` applies **047–055**. Revision **049** converts note markers to tags and then **drops** `entry_note_markers`. |
+| API clients          | The marker endpoints and `note_markers[]` on entry reads are removed.                                                  |
+| Compose              | Pull the updated compose file: the web healthcheck now uses IPv4 (`127.0.0.1`).                                        |
+
+```env
+IMAGE_TAG=v1.9.2
+```
+
+```bash
+docker compose pull
+docker compose up -d --remove-orphans
+curl -sf "https://${DOMAIN}/api/v1/health"   # "version":"1.9.2"
+```
+
+Why the backup matters: revision 049 backfills markers into tags and removes the marker table in one transaction.
+A failure before the end rolls everything back and `alembic upgrade head` can be re-run. A downgrade only recreates
+an **empty** marker table and is **not** a restore.
+
+**Rollback:** setting `IMAGE_TAG=v1.9.1` is **not enough** once 049 has run. Restore the database backup together
+with the v1.9.1 image. Details and the rehearsal steps for 046/047/048 start states:
+[A01 upgrade notes](https://github.com/Sturmi77/correlcore/blob/main/docs/quality/audit-2026-09-22/A01_UPGRADE.md).
+
+Images are published as `:v1.9.2` (and the `:v1.9` alias). For a reproducible deploy pin `sha-a48b84c` or the image
+digest instead of a moving tag.
+
+---
+
+## v1.9.1
 
 From **v1.9.0** to **v1.9.1**. Bugfix patch — no new required env vars and **no
 new blocking API / migration changes**.
@@ -265,7 +302,7 @@ Rollback: set `IMAGE_TAG=v1.4.0` and `up -d` again. Do not restore
 
 ## Older 1.x image pins
 
-Any **`v1.x`** GHCR tag still pulls. Prefer **`v1.9.1`**.
+Any **`v1.x`** GHCR tag still pulls. Prefer **`v1.9.2`**.
 
 ```bash
 cd correlcore/infra/docker
