@@ -8,6 +8,38 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.9.2] — Release Candidate (noch nicht veröffentlicht)
+
+Enthält die Audit-Nacharbeit nach v1.9.1 (Pakete A01–A12) und die Insight-Basis (#1015). Die Version
+gilt für den Release-Kandidaten `v1.9.2-rc.N`; die finale Veröffentlichung folgt erst nach den
+Abnahmen A10/A12.
+
+### Security
+
+- **JWT-Bibliothek ersetzt** — `python-jose` durch `PyJWT` (>=2.15.1) ersetzt. Damit entfällt die
+  Abhängigkeit `ecdsa` (CVE-2024-23342, kein Upstream-Fix) samt CI-Ausnahme PYSEC-2026-1325. Das
+  Token-Format (HS256) bleibt gleich, bestehende Sitzungen bleiben gültig (#1044).
+- **Transitive Abhängigkeiten** — `cookie` auf 0.7.2 und `uuid` auf 11.1.1 angehoben (#1045).
+- **Container-Images** — OpenSSL/PCRE2 im API-Image auf die Debian-Fixes `deb13u3` angehoben, System-`pip`
+  (API) und das gebündelte `npm` (Web) aus den Runtime-Images entfernt; behebt die HIGH-Funde des
+  Trivy-Scans (#1054).
+
+### Changed
+
+- **Android `versionCode`** — Ab 1.9.2 gilt `(MAJOR·1e6+MINOR·1e3+PATCH)·100+STAGE` (`rc.N` → `N`,
+  stabil → `99`), damit ein Release-Kandidat immer unter seinem Final-Tag liegt. 1.9.2 → `100900299`. Ältere
+  Tags behalten ihren Code.
+
+### Fixed
+
+- **API-Image installiert Abhängigkeiten aus `uv.lock`** — Das Image wurde frisch aufgelöst (SQLAlchemy
+  2.1.1 ohne `greenlet`) und startete nicht; es enthält jetzt exakt das gelockte Set (#1053).
+- **Insights: Rohschlüssel und Zeiträume** — Titel, Bericht und CSV/JSON zeigen lokalisierte Metriknamen
+  statt `stress_mood`/`mood_score`; die Detailseite nennt den tatsächlichen Analysezeitraum statt „letzte
+  90 Tage“ (#1043).
+
 ### Removed
 
 - **Marker-Endgame (#903 C)** — Tabelle `entry_note_markers` (Migration 049),
@@ -75,6 +107,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   CRUD-/Suggestions-Endpunkte **bleiben erhalten**, damit die
   read-only-Historienansichten weiterlaufen, bis der UI-/Taxonomie-Rückbau
   (#897) folgt. Note-Signals (Regex auf dem Notiztext) sind unberührt.
+  _Zwischenstand: Tabelle und Endpunkte sind seit dem Marker-Endgame (#903 C, unter
+  „Removed“) entfernt._
 - **Note-Marker-UI + Taxonomie zurückgebaut (#890 Folge 3/4, #897)** — Nach der
   Migration (#895) und der Analytik-Archivierung (#896) wurde die Marker-Taxonomie
   als eigenes Konzept aus dem Frontend entfernt: die Komponente
@@ -85,6 +119,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   Insight-Evidenz (`NoteInsightEvidence`/`InsightCard`) entfällt; Note-Signal-
   Evidenz bleibt. Die Tabelle `entry_note_markers` und ihre API bleiben nur, weil
   das Backend historische `note_markers[]` bei Entry-Reads weiterliefert.
+  _Zwischenstand: Tabelle, API und `note_markers[]` sind seit dem Marker-Endgame
+  (#903 C, unter „Removed“) entfernt._
 - **Marker-Analytik archiviert (#890 Folge 2/4, #896)** — Nach der Datenmigration
   (#895) sind die marker-spezifischen Auswertungen redundant zur Tag-Analytik und
   wurden entfernt: der Endpoint `GET /analysis/notes/marker-summary` (samt
@@ -94,7 +130,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
   keinen Consumer; `achievement`/`conflict`/`social` sind als Tags über die
   bestehende Tag-Korrelation/Co-occurrence abgedeckt. Der Enum-Wert
   `InsightType.NOTE_MARKER_MOOD` bleibt nur zur Rücklese-Kompatibilität für evtl.
-  vorhandene historische `insights`-Zeilen erhalten.
+  vorhandene historische `insights`-Zeilen erhalten. _Zwischenstand: der Enum-Wert ist
+  seit dem Marker-Endgame (#903 C, unter „Removed“) entfernt; historische Zeilen
+  dieses Typs löscht Migration 049._
 
 ### Fixed
 

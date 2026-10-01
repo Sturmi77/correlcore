@@ -28,15 +28,17 @@ jobs:
         run: |
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
+          # Prerelease tags (v1.9.2-rc.1) reuse the section of their final version.
+          BASE_VERSION="${VERSION%%-*}"
           OUT="${RUNNER_TEMP}/release_notes.md"
 
-          awk -v ver="$VERSION" '
+          awk -v ver="$VERSION" -v base="$BASE_VERSION" '
             /^## \[/ {
               if (found) exit
               header = $0
               sub(/^## \[/, "", header)
               sub(/\].*$/, "", header)
-              if (header == ver) found = 1
+              if (header == ver || header == base) found = 1
               next
             }
             found { print }
