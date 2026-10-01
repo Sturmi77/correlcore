@@ -27,6 +27,13 @@ allowBuilds:
 # legacy Browser-Targets (chrome87/edge88/firefox78/safari14), die
 # unseren vite build aktuell brechen. 0.25.x patched die Advisory
 # (siehe Release-Notes 0.25.0) und ist API-stabil.
+# Transitive Advisories ohne Upstream-Release, das sie schon behebt:
+#   - cookie <0.7.0 (GHSA-pxg6-pf52-xh8x) kommt ueber @sveltejs/kit (^0.6.0);
+#     0.7.x ist API-kompatibel (parse/serialize).
+#   - uuid <11.1.1 (GHSA-w5hq-g745-h8pq) kommt ueber xcode -> @capacitor/cli (^7);
+#     ^11 bleibt CommonJS-kompatibel (ab 12 ESM-only, bricht require()).
 overrides:
   esbuild: '^0.25.0'
   devalue: '>=5.8.1'
+  cookie: '^0.7.0'
+  uuid: '^11.1.1'
