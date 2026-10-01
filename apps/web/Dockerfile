@@ -73,6 +73,11 @@ WORKDIR /app
 # Non-root User (Alpine: addgroup/adduser)
 RUN addgroup -S correlcore && adduser -S -G correlcore correlcore
 
+# The server only needs `node`. The npm bundled with the base image carries its own
+# vulnerable copies of brace-expansion, undici and ip-address (Trivy, audit A10)
+# and is never used at runtime, so remove it from the final image.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 # Build-Output + Prod-Deps kopieren
 # SvelteKit adapter-node erzeugt /build mit eigenem package.json + Server
 COPY --from=builder --chown=correlcore:correlcore /repo/apps/web/build ./build

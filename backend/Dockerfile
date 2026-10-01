@@ -64,6 +64,14 @@ ARG BUILD_TIME=
 # Non-root user for security
 RUN groupadd -r correlcore && useradd -r -g correlcore correlcore
 
+# Security hardening of the runtime image (Trivy findings, audit A10):
+# - The python:3.12-slim base lags behind Debian security fixes; upgrade only the
+#   affected libraries (OpenSSL, PCRE2) so the rest of the base stays unchanged.
+#   This becomes a no-op once the base image ships the fixed versions.
+# - The app runs from /app/.venv; the base image's system pip is never used at
+#   runtime, so remove it instead of shipping its CVEs.
+RUN apt-get update     && apt-get install -y --no-install-recommends --only-upgrade         openssl libssl3t64 openssl-provider-legacy libpcre2-8-0     && rm -rf /var/lib/apt/lists/*     && rm -rf /usr/local/lib/python3.12/site-packages/pip         /usr/local/lib/python3.12/site-packages/pip-*.dist-info         /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12
+
 # Copy venv from builder
 COPY --from=builder /app/.venv .venv
 ENV PATH="/app/.venv/bin:$PATH"
