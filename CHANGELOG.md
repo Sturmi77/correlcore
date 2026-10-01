@@ -10,11 +10,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.9.2] — Release Candidate (noch nicht veröffentlicht)
+## [1.9.2] — 2026-10-01
 
-Enthält die Audit-Nacharbeit nach v1.9.1 (Pakete A01–A12) und die Insight-Basis (#1015). Die Version
-gilt für den Release-Kandidaten `v1.9.2-rc.N`; die finale Veröffentlichung folgt erst nach den
-Abnahmen A10/A12.
+Enthält die Audit-Nacharbeit nach v1.9.1 (Pakete A01–A12) und die Insight-Basis (#1015). Quelltext identisch mit
+`v1.9.2-rc.2`. Die Abnahmen A10/A12 laufen in der Betreiberumgebung.
+
+**Upgrade:** Datenbank vorher sichern und den Restore testen. Dieses Release wendet die Alembic-Revisionen 047–055 an;
+Revision 049 entfernt `entry_note_markers` (siehe Upgrade-Anleitung).
 
 ### Security
 
