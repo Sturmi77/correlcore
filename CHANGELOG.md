@@ -8,6 +8,27 @@ Versionierung nach [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [1.9.2] — Release Candidate (noch nicht veröffentlicht)
+
+Enthält die Audit-Nacharbeit nach v1.9.1 (Pakete A01–A12) und die Insight-Basis (#1015). Die Version
+gilt für den Release-Kandidaten `v1.9.2-rc.N`; die finale Veröffentlichung folgt erst nach den
+Abnahmen A10/A12.
+
+### Security
+
+- **JWT-Bibliothek ersetzt** — `python-jose` durch `PyJWT` (>=2.15.1) ersetzt. Damit entfällt die
+  Abhängigkeit `ecdsa` (CVE-2024-23342, kein Upstream-Fix) samt CI-Ausnahme PYSEC-2026-1325. Das
+  Token-Format (HS256) bleibt gleich, bestehende Sitzungen bleiben gültig (#1044).
+- **Transitive Abhängigkeiten** — `cookie` auf 0.7.2 und `uuid` auf 11.1.1 angehoben (#1045).
+
+### Fixed
+
+- **Insights: Rohschlüssel und Zeiträume** — Titel, Bericht und CSV/JSON zeigen lokalisierte Metriknamen
+  statt `stress_mood`/`mood_score`; die Detailseite nennt den tatsächlichen Analysezeitraum statt „letzte
+  90 Tage“ (#1043).
+
 ### Removed
 
 - **Marker-Endgame (#903 C)** — Tabelle `entry_note_markers` (Migration 049),
