@@ -22,3 +22,12 @@ Auf dem unveränderten Arbeitsbranch `feat/928-phase14-sleep-next-day` liefen am
 ## Abschlussgrenzen
 
 Dieses A00-Register ist eine nachvollziehbare Ausgangsbasis. Es bestätigt noch keinen Produkt-Fix und keine Freigabe. Die 40 Audit-Zeilen und die historischen Kommentare brauchen die jeweiligen Fix-Commits, Regressionstests und Nachweise am finalen Release-Kandidaten. A11 klärt die fachliche Relevanz historischer Antworten. Kein bestätigter Befund wird hier als akzeptiertes Risiko klassifiziert; eine Widerlegung erfordert konkreten Test oder Gegenbeleg.
+
+## Stand nach Integration (30.09.2026)
+
+Die Pakete A01–A12 sind seit der Integration (#1015) auf `main` enthalten; das Register oben
+bleibt bewusst die Ausgangsbasis (Fix-Commit und Release-CI leer, bis ein vollständiger
+A10-Lauf auf dem finalen Kandidaten vorliegt). Den aktuellen Desktop-Nachweis liefert der
+[Retest vom 30.09.2026](QA_RETEST_2026-09-30.md): AUD-07, -08, -12 und -24 sind im
+Desktop-Weg bestanden; AUD-16 und -28 nur teilweise. Sprachmischung (A09), Fensterbezeichnung (A07)
+und gemischte Fenster auf der Detailseite sind offen, mehrere Zeilen (u. a. AUD-14) sind nicht geprüft.

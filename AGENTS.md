@@ -22,6 +22,7 @@ export SECRET_KEY='local-dev-secret-key-min-32-bytes-long-padding'
 export ENCRYPTION_KEY='<valid-fernet-key>'  # see backend pytest env in ci-api.yml
 export CORS_ORIGINS='http://127.0.0.1:5173,http://localhost:5173'
 export SMTP_HOST=localhost SMTP_PORT=1025
+export SLUG_HMAC_KEY='<random-32-byte-hex>'  # required by migration 027
 uv run --python 3.12 alembic -c migrations/alembic.ini upgrade head
 ```
 
