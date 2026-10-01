@@ -1,6 +1,21 @@
 import { expect, test, type Page } from '@playwright/test';
 import { mockDashboardSummary, mockUserPreferences } from '../../src/lib/dev/mockEntries';
 
+/**
+ * Mock data is dated relative to today. Trends loads an exact rolling window
+ * (14/28/90 days ending today, #867), so fixed calendar dates age out of it and
+ * silently drop rows such as the work-context "Office" row.
+ */
+function isoDay(daysAgo: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+const DAY_OLDEST = isoDay(6);
+const DAY_MIDDLE = isoDay(2);
+const DAY_NEWEST = isoDay(0);
+
 const user = {
   id: '00000000-0000-4000-8000-000000000092',
   email: 'mobile-trends@example.test',
@@ -58,7 +73,7 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
     }
     if (path.startsWith('/entries/stats/health-context')) {
       return json(200, {
-        as_of: '2026-06-23',
+        as_of: DAY_NEWEST,
         coverage_window_days: 90,
         maturity: {
           phase: 'robust',
@@ -85,16 +100,16 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
           ? []
           : [
               {
-                period_start: '2026-06-17',
-                period_end: '2026-06-17',
+                period_start: DAY_OLDEST,
+                period_end: DAY_OLDEST,
                 entry_count: 1,
                 mood_avg: 3,
                 energy_avg: 4,
                 stress_avg: 4,
               },
               {
-                period_start: '2026-06-23',
-                period_end: '2026-06-23',
+                period_start: DAY_NEWEST,
+                period_end: DAY_NEWEST,
                 entry_count: 1,
                 mood_avg: 4,
                 energy_avg: 3,
@@ -105,8 +120,8 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
     }
     if (path === '/entries/stats/tags') {
       return json(200, {
-        start_date: '2026-06-17',
-        end_date: '2026-06-23',
+        start_date: DAY_OLDEST,
+        end_date: DAY_NEWEST,
         tags: options.empty
           ? []
           : [
@@ -117,8 +132,8 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
                 category: 'work',
                 color: null,
                 days: [
-                  { date: '2026-06-21', count: 2 },
-                  { date: '2026-06-23', count: 1 },
+                  { date: DAY_MIDDLE, count: 2 },
+                  { date: DAY_NEWEST, count: 1 },
                 ],
               },
             ],
@@ -126,8 +141,8 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
     }
     if (path === '/entries/stats/symptoms') {
       return json(200, {
-        start_date: '2026-06-17',
-        end_date: '2026-06-23',
+        start_date: DAY_OLDEST,
+        end_date: DAY_NEWEST,
         symptoms: options.empty
           ? []
           : [
@@ -136,7 +151,7 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
                 slug: 'fatigue',
                 name: 'Fatigue',
                 icon: null,
-                days: [{ date: '2026-06-23', count: 2, max_intensity: 2 }],
+                days: [{ date: DAY_NEWEST, count: 2, max_intensity: 2 }],
               },
             ],
       });
@@ -145,9 +160,9 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
     if (path === '/tags' || path === '/tags/default') return json(200, []);
     if (path === '/symptoms' || path === '/symptoms/default') return json(200, []);
     if (path === '/entries') {
-      // Keep work-context days on the mocked timeseries axis (2026-06-17/23).
-      // Compare loads a rolling year window; using the query bounds would place
-      // rows outside the clamped June axis and prune "Office" (#590).
+      // Keep work-context days on the mocked timeseries axis (DAY_OLDEST..DAY_NEWEST,
+      // inside the rolling window). Using the query bounds would place rows outside
+      // the clamped axis and prune "Office" (#590).
       return json(
         200,
         options.empty
@@ -156,7 +171,7 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
               {
                 id: 'trend-entry-office',
                 user_id: user.id,
-                entry_date: '2026-06-23',
+                entry_date: DAY_NEWEST,
                 slot: 'day',
                 mood_score: 4,
                 energy: 3,
@@ -165,13 +180,13 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
                 source: 'manual',
                 work_context: 'office',
                 note: null,
-                created_at: '2026-06-23T09:00:00Z',
-                updated_at: '2026-06-23T09:00:00Z',
+                created_at: `${DAY_NEWEST}T09:00:00Z`,
+                updated_at: `${DAY_NEWEST}T09:00:00Z`,
               },
               {
                 id: 'trend-entry-homeoffice',
                 user_id: user.id,
-                entry_date: '2026-06-17',
+                entry_date: DAY_OLDEST,
                 slot: 'day',
                 mood_score: 3,
                 energy: 4,
@@ -180,8 +195,8 @@ async function installTrendsApi(page: Page, options: { empty?: boolean } = {}) {
                 source: 'manual',
                 work_context: 'homeoffice',
                 note: null,
-                created_at: '2026-06-17T09:00:00Z',
-                updated_at: '2026-06-17T09:00:00Z',
+                created_at: `${DAY_OLDEST}T09:00:00Z`,
+                updated_at: `${DAY_OLDEST}T09:00:00Z`,
               },
             ]
       );
@@ -227,10 +242,10 @@ test('mobile compare filters and analysis canvas are reachable by scroll at 430p
   await page.getByTestId('trends-compare-customize').click();
   await expect(page.getByTestId('trends-compare-settings-sheet')).toBeVisible();
   await expect(page.getByTestId('trends-compare-filters')).toBeVisible();
-  await expect(page.getByRole('checkbox', { name: 'Mood' })).toBeVisible();
-  await expect(page.getByRole('checkbox', { name: 'Energy' })).toBeVisible();
-  await expect(page.getByRole('checkbox', { name: 'Stress' })).toBeVisible();
-  await expect(page.getByRole('checkbox', { name: 'Sleep quality' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Mood', exact: true })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Energy', exact: true })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Stress', exact: true })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Sleep quality', exact: true })).toBeVisible();
   await page.getByTestId('trends-compare-settings-close').click();
   await page.getByTestId('trends-compare-panel').scrollIntoViewIfNeeded();
   await expect(page.getByTestId('trends-compare-panel')).toBeVisible();

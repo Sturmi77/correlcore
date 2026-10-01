@@ -33,7 +33,25 @@ function json(route: import('@playwright/test').Route, status: number, body: unk
 
 type InsightsApiMockOptions = {
   includeContextInsight?: boolean;
+  /**
+   * Saves an explicit layout with every optional Insights section enabled
+   * (correlation matrix, lag heatmap, symptom analytics, tag groups, co-occurrence) in
+   * the pre-Phase-6 order, with the matrix above the feed.
+   * Without it the page renders the slim Phase 6 / D5 default: stage header + feed.
+   */
+  allSections?: boolean;
 };
+
+const allInsightSections = [
+  'stage_header',
+  'correlation_matrix',
+  'insight_feed',
+  'lag_heatmap',
+  'dismissed',
+  'symptom_analytics',
+  'tag_groups',
+  'tag_cooccurrence',
+].map((key) => ({ key, enabled: true }));
 
 const contextInsight = {
   id: '20000000-0000-4000-8000-000000000context',
@@ -69,6 +87,10 @@ export async function installInsightsApiMock(
   page: Page,
   options: InsightsApiMockOptions = {}
 ): Promise<void> {
+  const activePreferences = options.allSections
+    ? { ...preferences, insight_sections: allInsightSections, insight_sections_version: 2 }
+    : preferences;
+
   await page.addInitScript(() => {
     window.localStorage.setItem('correlcore-locale', 'en');
     window.localStorage.setItem('cc_insights_symptoms', 'true');
@@ -89,10 +111,11 @@ export async function installInsightsApiMock(
         user,
       });
     }
-    if (path === '/user/preferences' && method === 'GET') return json(route, 200, preferences);
+    if (path === '/user/preferences' && method === 'GET')
+      return json(route, 200, activePreferences);
     if (path === '/user/preferences' && method === 'PATCH') {
       const patch = (request.postDataJSON() ?? {}) as Record<string, unknown>;
-      return json(route, 200, { ...preferences, ...patch });
+      return json(route, 200, { ...activePreferences, ...patch });
     }
     if (path === '/insights/dismissals' && method === 'GET') {
       return json(route, 200, { dismissals: [] });
