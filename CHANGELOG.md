@@ -96,6 +96,8 @@ Abnahmen A10/A12.
   CRUD-/Suggestions-Endpunkte **bleiben erhalten**, damit die
   read-only-Historienansichten weiterlaufen, bis der UI-/Taxonomie-Rückbau
   (#897) folgt. Note-Signals (Regex auf dem Notiztext) sind unberührt.
+  _Zwischenstand: Tabelle und Endpunkte sind seit dem Marker-Endgame (#903 C, unter
+  „Removed“) entfernt._
 - **Note-Marker-UI + Taxonomie zurückgebaut (#890 Folge 3/4, #897)** — Nach der
   Migration (#895) und der Analytik-Archivierung (#896) wurde die Marker-Taxonomie
   als eigenes Konzept aus dem Frontend entfernt: die Komponente
@@ -106,6 +108,8 @@ Abnahmen A10/A12.
   Insight-Evidenz (`NoteInsightEvidence`/`InsightCard`) entfällt; Note-Signal-
   Evidenz bleibt. Die Tabelle `entry_note_markers` und ihre API bleiben nur, weil
   das Backend historische `note_markers[]` bei Entry-Reads weiterliefert.
+  _Zwischenstand: Tabelle, API und `note_markers[]` sind seit dem Marker-Endgame
+  (#903 C, unter „Removed“) entfernt._
 - **Marker-Analytik archiviert (#890 Folge 2/4, #896)** — Nach der Datenmigration
   (#895) sind die marker-spezifischen Auswertungen redundant zur Tag-Analytik und
   wurden entfernt: der Endpoint `GET /analysis/notes/marker-summary` (samt
@@ -115,7 +119,9 @@ Abnahmen A10/A12.
   keinen Consumer; `achievement`/`conflict`/`social` sind als Tags über die
   bestehende Tag-Korrelation/Co-occurrence abgedeckt. Der Enum-Wert
   `InsightType.NOTE_MARKER_MOOD` bleibt nur zur Rücklese-Kompatibilität für evtl.
-  vorhandene historische `insights`-Zeilen erhalten.
+  vorhandene historische `insights`-Zeilen erhalten. _Zwischenstand: der Enum-Wert ist
+  seit dem Marker-Endgame (#903 C, unter „Removed“) entfernt; historische Zeilen
+  dieses Typs löscht Migration 049._
 
 ### Fixed
 
