@@ -30,6 +30,7 @@ const SENSITIVE_KEYS = new Set([
   'wrapped_dek',
   'encryption_key',
   'secret_key',
+  'x_real_ip',
 ]);
 
 const EMAIL_RE = /[^@\s]+@[^@\s]+\.[^@\s]+/g;
@@ -38,7 +39,13 @@ const REDACTED = '[Filtered]';
 function isSensitiveKey(key: string): boolean {
   const normalized = key.toLowerCase().replace(/-/g, '_');
   if (SENSITIVE_KEYS.has(normalized)) return true;
-  return ['password', 'token', 'note', 'email'].some((fragment) => normalized.includes(fragment));
+  return ['password', 'token', 'note', 'email', 'forwarded'].some((fragment) =>
+    normalized.includes(fragment)
+  );
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function scrubString(value: string): string {
@@ -64,7 +71,7 @@ export function scrubMapping(data: Record<string, unknown>): Record<string, unkn
 type SentryEvent = {
   message?: string;
   request?: {
-    data?: Record<string, unknown>;
+    data?: unknown;
     cookies?: Record<string, unknown>;
     headers?: Record<string, unknown>;
   };
@@ -81,7 +88,10 @@ type SentryEvent = {
 
 export function scrubSentryEvent<T extends SentryEvent>(event: T): T {
   if (event.request?.data) {
-    event.request.data = scrubMapping(event.request.data);
+    const data = event.request.data;
+    // The Node SDK attaches raw bodies as strings. Key scrubbing only works
+    // for objects; anything else still contains the payload, so drop it.
+    event.request.data = isPlainRecord(data) ? scrubMapping(data) : REDACTED;
   }
   if (event.request?.cookies) {
     event.request.cookies = Object.fromEntries(
