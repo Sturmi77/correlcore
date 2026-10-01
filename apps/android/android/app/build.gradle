@@ -17,7 +17,7 @@ def hasFileSigning = keystorePropertiesFile.exists() &&
         keystoreProperties['keyPassword'] != null
 def hasReleaseSigning = hasEnvSigning || hasFileSigning
 
-def releaseVersionCode = (System.getenv('ANDROID_VERSION_CODE') ?: '1009002') as int
+def releaseVersionCode = (System.getenv('ANDROID_VERSION_CODE') ?: '100900299') as int
 def releaseVersionName = System.getenv('ANDROID_VERSION_NAME') ?: '1.9.2'
 
 // Sideload / Obtainium builds omit google-services.json. Detect before

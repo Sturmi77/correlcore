@@ -2,10 +2,10 @@ name: Release — Container Images
 
 # Builds and publishes correlcore-api and correlcore-web (multi-arch).
 # - Push to main → :latest + :main + :sha-<short>
-# - Tag v* (e.g. v1.0.0) → :v1.0.0 + :v1.0 + :sha-<short>. :latest is only set on the
-#   default branch (enable={{is_default_branch}}), so a tag push does not move it.
-#   Prerelease tags (e.g. v1.9.2-rc.1) get :v1.9.2-rc.1 + :sha-<short>; docker/metadata-action
-#   does not emit the :vMAJOR.MINOR alias for prereleases.
+# - Tag v* (e.g. v1.0.0) → :v1.0.0 + :v1.0 + :sha-<short>. A stable semver tag also gets
+#   :latest (docker/metadata-action flavor latest=auto). Prerelease tags such as
+#   v1.9.2-rc.1 get only :v1.9.2-rc.1 + :sha-<short>: no :vMAJOR.MINOR alias and no
+#   automatic :latest. Pushes to main set :latest via the explicit raw rule.
 # - manual dispatch → same tag rules as branch/tag context
 # - Push to main / dispatch also aliases any bare-semver tags still on the
 #   registry (:1.3.0) to the documented v-prefixed names (:v1.3.0). Needed

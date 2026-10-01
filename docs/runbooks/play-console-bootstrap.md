@@ -43,15 +43,20 @@ From [`.github/workflows/release-android.yml`](../../.github/workflows/release-a
 versionCode = MAJOR * 1_000_000 + MINOR * 1_000 + PATCH
 ```
 
-| Tag    | versionName | versionCode   |
-| ------ | ----------- | ------------- |
-| v1.2.1 | 1.2.1       | 1_002_001     |
-| v1.3.0 | 1.3.0       | 1_003_000     |
-| v1.4.0 | 1.4.0       | 1_004_000     |
-| v1.5.0 | 1.5.0       | 1_005_000     |
-| v1.6.0 | 1.6.0       | **1_006_000** |
+| Tag         | versionName | versionCode   |
+| ----------- | ----------- | ------------- |
+| v1.2.1      | 1.2.1       | 1_002_001     |
+| v1.3.0      | 1.3.0       | 1_003_000     |
+| v1.4.0      | 1.4.0       | 1_004_000     |
+| v1.5.0      | 1.5.0       | 1_005_000     |
+| v1.6.0      | 1.6.0       | **1_006_000** |
+| v1.9.2-rc.1 | 1.9.2-rc.1  | 100_900_201   |
+| v1.9.2      | 1.9.2       | 100_900_299   |
 
-Play rejects non-monotonic `versionCode`. After the first upload, every later
+From **1.9.2** on the base value is multiplied by 100 and a stage is added
+(`rc.N` → `N`, stable → `99`), so a release candidate always sorts below its final
+tag: `versionCode = (MAJOR * 1_000_000 + MINOR * 1_000 + PATCH) * 100 + STAGE`.
+Tags before 1.9.2 keep the formula above. Play rejects non-monotonic `versionCode`. After the first upload, every later
 `v*` tag must be strictly greater (normal SemVer tags already are).
 
 Manual `workflow_dispatch` **without** `attach_to_tag` uses `GITHUB_RUN_NUMBER`

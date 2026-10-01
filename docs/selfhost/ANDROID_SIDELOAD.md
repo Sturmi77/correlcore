@@ -105,7 +105,9 @@ Or use `apps/android/android/keystore.properties` from
 
 **CI version encoding:** on `v*` tags, [`release-android.yml`](../../.github/workflows/release-android.yml)
 strips the leading `v` for `versionName` (e.g. `v1.5.0` → `1.5.0`) and sets
-`versionCode = major×1_000_000 + minor×1_000 + patch` (e.g. `1.3.0` → `1003000`).
+`versionCode = major×1_000_000 + minor×1_000 + patch` (e.g. `1.3.0` → `1003000`). From `1.9.2` the value is multiplied by 100 and a
+stage is added (`rc.N` → `N`, stable → `99`; `1.9.2` → `100900299`), so release candidates
+sort below the final release.
 Manual `workflow_dispatch` without a tag falls back to `1.0.0-android.<run>` / run number.
 
 ### CI
