@@ -22,9 +22,20 @@ Abnahmen A10/A12.
   Abhängigkeit `ecdsa` (CVE-2024-23342, kein Upstream-Fix) samt CI-Ausnahme PYSEC-2026-1325. Das
   Token-Format (HS256) bleibt gleich, bestehende Sitzungen bleiben gültig (#1044).
 - **Transitive Abhängigkeiten** — `cookie` auf 0.7.2 und `uuid` auf 11.1.1 angehoben (#1045).
+- **Container-Images** — OpenSSL/PCRE2 im API-Image auf die Debian-Fixes `deb13u3` angehoben, System-`pip`
+  (API) und das gebündelte `npm` (Web) aus den Runtime-Images entfernt; behebt die HIGH-Funde des
+  Trivy-Scans (#1054).
+
+### Changed
+
+- **Android `versionCode`** — Ab 1.9.2 gilt `(MAJOR·1e6+MINOR·1e3+PATCH)·100+STAGE` (`rc.N` → `N`,
+  stabil → `99`), damit ein Release-Kandidat immer unter seinem Final-Tag liegt. 1.9.2 → `100900299`. Ältere
+  Tags behalten ihren Code.
 
 ### Fixed
 
+- **API-Image installiert Abhängigkeiten aus `uv.lock`** — Das Image wurde frisch aufgelöst (SQLAlchemy
+  2.1.1 ohne `greenlet`) und startete nicht; es enthält jetzt exakt das gelockte Set (#1053).
 - **Insights: Rohschlüssel und Zeiträume** — Titel, Bericht und CSV/JSON zeigen lokalisierte Metriknamen
   statt `stress_mood`/`mood_score`; die Detailseite nennt den tatsächlichen Analysezeitraum statt „letzte
   90 Tage“ (#1043).
